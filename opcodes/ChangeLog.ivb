@@ -1,0 +1,41 @@
+2009-09-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (PREFIX_VEX_3813): New.
+	(PREFIX_VEX_3A1A): Likewise.
+	(prefix_table): Add PREFIX_VEX_3813 and PREFIX_VEX_3A1A.
+	(vex_table): Likewise.
+
+	* i386-opc.tbl: Add vcvtph2ps and vcvtps2ph.
+	* i386-opc.tbl: Regenerated.
+
+2009-09-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (PREFIX_0FAE_REG_0): New.
+	(PREFIX_0FAE_REG_1): Likewise.
+	(PREFIX_0FAE_REG_2): Likewise.
+	(PREFIX_0FAE_REG_3): Likewise.
+	(prefix_table): Add PREFIX_0FAE_REG_0, PREFIX_0FAE_REG_1,
+	PREFIX_0FAE_REG_2 and PREFIX_0FAE_REG_3.
+	(mod_table): Likewise.  Change rdrndS to rdrnd.
+
+	* i386-opc.tbl: Add rdfsbase, rdgsbase, wrfsbase and wrgsbase.
+	Don't allow suffixes on rdrnd.
+	* i386-opc.tbl: Regenerated.
+
+2009-09-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-gen.c (cpu_flag_init): Add CPU_FSGSBASE_FLAGS,
+	CPU_RDRND_FLAGS and CPU_F16C_FLAGS.
+	(cpu_flags): Add CpuFSGSBase, CpuRdRnd and CpuF16C.
+
+	* i386-dis.c (mod_tablemod_table): Add rdrndS.
+
+	* i386-opc.h (CpuFSGSBase): New.
+	(CpuRdRnd): Likewise.
+	(CpuF16C): Likewise.
+	(i386_cpu_flags): Add cpufsgsbase, cpurdrnd and cpuf16c.
+
+	* i386-opc.tbl: Add rdrnd.
+
+	* i386-init.h: Regenerated.
+	* i386-tbl.h: Likewise.

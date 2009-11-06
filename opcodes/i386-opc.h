@@ -110,6 +110,12 @@ enum
   CpuEPT,
   /* RDTSCP Instuction support required */
   CpuRdtscp,
+  /* FSBSBASE Instructions required */
+  CpuFSGSBase,
+  /* RDRND Instructions required */
+  CpuRdRnd,
+  /* F16C Instructions required */
+  CpuF16C,
   /* 64bit support available, used by -march= in assembler.  */
   CpuLM,
   /* 64bit support required  */
@@ -174,6 +180,9 @@ typedef union i386_cpu_flags
       unsigned int cpumovbe:1;
       unsigned int cpuept:1;
       unsigned int cpurdtscp:1;
+      unsigned int cpufsgsbase:1;
+      unsigned int cpurdrnd:1;
+      unsigned int cpuf16c:1;
       unsigned int cpulm:1;
       unsigned int cpu64:1;
       unsigned int cpuno64:1;
