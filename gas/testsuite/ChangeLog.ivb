@@ -1,0 +1,24 @@
+2009-11-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/f16c-intel.d: New.
+	* gas/i386/f16c.d: Likewise.
+	* gas/i386/f16c.s: Likewise.
+	* gas/i386/fsgs-intel.d: Likewise.
+	* gas/i386/fsgs.d: Likewise.
+	* gas/i386/fsgs.s: Likewise.
+	* gas/i386/rdrnd-intel.d: Likewise.
+	* gas/i386/rdrnd.d: Likewise.
+	* gas/i386/rdrnd.s: Likewise.
+	* gas/i386/x86-64-f16c-intel.d: Likewise.
+	* gas/i386/x86-64-f16c.d: Likewise.
+	* gas/i386/x86-64-f16c.s: Likewise.
+	* gas/i386/x86-64-fsgs-intel.d: Likewise.
+	* gas/i386/x86-64-fsgs.d: Likewise.
+	* gas/i386/x86-64-fsgs.s: Likewise.
+	* gas/i386/x86-64-rdrnd-intel.d: Likewise.
+	* gas/i386/x86-64-rdrnd.d: Likewise.
+	* gas/i386/x86-64-rdrnd.s: Likewise.
+
+	* gas/i386/i386.exp: Run f16c, f16c-intel, fsgs, fsgs-intel,
+	rdrnd, rdrnd-intel, x86-64-f16c, x86-64-f16c-intel, x86-64-fsgs,
+	x86-64-fsgs-intel, x86-64-rdrnd, x86-64-rdrnd-intel.
