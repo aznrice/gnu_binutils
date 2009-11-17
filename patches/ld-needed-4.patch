@@ -1,0 +1,44 @@
+2009-05-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* NEWS: Mention LD_AS_NEEDED.
+
+	* ld.texinfo: Document LD_AS_NEEDED.
+
+	* ldmain.c (main): Handle LD_AS_NEEDED.
+
+--- ld/NEWS.needed	2009-11-06 09:47:23.000000000 -0800
++++ ld/NEWS	2009-11-06 09:47:25.000000000 -0800
+@@ -73,6 +73,8 @@ Changes in 2.20:
+   For the switch --enable-runtime-pseudo-reloc it uses for 32-bit
+   runtime pseudo relocation version one, for 64-bit the version two.
+ 
++* ELF: Support environment variable LD_AS_NEEDED for --as-needed.
++
+ * ELF: Support environment variables, LD_SYMBOLIC for -Bsymbolic and
+   LD_SYMBOLIC_FUNCTIONS for -Bsymbolic-functions.
+ 
+--- ld/ld.texinfo.needed	2009-11-06 09:47:23.000000000 -0800
++++ ld/ld.texinfo	2009-11-06 09:48:25.000000000 -0800
+@@ -1151,6 +1151,10 @@ their names to the @option{--as-needed} 
+ options.  They have been replaced by @option{--copy-dt-needed-entries}
+ and @option{--no-copy-dt-needed-entries}.
+ 
++If the environment variable @code{LD_AS_NEEDED} is set, the linker
++will behave as if the @option{--as-needed} option is passed to the
++linker as the first command line option.
++
+ @kindex -assert @var{keyword}
+ @item -assert @var{keyword}
+ This option is ignored for SunOS compatibility.
+--- ld/ldmain.c.needed	2009-11-06 09:47:24.000000000 -0800
++++ ld/ldmain.c	2009-11-06 09:49:24.000000000 -0800
+@@ -262,6 +262,9 @@ main (int argc, char **argv)
+   else if (getenv ("LD_SYMBOLIC_FUNCTIONS") != NULL)
+     command_line.symbolic = symbolic_functions;
+ 
++  if (getenv ("LD_AS_NEEDED") != NULL)
++    add_DT_NEEDED_for_regular = TRUE;
++
+   /* We initialize DEMANGLING based on the environment variable
+      COLLECT_NO_DEMANGLE.  The gcc collect2 program will demangle the
+      output of the linker, unless COLLECT_NO_DEMANGLE is set in the
