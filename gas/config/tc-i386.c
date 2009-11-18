@@ -59,14 +59,15 @@
    WAIT_PREFIX must be the first prefix since FWAIT is really is an
    instruction, and so must come before any prefixes.
    The preferred prefix order is SEG_PREFIX, ADDR_PREFIX, DATA_PREFIX,
-   LOCKREP_PREFIX.  */
+   REP_PREFIX, LOCK_PREFIX.  */
 #define WAIT_PREFIX	0
 #define SEG_PREFIX	1
 #define ADDR_PREFIX	2
 #define DATA_PREFIX	3
-#define LOCKREP_PREFIX	4
-#define REX_PREFIX	5       /* must come last.  */
-#define MAX_PREFIXES	6	/* max prefixes per opcode */
+#define REP_PREFIX	4
+#define LOCK_PREFIX	5
+#define REX_PREFIX	6       /* must come last.  */
+#define MAX_PREFIXES	7	/* max prefixes per opcode */
 
 /* we define the syntax here (modulo base,index,scale syntax) */
 #define REGISTER_PREFIX '%'
@@ -256,7 +257,7 @@ struct _i386_insn
     vex_prefix vex;
 
     /* Swap operand in encoding.  */
-    unsigned int swap_operand : 1;
+    unsigned int swap_operand;
   };
 
 typedef struct _i386_insn i386_insn;
@@ -641,6 +642,10 @@ static const arch_entry cpu_arch[] =
     CPU_FMA_FLAGS },
   { ".fma4", PROCESSOR_UNKNOWN,
     CPU_FMA4_FLAGS },
+  { ".xop", PROCESSOR_UNKNOWN,
+    CPU_XOP_FLAGS },
+  { ".cvt16", PROCESSOR_UNKNOWN,
+    CPU_CVT16_FLAGS },
   { ".lwp", PROCESSOR_UNKNOWN,
     CPU_LWP_FLAGS },
   { ".movbe", PROCESSOR_UNKNOWN,
@@ -1783,13 +1788,26 @@ offset_in_range (offsetT val, int size)
   return val & mask;
 }
 
-/* Returns 0 if attempting to add a prefix where one from the same
-   class already exists, 1 if non rep/repne added, 2 if rep/repne
-   added.  */
-static int
+enum PREFIX_GROUP
+{
+  PREFIX_EXIST = 0,
+  PREFIX_LOCK,
+  PREFIX_REP,
+  PREFIX_OTHER
+};
+
+/* Returns
+   a. PREFIX_EXIST if attempting to add a prefix where one from the
+   same class already exists.
+   b. PREFIX_LOCK if lock prefix is added.
+   c. PREFIX_REP if rep/repne prefix is added.
+   d. PREFIX_OTHER if other prefix is added.
+ */
+
+static enum PREFIX_GROUP
 add_prefix (unsigned int prefix)
 {
-  int ret = 1;
+  enum PREFIX_GROUP ret = PREFIX_OTHER;
   unsigned int q;
 
   if (prefix >= REX_OPCODE && prefix < REX_OPCODE + 16
@@ -1798,7 +1816,7 @@ add_prefix (unsigned int prefix)
       if ((i.prefix[REX_PREFIX] & prefix & REX_W)
 	  || ((i.prefix[REX_PREFIX] & (REX_R | REX_X | REX_B))
 	      && (prefix & (REX_R | REX_X | REX_B))))
-	ret = 0;
+	ret = PREFIX_EXIST;
       q = REX_PREFIX;
     }
   else
@@ -1819,10 +1837,13 @@ add_prefix (unsigned int prefix)
 
 	case REPNE_PREFIX_OPCODE:
 	case REPE_PREFIX_OPCODE:
-	  ret = 2;
-	  /* fall thru */
+	  q = REP_PREFIX;
+	  ret = PREFIX_REP;
+	  break;
+
 	case LOCK_PREFIX_OPCODE:
-	  q = LOCKREP_PREFIX;
+	  q = LOCK_PREFIX;
+	  ret = PREFIX_LOCK;
 	  break;
 
 	case FWAIT_OPCODE:
@@ -1838,7 +1859,7 @@ add_prefix (unsigned int prefix)
 	  break;
 	}
       if (i.prefix[q] != 0)
-	ret = 0;
+	ret = PREFIX_EXIST;
     }
 
   if (ret)
@@ -2731,6 +2752,11 @@ build_vex_prefix (const insn_template *t)
 	m = 0x2;
       else if (i.tm.opcode_modifier.vex0f3a)
 	m = 0x3;
+      else if (i.tm.opcode_modifier.xop08)
+	{
+	  m = 0x8;
+	  i.vex.bytes[0] = 0x8f;
+	}
       else if (i.tm.opcode_modifier.xop09)
 	{
 	  m = 0x9;
@@ -2915,6 +2941,18 @@ md_assemble (char *line)
     if (!add_prefix (FWAIT_OPCODE))
       return;
 
+  /* Check for lock without a lockable instruction.  Destination operand
+     must be memory unless it is xchg (0x86).  */
+  if (i.prefix[LOCK_PREFIX]
+      && (!i.tm.opcode_modifier.islockable
+	  || i.mem_operands == 0
+	  || (i.tm.base_opcode != 0x86
+	      && !operand_type_check (i.types[i.operands - 1], anymem))))
+    {
+      as_bad (_("expecting lockable instruction after `lock'"));
+      return;
+    }
+
   /* Check string instruction segment overrides.  */
   if (i.tm.opcode_modifier.isstring && i.mem_operands != 0)
     {
@@ -2968,8 +3006,12 @@ md_assemble (char *line)
   if (i.tm.opcode_modifier.vex)
     build_vex_prefix (t);
 
-  /* Handle conversion of 'int $3' --> special int3 insn.  */
-  if (i.tm.base_opcode == INT_OPCODE && i.op[0].imms->X_add_number == 3)
+  /* Handle conversion of 'int $3' --> special int3 insn.  XOP or FMA4
+     instructions may define INT_OPCODE as well, so avoid this corner
+     case for those instructions that use MODRM.  */
+  if (i.tm.base_opcode == INT_OPCODE
+      && i.op[0].imms->X_add_number == 3
+      && !i.tm.opcode_modifier.modrm)
     {
       i.tm.base_opcode = INT3_OPCODE;
       i.imm_operands = 0;
@@ -3111,10 +3153,12 @@ parse_insn (char *line, char *mnemonic)
 	  /* Add prefix, checking for repeated prefixes.  */
 	  switch (add_prefix (current_templates->start->base_opcode))
 	    {
-	    case 0:
+	    case PREFIX_EXIST:
 	      return NULL;
-	    case 2:
+	    case PREFIX_REP:
 	      expecting_string_instruction = current_templates->start->name;
+	      break;
+	    default:
 	      break;
 	    }
 	  /* Skip past PREFIX_SEPARATOR and reset token_start.  */
@@ -4877,11 +4921,12 @@ build_modrm_byte (void)
 {
   const seg_entry *default_seg = 0;
   unsigned int source, dest;
-  int vex_3_sources;
+  int vex_3_sources, vex_2_sources;
 
   /* The first operand of instructions with VEX prefix and 3 sources
      must be VEX_Imm4.  */
   vex_3_sources = i.tm.opcode_modifier.vex3sources;
+  vex_2_sources = i.tm.opcode_modifier.vex2sources;
   if (vex_3_sources)
     {
       unsigned int nds, reg;
@@ -5265,7 +5310,41 @@ build_modrm_byte (void)
       else
 	mem = ~0;
 
-      if (i.tm.opcode_modifier.vexlwp)
+      if (vex_2_sources)
+	{
+	  if (operand_type_check (i.types[0], imm))
+	    i.vex.register_specifier = NULL;
+	  else
+	    {
+	      /* VEX.vvvv encodes one of the sources when the first
+		 operand is not an immediate.  */
+	      if (i.tm.opcode_modifier.vexw0)
+		i.vex.register_specifier = i.op[0].regs;
+	      else
+		i.vex.register_specifier = i.op[1].regs;
+	    }
+
+	  /* Destination is a XMM register encoded in the ModRM.reg
+	     and VEX.R bit.  */
+	  i.rm.reg = i.op[2].regs->reg_num;
+	  if ((i.op[2].regs->reg_flags & RegRex) != 0)
+	    i.rex |= REX_R;
+
+	  /* ModRM.rm and VEX.B encodes the other source.  */
+	  if (!i.mem_operands)
+	    {
+	      i.rm.mode = 3;
+
+	      if (i.tm.opcode_modifier.vexw0)
+		i.rm.regmem = i.op[1].regs->reg_num;
+	      else
+		i.rm.regmem = i.op[0].regs->reg_num;
+
+	      if ((i.op[1].regs->reg_flags & RegRex) != 0)
+		i.rex |= REX_B;
+	    }
+	}
+      else if (i.tm.opcode_modifier.vexlwp)
 	{
 	  i.vex.register_specifier = i.op[2].regs;
 	  if (!i.mem_operands)
@@ -5344,19 +5423,23 @@ build_modrm_byte (void)
 	      i.vex.register_specifier = i.op[vex_reg].regs;
 	    }
 
-	  /* If there is an extension opcode to put here, the
-	     register number must be put into the regmem field.  */
-	  if (i.tm.extension_opcode != None)
+	  /* Don't set OP operand twice.  */
+	  if (vex_reg != op)
 	    {
-	      i.rm.regmem = i.op[op].regs->reg_num;
-	      if ((i.op[op].regs->reg_flags & RegRex) != 0)
-		i.rex |= REX_B;
-	    }
-	  else
-	    {
-	      i.rm.reg = i.op[op].regs->reg_num;
-	      if ((i.op[op].regs->reg_flags & RegRex) != 0)
-		i.rex |= REX_R;
+	      /* If there is an extension opcode to put here, the
+		 register number must be put into the regmem field.  */
+	      if (i.tm.extension_opcode != None)
+		{
+		  i.rm.regmem = i.op[op].regs->reg_num;
+		  if ((i.op[op].regs->reg_flags & RegRex) != 0)
+		    i.rex |= REX_B;
+		}
+	      else
+		{
+		  i.rm.reg = i.op[op].regs->reg_num;
+		  if ((i.op[op].regs->reg_flags & RegRex) != 0)
+		    i.rex |= REX_R;
+		}
 	    }
 
 	  /* Now, if no memory operand has set i.rm.mode = 0, 1, 2 we
@@ -5632,7 +5715,7 @@ output_insn (void)
 		    {
 check_prefix:
 		      if (prefix != REPE_PREFIX_OPCODE
-			  || (i.prefix[LOCKREP_PREFIX]
+			  || (i.prefix[REP_PREFIX]
 			      != REPE_PREFIX_OPCODE))
 			add_prefix (prefix);
 		    }
@@ -8044,7 +8127,7 @@ md_show_usage (stream)
                            ssse3, sse4.1, sse4.2, sse4, nosse, avx, noavx,\n\
                            vmx, smx, xsave, movbe, ept, aes, pclmul, fma,\n\
                            clflush, syscall, rdtscp, 3dnow, 3dnowa, sse4a,\n\
-                           svme, abm, padlock, fma4, lwp\n"));
+                           svme, abm, padlock, fma4, xop, cvt16, lwp\n"));
   fprintf (stream, _("\
   -mtune=CPU              optimize for CPU, CPU is one of:\n\
                            i8086, i186, i286, i386, i486, pentium, pentiumpro,\n\

@@ -1,3 +1,83 @@
+2009-11-17  Sebastian Pop  <sebastian.pop@amd.com>
+	    Quentin Neill  <quentin.neill@amd.com>
+
+	* config/tc-i386.c (cpu_arch): Added .xop and .cvt16.
+	(build_vex_prefix): Handle xop08.
+	(md_assemble): Don't special case the constant 3 for insns using MODRM.
+	(build_modrm_byte): Handle vex2sources.
+	(md_show_usage): Add xop and cvt16.
+	* doc/c-i386.texi: Document fma4, xop, and cvt16.
+
+2009-11-17  Paul Brook  <paul@codesourcery.com>
+	Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* doc/c-arm.texi: Document .arch armv7e-m.
+	* config/tc-arm.c (arm_ext_v6_dsp, arm_ext_v7m): New.
+	(insns): Put Thumb versions of v5TExP instructions into
+	arm_ext_v5exp also.  Move some Thumb variants from
+	arm_ext_v6_notm to arm_ext_v6_dsp.
+	(arm_archs): Add armv7e-m architecture.
+	(aeabi_set_public_attributes): Handle -march=armv7e-m.
+
+2009-11-16  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
+
+	* config/tc-arm.c (parse_operands): Encode APSR_nzcv as r15.
+	(do_vmrs): New function.
+	(do_vmsr): New function.
+	(insns): Add vmrs and vmsr.
+
+2009-11-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (md_assemble): Check destination operand
+	for lockable instructions.
+
+2009-11-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (_i386_insn): Don't use bit field on
+	swap_operand.
+
+2009-11-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (LOCKREP_PREFIX): Removed.
+	(REP_PREFIX): New.
+	(LOCK_PREFIX): Likewise.
+	(PREFIX_GROUP): Likewise.
+	(REX_PREFIX): Updated.
+	(MAX_PREFIXES): Likewise.
+	(add_prefix): Updated.  Return enum PREFIX_GROUP.
+	(md_assemble): Check for lock without a lockable instruction.
+	(parse_insn): Updated.
+	(output_insn): Likewise.
+
+2009-11-12  Nick Clifton  <nickc@redhat.com>
+
+	* po/id.po: Updated Indonesian translation.
+
+2009-11-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (build_modrm_byte): Don't set register
+	operand twice.
+
+2009-11-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* configure.in: Call ACX_LARGEFILE.  Stop calling AC_SYS_LARGEFILE.
+	* aclocal.m4: Regenerate.
+	* configure: Regenerate.
+
+2009-11-10  Maxim Kuvyrkov  <maxim@codesourcery.com>
+
+	* config/m68k-parse.h (enum m68k_register): Add ACR[4-7], RGPIOBAR.
+	* config/tc-m68k.c (mcf5206_ctrl): Fix whitespace.
+	(mcf52223_ctrl): Remove non-existent registers. 
+	(mcf54418): Define.
+	(mcf54455): Remove MBAR.
+	(m68k_cpus): Add lines for MCF5441x family.
+	(m68k_ip, init_table): Handle RGPIOBAR, ACR[4-7].
+	
+2009-11-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* doc/c-i386.texi: Move .lwp.
+
 2009-11-06  Alan Modra  <amodra@bigpond.net.au>
 
 	* config/obj-elf.c (obj_elf_change_section): Remove FIXME from

@@ -1,3 +1,9 @@
+2009-11-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/cvt16.d: Pass -march=generic32+cvt16 to assembler.
+	* gas/i386/x86-64-cvt16.d: Pass -march=generic64+cvt16 to
+	assembler.
+
 2009-11-07  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* gas/i386/f16c-intel.d: New.
