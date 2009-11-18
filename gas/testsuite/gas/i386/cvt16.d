@@ -1,4 +1,3 @@
-#as: -march=generic32+cvt16
 #objdump: -dw
 #name: i386 CVT16
 

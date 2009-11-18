@@ -1,4 +1,3 @@
-#as: -march=generic64+cvt16
 #objdump: -dw
 #name: x86-64 CVT16
 
