@@ -39,63 +39,23 @@ namespace gold {
 // we could think about backward (and forward?) compatibility.
 const unsigned int INCREMENTAL_LINK_VERSION = 1;
 
-namespace internal {
-
-// Header of the .gnu_incremental_input section.
-struct Incremental_inputs_header_data
-{
-  // Incremental linker version.
-  elfcpp::Elf_Word version;
-
-  // Numer of input files in the link.
-  elfcpp::Elf_Word input_file_count;
-
-  // Offset of command line options in .gnu_incremental_strtab.
-  elfcpp::Elf_Word command_line_offset;
-
-  // Padding.
-  elfcpp::Elf_Word reserved;
-};
-
-// Data stored in .gnu_incremental_input after the header for each of the
-// Incremental_input_header_data::input_file_count input entries.
-struct Incremental_inputs_entry_data
-{
-  // Offset of file name in .gnu_incremental_strtab section.
-  elfcpp::Elf_Word filename_offset;
-
-  // Offset of data in .gnu_incremental_input.
-  elfcpp::Elf_Word data_offset;
-
-  // Timestamp (in seconds).
-  elfcpp::Elf_Xword timestamp_sec;
-
-  // Nano-second part of timestamp (if supported).
-  elfcpp::Elf_Word timestamp_nsec;
-
-  // Type of the input entry.
-  elfcpp::Elf_Half input_type;
-
-  // Padding.
-  elfcpp::Elf_Half reserved;
-};
-
-}
-
 // Accessors.
 
 // Reader class for .gnu_incremental_inputs header. See
-// internal::Incremental_input_header for fields descriptions.
+// Incremental_inputs_header_data for fields descriptions.
 
 template<int size, bool big_endian>
 class Incremental_inputs_header
 {
+ private:
+  typedef Incremental_inputs_header_data Data_type;
+
  public:
   Incremental_inputs_header(const unsigned char *p)
-    : p_(reinterpret_cast<const internal::Incremental_inputs_header_data*>(p))
+    : p_(reinterpret_cast<const Data_type*>(p))
   { }
 
-  static const int data_size = sizeof(internal::Incremental_inputs_header_data);
+  static const int data_size = sizeof(Data_type);
 
   elfcpp::Elf_Word
   get_version() const
@@ -114,21 +74,24 @@ class Incremental_inputs_header
   { return Convert<32, big_endian>::convert_host(this->p_->reserved); }
 
  private:
-  const internal::Incremental_inputs_header_data* p_;
+  const Data_type* p_;
 };
 
 // Writer class for .gnu_incremental_inputs header. See
-// internal::Incremental_input_header for fields descriptions.
+// Incremental_inputs_header_data for fields descriptions.
 
 template<int size, bool big_endian>
 class Incremental_inputs_header_write
 {
+ private:
+  typedef Incremental_inputs_header_data Data_type;
+
  public:
   Incremental_inputs_header_write(unsigned char *p)
-    : p_(reinterpret_cast<internal::Incremental_inputs_header_data*>(p))
+    : p_(reinterpret_cast<Data_type*>(p))
   { }
 
-  static const int data_size = sizeof(internal::Incremental_inputs_header_data);
+  static const int data_size = sizeof(Data_type);
 
   void
   put_version(elfcpp::Elf_Word v)
@@ -147,20 +110,23 @@ class Incremental_inputs_header_write
   { this->p_->reserved = Convert<32, big_endian>::convert_host(v); }
 
  private:
-  internal::Incremental_inputs_header_data* p_;
+  Data_type* p_;
 };
 
 // Reader class for an .gnu_incremental_inputs entry. See
-// internal::Incremental_input_entry for fields descriptions.
+// Incremental_inputs_entry_data for fields descriptions.
 template<int size, bool big_endian>
 class Incremental_inputs_entry
 {
+ private:
+  typedef Incremental_inputs_entry_data Data_type;
+
  public:
   Incremental_inputs_entry(const unsigned char *p)
-    : p_(reinterpret_cast<const internal::Incremental_inputs_entry_data*>(p))
+    : p_(reinterpret_cast<const Data_type*>(p))
   { }
 
-  static const int data_size = sizeof(internal::Incremental_inputs_entry_data);
+  static const int data_size = sizeof(Data_type);
 
   elfcpp::Elf_Word
   get_filename_offset(elfcpp::Elf_Word v)
@@ -187,20 +153,23 @@ class Incremental_inputs_entry
   { return Convert<32, big_endian>::convert_host(this->p_->reserved); }
 
  private:
-  const internal::Incremental_inputs_entry_data* p_;
+  const Data_type* p_;
 };
 
 // Writer class for an .gnu_incremental_inputs entry. See
-// internal::Incremental_input_entry for fields descriptions.
+// Incremental_inputs_entry_data for fields descriptions.
 template<int size, bool big_endian>
 class Incremental_inputs_entry_write
 {
+ private:
+  typedef Incremental_inputs_entry_data Data_type;
+
  public:
   Incremental_inputs_entry_write(unsigned char *p)
-    : p_(reinterpret_cast<internal::Incremental_inputs_entry_data*>(p))
+    : p_(reinterpret_cast<Data_type*>(p))
   { }
 
-  static const int data_size = sizeof(internal::Incremental_inputs_entry_data);
+  static const int data_size = sizeof(Data_type);
 
   void
   put_filename_offset(elfcpp::Elf_Word v)
@@ -227,7 +196,7 @@ class Incremental_inputs_entry_write
   { this->p_->reserved = Convert<32, big_endian>::convert_host(v); }
 
  private:
-  internal::Incremental_inputs_entry_data* p_;
+  Data_type* p_;
 };
 
 // Inform the user why we don't do an incremental link.  Not called in
