@@ -129,27 +129,27 @@ class Incremental_inputs_entry
   static const int data_size = sizeof(Data_type);
 
   elfcpp::Elf_Word
-  get_filename_offset(elfcpp::Elf_Word v)
+  get_filename_offset()
   { return Convert<32, big_endian>::convert_host(this->p_->filename_offset); }
 
   elfcpp::Elf_Word
-  get_data_offset(elfcpp::Elf_Word v)
+  get_data_offset()
   { return Convert<32, big_endian>::convert_host(this->p_->data_offset); }
 
   elfcpp::Elf_Xword
-  get_timestamp_sec(elfcpp::Elf_Xword v)
+  get_timestamp_sec()
   { return Convert<64, big_endian>::convert_host(this->p_->timestamp_sec); }
 
   elfcpp::Elf_Word
-  get_timestamp_nsec(elfcpp::Elf_Word v)
+  get_timestamp_nsec()
   { return Convert<32, big_endian>::convert_host(this->p_->timestamp_nsec); }
 
   elfcpp::Elf_Word
-  get_input_type(elfcpp::Elf_Word v)
+  get_input_type()
   { return Convert<32, big_endian>::convert_host(this->p_->input_type); }
 
   elfcpp::Elf_Word
-  get_reserved(elfcpp::Elf_Word v)
+  get_reserved()
   { return Convert<32, big_endian>::convert_host(this->p_->reserved); }
 
  private:
@@ -332,6 +332,11 @@ make_sized_incremental_binary(Output_file* file,
                ehdr.get_e_machine());
       return NULL;
     }
+
+  if (!parameters->target_valid())
+    set_parameters_target(target);
+  else if (target != &parameters->target())
+    gold_error(_("%s: incompatible target"), file->filename());
 
   return new Sized_incremental_binary<size, big_endian>(file, ehdr, target);
 }
@@ -650,6 +655,22 @@ Incremental_inputs::sized_create_inputs_section_data()
       int filename_offset =
           this->strtab_->get_offset_from_key(it->second.filename_key);
       entry.put_filename_offset(filename_offset);
+      switch (it->second.type)
+        {
+        case INCREMENTAL_INPUT_SCRIPT:
+          entry.put_data_offset(0);
+          break;
+        case INCREMENTAL_INPUT_ARCHIVE:
+        case INCREMENTAL_INPUT_OBJECT:
+        case INCREMENTAL_INPUT_SHARED_LIBRARY:
+          // TODO: add per input data.  Currently we store
+          // an out-of-bounds offset for future version of gold to reject
+          // such an incremental_inputs section.
+          entry.put_data_offset(0xffffffff);
+          break;
+        default:
+          gold_unreachable();
+        }
       // TODO: add per input data and timestamp.  Currently we store
       // an out-of-bounds offset for future version of gold to reject
       // such an incremental_inputs section.

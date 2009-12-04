@@ -1,3 +1,19 @@
+2009-12-02  Jerker Bäck  <jerker.back@gmail.com>
+
+	PR binutils/11017
+	* dlltool.c (PAGE_SIZE): Delete.
+	(PAGE_MASK): Provide default definition based on COFF_PAGE_SIZE.
+	Check for DLLTOOL_DEFAULT_MX86_64 and DLLTOOL_DEFAULT_I386.
+
+2009-12-01  Joseph Myers  <joseph@codesourcery.com>
+
+	* readelf.c (get_machine_name, get_osabi_name): Handle more
+	allocated values.
+
+2009-11-30  Joseph Myers  <joseph@codesourcery.com>
+
+	* configure: Regenerate.
+
 2009-11-20  Nick Clifton  <nickc@redhat.com>
 
 	* readelf.c: Include xc16x.h.
@@ -198,7 +214,7 @@
 	SHN_AFTER section link values in x86 binaries.
 	(process_section_headers): Likewise.
 
-2009-09-25  Dimitry Gorbachev  <d.g.gorbachev@gmail.com>
+2009-09-25  Dmitry Gorbachev  <d.g.gorbachev@gmail.com>
 
 	PR 10656
 	* readelf.c: Remove duplicate declaration of variable do_wide.

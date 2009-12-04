@@ -4972,13 +4972,13 @@ parse_address_main (char **str, int i, int group_relocations,
     {
       if (skip_past_char (&p, '=') == FAIL)
 	{
-	  /* bare address - translate to PC-relative offset */
+	  /* Bare address - translate to PC-relative offset.  */
 	  inst.reloc.pc_rel = 1;
 	  inst.operands[i].reg = REG_PC;
 	  inst.operands[i].isreg = 1;
 	  inst.operands[i].preind = 1;
 	}
-      /* else a load-constant pseudo op, no special treatment needed here */
+      /* Otherwise a load-constant pseudo op, no special treatment needed here.  */
 
       if (my_get_expression (&inst.reloc.exp, &p, GE_NO_PREFIX))
 	return PARSE_OPERAND_FAIL;
@@ -11103,6 +11103,24 @@ do_t_simd (void)
 }
 
 static void
+do_t_simd2 (void)
+{
+  unsigned Rd, Rn, Rm;
+
+  Rd = inst.operands[0].reg;
+  Rm = inst.operands[1].reg;
+  Rn = inst.operands[2].reg;
+
+  reject_bad_reg (Rd);
+  reject_bad_reg (Rn);
+  reject_bad_reg (Rm);
+
+  inst.instruction |= Rd << 8;
+  inst.instruction |= Rn << 16;
+  inst.instruction |= Rm;
+}
+
+static void
 do_t_smc (void)
 {
   unsigned int value = inst.reloc.exp.X_add_number;
@@ -16494,10 +16512,10 @@ static const struct asm_opcode insns[] =
  TCE("smulwb",	12000a0, fb30f000, 3, (RRnpc, RRnpc, RRnpc),	    smul, t_simd),
  TCE("smulwt",	12000e0, fb30f010, 3, (RRnpc, RRnpc, RRnpc),	    smul, t_simd),
 
- TCE("qadd",	1000050, fa80f080, 3, (RRnpc, RRnpc, RRnpc),	    rd_rm_rn, t_simd),
- TCE("qdadd",	1400050, fa80f090, 3, (RRnpc, RRnpc, RRnpc),	    rd_rm_rn, t_simd),
- TCE("qsub",	1200050, fa80f0a0, 3, (RRnpc, RRnpc, RRnpc),	    rd_rm_rn, t_simd),
- TCE("qdsub",	1600050, fa80f0b0, 3, (RRnpc, RRnpc, RRnpc),	    rd_rm_rn, t_simd),
+ TCE("qadd",	1000050, fa80f080, 3, (RRnpc, RRnpc, RRnpc),	    rd_rm_rn, t_simd2),
+ TCE("qdadd",	1400050, fa80f090, 3, (RRnpc, RRnpc, RRnpc),	    rd_rm_rn, t_simd2),
+ TCE("qsub",	1200050, fa80f0a0, 3, (RRnpc, RRnpc, RRnpc),	    rd_rm_rn, t_simd2),
+ TCE("qdsub",	1600050, fa80f0b0, 3, (RRnpc, RRnpc, RRnpc),	    rd_rm_rn, t_simd2),
 
 #undef  ARM_VARIANT
 #define ARM_VARIANT  & arm_ext_v5e /*  ARM Architecture 5TE.  */
@@ -18335,7 +18353,8 @@ relax_adr (fragS *fragp, asection *sec, long stretch)
   offsetT val;
 
   /* Assume worst case for symbols not known to be in the same section.  */
-  if (!S_IS_DEFINED (fragp->fr_symbol)
+  if (fragp->fr_symbol == NULL
+      || !S_IS_DEFINED (fragp->fr_symbol)
       || sec != S_GET_SEGMENT (fragp->fr_symbol))
     return 4;
 
