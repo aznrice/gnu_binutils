@@ -1,3 +1,9 @@
+2009-12-03  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-gold-5.patch: New file. Replace ...
+	* binutils-gold-4.patch: This.  Removed.
+	* README: Likewise.
+
 2009-11-17  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-pr10955-1.patch: Removed.

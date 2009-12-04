@@ -26,7 +26,7 @@ patches="
 	binutils-sec64k-6.patch
 	ld-needed-4.patch
 	binutils-group-10.patch
-	binutils-gold-4.patch
+	binutils-gold-5.patch
 "
 
 if [ -n "$clean" ]
