@@ -102,7 +102,7 @@ class Target_x86_64 : public Target_freebsd<64, false>
 
   // Finalize the sections.
   void
-  do_finalize_sections(Layout*, const Input_objects*);
+  do_finalize_sections(Layout*, const Input_objects*, Symbol_table*);
 
   // Return the value to use for a dynamic which requires special
   // treatment.
@@ -439,7 +439,9 @@ const Target::Target_info Target_x86_64::x86_64_info =
   elfcpp::SHN_UNDEF,	// small_common_shndx
   elfcpp::SHN_X86_64_LCOMMON,	// large_common_shndx
   0,			// small_common_section_flags
-  elfcpp::SHF_X86_64_LARGE	// large_common_section_flags
+  elfcpp::SHF_X86_64_LARGE,	// large_common_section_flags
+  NULL,			// attributes_section
+  NULL			// attributes_vendor
 };
 
 // This is called when a new output section is created.  This is where
@@ -1642,7 +1644,10 @@ Target_x86_64::scan_relocs(Symbol_table* symtab,
 // Finalize the sections.
 
 void
-Target_x86_64::do_finalize_sections(Layout* layout, const Input_objects*)
+Target_x86_64::do_finalize_sections(
+    Layout* layout,
+    const Input_objects*,
+    Symbol_table*)
 {
   // Fill in some more dynamic tags.
   Output_data_dynamic* const odyn = layout->dynamic_data();

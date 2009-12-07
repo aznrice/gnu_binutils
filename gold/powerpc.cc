@@ -92,7 +92,7 @@ class Target_powerpc : public Sized_target<size, big_endian>
 	      const unsigned char* plocal_symbols);
   // Finalize the sections.
   void
-  do_finalize_sections(Layout*, const Input_objects*);
+  do_finalize_sections(Layout*, const Input_objects*, Symbol_table*);
 
   // Return the value to use for a dynamic which requires special
   // treatment.
@@ -342,7 +342,9 @@ Target::Target_info Target_powerpc<32, true>::powerpc_info =
   elfcpp::SHN_UNDEF,	// small_common_shndx
   elfcpp::SHN_UNDEF,	// large_common_shndx
   0,			// small_common_section_flags
-  0			// large_common_section_flags
+  0,			// large_common_section_flags
+  NULL,			// attributes_section
+  NULL			// attributes_vendor
 };
 
 template<>
@@ -363,7 +365,9 @@ Target::Target_info Target_powerpc<32, false>::powerpc_info =
   elfcpp::SHN_UNDEF,	// small_common_shndx
   elfcpp::SHN_UNDEF,	// large_common_shndx
   0,			// small_common_section_flags
-  0			// large_common_section_flags
+  0,			// large_common_section_flags
+  NULL,			// attributes_section
+  NULL			// attributes_vendor
 };
 
 template<>
@@ -384,7 +388,9 @@ Target::Target_info Target_powerpc<64, true>::powerpc_info =
   elfcpp::SHN_UNDEF,	// small_common_shndx
   elfcpp::SHN_UNDEF,	// large_common_shndx
   0,			// small_common_section_flags
-  0			// large_common_section_flags
+  0,			// large_common_section_flags
+  NULL,			// attributes_section
+  NULL			// attributes_vendor
 };
 
 template<>
@@ -405,7 +411,9 @@ Target::Target_info Target_powerpc<64, false>::powerpc_info =
   elfcpp::SHN_UNDEF,	// small_common_shndx
   elfcpp::SHN_UNDEF,	// large_common_shndx
   0,			// small_common_section_flags
-  0			// large_common_section_flags
+  0,			// large_common_section_flags
+  NULL,			// attributes_section
+  NULL			// attributes_vendor
 };
 
 template<int size, bool big_endian>
@@ -1532,7 +1540,8 @@ template<int size, bool big_endian>
 void
 Target_powerpc<size, big_endian>::do_finalize_sections(
     Layout* layout,
-    const Input_objects*)
+    const Input_objects*,
+    Symbol_table*)
 {
   // Fill in some more dynamic tags.
   Output_data_dynamic* const odyn = layout->dynamic_data();

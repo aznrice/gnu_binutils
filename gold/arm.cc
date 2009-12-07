@@ -121,9 +121,6 @@ const int32_t THM2_MAX_BWD_BRANCH_OFFSET = (-(1 << 24) + 4);
 // R_ARM_THM_MOVT_PREL
 // 
 // TODOs:
-// - Generate various branch stubs.
-// - Support interworking.
-// - Define section symbols __exidx_start and __exidx_stop.
 // - Support more relocation types as needed. 
 // - Make PLTs more flexible for different architecture features like
 //   Thumb-2 and BE8.
@@ -1234,7 +1231,7 @@ class Target_arm : public Sized_target<32, big_endian>
 
   // Finalize the sections.
   void
-  do_finalize_sections(Layout*, const Input_objects*);
+  do_finalize_sections(Layout*, const Input_objects*, Symbol_table*);
 
   // Return the value to use for a dynamic symbol which requires special
   // treatment.
@@ -1476,25 +1473,36 @@ class Target_arm : public Sized_target<32, big_endian>
 	     section_size_type);
 
     // Return whether we want to pass flag NON_PIC_REF for this
-    // reloc.
+    // reloc.  This means the relocation type accesses a symbol not via
+    // GOT or PLT.
     static inline bool
     reloc_is_non_pic (unsigned int r_type)
     {
       switch (r_type)
 	{
-	case elfcpp::R_ARM_REL32:
-	case elfcpp::R_ARM_THM_CALL:
+	// These relocation types reference GOT or PLT entries explicitly.
+	case elfcpp::R_ARM_GOT_BREL:
+	case elfcpp::R_ARM_GOT_ABS:
+	case elfcpp::R_ARM_GOT_PREL:
+	case elfcpp::R_ARM_GOT_BREL12:
+	case elfcpp::R_ARM_PLT32_ABS:
+	case elfcpp::R_ARM_TLS_GD32:
+	case elfcpp::R_ARM_TLS_LDM32:
+	case elfcpp::R_ARM_TLS_IE32:
+	case elfcpp::R_ARM_TLS_IE12GP:
+
+	// These relocate types may use PLT entries.
 	case elfcpp::R_ARM_CALL:
+	case elfcpp::R_ARM_THM_CALL:
 	case elfcpp::R_ARM_JUMP24:
-	case elfcpp::R_ARM_PREL31:
-	case elfcpp::R_ARM_THM_ABS5:
-	case elfcpp::R_ARM_ABS8:
-	case elfcpp::R_ARM_ABS12:
-	case elfcpp::R_ARM_ABS16:
-	case elfcpp::R_ARM_BASE_ABS:
-	  return true;
-	default:
+	case elfcpp::R_ARM_THM_JUMP24:
+	case elfcpp::R_ARM_THM_JUMP19:
+	case elfcpp::R_ARM_PLT32:
+	case elfcpp::R_ARM_THM_XPC22:
 	  return false;
+
+	default:
+	  return true;
 	}
     }
   };
@@ -1657,7 +1665,9 @@ const Target::Target_info Target_arm<big_endian>::arm_info =
   elfcpp::SHN_UNDEF,	// small_common_shndx
   elfcpp::SHN_UNDEF,	// large_common_shndx
   0,			// small_common_section_flags
-  0			// large_common_section_flags
+  0,			// large_common_section_flags
+  ".ARM.attributes",	// attributes_section
+  "aeabi"		// attributes_vendor
 };
 
 // Arm relocate functions class
@@ -1926,7 +1936,7 @@ class Arm_relocate_functions : public Relocate_functions<32, big_endian>
   // R_ARM_BASE_ABS: B(S) + A
   static inline typename This::Status
   base_abs(unsigned char* view,
-	    Arm_address origin)
+	   Arm_address origin)
   {
     Base::rel32(view, origin);
     return STATUS_OKAY;
@@ -1941,13 +1951,13 @@ class Arm_relocate_functions : public Relocate_functions<32, big_endian>
     return This::STATUS_OKAY;
   }
 
-  // R_ARM_GOT_PREL: GOT(S) + A – P
+  // R_ARM_GOT_PREL: GOT(S) + A - P
   static inline typename This::Status
-  got_prel(unsigned char* view,
-	   typename elfcpp::Swap<32, big_endian>::Valtype got_offset,
+  got_prel(unsigned char *view,
+	   Arm_address got_entry,
 	   Arm_address address)
   {
-    Base::rel32(view, got_offset - address);
+    Base::rel32(view, got_entry - address);
     return This::STATUS_OKAY;
   }
 
@@ -4382,33 +4392,26 @@ Target_arm<big_endian>::Scan::global(Symbol_table* symtab,
       break;
 
     case elfcpp::R_ARM_JUMP24:
-    case elfcpp::R_ARM_THM_CALL:
+    case elfcpp::R_ARM_THM_JUMP24:
     case elfcpp::R_ARM_CALL:
-      {
-	if (Target_arm<big_endian>::Scan::symbol_needs_plt_entry(gsym))
-	  target->make_plt_entry(symtab, layout, gsym);
-	// Make a dynamic relocation if necessary.
-	int flags = Symbol::NON_PIC_REF;
-	if (gsym->type() == elfcpp::STT_FUNC
-	    || gsym->type() == elfcpp::STT_ARM_TFUNC)
-	  flags |= Symbol::FUNCTION_CALL;
-	if (gsym->needs_dynamic_reloc(flags))
-	  {
-	    if (target->may_need_copy_reloc(gsym))
-	      {
-		target->copy_reloc(symtab, layout, object,
-				   data_shndx, output_section, gsym,
-				   reloc);
-	      }
-	    else
-	      {
-		check_non_pic(object, r_type);
-		Reloc_section* rel_dyn = target->rel_dyn_section(layout);
-		rel_dyn->add_global(gsym, r_type, output_section, object,
-				    data_shndx, reloc.get_r_offset());
-	      }
-	  }
-      }
+    case elfcpp::R_ARM_THM_CALL:
+
+      if (Target_arm<big_endian>::Scan::symbol_needs_plt_entry(gsym))
+	target->make_plt_entry(symtab, layout, gsym);
+      else
+	{
+	   // Check to see if this is a function that would need a PLT
+	   // but does not get one because the function symbol is untyped.
+	   // This happens in assembly code missing a proper .type directive.
+	  if ((!gsym->is_undefined() || parameters->options().shared())
+	      && !parameters->doing_static_link()
+	      && gsym->type() == elfcpp::STT_NOTYPE
+	      && (gsym->is_from_dynobj()
+		  || gsym->is_undefined()
+		  || gsym->is_preemptible()))
+	    gold_error(_("%s is not a function."),
+		       gsym->demangled_name().c_str());
+	}
       break;
 
     case elfcpp::R_ARM_PLT32:
@@ -4560,7 +4563,8 @@ template<bool big_endian>
 void
 Target_arm<big_endian>::do_finalize_sections(
     Layout* layout,
-    const Input_objects* input_objects)
+    const Input_objects* input_objects,
+    Symbol_table* symtab)
 {
   // Merge processor-specific flags.
   for (Input_objects::Relobj_iterator p = input_objects->relobj_begin();
@@ -4625,16 +4629,25 @@ Target_arm<big_endian>::do_finalize_sections(
   if (this->copy_relocs_.any_saved_relocs())
     this->copy_relocs_.emit(this->rel_dyn_section(layout));
 
-  // For the ARM target, we need to add a PT_ARM_EXIDX segment for
-  // the .ARM.exidx section.
-  if (!layout->script_options()->saw_phdrs_clause()
+  // Handle the .ARM.exidx section.
+  Output_section* exidx_section = layout->find_output_section(".ARM.exidx");
+  if (exidx_section != NULL
+      && exidx_section->type() == elfcpp::SHT_ARM_EXIDX
       && !parameters->options().relocatable())
     {
-      Output_section* exidx_section =
-	layout->find_output_section(".ARM.exidx");
+      // Create __exidx_start and __exdix_end symbols.
+      symtab->define_in_output_data("__exidx_start", NULL, exidx_section,
+				    0, 0, elfcpp::STT_OBJECT,
+				    elfcpp::STB_LOCAL, elfcpp::STV_HIDDEN, 0,
+				    false, false);
+      symtab->define_in_output_data("__exidx_end", NULL, exidx_section,
+				    0, 0, elfcpp::STT_OBJECT,
+				    elfcpp::STB_LOCAL, elfcpp::STV_HIDDEN, 0,
+				    true, false);
 
-      if (exidx_section != NULL
-	  && exidx_section->type() == elfcpp::SHT_ARM_EXIDX)
+      // For the ARM target, we need to add a PT_ARM_EXIDX segment for
+      // the .ARM.exidx section.
+      if (!layout->script_options()->saw_phdrs_clause())
 	{
 	  gold_assert(layout->find_output_segment(elfcpp::PT_ARM_EXIDX, 0, 0)
 		      == NULL);
@@ -4848,7 +4861,7 @@ Target_arm<big_endian>::Relocate::relocate(
 				    output_section))
 	// No thumb bit for this relocation: (S + A)
 	reloc_status = Arm_relocate_functions::abs32(view, object, psymval,
-						     false);
+						     0);
       break;
 
     case elfcpp::R_ARM_MOVW_ABS_NC:

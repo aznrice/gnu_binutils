@@ -2337,6 +2337,7 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
   	    case E_MIPS_MACH_LS2E: strcat (buf, ", loongson-2e"); break;
   	    case E_MIPS_MACH_LS2F: strcat (buf, ", loongson-2f"); break;
 	    case E_MIPS_MACH_OCTEON: strcat (buf, ", octeon"); break;
+	    case E_MIPS_MACH_OCTEON2: strcat (buf, ", octeon2"); break;
 	    case E_MIPS_MACH_XLR:  strcat (buf, ", xlr"); break;
 	    case 0:
 	    /* We simply ignore the field in this case to avoid confusion:
@@ -2990,9 +2991,9 @@ usage (FILE * stream)
                          Dump the contents of section <number|name> as strings\n\
   -R --relocated-dump=<number|name>\n\
                          Dump the contents of section <number|name> as relocated bytes\n\
-  -w[lLiaprmfFsoR] or\n\
+  -w[lLiaprmfFsoRt] or\n\
   --debug-dump[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,=frames,\n\
-               =frames-interp,=str,=loc,=Ranges]\n\
+               =frames-interp,=str,=loc,=Ranges,=pubtypes]\n\
                          Display the contents of DWARF2 debug sections\n"));
 #ifdef SUPPORT_DISASSEMBLY
   fprintf (stream, _("\
@@ -4341,7 +4342,7 @@ process_section_headers (FILE * file)
       else if (section->sh_type == SHT_RELA)
 	CHECK_ENTSIZE (section, i, Rela);
       else if ((do_debugging || do_debug_info || do_debug_abbrevs
-		|| do_debug_lines || do_debug_pubnames
+		|| do_debug_lines || do_debug_pubnames || do_debug_pubtypes
 		|| do_debug_aranges || do_debug_frames || do_debug_macinfo
 		|| do_debug_str || do_debug_loc || do_debug_ranges)
 	       && (const_strneq (name, ".debug_")
@@ -4358,6 +4359,7 @@ process_section_headers (FILE * file)
 	      || (do_debug_abbrevs  && streq (name, "abbrev"))
 	      || (do_debug_lines    && streq (name, "line"))
 	      || (do_debug_pubnames && streq (name, "pubnames"))
+	      || (do_debug_pubtypes && streq (name, "pubtypes"))
 	      || (do_debug_aranges  && streq (name, "aranges"))
 	      || (do_debug_ranges   && streq (name, "ranges"))
 	      || (do_debug_frames   && streq (name, "frame"))

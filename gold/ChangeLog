@@ -1,3 +1,94 @@
+2009-12-05  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::arm_info): Initialize new fields
+	attributes_section and attributes_vendor.
+	* i386.cc (Target_i386::i386_info): Same.
+	* object.cc (Sized_relobj::do_layout): Skip attribute section.
+	* gold/powerpc.cc (Target_powerpc::powerpc_info): Initialize new
+	fields attributes_section and attributes_vendor.
+ 	* sparc.cc (Target_sparc::sparc_info): Same.
+	* target.h (Target::attributes_section, Target::attributes_vendor,
+	Target::is_attributes_section, Target::attribute_arg_type,
+	Target::attributes_order): New method definitions.
+	(Target::Target_info::attributes_section,
+	Target::Target_info::attributes_vendor): New fields.
+	(Target::do_attribute_arg_type, Target::do_attributes_order): New
+	virtual method definitions.
+	* x86_64.cc (Target_x86_64::x86_64_info): Initialize new fields
+	attributes_section and attributes_vendor.
+	* testsuite/testfile.cc (Target_test::test_target_info): Same.
+
+2009-12-05  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc: Update comments about interworking and stub generation.
+	(Target_arm::Relocate::reloc_is_non_pic): Update list of relocations
+	considered as non-PIC.
+	(Arm_relocate_functions::base_abs): Fix formatting.
+	(Arm_relocate_functions::got_prel): Fix comment.  Change interface
+	of function to use GOT entry address instead of offset.
+	(Target_arm::Scan::global): Issue an error if a symbol would need a
+	PLT does not get one because it is untyped.  Remove code to create
+	dynamic symbols for relative branches.
+	(Target_arm::Relocate::relocate: Use 0 instead of false since function
+	takes unsigned integer instead of boolean.
+
+2009-12-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* testsuite/Makefile.am (constructor_test_LDADD): New. Empty.
+	(two_file_test_LDADD): Likewise.
+	(common_test_1_LDADD): Likewise.
+	(exception_test_LDADD) Likewise.
+	(weak_test_LDADD): Likewise.
+	(many_sections_test_LDADD): Likewise.
+	(initpri1_LDADD): Likewise.
+	(script_test_1_LDADD): Likewise.
+	(script_test_2_LDADD): Likewise.
+	(justsyms_LDADD): Likewise.
+	(binary_test_LDADD): Likewise.
+	(large_LDADD): Likewise.
+	* testsuite/Makefile.in: Regenerated.
+
+2009-12-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* resolve.cc (symbol_to_bits): Treat STB_GNU_UNIQUE as STB_GLOBAL.
+	(Symbol_table::override_with_special): Likewise.
+	(Symbol_table::add_from_object): Likewise.
+
+2009-12-04  Rafael Avila de Espindola  <espindola@google.com>
+
+	* incremental.cc (Incremental_inputs::sized_create_inputs_section_data):
+	Don't set the data_offset twice.
+
+2009-12-04  Rafael Avila de Espindola  <espindola@google.com>
+
+	* testsuite/Makefile.in: Regenerate.
+
+2009-12-03  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc: Remove comment about missing .ARM.exidx section symbols.
+	(Target_arm::do_finalize_sections): Add parameter for symbol table
+	pointer.  Add __exidx_start and __exidx_end symbols as appropriate.
+	* i386.cc (Target_i386::do_finalize_sections): Add an additional
+	parameter for symbol table pointer.
+	* layout.cc (Layout::finalize): Call Target::finalize_sections with
+	an additional parameter for a pointer to symbol table.
+	* powerpc.cc (Target_powerpc::do_finalize_sections): Add an additional
+	parameter for a symbol table pointer.
+	* sparc.cc (Target_sparc::do_finalize_sections): Ditto.
+	* target.h (Target::finalize_sections, Target::do_finalize_sections):
+	Ditto.
+	* x86_64.cc (Target_x86_64::do_finalize_sections): Add an additional
+	parameter for a symbol table pointer.
+
+2009-12-03  Rafael Avila de Espindola  <espindola@google.com>
+
+	* incremental.cc (Incremental_inputs_header)
+	(Incremental_inputs_header_write, Incremental_inputs_entry)
+	(Incremental_inputs_entry_write): Move ...
+	* incremental.h (Incremental_inputs_header)
+	(Incremental_inputs_header_write, Incremental_inputs_entry)
+	(Incremental_inputs_entry_write): here.
+
 2009-12-02  Rafael Avila de Espindola  <espindola@google.com>
 
 	* incremental.cc (make_sized_incremental_binary): Set the target.
