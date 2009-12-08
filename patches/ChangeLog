@@ -1,3 +1,9 @@
+2009-12-08  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-DEP-1.patch: New.
+	* binutils-TLSDESC-1.patch: Likewise.
+	* README: Apply them.
+
 2009-12-07  H.J. Lu  <hjl.tools@gmail.com>
 
 	* bfd-kept-4.patch: Removed.
