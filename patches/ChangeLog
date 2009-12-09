@@ -1,3 +1,8 @@
+2009-12-09  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-DEP-1.patch: Removed.
+	* README: Don't apply it.
+
 2009-12-08  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-DEP-1.patch: New.
