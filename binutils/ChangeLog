@@ -1,3 +1,70 @@
+2009-12-09  Tristan Gingold  <gingold@adacore.com>
+
+	* addr2line.c (translate_addresses): Display addresses
+	if option -a is used.
+	(with_addresses): New variable.
+	(long_options): Add option '-a'.
+	(usage): Add usage for option '-a'.
+	(main): Handle option '-a'.
+	* doc/binutils.texi (addr2line): Document option '-a'.
+	* NEWS: Mention new feature.
+
+2009-12-08  Cary Coutant  <ccoutant@google.com>
+
+	* dwarf.c (dwarf_select_sections_by_names): Handle pubtypes correctly.
+	(debug_displays): Remove duplicate entry for debug_pubtypes.
+
+2009-12-03  David Daney  <ddaney@caviumnetworks.com>
+	    Adam Nemet  <adambnemet@gmail.com>
+
+	* readelf.c (get_machine_flags): Handle E_MIPS_MACH_OCTEON2 case.
+
+2009-12-03  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/11045
+	* dwarf.c (do_debug_pubtypes): New variable.
+	(dwarf_select_sections_by_names): Handle .debug_pubtypes.
+	(dwarf_select_sections_by_letters): Add 't' for .debug_pubtype.
+	(dwarf_select_sections_all): Set do_debug_pubtypes.
+	(debug_displays): Add support for .debug_pubtypes.
+	* dwarf.h (do_debug_pubtypes): Export.
+	* objdump.c (usage): Add -wt or --dwarf=pubtypes.
+	* readelf.c (usage): Likewise.
+	(process_section_headers): Enable debug display if
+	do_debug_pubtypes is set.
+	* doc/binutils.texi: Document -wt/--dwarf=pubtypes option.
+
+2009-12-02  Jerker Bäck  <jerker.back@gmail.com>
+
+	PR binutils/11017
+	* dlltool.c (PAGE_SIZE): Delete.
+	(PAGE_MASK): Provide default definition based on COFF_PAGE_SIZE.
+	Check for DLLTOOL_DEFAULT_MX86_64 and DLLTOOL_DEFAULT_I386.
+
+2009-12-01  Joseph Myers  <joseph@codesourcery.com>
+
+	* readelf.c (get_machine_name, get_osabi_name): Handle more
+	allocated values.
+
+2009-11-30  Joseph Myers  <joseph@codesourcery.com>
+
+	* configure: Regenerate.
+
+2009-11-20  Nick Clifton  <nickc@redhat.com>
+
+	* readelf.c: Include xc16x.h.
+	(dump_relocations): Handle relocations for the xc16x target.
+	(get_machine_name): Accept EM_C166 for xc16x targets.
+	(is_32bit_abs_reloc): Add support for xc16c 32-bit absolute reloc.
+	(is_16bit_abs_reloc): Add support for xc16c 16-bit absolute reloc.
+	(is_none_reloc): Add support for xc16c null reloc.
+	
+2009-11-20  Ben Elliston  <bje@au.ibm.com>
+
+	* Makefile.am (syslex.o): Use $(NO_WERROR) not -Wno-error.
+	(sysinfo.o): Likewise.
+	* Makefile.in: Regenerate.
+
 2009-11-19  Ben Elliston  <bje@au.ibm.com>
 
 	* arlex.l: Enable noinput, nounput flex options.
@@ -183,7 +250,7 @@
 	SHN_AFTER section link values in x86 binaries.
 	(process_section_headers): Likewise.
 
-2009-09-25  Dimitry Gorbachev  <d.g.gorbachev@gmail.com>
+2009-09-25  Dmitry Gorbachev  <d.g.gorbachev@gmail.com>
 
 	PR 10656
 	* readelf.c: Remove duplicate declaration of variable do_wide.

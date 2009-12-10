@@ -139,6 +139,7 @@
 #include "elf/v850.h"
 #include "elf/vax.h"
 #include "elf/x86-64.h"
+#include "elf/xc16x.h"
 #include "elf/xstormy16.h"
 #include "elf/xtensa.h"
 
@@ -1221,6 +1222,11 @@ dump_relocations (FILE * file,
 	case EM_RX:
 	  rtype = elf_rx_reloc_type (type);
 	  break;
+
+	case EM_XC16X:
+	case EM_C166:
+	  rtype = elf_xc16x_reloc_type (type);
+	  break;
 	}
 
       if (rtype == NULL)
@@ -1846,6 +1852,9 @@ get_machine_name (unsigned e_machine)
     case EM_ME16:		return "Toyota ME16 processor";
     case EM_ST100:		return "STMicroelectronics ST100 processor";
     case EM_TINYJ:		return "Advanced Logic Corp. TinyJ embedded processor";
+    case EM_PDSP:		return "Sony DSP processor";
+    case EM_PDP10:		return "Digital Equipment Corp. PDP-10";
+    case EM_PDP11:		return "Digital Equipment Corp. PDP-11";
     case EM_FX66:		return "Siemens FX66 microcontroller";
     case EM_ST9PLUS:		return "STMicroelectronics ST9+ 8/16 bit microcontroller";
     case EM_ST7:		return "STMicroelectronics ST7 8-bit microcontroller";
@@ -1873,6 +1882,7 @@ get_machine_name (unsigned e_machine)
     case EM_XSTORMY16:		return "Sanyo Xstormy16 CPU core";
     case EM_OPENRISC:
     case EM_OR32:		return "OpenRISC";
+    case EM_ARC_A5:		return "ARC International ARCompact processor";
     case EM_CRX:		return "National Semiconductor CRX microprocessor";
     case EM_DLX:		return "OpenDLX";
     case EM_IP2K_OLD:
@@ -1880,20 +1890,71 @@ get_machine_name (unsigned e_machine)
     case EM_IQ2000:       	return "Vitesse IQ2000";
     case EM_XTENSA_OLD:
     case EM_XTENSA:		return "Tensilica Xtensa Processor";
+    case EM_VIDEOCORE:		return "Alphamosaic VideoCore processor";
+    case EM_TMM_GPP:		return "Thompson Multimedia General Purpose Processor";
+    case EM_NS32K:		return "National Semiconductor 32000 series";
+    case EM_TPC:		return "Tenor Network TPC processor";
+    case EM_ST200:		return "STMicroelectronics ST200 microcontroller";
+    case EM_MAX:		return "MAX Processor";
+    case EM_CR:			return "National Semiconductor CompactRISC";
+    case EM_F2MC16:		return "Fujitsu F2MC16";
+    case EM_MSP430:		return "Texas Instruments msp430 microcontroller";
     case EM_LATTICEMICO32:	return "Lattice Mico32";
     case EM_M32C_OLD:
     case EM_M32C:	        return "Renesas M32c";
     case EM_MT:                 return "Morpho Techologies MT processor";
     case EM_BLACKFIN:		return "Analog Devices Blackfin";
+    case EM_SE_C33:		return "S1C33 Family of Seiko Epson processors";
+    case EM_SEP:		return "Sharp embedded microprocessor";
+    case EM_ARCA:		return "Arca RISC microprocessor";
+    case EM_UNICORE:		return "Unicore";
+    case EM_EXCESS:		return "eXcess 16/32/64-bit configurable embedded CPU";
+    case EM_DXP:		return "Icera Semiconductor Inc. Deep Execution Processor";
     case EM_NIOS32:		return "Altera Nios";
     case EM_ALTERA_NIOS2:	return "Altera Nios II";
+    case EM_C166:
     case EM_XC16X:		return "Infineon Technologies xc16x";
+    case EM_M16C:		return "Renesas M16C series microprocessors";
+    case EM_DSPIC30F:		return "Microchip Technology dsPIC30F Digital Signal Controller";
+    case EM_CE:			return "Freescale Communication Engine RISC core";
+    case EM_TSK3000:		return "Altium TSK3000 core";
+    case EM_RS08:		return "Freescale RS08 embedded processor";
+    case EM_ECOG2:		return "Cyan Technology eCOG2 microprocessor";
+    case EM_DSP24:		return "New Japan Radio (NJR) 24-bit DSP Processor";
+    case EM_VIDEOCORE3:		return "Broadcom VideoCore III processor";
+    case EM_SE_C17:		return "Seiko Epson C17 family";
+    case EM_TI_C6000:		return "Texas Instruments TMS320C6000 DSP family";
+    case EM_TI_C2000:		return "Texas Instruments TMS320C2000 DSP family";
+    case EM_TI_C5500:		return "Texas Instruments TMS320C55x DSP family";
+    case EM_MMDSP_PLUS:		return "STMicroelectronics 64bit VLIW Data Signal Processor";
+    case EM_CYPRESS_M8C:	return "Cypress M8C microprocessor";
+    case EM_R32C:		return "Renesas R32C series microprocessors";
+    case EM_TRIMEDIA:		return "NXP Semiconductors TriMedia architecture family";
+    case EM_QDSP6:		return "QUALCOMM DSP6 Processor";
+    case EM_8051:		return "Intel 8051 and variants";
+    case EM_STXP7X:		return "STMicroelectronics STxP7x family";
+    case EM_NDS32:		return "Andes Technology compact code size embedded RISC processor family";
+    case EM_ECOG1X:		return "Cyan Technology eCOG1X family";
+    case EM_MAXQ30:		return "Dallas Semiconductor MAXQ30 Core microcontrollers";
+    case EM_XIMO16:		return "New Japan Radio (NJR) 16-bit DSP Processor";
+    case EM_MANIK:		return "M2000 Reconfigurable RISC Microprocessor";
+    case EM_CRAYNV2:		return "Cray Inc. NV2 vector architecture";
     case EM_CYGNUS_MEP:         return "Toshiba MeP Media Engine";
     case EM_CR16:
     case EM_CR16_OLD:		return "National Semiconductor's CR16";
     case EM_MICROBLAZE:		return "Xilinx MicroBlaze";
     case EM_MICROBLAZE_OLD:	return "Xilinx MicroBlaze";
     case EM_RX:			return "Renesas RX";
+    case EM_METAG:		return "Imagination Technologies META processor architecture";
+    case EM_MCST_ELBRUS:	return "MCST Elbrus general purpose hardware architecture";
+    case EM_ECOG16:		return "Cyan Technology eCOG16 family";
+    case EM_ETPU:		return "Freescale Extended Time Processing Unit";
+    case EM_SLE9X:		return "Infineon Technologies SLE9X core";
+    case EM_AVR32:		return "Atmel Corporation 32-bit microprocessor family";
+    case EM_STM8:		return "STMicroeletronics STM8 8-bit microcontroller";
+    case EM_TILE64:		return "Tilera TILE64 multicore architecture family";
+    case EM_TILEPRO:		return "Tilera TILEPro multicore architecture family";
+    case EM_CUDA:		return "NVIDIA CUDA architecture";
     default:
       snprintf (buff, sizeof (buff), _("<unknown>: 0x%x"), e_machine);
       return buff;
@@ -2276,6 +2337,7 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
   	    case E_MIPS_MACH_LS2E: strcat (buf, ", loongson-2e"); break;
   	    case E_MIPS_MACH_LS2F: strcat (buf, ", loongson-2f"); break;
 	    case E_MIPS_MACH_OCTEON: strcat (buf, ", octeon"); break;
+	    case E_MIPS_MACH_OCTEON2: strcat (buf, ", octeon2"); break;
 	    case E_MIPS_MACH_XLR:  strcat (buf, ", xlr"); break;
 	    case 0:
 	    /* We simply ignore the field in this case to avoid confusion:
@@ -2472,6 +2534,7 @@ get_osabi_name (unsigned int osabi)
     case ELFOSABI_OPENVMS:	return "VMS - OpenVMS";
     case ELFOSABI_NSK:		return "HP - Non-Stop Kernel";
     case ELFOSABI_AROS:		return "AROS";
+    case ELFOSABI_FENIXOS:	return "FenixOS";
     case ELFOSABI_STANDALONE:	return _("Standalone App");
     case ELFOSABI_ARM:		return "ARM";
     default:
@@ -2928,9 +2991,9 @@ usage (FILE * stream)
                          Dump the contents of section <number|name> as strings\n\
   -R --relocated-dump=<number|name>\n\
                          Dump the contents of section <number|name> as relocated bytes\n\
-  -w[lLiaprmfFsoR] or\n\
+  -w[lLiaprmfFsoRt] or\n\
   --debug-dump[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,=frames,\n\
-               =frames-interp,=str,=loc,=Ranges]\n\
+               =frames-interp,=str,=loc,=Ranges,=pubtypes]\n\
                          Display the contents of DWARF2 debug sections\n"));
 #ifdef SUPPORT_DISASSEMBLY
   fprintf (stream, _("\
@@ -4279,7 +4342,7 @@ process_section_headers (FILE * file)
       else if (section->sh_type == SHT_RELA)
 	CHECK_ENTSIZE (section, i, Rela);
       else if ((do_debugging || do_debug_info || do_debug_abbrevs
-		|| do_debug_lines || do_debug_pubnames
+		|| do_debug_lines || do_debug_pubnames || do_debug_pubtypes
 		|| do_debug_aranges || do_debug_frames || do_debug_macinfo
 		|| do_debug_str || do_debug_loc || do_debug_ranges)
 	       && (const_strneq (name, ".debug_")
@@ -4296,6 +4359,7 @@ process_section_headers (FILE * file)
 	      || (do_debug_abbrevs  && streq (name, "abbrev"))
 	      || (do_debug_lines    && streq (name, "line"))
 	      || (do_debug_pubnames && streq (name, "pubnames"))
+	      || (do_debug_pubtypes && streq (name, "pubtypes"))
 	      || (do_debug_aranges  && streq (name, "aranges"))
 	      || (do_debug_ranges   && streq (name, "ranges"))
 	      || (do_debug_frames   && streq (name, "frame"))
@@ -8094,12 +8158,14 @@ is_32bit_abs_reloc (unsigned int reloc_type)
     case EM_X86_64:
     case EM_L1OM:
       return reloc_type == 10; /* R_X86_64_32.  */
+    case EM_XC16X:
+    case EM_C166:
+      return reloc_type == 3; /* R_XC16C_ABS_32.  */
     case EM_XSTORMY16:
       return reloc_type == 1; /* R_XSTROMY16_32.  */
     case EM_XTENSA_OLD:
     case EM_XTENSA:
       return reloc_type == 1; /* R_XTENSA_32.  */
-
     default:
       error (_("Missing knowledge of 32-bit reloc types used in DWARF sections of machine number %d\n"),
 	     elf_header.e_machine);
@@ -8267,6 +8333,9 @@ is_16bit_abs_reloc (unsigned int reloc_type)
     case EM_ALTERA_NIOS2:
     case EM_NIOS32:
       return reloc_type == 9; /* R_NIOS_16.  */
+    case EM_XC16X:
+    case EM_C166:
+      return reloc_type == 2; /* R_XC16C_ABS_16.  */
     default:
       return FALSE;
     }
@@ -8300,6 +8369,8 @@ is_none_reloc (unsigned int reloc_type)
     case EM_L1OM:    /* R_X86_64_NONE.  */
     case EM_MN10300: /* R_MN10300_NONE.  */
     case EM_M32R:    /* R_M32R_NONE.  */
+    case EM_XC16X:
+    case EM_C166:    /* R_XC16X_NONE.  */
       return reloc_type == 0;
     case EM_XTENSA_OLD:
     case EM_XTENSA:

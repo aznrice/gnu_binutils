@@ -1,3 +1,33 @@
+2009-12-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11037
+	* gas/i386/intelpic.s: Add testcases.
+	* gas/i386/intelpic.d: Updated.
+
+2009-12-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/i386.exp: Run x86-64-fxsave and x86-64-fxsave-intel.
+
+	* gas/i386/rex.d: Updated for fxsave64.
+
+	* gas/i386/x86-64-fxsave-intel.d: New.
+	* gas/i386/x86-64-fxsave.d: Likewise.
+	* gas/i386/x86-64-fxsave.s: Likewise.
+
+2009-12-02  Nick Clifton  <nickc@redhat.com>
+	    Richard Earnshaw  <rearnsha@arm.com>
+
+	PR gas/11013
+	* gas/arm/arch7em.d: Update expected disassembly.
+	* gas/arm/thumb32.d: Likewise.
+	
+2009-11-17  Quentin Neill  <quentin.neill@amd.com>
+	    Sebastian Pop  <sebastian.pop@amd.com>
+
+	* gas/i386/x86-64-fma4.d: Add new patterns.
+	* gas/i386/x86-64-fma4.s: Same.
+	* gas/i386/x86-64-xop.d: Adjusted.
+
 2009-11-19  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* gas/i386/lock-1.s: Add cmpxchg16b test.

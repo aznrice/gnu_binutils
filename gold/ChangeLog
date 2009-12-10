@@ -1,3 +1,263 @@
+2009-12-09  Ian Lance Taylor  <iant@google.com>
+
+	* dynobj.cc (Sized_dynobj::do_read_symbols): Clear version
+	information fields.
+
+2009-12-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* testsuite/Makefile.am (two_file_shared_1_pic_2_test_DEPENDENCIES):
+	Replace two_file_shared_1.so with two_file_shared_2.so.
+	* testsuite/Makefile.in: Regenerated.
+
+2009-12-08  Doug Kwan  <dougkwan@google.com>
+
+	* Makefile.am (CCFILES): Add attributes.cc and int_encoding.cc.
+	(HFILES): Add attributes.h and int_encoding.h.
+	* Makefile.in: Regenerate.
+	* dwarf_reader.cc (read_unsigned_LEB_128, read_signed_LEB_128): Move
+	function definitions to int_encoding.cc
+	* dwarf_reader.h (read_unsigned_LEB_128, read_signed_LEB_128): Move
+	prototypes to int_encoding.h
+	* reduced_debug_output.cc (int_encoding.h): New include.
+	(write_unsigned_LEB_128, get_length_as_unsigned_LEB_128): Move
+	function definitions to int_encoding.cc
+	(insert_into_vector, read_from_pointer): Move template definitions to
+	int_encoding.h
+	* attributes.cc: New file.
+	* attributes.h: New file.
+	* int_encoding.cc: New file.
+	* int_encoding.h: New file.
+
+2009-12-07  Rafael Avila de Espindola  <espindola@google.com>
+
+	PR gold/11055
+	* incremental-dump.cc (dump_incremental_inputs): New.
+	(main): Use dump_incremental_inputs.
+
+2009-12-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gold/10893
+	* i386.cc (Target_i386::Scan::globa): Use is_func instead of
+	checking elfcpp::STT_FUNC.
+	(Target_i386::Relocate::relocate): Likewise.
+	* x86_64.cc (Target_x86_64::Scan::global): Likewise.
+
+	* symtab.cc (Symbol_table::sized_write_symbol): Turn IFUNC
+	symbols from shared libraries into normal FUNC symbols.
+
+	* symtab.h (Symbol): Add is_func and use it.
+
+2009-12-05  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::arm_info): Initialize new fields
+	attributes_section and attributes_vendor.
+	* i386.cc (Target_i386::i386_info): Same.
+	* object.cc (Sized_relobj::do_layout): Skip attribute section.
+	* gold/powerpc.cc (Target_powerpc::powerpc_info): Initialize new
+	fields attributes_section and attributes_vendor.
+	* sparc.cc (Target_sparc::sparc_info): Same.
+	* target.h (Target::attributes_section, Target::attributes_vendor,
+	Target::is_attributes_section, Target::attribute_arg_type,
+	Target::attributes_order): New method definitions.
+	(Target::Target_info::attributes_section,
+	Target::Target_info::attributes_vendor): New fields.
+	(Target::do_attribute_arg_type, Target::do_attributes_order): New
+	virtual method definitions.
+	* x86_64.cc (Target_x86_64::x86_64_info): Initialize new fields
+	attributes_section and attributes_vendor.
+	* testsuite/testfile.cc (Target_test::test_target_info): Same.
+
+2009-12-05  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc: Update comments about interworking and stub generation.
+	(Target_arm::Relocate::reloc_is_non_pic): Update list of relocations
+	considered as non-PIC.
+	(Arm_relocate_functions::base_abs): Fix formatting.
+	(Arm_relocate_functions::got_prel): Fix comment.  Change interface
+	of function to use GOT entry address instead of offset.
+	(Target_arm::Scan::global): Issue an error if a symbol would need a
+	PLT does not get one because it is untyped.  Remove code to create
+	dynamic symbols for relative branches.
+	(Target_arm::Relocate::relocate: Use 0 instead of false since function
+	takes unsigned integer instead of boolean.
+
+2009-12-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* testsuite/Makefile.am (constructor_test_LDADD): New. Empty.
+	(two_file_test_LDADD): Likewise.
+	(common_test_1_LDADD): Likewise.
+	(exception_test_LDADD) Likewise.
+	(weak_test_LDADD): Likewise.
+	(many_sections_test_LDADD): Likewise.
+	(initpri1_LDADD): Likewise.
+	(script_test_1_LDADD): Likewise.
+	(script_test_2_LDADD): Likewise.
+	(justsyms_LDADD): Likewise.
+	(binary_test_LDADD): Likewise.
+	(large_LDADD): Likewise.
+	* testsuite/Makefile.in: Regenerated.
+
+2009-12-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* resolve.cc (symbol_to_bits): Treat STB_GNU_UNIQUE as STB_GLOBAL.
+	(Symbol_table::override_with_special): Likewise.
+	(Symbol_table::add_from_object): Likewise.
+
+2009-12-04  Rafael Avila de Espindola  <espindola@google.com>
+
+	* incremental.cc (Incremental_inputs::sized_create_inputs_section_data):
+	Don't set the data_offset twice.
+
+2009-12-04  Rafael Avila de Espindola  <espindola@google.com>
+
+	* testsuite/Makefile.in: Regenerate.
+
+2009-12-03  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc: Remove comment about missing .ARM.exidx section symbols.
+	(Target_arm::do_finalize_sections): Add parameter for symbol table
+	pointer.  Add __exidx_start and __exidx_end symbols as appropriate.
+	* i386.cc (Target_i386::do_finalize_sections): Add an additional
+	parameter for symbol table pointer.
+	* layout.cc (Layout::finalize): Call Target::finalize_sections with
+	an additional parameter for a pointer to symbol table.
+	* powerpc.cc (Target_powerpc::do_finalize_sections): Add an additional
+	parameter for a symbol table pointer.
+	* sparc.cc (Target_sparc::do_finalize_sections): Ditto.
+	* target.h (Target::finalize_sections, Target::do_finalize_sections):
+	Ditto.
+	* x86_64.cc (Target_x86_64::do_finalize_sections): Add an additional
+	parameter for a symbol table pointer.
+
+2009-12-03  Rafael Avila de Espindola  <espindola@google.com>
+
+	* incremental.cc (Incremental_inputs_header)
+	(Incremental_inputs_header_write, Incremental_inputs_entry)
+	(Incremental_inputs_entry_write): Move ...
+	* incremental.h (Incremental_inputs_header)
+	(Incremental_inputs_header_write, Incremental_inputs_entry)
+	(Incremental_inputs_entry_write): here.
+
+2009-12-02  Rafael Avila de Espindola  <espindola@google.com>
+
+	* incremental.cc (make_sized_incremental_binary): Set the target.
+	Error if it is incompatible.
+	* output.h (Output_file): Add filename method.
+
+2009-12-02  Rafael Avila de Espindola  <espindola@google.com>
+
+	* incremental.cc (Incremental_inputs_entry): Remove unused argument
+	from the get_* methods.
+
+2009-12-02  Rafael Avila de Espindola  <espindola@google.com>
+
+	* incremental-dump.cc (main): Check that the offeset of a script is 0.
+	* incremental.cc (Incremental_inputs::sized_create_inputs_section_data):
+	Write 0 for the data_offset of scripts.
+
+2009-12-02  Rafael Avila de Espindola  <espindola@google.com>
+
+	* testsuite/Makefile.am: Add the incremental_test.sh test.
+	* testsuite/incremental_test.sh: New.
+	* testsuite/incremental_test_1.c: New.
+	* testsuite/incremental_test_2.c: New.
+
+2009-12-01  Rafael Avila de Espindola  <espindola@google.com>
+
+       * incremental-dump.cc (main): Fix typos.
+
+2009-11-27  Rafael Avila de Espindola  <espindola@google.com>
+
+	PR gold/11025
+	* incremental-dump.cc (main): Use llu to print 64 bit values.
+
+2009-11-26  Per Øyvind Karlsen <peroyvind@mandriva.org>
+	    H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.am (incremental_dump_DEPENDENCIES): Add $(THREADSLIB)
+	$(LIBDL).
+	(incremental_dump_LDADD): Likewise.
+	* Makefile.in: Regenerated.
+
+2009-11-25  Doug Kwan  <dougkwan@google.com>
+	
+	Revert:
+
+	2009-11-25  Doug Kwan  <dougkwan@google.com>
+
+		* arm.cc (Target_arm::Target_arm): Move method definition
+		outside of class definition.  Add code to handle
+		--target1-rel, --target1-abs and --target2= options.
+		(Target_arm::get_reloc_reloc_type): Change method to be
+		non-static and const.
+		(Target_arm::target1_is_rel_, Target_arm::target2_reloc_):
+		New data member declaration.
+		(Target_arm::Scan::local, Target_arm::Scan::global,
+		Target_arm::Relocate::relocate,
+		Target_arm::Relocatable_size_for_reloc::get_size_for_reloc):
+		Adjust call to Target_arm::get_real_reloc_type.
+		(Target_arm::get_real_reloc_type): Use command line options
+		to determine real types of R_ARM_TARGET1 and R_ARM_TARGET2.
+		* options.h (--target1-rel, --target1-abs, --target2): New
+		ARM-only options.
+
+2009-11-25  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::Target_arm): Move method definition outside of
+	class definition.  Add code to handle --target1-rel, --target1-abs
+	and --target2= options.
+	(Target_arm::get_reloc_reloc_type): Change method to be non-static
+	and const.
+	(Target_arm::target1_is_rel_, Target_arm::target2_reloc_): New data
+	member declaration.
+	(Target_arm::Scan::local, Target_arm::Scan::global,
+	Target_arm::Relocate::relocate,
+	Target_arm::Relocatable_size_for_reloc::get_size_for_reloc): Adjust
+	call to Target_arm::get_real_reloc_type.
+	(Target_arm::get_real_reloc_type): Use command line options to
+	determine real types of R_ARM_TARGET1 and R_ARM_TARGET2.
+	* options.h (--target1-rel, --target1-abs, --target2): New ARM-only
+	options.
+
+2009-11-25  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::may_use_thumb2_nop): New method definition.
+	(Arm_relocate_functions::thumb_branch_common): New metod declaration.
+	(Arm_relocate_functions::abs12, Arm_relocate_functions::abs16): Fix
+	formatting.
+	(Arm_relocate_functions::thm_call): Replace body with a call to
+	Arm_relocate_functions::thumb_branch_common.
+	(Arm_relocate_functions::thm_jump24,
+	Arm_relocate_functions::thm_xpc22): New method definitions.
+	(Arm_relocate_functions::thumb_branch_common): New method definition.
+	(Reloc_stub::stbu_type_for_reloc): Fix incorrect uses of bit-wise-or
+	operator.
+	(Target_arm::Relocate::relocate): Adjust call to thm_call.
+	Add code to handle R_ARM_THM_XPC22 and R_ARM_THM_JUMP24.
+
+2009-11-24  Rafael Avila de Espindola  <espindola@google.com>
+
+	* Makefile.am: Build incremental-dump
+	* Makefile.in: Regenerate.
+	* incremental-dump.cc: New.
+	* incremental.cc (Incremental_inputs_header_data,
+	Incremental_inputs_entry_data): Move to incremental.h
+	* incremental.h: (Incremental_inputs_header_data,
+	Incremental_inputs_entry_data): Move from incremental.cc
+
+2009-11-24  Rafael Avila de Espindola  <espindola@google.com>
+
+	* incremental.cc (Incremental_inputs_header,
+	Incremental_inputs_header_write, Incremental_inputs_entry,
+	Incremental_inputs_entry_write): Add a typedef with the data type.
+
+2009-11-24  Rafael Avila de Espindola  <espindola@google.com>
+
+	* incremental.cc (Incremental_inputs_header,
+	Incremental_inputs_header_write, Incremental_inputs_entry,
+	Incremental_inputs_entry_write): Update comment about which
+	type has the filed descriptions.
+
 2009-11-15  Doug Kwan  <dougkwan@google.com>
 
 	* arm.cc (Target_arm::may_use_arm_nop): New method definition.
@@ -68,7 +328,7 @@
 	bit instead of a flag indicating that the thumb-bit is used.  Adjust
 	calls to methods in Arm_relocate_functions for this change.
 
-2009-11-08  Ian Lance Taylor  <ian@airs.com>
+2009-11-08  Ian Lance Taylor  <iant@google.com>
 
 	PR 10925
 	* reloc.cc: Instantiate

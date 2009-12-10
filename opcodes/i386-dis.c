@@ -110,6 +110,7 @@ static void REP_Fixup (int, int);
 static void CMPXCHG8B_Fixup (int, int);
 static void XMM_Fixup (int, int);
 static void CRC32_Fixup (int, int);
+static void FXSAVE_Fixup (int, int);
 static void OP_LWPCB_E (int, int);
 static void OP_LWP_E (int, int);
 static void OP_LWP_I (int, int);
@@ -358,6 +359,7 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define OPSUF { OP_3DNowSuffix, 0 }
 #define CMP { CMP_Fixup, 0 }
 #define XMM0 { XMM_Fixup, 0 }
+#define FXSAVE { FXSAVE_Fixup, 0 }
 #define Vex_2src_1 { OP_Vex_2src_1, 0 }
 #define Vex_2src_2 { OP_Vex_2src_2, 0 }
 
@@ -9595,12 +9597,12 @@ static const struct dis386 mod_table[][2] = {
   },
   {
     /* MOD_0FAE_REG_0 */
-    { "fxsave",		{ M } },
+    { "fxsave",		{ FXSAVE } },
     { PREFIX_TABLE (PREFIX_0FAE_REG_0) },
   },
   {
     /* MOD_0FAE_REG_1 */
-    { "fxrstor",	{ M } },
+    { "fxrstor",	{ FXSAVE } },
     { PREFIX_TABLE (PREFIX_0FAE_REG_1) },
   },
   {
@@ -13695,6 +13697,22 @@ skip:
     OP_E (bytemode, sizeflag);
 }
 
+static void
+FXSAVE_Fixup (int bytemode, int sizeflag)
+{
+  /* Add proper suffix to "fxsave" and "fxrstor".  */
+  USED_REX (REX_W);
+  if (rex & REX_W)
+    {
+      char *p = mnemonicendp;
+      *p++ = '6';
+      *p++ = '4';
+      *p = '\0';
+      mnemonicendp = p;
+    }
+  OP_M (bytemode, sizeflag);
+}
+
 /* Display the destination register operand for instructions with
    VEX. */
 
@@ -13745,7 +13763,7 @@ OP_VEX (int bytemode, int sizeflag ATTRIBUTE_UNUSED)
 /* Get the VEX immediate byte without moving codep.  */
 
 static unsigned char
-get_vex_imm8 (int sizeflag)
+get_vex_imm8 (int sizeflag, int opnum)
 {
   int bytes_before_imm = 0;
 
@@ -13762,10 +13780,13 @@ get_vex_imm8 (int sizeflag)
 	    {
 	      FETCH_DATA (the_info, codep + 1);
 	      base = *codep & 7;
-	      /* Don't increase bytes_before_imm as this has already
-		 been done in OP_E_memory.  */
+	      /* When decoding the third source, don't increase
+		 bytes_before_imm as this has already been incremented
+		 by one in OP_E_memory while decoding the second
+		 source operand.  */
+              if (opnum == 0)
+                bytes_before_imm++;
 	    }
-
 	  switch (modrm.mod)
 	    {
 	    case 0:
@@ -13779,8 +13800,13 @@ get_vex_imm8 (int sizeflag)
 	      bytes_before_imm += 4;
 	      break;
 	    case 1:
-	      /* 1 byte displacement: codep has already been
-		 incremented by 1 in OP_E_memory.  */
+	      /* 1 byte displacement: when decoding the third source,
+		 don't increase bytes_before_imm as this has already
+		 been incremented by one in OP_E_memory while decoding
+		 the second source operand.  */
+              if (opnum == 0)
+                bytes_before_imm++;
+
 	      break;
 	    }
 	}
@@ -13798,8 +13824,13 @@ get_vex_imm8 (int sizeflag)
 	      bytes_before_imm += 2;
 	      break;
 	    case 1:
-	      /* 1 byte displacement: codep has already been
-		 incremented by 1 in OP_E_memory.  */
+	      /* 1 byte displacement: when decoding the third source,
+		 don't increase bytes_before_imm as this has already
+		 been incremented by one in OP_E_memory while decoding
+		 the second source operand.  */
+              if (opnum == 0)
+                bytes_before_imm++;
+
 	      break;
 	    }
 	}
@@ -13910,12 +13941,12 @@ OP_EX_VexW (int bytemode, int sizeflag)
       codep++;
 
       if (vex.w)
-	reg = get_vex_imm8 (sizeflag) >> 4;
+	reg = get_vex_imm8 (sizeflag, 0) >> 4;
     }
   else
     {
       if (!vex.w)
-	reg = get_vex_imm8 (sizeflag) >> 4;
+	reg = get_vex_imm8 (sizeflag, 1) >> 4;
     }
 
   OP_EX_VexReg (bytemode, sizeflag, reg);

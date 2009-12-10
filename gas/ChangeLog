@@ -1,3 +1,36 @@
+2009-12-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (arch_entry): Add len and skip.
+	(cpu_arch): Use STRING_COMMA_LEN.
+	(MESSAGE_TEMPLATE): New.
+	(show_arch): Likewise.
+	(md_show_usage): Use show_arch.
+
+2009-12-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11037
+	* expr.c (resolve_expression): Call symbol_same_p to check
+	if 2 symbols are the same.
+
+	* symbols.c (symbol_same_p): New.
+	* symbols.h (symbol_same_p): Likewise.
+
+2009-12-02  Nick Clifton  <nickc@redhat.com>
+	    Richard Earnshaw  <rearnsha@arm.com>
+
+	PR gas/11013
+	* config/tc-arm.c (do_t_simd2): New function.
+	(insns): Use do_t_simd2 for QADD, QDADD, QSUB and QDSUB.
+
+2009-11-30  Joseph Myers  <joseph@codesourcery.com>
+
+	* configure: Regenerate.
+
+2009-11-30  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/11032
+	* config/tc-arm.c (relax_adr): Cope with a frag with no symbol.
+
 2009-11-19  Jan Beulich  <jbeulich@novell.com>
 
 	* read.c (pseudo_set): Also call copy_symbol_attributes() for

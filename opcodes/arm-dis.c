@@ -1364,10 +1364,10 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_EXT_V6T2, 0xfa80f040, 0xfff0f0f0, "uadd8%c\t%8-11r, %16-19r, %0-3r"},
   {ARM_EXT_V6T2, 0xfa80f050, 0xfff0f0f0, "uqadd8%c\t%8-11r, %16-19r, %0-3r"},
   {ARM_EXT_V6T2, 0xfa80f060, 0xfff0f0f0, "uhadd8%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfa80f080, 0xfff0f0f0, "qadd%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfa80f090, 0xfff0f0f0, "qdadd%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfa80f0a0, 0xfff0f0f0, "qsub%c\t%8-11r, %16-19r, %0-3r"},
-  {ARM_EXT_V6T2, 0xfa80f0b0, 0xfff0f0f0, "qdsub%c\t%8-11r, %16-19r, %0-3r"},
+  {ARM_EXT_V6T2, 0xfa80f080, 0xfff0f0f0, "qadd%c\t%8-11r, %0-3r, %16-19r"},
+  {ARM_EXT_V6T2, 0xfa80f090, 0xfff0f0f0, "qdadd%c\t%8-11r, %0-3r, %16-19r"},
+  {ARM_EXT_V6T2, 0xfa80f0a0, 0xfff0f0f0, "qsub%c\t%8-11r, %0-3r, %16-19r"},
+  {ARM_EXT_V6T2, 0xfa80f0b0, 0xfff0f0f0, "qdsub%c\t%8-11r, %0-3r, %16-19r"},
   {ARM_EXT_V6T2, 0xfa90f000, 0xfff0f0f0, "sadd16%c\t%8-11r, %16-19r, %0-3r"},
   {ARM_EXT_V6T2, 0xfa90f010, 0xfff0f0f0, "qadd16%c\t%8-11r, %16-19r, %0-3r"},
   {ARM_EXT_V6T2, 0xfa90f020, 0xfff0f0f0, "shadd16%c\t%8-11r, %16-19r, %0-3r"},
@@ -2931,11 +2931,17 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 				      NEGATIVE_BIT_SET ? "-" : "",
 				      arm_regnames[given & 0xf]);
 
-			      /* Writeback is automatically implied by post- addressing.
-				 Setting the W bit is unnecessary and ARM specify it as
-				 being unpredictable.  */
-			      if (WRITEBACK_BIT_SET && ! allow_unpredictable)
-				func (stream, UNPREDICTABLE_INSTRUCTION);
+			      if (! allow_unpredictable)
+				{
+				  /* Writeback is automatically implied by post- addressing.
+				     Setting the W bit is unnecessary and ARM specify it as
+				     being unpredictable.  */
+				  if (WRITEBACK_BIT_SET
+				      /* Specifying the PC register as the post-indexed
+					 registers is also unpredictable.  */
+				      || ((given & 0xf) == 0xf))
+				    func (stream, UNPREDICTABLE_INSTRUCTION);
+				}
 			    }
 			}
 		      break;

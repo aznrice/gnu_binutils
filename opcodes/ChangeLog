@@ -1,3 +1,39 @@
+2009-12-09  Nick Clifton  <nickc@redhat.com>
+
+	PR 10924
+	* arm-dis.c (print_insn_arm): Mark insns that use the PC in
+	post-indexed addressing as unpredictable.
+
+2009-12-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (FXSAVE_Fixup): New.
+	(FXSAVE): Likewise.
+	(mod_table): Use FXSAVE on fxsave and fxrstor.
+
+	* i386-opc.tbl: Add fxsave64 and fxrstor64.
+	* i386-tbl.h: Regenerated.
+
+2009-12-02  Nick Clifton  <nickc@redhat.com>
+	    Richard Earnshaw  <rearnsha@arm.com>
+
+	PR gas/11013
+	* arm-dis.c (thumb32_opc): Adjust disassembly of QADD, QDADD, QSUB
+	and QDSUB.
+
+2009-11-30  Massimo Ruo Roch  <massimo.ruoroch@polito.it>
+
+	PR gas/11030
+	* m68k-opc.c (m68k_opcodes): Allow the STLDSR instruction on the
+	Coldfire ISA A+.
+
+2009-11-17  Quentin Neill  <quentin.neill@amd.com>
+	    Sebastian Pop  <sebastian.pop@amd.com>
+
+	* i386-dis.c (get_vex_imm8): Increase bytes_before_imm when
+	decoding the second source operand from the immediate byte.
+	(OP_EX_VexW): Pass an extra integer to identify the second
+	and third source arguments.
+
 2009-11-19  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* i386-opc.tbl: Add IsLockable to cmpxch16b.
