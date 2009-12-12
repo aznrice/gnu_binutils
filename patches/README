@@ -17,7 +17,7 @@ clean=$1
 
 patches="
 	binutils-indirect-2.patch
-	binutils-shr-91.patch
+	binutils-shr-92.patch
 	ld-env-11.patch
 	binutils-error-8.patch
 	binutils-signed-4.patch
