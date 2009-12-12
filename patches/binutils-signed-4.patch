@@ -25,14 +25,14 @@ gas/testsuite/
 	* gas/ppc/test1elf64.d: Likewise.
 	* gas/sparc/reloc64.d: Likewise.
 
---- binutils/binutils/objdump.c.signed	2007-07-24 15:03:40.000000000 -0700
-+++ binutils/binutils/objdump.c	2007-09-26 09:51:38.000000000 -0700
-@@ -1650,8 +1650,15 @@ disassemble_bytes (struct disassemble_in
+--- binutils/binutils/objdump.c.signed	2009-12-12 09:53:00.000000000 -0800
++++ binutils/binutils/objdump.c	2009-12-12 09:55:59.000000000 -0800
+@@ -1754,8 +1754,15 @@ disassemble_bytes (struct disassemble_in
  
  	      if (q->addend)
  		{
 -		  printf ("+0x");
--		  objdump_print_value (q->addend, info, TRUE);
+-		  objdump_print_value (q->addend, inf, TRUE);
 +		  bfd_signed_vma addend = q->addend;
 +		  if (addend < 0)
 +		    {
@@ -41,11 +41,11 @@ gas/testsuite/
 +		    }
 +		  else
 +		    printf ("+0x");
-+		  objdump_print_value (addend, info, TRUE);
++		  objdump_print_value (addend, inf, TRUE);
  		}
  
  	      printf ("\n");
-@@ -2710,8 +2717,15 @@ dump_reloc_set (bfd *abfd, asection *sec
+@@ -2834,8 +2841,15 @@ dump_reloc_set (bfd *abfd, asection *sec
  
        if (q->addend)
  	{
@@ -63,8 +63,8 @@ gas/testsuite/
  	}
  
        printf ("\n");
---- binutils/gas/testsuite/gas/alpha/elf-reloc-1.d.signed	2003-06-17 04:16:16.000000000 -0700
-+++ binutils/gas/testsuite/gas/alpha/elf-reloc-1.d	2007-09-26 09:51:38.000000000 -0700
+--- binutils/gas/testsuite/gas/alpha/elf-reloc-1.d.signed	2009-11-17 10:48:30.000000000 -0800
++++ binutils/gas/testsuite/gas/alpha/elf-reloc-1.d	2009-12-12 09:53:12.000000000 -0800
 @@ -16,6 +16,6 @@ OFFSET           TYPE              VALUE
  0*000001c GPRELHIGH         d
  0*0000020 GPRELLOW          e
@@ -73,8 +73,8 @@ gas/testsuite/
 +0*0000030 GPDISP            \.text-0x0*0000008
  
  
---- binutils/gas/testsuite/gas/i386/mixed-mode-reloc64.d.signed	2005-09-28 08:31:21.000000000 -0700
-+++ binutils/gas/testsuite/gas/i386/mixed-mode-reloc64.d	2007-09-26 09:51:38.000000000 -0700
+--- binutils/gas/testsuite/gas/i386/mixed-mode-reloc64.d.signed	2009-11-17 10:48:31.000000000 -0800
++++ binutils/gas/testsuite/gas/i386/mixed-mode-reloc64.d	2009-12-12 09:53:12.000000000 -0800
 @@ -7,8 +7,8 @@
  RELOCATION RECORDS FOR \[.text\]:
  OFFSET[ 	]+TYPE[ 	]+VALUE[ 	]*
@@ -87,8 +87,8 @@ gas/testsuite/
  [0-9a-f]+[ 	]+R_X86_64_GOT32[ 	]+xtrn[ 	]*
 -[0-9a-f]+[ 	]+R_X86_64_PLT32[ 	]+xtrn\+0xf+c[ 	]*
 +[0-9a-f]+[ 	]+R_X86_64_PLT32[ 	]+xtrn-0x0*4[ 	]*
---- binutils/gas/testsuite/gas/i386/reloc64.d.signed	2007-09-26 09:51:26.000000000 -0700
-+++ binutils/gas/testsuite/gas/i386/reloc64.d	2007-09-26 09:59:15.000000000 -0700
+--- binutils/gas/testsuite/gas/i386/reloc64.d.signed	2009-11-17 10:48:31.000000000 -0800
++++ binutils/gas/testsuite/gas/i386/reloc64.d	2009-12-12 09:53:12.000000000 -0800
 @@ -16,33 +16,33 @@ Disassembly of section \.text:
  .*[ 	]+R_X86_64_PC32[ 	]+xtrn\+0x0*2
  .*[ 	]+R_X86_64_PC16[ 	]+xtrn\+0x0*2
@@ -134,8 +134,8 @@ gas/testsuite/
  .*[ 	]+R_X86_64_DTPOFF64[ 	]+xtrn
  .*[ 	]+R_X86_64_DTPOFF32[ 	]+xtrn
  .*[ 	]+R_X86_64_DTPOFF32[ 	]+xtrn
---- binutils/gas/testsuite/gas/ia64/pcrel.d.signed	2005-03-28 14:34:20.000000000 -0800
-+++ binutils/gas/testsuite/gas/ia64/pcrel.d	2007-09-26 09:51:38.000000000 -0700
+--- binutils/gas/testsuite/gas/ia64/pcrel.d.signed	2009-11-17 10:48:31.000000000 -0800
++++ binutils/gas/testsuite/gas/ia64/pcrel.d	2009-12-12 09:53:12.000000000 -0800
 @@ -9,28 +9,28 @@ OFFSET[[:space:]]+TYPE[[:space:]]+VALUE[
  0+10[[:space:]]+PCREL22[[:space:]]+esym
  0+20[[:space:]]+PCREL22[[:space:]]+esym\+0x0+20
@@ -169,9 +169,9 @@ gas/testsuite/
  
  
  Contents of section \.mov:
---- binutils/gas/testsuite/gas/mips/branch-misc-2-64.d.signed	2005-11-23 06:04:18.000000000 -0800
-+++ binutils/gas/testsuite/gas/mips/branch-misc-2-64.d	2007-09-26 09:51:38.000000000 -0700
-@@ -12,51 +12,51 @@ Disassembly of section .text:
+--- binutils/gas/testsuite/gas/mips/branch-misc-2-64.d.signed	2009-11-17 10:48:31.000000000 -0800
++++ binutils/gas/testsuite/gas/mips/branch-misc-2-64.d	2009-12-12 09:53:12.000000000 -0800
+@@ -13,51 +13,51 @@ Disassembly of section .text:
  	\.\.\.
  	\.\.\.
  0+003c <[^>]*> 04110000 	bal	0000000000000040 <x\+0x4>
@@ -250,9 +250,9 @@ gas/testsuite/
 +[ 	]*b8: R_MIPS_NONE	\*ABS\*-0x4
  0+00bc <[^>]*> 00000000 	nop
  	\.\.\.
---- binutils/gas/testsuite/gas/mips/branch-misc-2pic-64.d.signed	2005-11-23 06:04:18.000000000 -0800
-+++ binutils/gas/testsuite/gas/mips/branch-misc-2pic-64.d	2007-09-26 09:51:38.000000000 -0700
-@@ -12,51 +12,51 @@ Disassembly of section .text:
+--- binutils/gas/testsuite/gas/mips/branch-misc-2pic-64.d.signed	2009-11-17 10:48:31.000000000 -0800
++++ binutils/gas/testsuite/gas/mips/branch-misc-2pic-64.d	2009-12-12 09:53:12.000000000 -0800
+@@ -13,51 +13,51 @@ Disassembly of section .text:
  	\.\.\.
  	\.\.\.
  0+003c <[^>]*> 04110000 	bal	0000000000000040 <x\+0x4>
@@ -331,8 +331,8 @@ gas/testsuite/
 +[ 	]*b8: R_MIPS_NONE	\*ABS\*-0x4
  0+00bc <[^>]*> 00000000 	nop
  	\.\.\.
---- binutils/gas/testsuite/gas/mips/ldstla-n64-sym32.d.signed	2005-03-04 01:51:11.000000000 -0800
-+++ binutils/gas/testsuite/gas/mips/ldstla-n64-sym32.d	2007-09-26 09:51:38.000000000 -0700
+--- binutils/gas/testsuite/gas/mips/ldstla-n64-sym32.d.signed	2009-11-17 10:48:31.000000000 -0800
++++ binutils/gas/testsuite/gas/mips/ldstla-n64-sym32.d	2009-12-12 09:53:12.000000000 -0800
 @@ -196,19 +196,19 @@ Disassembly .*:
  .*: R_MIPS_NONE	.*
  .*	daddu	a0,a0,v1
@@ -433,8 +433,8 @@ gas/testsuite/
  .*: R_MIPS_NONE	.*
  .*: R_MIPS_NONE	.*
  .*	daddu	at,at,v1
---- binutils/gas/testsuite/gas/mips/mips16-hilo-n32.d.signed	2005-02-15 11:57:53.000000000 -0800
-+++ binutils/gas/testsuite/gas/mips/mips16-hilo-n32.d	2007-09-26 09:51:38.000000000 -0700
+--- binutils/gas/testsuite/gas/mips/mips16-hilo-n32.d.signed	2009-11-17 10:48:31.000000000 -0800
++++ binutils/gas/testsuite/gas/mips/mips16-hilo-n32.d	2009-12-12 09:53:12.000000000 -0800
 @@ -141,45 +141,45 @@ Disassembly of section \.text:
   13c:	f400 3480 	sll	a0,16
   140:	f010 4c00 	addiu	a0,-32768
@@ -559,8 +559,8 @@ gas/testsuite/
   41c:	6d01      	li	a1,1
   41e:	f400 35a0 	sll	a1,16
   422:	9d80      	lw	a0,0\(a1\)
---- binutils/gas/testsuite/gas/ppc/astest.d.signed	2005-03-02 05:25:01.000000000 -0800
-+++ binutils/gas/testsuite/gas/ppc/astest.d	2007-09-26 09:51:38.000000000 -0700
+--- binutils/gas/testsuite/gas/ppc/astest.d.signed	2009-11-17 10:48:32.000000000 -0800
++++ binutils/gas/testsuite/gas/ppc/astest.d	2009-12-12 09:53:12.000000000 -0800
 @@ -52,11 +52,11 @@ Disassembly of section \.text:
    60:	00 00 00 00 	\.long 0x0
  			60: R_PPC_ADDR32	z
@@ -575,8 +575,8 @@ gas/testsuite/
    70:	ff ff ff 9c 	\.long 0xffffff9c
    74:	ff ff ff 9c 	\.long 0xffffff9c
    78:	00 00 00 00 	\.long 0x0
---- binutils/gas/testsuite/gas/ppc/astest2.d.signed	2005-03-02 05:25:01.000000000 -0800
-+++ binutils/gas/testsuite/gas/ppc/astest2.d	2007-09-26 09:51:38.000000000 -0700
+--- binutils/gas/testsuite/gas/ppc/astest2.d.signed	2009-11-17 10:48:32.000000000 -0800
++++ binutils/gas/testsuite/gas/ppc/astest2.d	2009-12-12 09:53:12.000000000 -0800
 @@ -48,11 +48,11 @@ Disassembly of section \.text:
    60:	00 00 00 00 	\.long 0x0
  			60: R_PPC_ADDR32	z
@@ -591,8 +591,8 @@ gas/testsuite/
    70:	00 00 00 08 	\.long 0x8
    74:	00 00 00 08 	\.long 0x8
  
---- binutils/gas/testsuite/gas/ppc/astest2_64.d.signed	2005-03-02 05:25:01.000000000 -0800
-+++ binutils/gas/testsuite/gas/ppc/astest2_64.d	2007-09-26 09:51:38.000000000 -0700
+--- binutils/gas/testsuite/gas/ppc/astest2_64.d.signed	2009-11-17 10:48:32.000000000 -0800
++++ binutils/gas/testsuite/gas/ppc/astest2_64.d	2009-12-12 09:53:12.000000000 -0800
 @@ -45,11 +45,11 @@ Disassembly of section \.text:
    58:	00 00 00 00 	\.long 0x0
  			58: R_PPC64_ADDR32	z
@@ -607,8 +607,8 @@ gas/testsuite/
    68:	00 00 00 08 	\.long 0x8
    6c:	00 00 00 08 	\.long 0x8
  
---- binutils/gas/testsuite/gas/ppc/astest64.d.signed	2005-03-02 05:25:01.000000000 -0800
-+++ binutils/gas/testsuite/gas/ppc/astest64.d	2007-09-26 09:51:38.000000000 -0700
+--- binutils/gas/testsuite/gas/ppc/astest64.d.signed	2009-11-17 10:48:32.000000000 -0800
++++ binutils/gas/testsuite/gas/ppc/astest64.d	2009-12-12 09:53:12.000000000 -0800
 @@ -49,11 +49,11 @@ Disassembly of section \.text:
    58:	00 00 00 00 	\.long 0x0
  			58: R_PPC64_ADDR32	z
@@ -623,8 +623,8 @@ gas/testsuite/
    68:	ff ff ff a4 	\.long 0xffffffa4
    6c:	ff ff ff a4 	\.long 0xffffffa4
    70:	00 00 00 00 	\.long 0x0
---- binutils/gas/testsuite/gas/ppc/test1elf32.d.signed	2005-03-02 05:25:01.000000000 -0800
-+++ binutils/gas/testsuite/gas/ppc/test1elf32.d	2007-09-26 09:51:38.000000000 -0700
+--- binutils/gas/testsuite/gas/ppc/test1elf32.d.signed	2009-11-17 10:48:32.000000000 -0800
++++ binutils/gas/testsuite/gas/ppc/test1elf32.d	2009-12-12 09:53:12.000000000 -0800
 @@ -79,7 +79,7 @@ Disassembly of section \.data:
  
  0+000c <dat0>:
@@ -634,8 +634,8 @@ gas/testsuite/
  
  0+0010 <dat1>:
    10:	00 00 00 00 	\.long 0x0
---- binutils/gas/testsuite/gas/ppc/test1elf64.d.signed	2005-03-02 05:25:01.000000000 -0800
-+++ binutils/gas/testsuite/gas/ppc/test1elf64.d	2007-09-26 09:51:38.000000000 -0700
+--- binutils/gas/testsuite/gas/ppc/test1elf64.d.signed	2009-11-17 10:48:32.000000000 -0800
++++ binutils/gas/testsuite/gas/ppc/test1elf64.d	2009-12-12 09:53:12.000000000 -0800
 @@ -114,7 +114,7 @@ Disassembly of section \.data:
  
  0000000000000014 <dat0>:
@@ -645,8 +645,8 @@ gas/testsuite/
  
  0000000000000018 <dat1>:
    18:	00 00 00 00 	\.long 0x0
---- binutils/gas/testsuite/gas/sparc/reloc64.d.signed	1999-06-10 14:08:04.000000000 -0700
-+++ binutils/gas/testsuite/gas/sparc/reloc64.d	2007-09-26 09:51:38.000000000 -0700
+--- binutils/gas/testsuite/gas/sparc/reloc64.d.signed	2009-11-17 10:48:32.000000000 -0800
++++ binutils/gas/testsuite/gas/sparc/reloc64.d	2009-12-12 09:53:12.000000000 -0800
 @@ -35,13 +35,13 @@ Disassembly of section .text:
  			44: R_SPARC_LO10	.text
    48:	01 00 00 00 	nop 

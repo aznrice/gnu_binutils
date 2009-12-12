@@ -20,7 +20,7 @@ patches="
 	binutils-shr-91.patch
 	ld-env-11.patch
 	binutils-error-8.patch
-	binutils-signed-3.patch
+	binutils-signed-4.patch
 	binutils-weakdef-2.patch
 	bfd-64k-2.patch
 	binutils-sec64k-6.patch

@@ -1,3 +1,9 @@
+2009-12-12  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-signed-4.patch: New file. Replace ...
+	* binutils-signed-3.patch: This.  Removed.
+	* README: Likewise.
+
 2009-12-09  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-DEP-1.patch: Removed.
