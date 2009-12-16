@@ -1,3 +1,62 @@
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (VEX_W_3818_P_2_M_0): New.
+	(vex_w_table): Add VEX_W_3818_P_2_M_0.
+	(mod_table): Use VEX_W_3818_P_2_M_0.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (vex_w_table): Reformat.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (VEX_W_382X_P_2_M_0): New.
+	(vex_w_table): Add VEX_W_382X_P_2_M_0.
+	(mod_table): Use VEX_W_382X_P_2_M_0.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (vex_w_table): Reformat.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (USE_VEX_W_TABLE): New.
+	(VEX_W_TABLE): Likewise.
+	(VEX_W_XXX): Likewise.
+	(vex_w_table): Likewise.
+	(prefix_table): Use VEX_W_XXX.
+	(vex_table): Likewise.
+	(vex_len_table): Likewise.
+	(mod_table): Likewise.
+	(get_valid_dis386): Handle USE_VEX_W_TABLE.
+
+	* i386-opc.tbl: Add VexW0 to AVX instructions where the VEX.W bit
+	isn't used.
+	* i386-tbl.h: Regenerated.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-opc.h (VEX128): New.
+	(VEX256): Likewise.
+
+2009-12-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (vex_len_table): Reformat.
+
+2009-12-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (MOD_VEX_51): Renamed to ...
+	(MOD_VEX_50): This.
+	(vex_table): Updated.
+	(mod_table): Likewise.
+
+2009-12-14  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/10924
+	* arm-dis.c (arm_opcodes): Specify %R in cases where using r15
+	results in unpredictable behaviour.
+	(print_insn_arm): Handle %R.
+
 2009-12-11  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* i386-dis.c (get_valid_dis386): Set vex.w to 0 for VEX C5
