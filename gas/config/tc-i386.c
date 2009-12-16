@@ -2675,7 +2675,7 @@ build_vex_prefix (const insn_template *t)
      operand.  */
   if (!i.swap_operand
       && i.operands == i.reg_operands
-      && i.tm.opcode_modifier.vex0f
+      && i.tm.opcode_modifier.vexopcode == VEX0F
       && i.tm.opcode_modifier.s
       && i.rex == REX_B)
     {
@@ -2722,7 +2722,7 @@ build_vex_prefix (const insn_template *t)
     }
 
   /* Use 2-byte VEX prefix if possible.  */
-  if (i.tm.opcode_modifier.vex0f
+  if (i.tm.opcode_modifier.vexopcode == VEX0F
       && (i.rex & (REX_W | REX_X | REX_B)) == 0)
     {
       /* 2-byte VEX prefix.  */
@@ -2746,29 +2746,32 @@ build_vex_prefix (const insn_template *t)
       i.vex.length = 3;
       i.vex.bytes[0] = 0xc4;
 
-      if (i.tm.opcode_modifier.vex0f)
-	m = 0x1;
-      else if (i.tm.opcode_modifier.vex0f38)
-	m = 0x2;
-      else if (i.tm.opcode_modifier.vex0f3a)
-	m = 0x3;
-      else if (i.tm.opcode_modifier.xop08)
+      switch (i.tm.opcode_modifier.vexopcode)
 	{
+	case VEX0F:
+	  m = 0x1;
+	  break;
+	case VEX0F38:
+	  m = 0x2;
+	  break;
+	case VEX0F3A:
+	  m = 0x3;
+	  break;
+	case XOP08:
 	  m = 0x8;
 	  i.vex.bytes[0] = 0x8f;
-	}
-      else if (i.tm.opcode_modifier.xop09)
-	{
+	  break;
+	case XOP09:
 	  m = 0x9;
 	  i.vex.bytes[0] = 0x8f;
-	}
-      else if (i.tm.opcode_modifier.xop0a)
-	{
+	  break;
+	case XOP0A:
 	  m = 0xa;
 	  i.vex.bytes[0] = 0x8f;
+	  break;
+	default:
+	  abort ();
 	}
-      else
-	abort ();
 
       /* The high 3 bits of the second VEX byte are 1's compliment
 	 of RXB bits from REX.  */
@@ -2776,12 +2779,12 @@ build_vex_prefix (const insn_template *t)
 
       /* Check the REX.W bit.  */
       w = (i.rex & REX_W) ? 1 : 0;
-      if (i.tm.opcode_modifier.vexw0 || i.tm.opcode_modifier.vexw1)
+      if (i.tm.opcode_modifier.vexw)
 	{
 	  if (w)
 	    abort ();
 
-	  if (i.tm.opcode_modifier.vexw1)
+	  if (i.tm.opcode_modifier.vexw == VEXW1)
 	    w = 1;
 	}
 
@@ -4722,7 +4725,7 @@ process_operands (void)
 	  if (i.op[0].regs->reg_num != 0)
 	    return bad_implicit_operand (1);
 
-	  if (i.tm.opcode_modifier.vex3sources)
+	  if (i.tm.opcode_modifier.vexsources == VEX3SOURCES)
 	    {
 	      /* Keep xmm0 for instructions with VEX prefix and 3
 		 sources.  */
@@ -4744,7 +4747,8 @@ process_operands (void)
       else if (i.tm.opcode_modifier.implicit1stxmm0)
 	{
 	  gas_assert ((MAX_OPERANDS - 1) > dupl
-		      && i.tm.opcode_modifier.vex3sources);
+		      && (i.tm.opcode_modifier.vexsources
+			  == VEX3SOURCES));
 
 	  /* Add the implicit xmm0 for instructions with VEX prefix
 	     and 3 sources.  */
@@ -4922,12 +4926,11 @@ build_modrm_byte (void)
 {
   const seg_entry *default_seg = 0;
   unsigned int source, dest;
-  int vex_3_sources, vex_2_sources;
+  int vex_3_sources;
 
   /* The first operand of instructions with VEX prefix and 3 sources
      must be VEX_Imm4.  */
-  vex_3_sources = i.tm.opcode_modifier.vex3sources;
-  vex_2_sources = i.tm.opcode_modifier.vex2sources;
+  vex_3_sources = i.tm.opcode_modifier.vexsources == VEX3SOURCES;
   if (vex_3_sources)
     {
       unsigned int nds, reg_slot;
@@ -4961,7 +4964,7 @@ build_modrm_byte (void)
       i.operands++;
       /* If VexW1 is set, the first operand is the source and
 	 the second operand is encoded in the immediate operand.  */
-      if (i.tm.opcode_modifier.vexw1)
+      if (i.tm.opcode_modifier.vexw == VEXW1)
 	{
 	  source = 0;
 	  reg_slot = 1;
@@ -5311,7 +5314,7 @@ build_modrm_byte (void)
       else
 	mem = ~0;
 
-      if (vex_2_sources)
+      if (i.tm.opcode_modifier.vexsources == XOP2SOURCES)
 	{
 	  if (operand_type_check (i.types[0], imm))
 	    i.vex.register_specifier = NULL;
@@ -5319,7 +5322,7 @@ build_modrm_byte (void)
 	    {
 	      /* VEX.vvvv encodes one of the sources when the first
 		 operand is not an immediate.  */
-	      if (i.tm.opcode_modifier.vexw0)
+	      if (i.tm.opcode_modifier.vexw == VEXW0)
 		i.vex.register_specifier = i.op[0].regs;
 	      else
 		i.vex.register_specifier = i.op[1].regs;
@@ -5336,7 +5339,7 @@ build_modrm_byte (void)
 	    {
 	      i.rm.mode = 3;
 
-	      if (i.tm.opcode_modifier.vexw0)
+	      if (i.tm.opcode_modifier.vexw == VEXW0)
 		i.rm.regmem = i.op[1].regs->reg_num;
 	      else
 		i.rm.regmem = i.op[0].regs->reg_num;

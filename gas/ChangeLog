@@ -1,3 +1,26 @@
+2009-12-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (build_vex_prefix): Replace vex0f, vex0f38,
+	vex0f3a, xop08, xop09 and xop0a with vexopcode.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (build_modrm_byte): Check XOP2SOURCES
+	instead VEX2SOURCES.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (process_operands): Check vexsources 
+	instead of vex3sources.
+	(build_modrm_byte): Check vexsources instead of vex2sources
+	and vex3sources.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (build_vex_prefix): Replace vexw0/vexw1
+	with vexw.
+	(build_modrm_byte): Likewise.
+
 2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* as.h (mempcpy): New.
