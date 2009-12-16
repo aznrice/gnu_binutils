@@ -1,3 +1,9 @@
+2009-12-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-opc.tbl: Replace Vex0F38 with VexOpcode=1, Vex0F3A with
+	VexOpcode=2 and VexW0 with VexW=1.
+	* i386-tbl.h: Regenerated.
+
 2009-09-06  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* i386-dis.c (PREFIX_VEX_3813): New.
