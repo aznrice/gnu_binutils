@@ -1,3 +1,84 @@
+2009-12-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-gen.c (opcode_modifiers): Remove Vex0F, Vex0F38,
+	Vex0F3A, XOP08, XOP09 and XOP0A.  Add VexOpcode.
+
+	* i386-opc.h (Vex0F): Removed.
+	(Vex0F38): Likewise.
+	(Vex0F3A): Likewise.
+	(VexOpcode): New.
+	(VEX0F): Likewise.
+	(VEX0F38): Likewise.
+	(VEX0F3A): Likewise.
+	(XOP08): Defined as a macro.
+	(XOP09): Likewise.
+	(XOP0A): Likewise.
+	(i386_opcode_modifier): Remove vex0f, vex0f38, vex0f3a, xop08,
+	xop09 and xop0a.  Add vexopcode.
+
+	* i386-opc.tbl: Replace Vex0F with VexOpcode=0, Vex0F38 with
+	VexOpcode=1, Vex0F3A with VexOpcode=2, XOP08 with VexOpcode=3,
+	XOP09 with VexOpcode=4 and XOP0A with VexOpcode=5.
+	* i386-tbl.h: Regenerated.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-opc.h (VEX2SOURCES): Renamed to ...
+	(XOP2SOURCES): This.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-gen.c (opcode_modifiers): Remove Vex3Sources and
+	Vex2Sources.  Add VexSources.
+
+	* i386-opc.h (Vex2Sources): Removed.
+	(Vex3Sources): Likewise.
+	(VEX2SOURCES): New.
+	(VEX3SOURCES): Likewise.
+	(VexSources): Likewise.
+	(i386_opcode_modifier): Remove vex2sources and vex3sources.
+	Add vexsources.
+
+	* i386-opc.tbl: Replace Vex2Sources with VexSources=1 and
+	Vex3Sourceswith VexSources=2.
+	* i386-tbl.h: Regenerated.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-gen.c (opcode_modifiers): Remove VexW0 and VexW1.  Add
+	VexW.
+
+	* i386-opc.h (VexW0): Removed.
+	(VexW1): Likewise.
+	(VEXW0): New.
+	(VEXW1): Likewise.
+	(VexW): Likewise.
+	(i386_opcode_modifier): Remove vexw0 and vexw1.  Add vexw.
+
+	* i386-opc.tbl: Replace VexW0 with VexW=1 and VexW1 with
+	Vex=2.
+	* i386-tbl.h: Regenerated.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (VEX_W_3818_P_2_M_0): New.
+	(vex_w_table): Add VEX_W_3818_P_2_M_0.
+	(mod_table): Use VEX_W_3818_P_2_M_0.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (vex_w_table): Reformat.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (VEX_W_382X_P_2_M_0): New.
+	(vex_w_table): Add VEX_W_382X_P_2_M_0.
+	(mod_table): Use VEX_W_382X_P_2_M_0.
+
+2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (vex_w_table): Reformat.
+
 2009-12-15  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* i386-dis.c (USE_VEX_W_TABLE): New.
