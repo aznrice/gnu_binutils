@@ -1,3 +1,37 @@
+2009-12-17  Rafael Avila de Espindola  <espindola@google.com>
+
+	* Makefile.am (CCFILES): Add timer.cc.
+	(HFILES): Add timer.h.
+	* configure.ac: Check for sysconf and times.
+	* main.cc: include timer.h.
+	(main): Use Timer instead of get_run_time.
+	* timer.cc: New.
+	* timer.h: New.
+	* workqueue.cc: include timer.h.
+	(Workqueue::find_and_run_task):
+	Report user, sys and wall time.
+	* Makefile.in: Regenerate.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+
+2009-12-16  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_relobj::scan_sections_for_stubs): Exclude ICF-eliminated
+	sections.
+	* object.cc (Sized_relobj::do_finalize_local_symbols): Handle
+	relaxed input sections.
+	* output.cc (Output_section::find_relaxed_input_section): Change
+	return type to Output_relaxed_input_section pointer.  Adjust code
+	for new type of relaxed_input_section_map_.
+	* output.h (Output_section::find_relaxed_input_section): Change
+	return type to Output_relaxed_input_section pointer.
+	(Output_section::Output_relaxed_input_section_by_input_section_map):
+	New type.
+	(Output_section::relaxed_input_section_map_): Change type to
+	Output_section::Output_relaxed_input_section_by_input_section_map.
+	* symtab.cc (Symbol_table::compute_final_value): Handle relaxed
+	input section.
+
 2009-12-15  Ian Lance Taylor  <iant@google.com>
 
 	* layout.cc (Layout::create_shstrtab): Only write out after input
