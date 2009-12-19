@@ -1,3 +1,21 @@
+2009-12-19  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/eret-2.s: Add an instruction to fill a branch delay
+	slot.
+	* gas/mips/eret-2.d: Adjust accordingly.
+
+2009-12-19  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/aent.d: New test.
+	* gas/mips/aent.s: Source for the new test.
+	* gas/mips/mips.exp: Run it.
+
+2009-12-17  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/10924
+	* gas/arm/unpredictable.s: Add more unpredictable instructions.
+	* gas/arm/unpredictable.d: Add expected disassemblies.
+
 2009-12-14  Nick Clifton  <nickc@redhat.com>
 
 	PR binutils/10924
