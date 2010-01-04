@@ -959,9 +959,10 @@ Dynobj::create_gnu_hash_table(const std::vector<Symbol*>& dynsyms,
     {
       Symbol* sym = dynsyms[i];
 
-      // FIXME: Should put on unhashed_dynsyms if the symbol is
-      // hidden.
-      if (sym->is_undefined())
+      if (!sym->needs_dynsym_value()
+	  && (sym->is_undefined()
+	      || sym->is_from_dynobj()
+	      || sym->is_forced_local()))
 	unhashed_dynsyms.push_back(sym);
       else
 	{
@@ -1526,7 +1527,9 @@ Versions::finalize(Symbol_table* symtab, unsigned int dynsym_index,
       if (!(*p)->is_symbol_created())
 	{
 	  Symbol* vsym = symtab->define_as_constant((*p)->name(),
-						    (*p)->name(), 0, 0,
+						    (*p)->name(),
+						    Symbol_table::PREDEFINED,
+						    0, 0,
 						    elfcpp::STT_OBJECT,
 						    elfcpp::STB_GLOBAL,
 						    elfcpp::STV_DEFAULT, 0,

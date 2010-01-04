@@ -654,6 +654,8 @@ class General_options
               N_("Try to detect violations of the One Definition Rule"),
               NULL);
 
+  DEFINE_bool(discard_all, options::TWO_DASHES, 'x', false,
+	      N_("Delete all local symbols"), NULL);
   DEFINE_bool(discard_locals, options::TWO_DASHES, 'X', false,
               N_("Delete all temporary local symbols"), NULL);
 
@@ -801,8 +803,8 @@ class General_options
   DEFINE_bool(relax, options::TWO_DASHES, '\0', false,
 	      N_("Relax branches on certain targets"), NULL);
 
-  DEFINE_string(retain_symbols_file, options::EXACTLY_ONE_DASH, '\0', NULL,
-                N_("keep only symbols listed in this file"), N_("[file]"));
+  DEFINE_string(retain_symbols_file, options::TWO_DASHES, '\0', NULL,
+                N_("keep only symbols listed in this file"), N_("FILE"));
 
   // -R really means -rpath, but can mean --just-symbols for
   // compatibility with GNU ld.  -rpath is always -rpath, so we list
@@ -816,6 +818,10 @@ class General_options
   DEFINE_dirlist(rpath_link, options::TWO_DASHES, '\0',
                  N_("Add DIR to link time shared library search path"),
                  N_("DIR"));
+
+  DEFINE_optional_string(sort_common, options::TWO_DASHES, '\0', NULL,
+			 N_("Sort common symbols by alignment"),
+			 N_("[={ascending,descending}]"));
 
   DEFINE_bool(strip_all, options::TWO_DASHES, 's', false,
               N_("Strip all symbols"), NULL);
@@ -1115,6 +1121,11 @@ class General_options
   bool
   in_dynamic_list(const char* symbol) const
   { return this->dynamic_list_.version_script_info()->symbol_is_local(symbol); }
+
+  // Finalize the dynamic list.
+  void
+  finalize_dynamic_list()
+  { this->dynamic_list_.version_script_info()->finalize(); }
 
   // The disposition given by the --incremental-changed,
   // --incremental-unchanged or --incremental-unknown option.  The
@@ -1550,10 +1561,9 @@ class Command_line
   script_options()
   { return this->script_options_; }
 
-  // Get the version-script options: a convenience routine.
+  // Finalize the version-script options and return them.
   const Version_script_info&
-  version_script() const
-  { return *this->script_options_.version_script_info(); }
+  version_script();
 
   // Get the input files.
   Input_arguments&
