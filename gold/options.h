@@ -1,6 +1,6 @@
 // options.h -- handle command line options for gold  -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -580,13 +580,25 @@ class General_options
   // alphabetical order).  For both, lowercase sorts before uppercase.
   // The -z options come last.
 
+  DEFINE_bool(add_needed, options::TWO_DASHES, '\0', false,
+	      N_("Not supported"),
+	      N_("Do not copy DT_NEEDED tags from shared libraries"));
+
+  DEFINE_bool_alias(allow_multiple_definition, muldefs, options::TWO_DASHES,
+		    '\0', N_("Allow multiple definitions of symbols"),
+		    N_("Do not allow multiple definitions"), false);
+
   DEFINE_bool(allow_shlib_undefined, options::TWO_DASHES, '\0', false,
               N_("Allow unresolved references in shared libraries"),
               N_("Do not allow unresolved references in shared libraries"));
 
   DEFINE_bool(as_needed, options::TWO_DASHES, '\0', false,
-              N_("Only set DT_NEEDED for dynamic libs if used"),
-              N_("Always DT_NEEDED for dynamic libs"));
+              N_("Only set DT_NEEDED for shared libraries if used"),
+              N_("Always DT_NEEDED for shared libraries"));
+
+  DEFINE_enum(assert, options::ONE_DASH, '\0', NULL,
+	      N_("Ignored"), N_("[ignored]"),
+	      {"definitions", "nodefinitions", "nosymbolic", "pure-text"});
 
   // This should really be an "enum", but it's too easy for folks to
   // forget to update the list as they add new targets.  So we just
@@ -626,6 +638,14 @@ class General_options
               N_("[none]"),
               {"none"});
 #endif
+
+  DEFINE_bool(copy_dt_needed_entries, options::TWO_DASHES, '\0', false,
+	      N_("Not supported"),
+	      N_("Do not copy DT_NEEDED tags from shared libraries"));
+
+  DEFINE_bool(cref, options::TWO_DASHES, '\0', false,
+	      N_("Output cross reference table"),
+	      N_("Do not output cross reference table"));
 
   DEFINE_bool(define_common, options::TWO_DASHES, 'd', false,
               N_("Define common symbols"),
@@ -692,8 +712,14 @@ class General_options
   DEFINE_string(fini, options::ONE_DASH, '\0', "_fini",
                 N_("Call SYMBOL at unload-time"), N_("SYMBOL"));
 
+  DEFINE_bool(g, options::EXACTLY_ONE_DASH, '\0', false,
+	      N_("Ignored"), NULL);
+
   DEFINE_string(soname, options::ONE_DASH, 'h', NULL,
                 N_("Set shared library name"), N_("FILENAME"));
+
+  DEFINE_bool(i, options::EXACTLY_ONE_DASH, '\0', false,
+	      N_("Ignored"), NULL);
 
   DEFINE_double(hash_bucket_empty_fraction, options::TWO_DASHES, '\0', 0.0,
 		N_("Min fraction of empty buckets in dynamic hash"),
@@ -845,7 +871,7 @@ class General_options
               N_("Use less memory and more disk I/O "
                  "(included only for compatibility with GNU ld)"), NULL);
 
-  DEFINE_bool(shared, options::ONE_DASH, '\0', false,
+  DEFINE_bool(shared, options::ONE_DASH, 'G', false,
               N_("Generate shared library"), NULL);
 
   DEFINE_bool(Bshareable, options::ONE_DASH, '\0', false,
@@ -945,6 +971,10 @@ class General_options
   DEFINE_set(trace_symbol, options::TWO_DASHES, 'y',
              N_("Trace references to symbol"), N_("SYMBOL"));
 
+  DEFINE_bool(undefined_version, options::TWO_DASHES, '\0', true,
+	      N_("Allow unused version in script (default)"),
+	      N_("Do not allow unused version in script"));
+
   DEFINE_string(Y, options::EXACTLY_ONE_DASH, 'Y', "",
 		N_("Default search path for Solaris compatibility"),
 		N_("PATH"));
@@ -980,6 +1010,11 @@ class General_options
 	      NULL);
   DEFINE_uint64(max_page_size, options::DASH_Z, '\0', 0,
                 N_("Set maximum page size to SIZE"), N_("SIZE"));
+  DEFINE_bool(muldefs, options::DASH_Z, '\0', false,
+	      N_("Allow multiple definitions of symbols"),
+	      NULL);
+  // copyreloc is here in the list because there is only -z
+  // nocopyreloc, not -z copyreloc.
   DEFINE_bool(copyreloc, options::DASH_Z, '\0', true,
 	      NULL,
 	      N_("Do not create copy relocs"));

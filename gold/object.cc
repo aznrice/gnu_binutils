@@ -1,6 +1,6 @@
 // object.cc -- support for an object file for linking in gold
 
-// Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -2146,7 +2146,8 @@ Input_objects::add_object(Object* obj)
     }
 
   // Add this object to the cross-referencer if requested.
-  if (parameters->options().user_set_print_symbol_counts())
+  if (parameters->options().user_set_print_symbol_counts()
+      || parameters->options().cref())
     {
       if (this->cref_ == NULL)
 	this->cref_ = new Cref();
@@ -2162,15 +2163,15 @@ Input_objects::add_object(Object* obj)
 void
 Input_objects::check_dynamic_dependencies() const
 {
+  bool issued_copy_dt_needed_error = false;
   for (Dynobj_list::const_iterator p = this->dynobj_list_.begin();
        p != this->dynobj_list_.end();
        ++p)
     {
       const Dynobj::Needed& needed((*p)->needed());
       bool found_all = true;
-      for (Dynobj::Needed::const_iterator pneeded = needed.begin();
-	   pneeded != needed.end();
-	   ++pneeded)
+      Dynobj::Needed::const_iterator pneeded;
+      for (pneeded = needed.begin(); pneeded != needed.end(); ++pneeded)
 	{
 	  if (this->sonames_.find(*pneeded) == this->sonames_.end())
 	    {
@@ -2179,6 +2180,25 @@ Input_objects::check_dynamic_dependencies() const
 	    }
 	}
       (*p)->set_has_unknown_needed_entries(!found_all);
+
+      // --copy-dt-needed-entries aka --add-needed is a GNU ld option
+      // --that gold does not support.  However, they cause no trouble
+      // --unless there is a DT_NEEDED entry that we don't know about;
+      // --warn only in that case.
+      if (!found_all
+	  && !issued_copy_dt_needed_error
+	  && (parameters->options().copy_dt_needed_entries()
+	      || parameters->options().add_needed()))
+	{
+	  const char* optname;
+	  if (parameters->options().copy_dt_needed_entries())
+	    optname = "--copy-dt-needed-entries";
+	  else
+	    optname = "--add-needed";
+	  gold_error(_("%s is not supported but is required for %s in %s"),
+		     optname, (*pneeded).c_str(), (*p)->name().c_str());
+	  issued_copy_dt_needed_error = true;
+	}
     }
 }
 
@@ -2187,7 +2207,8 @@ Input_objects::check_dynamic_dependencies() const
 void
 Input_objects::archive_start(Archive* archive)
 {
-  if (parameters->options().user_set_print_symbol_counts())
+  if (parameters->options().user_set_print_symbol_counts()
+      || parameters->options().cref())
     {
       if (this->cref_ == NULL)
 	this->cref_ = new Cref();
@@ -2200,7 +2221,8 @@ Input_objects::archive_start(Archive* archive)
 void
 Input_objects::archive_stop(Archive* archive)
 {
-  if (parameters->options().user_set_print_symbol_counts())
+  if (parameters->options().user_set_print_symbol_counts()
+      || parameters->options().cref())
     this->cref_->add_archive_stop(archive);
 }
 
@@ -2212,6 +2234,15 @@ Input_objects::print_symbol_counts(const Symbol_table* symtab) const
   if (parameters->options().user_set_print_symbol_counts()
       && this->cref_ != NULL)
     this->cref_->print_symbol_counts(symtab);
+}
+
+// Print a cross reference table.
+
+void
+Input_objects::print_cref(const Symbol_table* symtab, FILE* f) const
+{
+  if (parameters->options().cref() && this->cref_ != NULL)
+    this->cref_->print_cref(symtab, f);
 }
 
 // Relocate_info methods.
