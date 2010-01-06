@@ -1,43 +1,39 @@
-2009-11-03  Roland McGrath  <roland@redhat.com>
+2010-01-05  Roland McGrath  <roland@redhat.com>
 	    H.J. Lu  <hongjiu.lu@intel.com>
 
-	* configure.ac (--enable-gold): Accept --enable-gold=both to
-	add gold to configdirs without removing ld.
+	* configure.ac (--enable-gold): Support both, both/gold and
+	both/bfd to add gold to configdirs without removing ld.
 	* configure: Regenerated.
 
 gold/
 
-2009-11-03  H.J. Lu  <hongjiu.lu@intel.com>
+2010-01-05  H.J. Lu  <hongjiu.lu@intel.com>
 
-	* Makefile.am (install-exec-local): Install as @installed_linker@.
-	Install as ld if "@linker@" == "ld.gold" and @installed_linker@
+	* Makefile.am (install-exec-local): Install as $(installed_linker).
+	Install as ld if $(linker) == "ld.gold" and $(installed_linker)
 	!= "ld".
 	* Makefile.in: Regenerated.
 
-	* configure.ac (installed_linker): New substituted variable.  Set
-	by --enable-gold.
-	(linker): New substituted variable.  Set by --enable-gold and
-	--enable-linker.
+	* configure.ac (--enable-gold): Support both, both/gold and
+	both/bfd.
 	* configure: Regenerated.
 
 ld/
 
-2009-11-03  H.J. Lu  <hongjiu.lu@intel.com>
+2010-01-05  H.J. Lu  <hongjiu.lu@intel.com>
 
-	* Makefile.am (transform): Install as @installed_linker@.
+	* Makefile.am (transform): Install as $(installed_linker).
 	(install-exec-local): Depend on install-binPROGRAMS.  Install
-	as @installed_linker@.  Install as ld if "@linker@" == "ld.bfd"
-	and @installed_linker@ != "ld".
+	as $(installed_linker).  Install as ld if $(linker) == "ld.bfd"
+	and $(installed_linker) != "ld".
 	* Makefile.in: Regenerated.
 
-	* configure.ac (installed_linker): New substituted variable.  Set
-	by --enable-gold.
-	(linker): New substituted variable.  Set by --enable-gold and
-	--enable-linker.
+	* configure.in (--enable-gold): Support both, both/gold and
+	both/bfd.
 	* configure: Regenerated.
 
 diff --git a/configure b/configure
-index ba4aa10..8919b17 100755
+index 542f2b2..31d2f39 100755
 --- a/configure
 +++ b/configure
 @@ -1482,7 +1482,7 @@ Optional Features:
@@ -45,94 +41,131 @@ index ba4aa10..8919b17 100755
    --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
    --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
 -  --enable-gold           use gold instead of ld
-+  --enable-gold[=ARG]     build gold [ARG={yes,both}]
++  --enable-gold[=ARG]     build gold [ARG={both}[[/{gold,bfd}]]]
    --enable-libada         build libada directory
    --enable-libssp         build libssp directory
    --enable-build-with-cxx build with C++ compiler instead of C compiler
-@@ -3076,7 +3076,8 @@ else
+@@ -3068,6 +3068,12 @@ case ${with_newlib} in
+ esac
+ 
+ # Handle --enable-gold.
++#   --enable-gold		Build only gold, gold is default
++#   --disable-gold [default]	Build only GNU ld, GNU ld is default
++#   --enable-gold=both		Build both gold and GNU ld, gold is default
++#   --enable-gold=both/gold	Same
++#   --enable-gold=both/bfd	Build both gold and GNU ld, GNU ld is
++#				default
+ 
+ # Check whether --enable-gold was given.
+ if test "${enable_gold+set}" = set; then :
+@@ -3076,7 +3082,8 @@ else
    ENABLE_GOLD=no
  fi
  
 -if test "${ENABLE_GOLD}" = "yes"; then
 +case "${ENABLE_GOLD}" in
-+yes|both)
++yes|both|both/gold|both/bfd)
    # Check for ELF target.
    is_elf=no
    case "${target}" in
-@@ -3096,11 +3097,17 @@ if test "${ENABLE_GOLD}" = "yes"; then
+@@ -3096,11 +3103,25 @@ if test "${ENABLE_GOLD}" = "yes"; then
      # Check for target supported by gold.
      case "${target}" in
        i?86-*-* | x86_64-*-* | sparc*-*-* | powerpc*-*-* | arm*-*-*)
 -        configdirs="`echo " ${configdirs} " | sed -e 's/ ld / gold /'`"
-+        if test "${ENABLE_GOLD}" = both; then
++	case "${ENABLE_GOLD}" in
++	both*)
 +          configdirs="$configdirs gold"
-+	else
++	  ;;
++	*)
 +          configdirs="`echo " ${configdirs} " | sed -e 's/ ld / gold /'`"
-+	fi
++	  ;;
++	esac
          ;;
      esac
    fi
 -fi
 +  ENABLE_GOLD=yes
++  ;;
++no)
++  ;;
++*)
++  as_fn_error "invalid --enable-gold argument" "$LINENO" 5
 +  ;;
 +esac
  
  # Configure extra directories which are host specific
  
 diff --git a/configure.ac b/configure.ac
-index 5651e3c..8acaeeb 100644
+index 53ca32c..6e626b1 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -311,10 +311,11 @@ esac
+@@ -309,12 +309,19 @@ case ${with_newlib} in
+ esac
+ 
  # Handle --enable-gold.
++#   --enable-gold		Build only gold, gold is default
++#   --disable-gold [default]	Build only GNU ld, GNU ld is default
++#   --enable-gold=both		Build both gold and GNU ld, gold is default
++#   --enable-gold=both/gold	Same
++#   --enable-gold=both/bfd	Build both gold and GNU ld, GNU ld is
++#				default
  
  AC_ARG_ENABLE(gold,
 -[  --enable-gold           use gold instead of ld],
-+[  --enable-gold[[=ARG]]     build gold [[ARG={yes,both}]]],
++[  --enable-gold[[=ARG]]     build gold [[ARG={both}[[/{gold,bfd}]]]]],
  ENABLE_GOLD=$enableval,
  ENABLE_GOLD=no)
 -if test "${ENABLE_GOLD}" = "yes"; then
 +case "${ENABLE_GOLD}" in 
-+yes|both)
++yes|both|both/gold|both/bfd)
    # Check for ELF target.
    is_elf=no
    case "${target}" in
-@@ -334,11 +335,17 @@ if test "${ENABLE_GOLD}" = "yes"; then
+@@ -334,11 +341,25 @@ if test "${ENABLE_GOLD}" = "yes"; then
      # Check for target supported by gold.
      case "${target}" in
        i?86-*-* | x86_64-*-* | sparc*-*-* | powerpc*-*-* | arm*-*-*)
 -        configdirs="`echo " ${configdirs} " | sed -e 's/ ld / gold /'`"
-+        if test "${ENABLE_GOLD}" = both; then
++	case "${ENABLE_GOLD}" in 
++	both*)
 +          configdirs="$configdirs gold"
-+	else
++	  ;;
++	*)
 +          configdirs="`echo " ${configdirs} " | sed -e 's/ ld / gold /'`"
-+	fi
++	  ;;
++	esac
          ;;
      esac
    fi
 -fi
 +  ENABLE_GOLD=yes
 +  ;;
++no)
++  ;;
++*)
++  AC_MSG_ERROR([invalid --enable-gold argument])
++  ;;
 +esac
  
  # Configure extra directories which are host specific
  
 diff --git a/gold/Makefile.am b/gold/Makefile.am
-index 8f47d63..6851eb8 100644
+index 9c9ed1a..32a37e6 100644
 --- a/gold/Makefile.am
 +++ b/gold/Makefile.am
-@@ -169,12 +169,20 @@ check: libgold.a
+@@ -175,12 +175,20 @@ check: libgold.a
  
  install-exec-local: ld-new$(EXEEXT)
  	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(tooldir)/bin
 -	n=`echo ld | sed '$(transform)'`; \
-+	n=`echo @installed_linker@ | sed '$(transform)'`; \
++	n=`echo $(installed_linker) | sed '$(transform)'`; \
  	$(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${n}$(EXEEXT); \
 -	if test "$(bindir)" != "$(tooldir)/bin"; then \
 -	  rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 -	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
-+	if test "@linker@" = "ld.gold"; then \
-+	  if test "@installed_linker@" != "ld"; then \
++	if test "$(linker)" = "ld.gold"; then \
++	  if test "$(installed_linker)" != "ld"; then \
 +	    ld=`echo ld | sed '$(transform)'`; \
 +	    rm -f $(DESTDIR)$(bindir)/$${ld}$(EXEEXT); \
 +	    ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(bindir)/$${ld}$(EXEEXT) >/dev/null 2>/dev/null \
@@ -147,10 +180,10 @@ index 8f47d63..6851eb8 100644
  
  # We want install to imply install-info as per GNU standards, despite
 diff --git a/gold/Makefile.in b/gold/Makefile.in
-index cd10edd..cb3acc1 100644
+index b6e743a..38cc4fb 100644
 --- a/gold/Makefile.in
 +++ b/gold/Makefile.in
-@@ -305,8 +305,10 @@ htmldir = @htmldir@
+@@ -306,8 +306,10 @@ htmldir = @htmldir@
  includedir = @includedir@
  infodir = @infodir@
  install_sh = @install_sh@
@@ -161,17 +194,17 @@ index cd10edd..cb3acc1 100644
  localedir = @localedir@
  localstatedir = @localstatedir@
  mandir = @mandir@
-@@ -1213,12 +1215,20 @@ check: libgold.a
+@@ -1223,12 +1225,20 @@ check: libgold.a
  
  install-exec-local: ld-new$(EXEEXT)
  	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(tooldir)/bin
 -	n=`echo ld | sed '$(transform)'`; \
-+	n=`echo @installed_linker@ | sed '$(transform)'`; \
++	n=`echo $(installed_linker) | sed '$(transform)'`; \
  	$(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${n}$(EXEEXT); \
 -	if test "$(bindir)" != "$(tooldir)/bin"; then \
 -	  rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 -	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
-+	if test "@linker@" = "ld.gold"; then \
++	if test "$(linker)" = "ld.gold"; then \
 +	  if test "@installed_linke@" != "ld"; then \
 +	    ld=`echo ld | sed '$(transform)'`; \
 +	    rm -f $(DESTDIR)$(bindir)/$${ld}$(EXEEXT); \
@@ -187,7 +220,7 @@ index cd10edd..cb3acc1 100644
  
  # We want install to imply install-info as per GNU standards, despite
 diff --git a/gold/configure b/gold/configure
-index 793af0d..3de7fc3 100755
+index 4817e44..34d3794 100755
 --- a/gold/configure
 +++ b/gold/configure
 @@ -682,6 +682,8 @@ PLUGINS_FALSE
@@ -199,54 +232,50 @@ index 793af0d..3de7fc3 100755
  am__untar
  am__tar
  AMTAR
-@@ -759,6 +761,8 @@ ac_subst_files=''
+@@ -759,6 +761,7 @@ ac_subst_files=''
  ac_user_opts='
  enable_option_checking
  with_sysroot
 +enable_gold
-+enable_linker
  enable_threads
  enable_plugins
  enable_targets
-@@ -1403,6 +1407,8 @@ Optional Features:
+@@ -1403,6 +1406,7 @@ Optional Features:
    --disable-option-checking  ignore unrecognized --enable/--with options
    --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
    --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-+  --enable-gold[=ARG]     build gold [ARG={yes,both}]
-+  --enable-linker=[ARG]   specify the default linker [ARG={bfd,gold}]
++  --enable-gold[=ARG]     build gold [ARG={both}[[/{gold,bfd}]]]
    --enable-threads        multi-threaded linking
    --enable-plugins        linker plugins
    --enable-targets        alternative target configurations
-@@ -3227,6 +3233,35 @@ cat >>confdefs.h <<_ACEOF
+@@ -3227,6 +3231,33 @@ cat >>confdefs.h <<_ACEOF
  _ACEOF
  
  
 +# Check whether --enable-gold was given.
 +if test "${enable_gold+set}" = set; then :
-+  enableval=$enable_gold; if test "${enableval}" = "both"; then
-+   bfd_linker=ld.bfd
-+   installed_linker=ld.gold
-+ else
-+   bfd_linker=ld.gold
++  enableval=$enable_gold; case "${enableval}" in
++ yes)
 +   installed_linker=ld
-+ fi
-+else
-+  bfd_linker=ld.bfd
-+ installed_linker=ld
-+fi
-+
-+
-+
-+# Check whether --enable-linker was given.
-+if test "${enable_linker+set}" = set; then :
-+  enableval=$enable_linker; if test "${enableval}" = "gold"; then
 +   linker=ld.gold
-+ else
-+   linker=$bfd_linker
-+ fi
++   ;;
++ both|both/gold)
++   installed_linker=ld.gold
++   linker=ld.gold
++   ;;
++ both/bfd)
++   installed_linker=ld.gold
++   linker=ld.bfd
++   ;;
++ *)
++   as_fn_error "invalid --enable-gold argument" "$LINENO" 5
++   ;;
++ esac
 +else
-+  linker=$bfd_linker
++  installed_linker=ld
++ linker=ld.gold
 +fi
++
 +
 +
 +
@@ -254,41 +283,44 @@ index 793af0d..3de7fc3 100755
  if test "${enable_threads+set}" = set; then :
    enableval=$enable_threads; case "${enableval}" in
 diff --git a/gold/configure.ac b/gold/configure.ac
-index 4307732..49c7597 100644
+index 7102670..d6b855b 100644
 --- a/gold/configure.ac
 +++ b/gold/configure.ac
-@@ -38,6 +38,29 @@ AC_DEFINE_UNQUOTED(TARGET_SYSTEM_ROOT, "$sysroot",
+@@ -38,6 +38,32 @@ AC_DEFINE_UNQUOTED(TARGET_SYSTEM_ROOT, "$sysroot",
  AC_DEFINE_UNQUOTED(TARGET_SYSTEM_ROOT_RELOCATABLE, $sysroot_relocatable,
    [Whether the system root can be relocated])
  
++dnl "installed_linker" is the installed gold linker name.
++dnl "linker" is the linker to be installed as the default linker, ld.
 +AC_ARG_ENABLE(gold,
-+[  --enable-gold[[=ARG]]     build gold [[ARG={yes,both}]]],
-+[if test "${enableval}" = "both"; then
-+   bfd_linker=ld.bfd
-+   installed_linker=ld.gold
-+ else
-+   bfd_linker=ld.gold
++[  --enable-gold[[=ARG]]     build gold [[ARG={both}[[/{gold,bfd}]]]]],
++[case "${enableval}" in 
++ yes)
 +   installed_linker=ld
-+ fi],
-+[bfd_linker=ld.bfd
-+ installed_linker=ld])
-+AC_SUBST(installed_linker)
-+
-+AC_ARG_ENABLE(linker,
-+[  --enable-linker=[[ARG]]   specify the default linker [[ARG={bfd,gold}]]],
-+[if test "${enableval}" = "gold"; then
 +   linker=ld.gold
-+ else
-+   linker=$bfd_linker
-+ fi],
-+[linker=$bfd_linker])
++   ;;
++ both|both/gold)
++   installed_linker=ld.gold
++   linker=ld.gold
++   ;;
++ both/bfd)
++   installed_linker=ld.gold
++   linker=ld.bfd
++   ;;
++ *)
++   AC_MSG_ERROR([invalid --enable-gold argument])
++   ;;
++ esac],
++[installed_linker=ld
++ linker=ld.gold])
++AC_SUBST(installed_linker)
 +AC_SUBST(linker)
 +
  dnl For now threads are a configure time option.
  AC_ARG_ENABLE([threads],
  [  --enable-threads        multi-threaded linking],
 diff --git a/ld/Makefile.am b/ld/Makefile.am
-index c1d3dbf..1930a8b 100644
+index c1d3dbf..b54d27f 100644
 --- a/ld/Makefile.am
 +++ b/ld/Makefile.am
 @@ -95,7 +95,7 @@ CXX_FOR_TARGET = ` \
@@ -296,7 +328,7 @@ index c1d3dbf..1930a8b 100644
    fi`
  
 -transform = s/^ld-new$$/ld/;@program_transform_name@
-+transform = s/^ld-new$$/@installed_linker@/;$(program_transform_name)
++transform = s/^ld-new$$/$(installed_linker)/;$(program_transform_name)
  bin_PROGRAMS = ld-new
  info_TEXINFOS = ld.texinfo
  ld_TEXINFOS = configdoc.texi
@@ -312,9 +344,9 @@ index c1d3dbf..1930a8b 100644
 -	  rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 -	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
 -	  || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
-+	n=`echo @installed_linker@ | sed '$(transform)'`; \
-+	if test "@linker@" = "ld.bfd"; then \
-+	  if test "@installed_linker@" != "ld"; then \
++	n=`echo $(installed_linker) | sed '$(transform)'`; \
++	if test "$(linker)" = "ld.bfd"; then \
++	  if test "$(installed_linker)" != "ld"; then \
 +	    ld=`echo ld | sed '$(transform)'`; \
 +	    rm -f $(DESTDIR)$(bindir)/$$ld$(EXEEXT); \
 +	    ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(bindir)/$$ld$(EXEEXT) >/dev/null 2>/dev/null \
@@ -329,19 +361,19 @@ index c1d3dbf..1930a8b 100644
  
  install-data-local:
 diff --git a/ld/Makefile.in b/ld/Makefile.in
-index 0da0fff..2c5ab4a 100644
+index 2c2e014..634ecbc 100644
 --- a/ld/Makefile.in
 +++ b/ld/Makefile.in
-@@ -152,7 +152,7 @@ CTAGS = ctags
+@@ -155,7 +155,7 @@ CTAGS = ctags
  DEJATOOL = $(PACKAGE)
  RUNTESTDEFAULTFLAGS = --tool $$tool --srcdir $$srcdir
  DIST_SUBDIRS = $(SUBDIRS)
 -transform = s/^ld-new$$/ld/;@program_transform_name@
-+transform = s/^ld-new$$/@installed_linker@/;$(program_transform_name)
++transform = s/^ld-new$$/$(installed_linker)/;$(program_transform_name)
  ACLOCAL = @ACLOCAL@
  AMTAR = @AMTAR@
  AR = @AR@
-@@ -293,8 +293,10 @@ htmldir = @htmldir@
+@@ -296,8 +296,10 @@ htmldir = @htmldir@
  includedir = @includedir@
  infodir = @infodir@
  install_sh = @install_sh@
@@ -352,7 +384,7 @@ index 0da0fff..2c5ab4a 100644
  localedir = @localedir@
  localstatedir = @localstatedir@
  lt_ECHO = @lt_ECHO@
-@@ -3274,13 +3276,21 @@ mostlyclean-local:
+@@ -3277,13 +3279,21 @@ mostlyclean-local:
  
  .PHONY: install-exec-local install-data-local
  
@@ -364,9 +396,9 @@ index 0da0fff..2c5ab4a 100644
 -	  rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 -	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
 -	  || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
-+	n=`echo @installed_linker@ | sed '$(transform)'`; \
-+	if test "@linker@" = "ld.bfd"; then \
-+	  if test "@installed_linker@" != "ld"; then \
++	n=`echo $(installed_linker) | sed '$(transform)'`; \
++	if test "$(linker)" = "ld.bfd"; then \
++	  if test "$(installed_linker)" != "ld"; then \
 +	    ld=`echo ld | sed '$(transform)'`; \
 +	    rm -f $(DESTDIR)$(bindir)/$$ld$(EXEEXT); \
 +	    ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(bindir)/$$ld$(EXEEXT) >/dev/null 2>/dev/null \
@@ -381,7 +413,7 @@ index 0da0fff..2c5ab4a 100644
  
  install-data-local:
 diff --git a/ld/configure b/ld/configure
-index 6febc32..2963753 100755
+index e0ff758..6fc80f3 100755
 --- a/ld/configure
 +++ b/ld/configure
 @@ -797,6 +797,8 @@ GREP
@@ -393,189 +425,188 @@ index 6febc32..2963753 100755
  TARGET_SYSTEM_ROOT_DEFINE
  TARGET_SYSTEM_ROOT
  use_sysroot
-@@ -901,6 +903,8 @@ with_lib_path
+@@ -901,6 +903,7 @@ with_lib_path
  enable_targets
  enable_64_bit_bfd
  with_sysroot
 +enable_gold
-+enable_linker
  enable_got
  enable_werror
  enable_build_warnings
-@@ -1549,6 +1553,8 @@ Optional Features:
+@@ -1549,6 +1552,7 @@ Optional Features:
  			  (and sometimes confusing) to the casual installer
    --enable-targets        alternative target configurations
    --enable-64-bit-bfd     64-bit support (on hosts with narrower word sizes)
-+  --enable-gold[=ARG]     build gold [ARG={yes,both}]
-+  --enable-linker=[ARG]   specify the default linker [ARG={bfd,gold}]
++  --enable-gold[=ARG]     build gold [ARG={both}[[/{gold,bfd}]]]
    --enable-got=<type>     GOT handling scheme (target, single, negative,
                            multigot)
    --enable-werror         treat compile warnings as errors
-@@ -4304,6 +4310,35 @@ fi
+@@ -4304,6 +4308,33 @@ fi
  
  
  
 +# Check whether --enable-gold was given.
 +if test "${enable_gold+set}" = set; then :
-+  enableval=$enable_gold; if test "${enableval}" = "both"; then
-+  gold_linker=ld.gold
-+  installed_linker=ld.bfd
-+else
-+  gold_linker=ld.bfd
-+  installed_linker=ld
-+fi
-+else
-+  gold_linker=ld.bfd
-+ installed_linker=ld
-+fi
-+
-+
-+
-+# Check whether --enable-linker was given.
-+if test "${enable_linker+set}" = set; then :
-+  enableval=$enable_linker; if test "${enableval}" = "gold"; then
-+   linker=$gold_linker
-+ else
++  enableval=$enable_gold; case "${enableval}" in
++ both|both/gold)
++   installed_linker=ld.bfd
++   linker=ld.gold
++   ;;
++ both/bfd)
++   installed_linker=ld.bfd
 +   linker=ld.bfd
-+ fi
++   ;;
++ no)
++   installed_linker=ld
++   linker=ld.bfd
++   ;;
++ *)
++   as_fn_error "invalid --enable-gold argument" "$LINENO" 5
++   ;;
++ esac
 +else
-+  linker=ld.bfd
++  installed_linker=ld
++ linker=ld.bfd
 +fi
++
 +
 +
 +
  # Check whether --enable-got was given.
  if test "${enable_got+set}" = set; then :
    enableval=$enable_got; case "${enableval}" in
-@@ -6126,13 +6161,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
+@@ -6126,13 +6157,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
  else
    lt_cv_nm_interface="BSD nm"
    echo "int some_variable = 0;" > conftest.$ac_ext
 -  (eval echo "\"\$as_me:6129: $ac_compile\"" >&5)
-+  (eval echo "\"\$as_me:6164: $ac_compile\"" >&5)
++  (eval echo "\"\$as_me:6160: $ac_compile\"" >&5)
    (eval "$ac_compile" 2>conftest.err)
    cat conftest.err >&5
 -  (eval echo "\"\$as_me:6132: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
-+  (eval echo "\"\$as_me:6167: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
++  (eval echo "\"\$as_me:6163: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
    (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
    cat conftest.err >&5
 -  (eval echo "\"\$as_me:6135: output\"" >&5)
-+  (eval echo "\"\$as_me:6170: output\"" >&5)
++  (eval echo "\"\$as_me:6166: output\"" >&5)
    cat conftest.out >&5
    if $GREP 'External.*some_variable' conftest.out > /dev/null; then
      lt_cv_nm_interface="MS dumpbin"
-@@ -7337,7 +7372,7 @@ ia64-*-hpux*)
+@@ -7337,7 +7368,7 @@ ia64-*-hpux*)
    ;;
  *-*-irix6*)
    # Find out which ABI we are using.
 -  echo '#line 7340 "configure"' > conftest.$ac_ext
-+  echo '#line 7375 "configure"' > conftest.$ac_ext
++  echo '#line 7371 "configure"' > conftest.$ac_ext
    if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
    (eval $ac_compile) 2>&5
    ac_status=$?
-@@ -8599,11 +8634,11 @@ else
+@@ -8599,11 +8630,11 @@ else
     -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
 -   (eval echo "\"\$as_me:8602: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:8637: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:8633: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>conftest.err)
     ac_status=$?
     cat conftest.err >&5
 -   echo "$as_me:8606: \$? = $ac_status" >&5
-+   echo "$as_me:8641: \$? = $ac_status" >&5
++   echo "$as_me:8637: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s "$ac_outfile"; then
       # The compiler can only warn and ignore the option if not recognized
       # So say no if there are warnings other than the usual output.
-@@ -8938,11 +8973,11 @@ else
+@@ -8938,11 +8969,11 @@ else
     -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
 -   (eval echo "\"\$as_me:8941: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:8976: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:8972: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>conftest.err)
     ac_status=$?
     cat conftest.err >&5
 -   echo "$as_me:8945: \$? = $ac_status" >&5
-+   echo "$as_me:8980: \$? = $ac_status" >&5
++   echo "$as_me:8976: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s "$ac_outfile"; then
       # The compiler can only warn and ignore the option if not recognized
       # So say no if there are warnings other than the usual output.
-@@ -9043,11 +9078,11 @@ else
+@@ -9043,11 +9074,11 @@ else
     -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
 -   (eval echo "\"\$as_me:9046: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:9081: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:9077: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>out/conftest.err)
     ac_status=$?
     cat out/conftest.err >&5
 -   echo "$as_me:9050: \$? = $ac_status" >&5
-+   echo "$as_me:9085: \$? = $ac_status" >&5
++   echo "$as_me:9081: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s out/conftest2.$ac_objext
     then
       # The compiler can only warn and ignore the option if not recognized
-@@ -9098,11 +9133,11 @@ else
+@@ -9098,11 +9129,11 @@ else
     -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
     -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
     -e 's:$: $lt_compiler_flag:'`
 -   (eval echo "\"\$as_me:9101: $lt_compile\"" >&5)
-+   (eval echo "\"\$as_me:9136: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:9132: $lt_compile\"" >&5)
     (eval "$lt_compile" 2>out/conftest.err)
     ac_status=$?
     cat out/conftest.err >&5
 -   echo "$as_me:9105: \$? = $ac_status" >&5
-+   echo "$as_me:9140: \$? = $ac_status" >&5
++   echo "$as_me:9136: \$? = $ac_status" >&5
     if (exit $ac_status) && test -s out/conftest2.$ac_objext
     then
       # The compiler can only warn and ignore the option if not recognized
-@@ -11480,7 +11515,7 @@ else
+@@ -11480,7 +11511,7 @@ else
    lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<_LT_EOF
 -#line 11483 "configure"
-+#line 11518 "configure"
++#line 11514 "configure"
  #include "confdefs.h"
  
  #if HAVE_DLFCN_H
-@@ -11576,7 +11611,7 @@ else
+@@ -11576,7 +11607,7 @@ else
    lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<_LT_EOF
 -#line 11579 "configure"
-+#line 11614 "configure"
++#line 11610 "configure"
  #include "confdefs.h"
  
  #if HAVE_DLFCN_H
 diff --git a/ld/configure.in b/ld/configure.in
-index 4bbc8f8..7d0b3c4 100644
+index 4bbc8f8..450fe5d 100644
 --- a/ld/configure.in
 +++ b/ld/configure.in
-@@ -69,6 +69,29 @@ AC_SUBST(use_sysroot)
+@@ -69,6 +69,32 @@ AC_SUBST(use_sysroot)
  AC_SUBST(TARGET_SYSTEM_ROOT)
  AC_SUBST(TARGET_SYSTEM_ROOT_DEFINE)
  
++dnl "installed_linker" is the installed BFD linker name.
++dnl "linker" is the linker to be installed as the default linker, ld.
 +AC_ARG_ENABLE(gold, 
-+[  --enable-gold[[=ARG]]     build gold [[ARG={yes,both}]]],
-+[if test "${enableval}" = "both"; then
-+  gold_linker=ld.gold
-+  installed_linker=ld.bfd
-+else
-+  gold_linker=ld.bfd
-+  installed_linker=ld
-+fi],
-+[gold_linker=ld.bfd
-+ installed_linker=ld])
-+AC_SUBST(installed_linker)
-+
-+AC_ARG_ENABLE(linker, 
-+[  --enable-linker=[[ARG]]   specify the default linker [[ARG={bfd,gold}]]],
-+[if test "${enableval}" = "gold"; then
-+   linker=$gold_linker
-+ else
++[  --enable-gold[[=ARG]]     build gold [[ARG={both}[[/{gold,bfd}]]]]],
++[case "${enableval}" in 
++ both|both/gold)
++   installed_linker=ld.bfd
++   linker=ld.gold
++   ;;
++ both/bfd)
++   installed_linker=ld.bfd
 +   linker=ld.bfd
-+ fi],
-+[linker=ld.bfd])
++   ;;
++ no)
++   installed_linker=ld
++   linker=ld.bfd
++   ;;
++ *)
++   AC_MSG_ERROR([invalid --enable-gold argument])
++   ;;
++ esac],
++[installed_linker=ld
++ linker=ld.bfd])
++AC_SUBST(installed_linker)
 +AC_SUBST(linker)
 +
  AC_ARG_ENABLE([got],
