@@ -288,8 +288,11 @@ General_options::parse_help(const char*, const char*, Command_line*)
 void
 General_options::parse_version(const char* opt, const char*, Command_line*)
 {
-  gold::print_version(opt[0] == '-' && opt[1] == 'v');
-  ::exit(EXIT_SUCCESS);
+  bool print_short = (opt[0] == '-' && opt[1] == 'v');
+  gold::print_version(print_short);
+  this->printed_version_ = true;
+  if (!print_short)
+    ::exit(EXIT_SUCCESS);
 }
 
 void
@@ -393,6 +396,63 @@ General_options::parse_just_symbols(const char*, const char* arg,
   Input_file_argument file(arg, Input_file_argument::INPUT_FILE_TYPE_FILE,
 			   "", true, *this);
   cmdline->inputs().add_file(file);
+}
+
+// Handle --section-start.
+
+void
+General_options::parse_section_start(const char*, const char* arg,
+				     Command_line*)
+{
+  const char* eq = strchr(arg, '=');
+  if (eq == NULL)
+    {
+      gold_error(_("invalid argument to --section-start; "
+		   "must be SECTION=ADDRESS"));
+      return;
+    }
+
+  std::string section_name(arg, eq - arg);
+
+  ++eq;
+  const char* val_start = eq;
+  if (eq[0] == '0' && (eq[1] == 'x' || eq[1] == 'X'))
+    eq += 2;
+  if (*eq == '\0')
+    {
+      gold_error(_("--section-start address missing"));
+      return;
+    }
+  uint64_t addr = 0;
+  hex_init();
+  for (; *eq != '\0'; ++eq)
+    {
+      if (!hex_p(*eq))
+	{
+	  gold_error(_("--section-start argument %s is not a valid hex number"),
+		     val_start);
+	  return;
+	}
+      addr <<= 4;
+      addr += hex_value(*eq);
+    }
+
+  this->section_starts_[section_name] = addr;
+}
+
+// Look up a --section-start value.
+
+bool
+General_options::section_start(const char* secname, uint64_t* paddr) const
+{
+  if (this->section_starts_.empty())
+    return false;
+  std::map<std::string, uint64_t>::const_iterator p =
+    this->section_starts_.find(secname);
+  if (p == this->section_starts_.end())
+    return false;
+  *paddr = p->second;
+  return true;
 }
 
 void
@@ -746,9 +806,17 @@ namespace gold
 
 General_options::General_options()
   : printed_version_(false),
-    execstack_status_(General_options::EXECSTACK_FROM_INPUT), static_(false),
-    do_demangle_(false), plugins_(),
-    incremental_disposition_(INCREMENTAL_CHECK), implicit_incremental_(false)
+    execstack_status_(EXECSTACK_FROM_INPUT),
+    icf_status_(ICF_NONE),
+    static_(false),
+    do_demangle_(false),
+    plugins_(NULL),
+    dynamic_list_(),
+    incremental_disposition_(INCREMENTAL_CHECK),
+    implicit_incremental_(false),
+    excluded_libs_(),
+    symbols_to_retain_(),
+    section_starts_()
 {
   // Turn off option registration once construction is complete.
   gold::options::ready_to_register = false;
@@ -1204,6 +1272,17 @@ Command_line::process(int argc, const char** argv)
 
   // Normalize the options and ensure they don't contradict each other.
   this->options_.finalize();
+}
+
+// Finalize the version script options and return them.
+
+const Version_script_info&
+Command_line::version_script()
+{
+  this->options_.finalize_dynamic_list();
+  Version_script_info* vsi = this->script_options_.version_script_info();
+  vsi->finalize();
+  return *vsi;
 }
 
 } // End namespace gold.

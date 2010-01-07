@@ -1,6 +1,6 @@
 /* objcopy.c -- copy object file from input to output, optionally massaging it.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -1232,7 +1232,7 @@ add_redefine_syms_file (const char *filename)
 	   filename, strerror (errno));
 
   bufsize = 100;
-  buf = (char *) xmalloc (bufsize);
+  buf = (char *) xmalloc (bufsize + 1 /* For the terminating NUL.  */);
 
   lineno = 1;
   c = getc (file);
@@ -1249,7 +1249,7 @@ add_redefine_syms_file (const char *filename)
 	  if (len >= bufsize)
 	    {
 	      bufsize *= 2;
-	      buf = (char *) xrealloc (buf, bufsize);
+	      buf = (char *) xrealloc (buf, bufsize + 1);
 	    }
 	  c = getc (file);
 	}
@@ -1275,7 +1275,7 @@ add_redefine_syms_file (const char *filename)
 	  if (len >= bufsize)
 	    {
 	      bufsize *= 2;
-	      buf = (char *) xrealloc (buf, bufsize);
+	      buf = (char *) xrealloc (buf, bufsize + 1);
 	    }
 	  c = getc (file);
 	}
@@ -1481,7 +1481,7 @@ copy_object (bfd *ibfd, bfd *obfd, const bfd_arch_info_type *input_arch)
 	non_fatal (_("Unable to recognise the format of the input file `%s'"),
 		   bfd_get_archive_filename (ibfd));
       else
-	non_fatal (_("Warning: Output file cannot represent architecture `%s'"),
+	non_fatal (_("Output file cannot represent architecture `%s'"),
 		   bfd_printable_arch_mach (bfd_get_arch (ibfd),
 					    bfd_get_mach (ibfd)));
       return FALSE;

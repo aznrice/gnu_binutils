@@ -1,6 +1,7 @@
 /* readelf.c -- display contents of an ELF format file
    Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009  Free Software Foundation, Inc.
+   2008, 2009, 2010
+   Free Software Foundation, Inc.
 
    Originally developed by Eric Youngdale <eric@andante.jic.com>
    Modifications by Nick Clifton <nickc@redhat.com>
@@ -8624,7 +8625,10 @@ dump_section_as_strings (Elf_Internal_Shdr * section, FILE * file)
       if (data < end)
 	{
 #ifndef __MSVCRT__
-	  printf ("  [%6tx]  %s\n", data - start, data);
+	  /* PR 11128: Use two separate invocations in order to work
+             around bugs in the Solaris 8 implementation of printf.  */
+	  printf ("  [%6tx]  ", data - start);
+	  printf ("%s\n", data);
 #else
 	  printf ("  [%6Ix]  %s\n", (size_t) (data - start), data);
 #endif

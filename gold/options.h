@@ -1,6 +1,6 @@
 // options.h -- handle command line options for gold  -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -39,6 +39,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <list>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -580,13 +581,25 @@ class General_options
   // alphabetical order).  For both, lowercase sorts before uppercase.
   // The -z options come last.
 
+  DEFINE_bool(add_needed, options::TWO_DASHES, '\0', false,
+	      N_("Not supported"),
+	      N_("Do not copy DT_NEEDED tags from shared libraries"));
+
+  DEFINE_bool_alias(allow_multiple_definition, muldefs, options::TWO_DASHES,
+		    '\0', N_("Allow multiple definitions of symbols"),
+		    N_("Do not allow multiple definitions"), false);
+
   DEFINE_bool(allow_shlib_undefined, options::TWO_DASHES, '\0', false,
               N_("Allow unresolved references in shared libraries"),
               N_("Do not allow unresolved references in shared libraries"));
 
   DEFINE_bool(as_needed, options::TWO_DASHES, '\0', false,
-              N_("Only set DT_NEEDED for dynamic libs if used"),
-              N_("Always DT_NEEDED for dynamic libs"));
+              N_("Only set DT_NEEDED for shared libraries if used"),
+              N_("Always DT_NEEDED for shared libraries"));
+
+  DEFINE_enum(assert, options::ONE_DASH, '\0', NULL,
+	      N_("Ignored"), N_("[ignored]"),
+	      {"definitions", "nodefinitions", "nosymbolic", "pure-text"});
 
   // This should really be an "enum", but it's too easy for folks to
   // forget to update the list as they add new targets.  So we just
@@ -627,6 +640,14 @@ class General_options
               {"none"});
 #endif
 
+  DEFINE_bool(copy_dt_needed_entries, options::TWO_DASHES, '\0', false,
+	      N_("Not supported"),
+	      N_("Do not copy DT_NEEDED tags from shared libraries"));
+
+  DEFINE_bool(cref, options::TWO_DASHES, '\0', false,
+	      N_("Output cross reference table"),
+	      N_("Do not output cross reference table"));
+
   DEFINE_bool(define_common, options::TWO_DASHES, 'd', false,
               N_("Define common symbols"),
               N_("Do not define common symbols"));
@@ -654,6 +675,8 @@ class General_options
               N_("Try to detect violations of the One Definition Rule"),
               NULL);
 
+  DEFINE_bool(discard_all, options::TWO_DASHES, 'x', false,
+	      N_("Delete all local symbols"), NULL);
   DEFINE_bool(discard_locals, options::TWO_DASHES, 'X', false,
               N_("Delete all temporary local symbols"), NULL);
 
@@ -690,8 +713,14 @@ class General_options
   DEFINE_string(fini, options::ONE_DASH, '\0', "_fini",
                 N_("Call SYMBOL at unload-time"), N_("SYMBOL"));
 
+  DEFINE_bool(g, options::EXACTLY_ONE_DASH, '\0', false,
+	      N_("Ignored"), NULL);
+
   DEFINE_string(soname, options::ONE_DASH, 'h', NULL,
                 N_("Set shared library name"), N_("FILENAME"));
+
+  DEFINE_bool(i, options::EXACTLY_ONE_DASH, '\0', false,
+	      N_("Ignored"), NULL);
 
   DEFINE_double(hash_bucket_empty_fraction, options::TWO_DASHES, '\0', 0.0,
 		N_("Min fraction of empty buckets in dynamic hash"),
@@ -801,8 +830,8 @@ class General_options
   DEFINE_bool(relax, options::TWO_DASHES, '\0', false,
 	      N_("Relax branches on certain targets"), NULL);
 
-  DEFINE_string(retain_symbols_file, options::EXACTLY_ONE_DASH, '\0', NULL,
-                N_("keep only symbols listed in this file"), N_("[file]"));
+  DEFINE_string(retain_symbols_file, options::TWO_DASHES, '\0', NULL,
+                N_("keep only symbols listed in this file"), N_("FILE"));
 
   // -R really means -rpath, but can mean --just-symbols for
   // compatibility with GNU ld.  -rpath is always -rpath, so we list
@@ -816,6 +845,13 @@ class General_options
   DEFINE_dirlist(rpath_link, options::TWO_DASHES, '\0',
                  N_("Add DIR to link time shared library search path"),
                  N_("DIR"));
+
+  DEFINE_special(section_start, options::TWO_DASHES, '\0',
+		 N_("Set address of section"), N_("SECTION=ADDRESS"));
+
+  DEFINE_optional_string(sort_common, options::TWO_DASHES, '\0', NULL,
+			 N_("Sort common symbols by alignment"),
+			 N_("[={ascending,descending}]"));
 
   DEFINE_bool(strip_all, options::TWO_DASHES, 's', false,
               N_("Strip all symbols"), NULL);
@@ -839,7 +875,7 @@ class General_options
               N_("Use less memory and more disk I/O "
                  "(included only for compatibility with GNU ld)"), NULL);
 
-  DEFINE_bool(shared, options::ONE_DASH, '\0', false,
+  DEFINE_bool(shared, options::ONE_DASH, 'G', false,
               N_("Generate shared library"), NULL);
 
   DEFINE_bool(Bshareable, options::ONE_DASH, '\0', false,
@@ -939,6 +975,10 @@ class General_options
   DEFINE_set(trace_symbol, options::TWO_DASHES, 'y',
              N_("Trace references to symbol"), N_("SYMBOL"));
 
+  DEFINE_bool(undefined_version, options::TWO_DASHES, '\0', true,
+	      N_("Allow unused version in script (default)"),
+	      N_("Do not allow unused version in script"));
+
   DEFINE_string(Y, options::EXACTLY_ONE_DASH, 'Y', "",
 		N_("Default search path for Solaris compatibility"),
 		N_("PATH"));
@@ -974,6 +1014,11 @@ class General_options
 	      NULL);
   DEFINE_uint64(max_page_size, options::DASH_Z, '\0', 0,
                 N_("Set maximum page size to SIZE"), N_("SIZE"));
+  DEFINE_bool(muldefs, options::DASH_Z, '\0', false,
+	      N_("Allow multiple definitions of symbols"),
+	      NULL);
+  // copyreloc is here in the list because there is only -z
+  // nocopyreloc, not -z copyreloc.
   DEFINE_bool(copyreloc, options::DASH_Z, '\0', true,
 	      NULL,
 	      N_("Do not create copy relocs"));
@@ -1116,6 +1161,11 @@ class General_options
   in_dynamic_list(const char* symbol) const
   { return this->dynamic_list_.version_script_info()->symbol_is_local(symbol); }
 
+  // Finalize the dynamic list.
+  void
+  finalize_dynamic_list()
+  { this->dynamic_list_.version_script_info()->finalize(); }
+
   // The disposition given by the --incremental-changed,
   // --incremental-unchanged or --incremental-unknown option.  The
   // value may change as we proceed parsing the command line flags.
@@ -1127,6 +1177,12 @@ class General_options
   // symbol export.
   bool
   check_excluded_libs (const std::string &s) const;
+
+  // If an explicit start address was given for section SECNAME with
+  // the --section-start option, return true and set *PADDR to the
+  // address.  Otherwise return false.
+  bool
+  section_start(const char* secname, uint64_t* paddr) const;
 
  private:
   // Don't copy this structure.
@@ -1215,6 +1271,8 @@ class General_options
   Unordered_set<std::string> excluded_libs_;
   // List of symbol-names to keep, via -retain-symbol-info.
   Unordered_set<std::string> symbols_to_retain_;
+  // Map from section name to address from --section-start.
+  std::map<std::string, uint64_t> section_starts_;
 };
 
 // The position-dependent options.  We use this to store the state of
@@ -1550,10 +1608,9 @@ class Command_line
   script_options()
   { return this->script_options_; }
 
-  // Get the version-script options: a convenience routine.
+  // Finalize the version-script options and return them.
   const Version_script_info&
-  version_script() const
-  { return *this->script_options_.version_script_info(); }
+  version_script();
 
   // Get the input files.
   Input_arguments&

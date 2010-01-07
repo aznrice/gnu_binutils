@@ -349,6 +349,9 @@ struct arm_it
      appropriate.  */
   int		uncond_value;
   struct neon_type vectype;
+  /* This does not indicate an actual NEON instruction, only that
+     the mnemonic accepts neon-style type suffixes.  */
+  int		is_neon;
   /* Set to the opcode if the instruction needs relaxation.
      Zero if the instruction is not relaxed.  */
   unsigned long	relax;
@@ -5765,7 +5768,6 @@ enum operand_parse_code
   OP_NRDLST,    /* Neon double-precision register list (d0-d31, qN aliases) */
   OP_NSTRLST,   /* Neon element/structure list */
 
-  OP_NILO,      /* Neon immediate/logic operands 2 or 2+3. (VBIC, VORR...)  */
   OP_RNDQ_I0,   /* Neon D or Q reg, or immediate zero.  */
   OP_RVSD_I0,	/* VFP S or D reg, or immediate zero.  */
   OP_RR_RNSC,   /* ARM reg or Neon scalar.  */
@@ -5773,7 +5775,7 @@ enum operand_parse_code
   OP_RNDQ_RNSC, /* Neon D or Q reg, or Neon scalar.  */
   OP_RND_RNSC,  /* Neon D reg, or Neon scalar.  */
   OP_VMOV,      /* Neon VMOV operands.  */
-  OP_RNDQ_IMVNb,/* Neon D or Q reg, or immediate good for VMVN.  */
+  OP_RNDQ_Ibig,	/* Neon D or Q reg, or big immediate for logic and VMVN.  */
   OP_RNDQ_I63b, /* Neon D or Q reg, or immediate for shift.  */
   OP_RIWR_I32z, /* iWMMXt wR register, or immediate 0 .. 32 for iWMMXt2.  */
 
@@ -6005,36 +6007,6 @@ parse_operands (char *str, const unsigned char *pattern)
            scalars are accepted here, so deal with those in later code.  */
         case OP_RNSC:  po_scalar_or_goto (8, failure);    break;
 
-        /* WARNING: We can expand to two operands here. This has the potential
-           to totally confuse the backtracking mechanism! It will be OK at
-           least as long as we don't try to use optional args as well,
-           though.  */
-        case OP_NILO:
-          {
-            po_reg_or_goto (REG_TYPE_NDQ, try_imm);
-	    inst.operands[i].present = 1;
-            i++;
-            skip_past_comma (&str);
-            po_reg_or_goto (REG_TYPE_NDQ, one_reg_only);
-            break;
-            one_reg_only:
-            /* Optional register operand was omitted. Unfortunately, it's in
-               operands[i-1] and we need it to be in inst.operands[i]. Fix that
-               here (this is a bit grotty).  */
-            inst.operands[i] = inst.operands[i-1];
-            inst.operands[i-1].present = 0;
-            break;
-            try_imm:
-	    /* There's a possibility of getting a 64-bit immediate here, so
-	       we need special handling.  */
-	    if (parse_big_immediate (&str, i) == FAIL)
-	      {
-		inst.error = _("immediate value is out of range");
-		goto failure;
-	      }
-          }
-          break;
-
         case OP_RNDQ_I0:
           {
             po_reg_or_goto (REG_TYPE_NDQ, try_imm0);
@@ -6090,11 +6062,11 @@ parse_operands (char *str, const unsigned char *pattern)
           po_misc_or_fail (parse_neon_mov (&str, &i) == FAIL);
           break;
 
-        case OP_RNDQ_IMVNb:
+        case OP_RNDQ_Ibig:
           {
-            po_reg_or_goto (REG_TYPE_NDQ, try_mvnimm);
+            po_reg_or_goto (REG_TYPE_NDQ, try_immbig);
             break;
-            try_mvnimm:
+            try_immbig:
             /* There's a possibility of getting a 64-bit immediate here, so
                we need special handling.  */
             if (parse_big_immediate (&str, i) == FAIL)
@@ -11425,19 +11397,39 @@ NEON_ENC_TAB
 #undef X
 };
 
-#define NEON_ENC_INTEGER(X) (neon_enc_tab[(X) & 0x0fffffff].integer)
-#define NEON_ENC_ARMREG(X)  (neon_enc_tab[(X) & 0x0fffffff].integer)
-#define NEON_ENC_POLY(X)    (neon_enc_tab[(X) & 0x0fffffff].float_or_poly)
-#define NEON_ENC_FLOAT(X)   (neon_enc_tab[(X) & 0x0fffffff].float_or_poly)
-#define NEON_ENC_SCALAR(X)  (neon_enc_tab[(X) & 0x0fffffff].scalar_or_imm)
-#define NEON_ENC_IMMED(X)   (neon_enc_tab[(X) & 0x0fffffff].scalar_or_imm)
-#define NEON_ENC_INTERLV(X) (neon_enc_tab[(X) & 0x0fffffff].integer)
-#define NEON_ENC_LANE(X)    (neon_enc_tab[(X) & 0x0fffffff].float_or_poly)
-#define NEON_ENC_DUP(X)     (neon_enc_tab[(X) & 0x0fffffff].scalar_or_imm)
-#define NEON_ENC_SINGLE(X) \
+/* Do not use these macros; instead, use NEON_ENCODE defined below.  */
+#define NEON_ENC_INTEGER_(X) (neon_enc_tab[(X) & 0x0fffffff].integer)
+#define NEON_ENC_ARMREG_(X)  (neon_enc_tab[(X) & 0x0fffffff].integer)
+#define NEON_ENC_POLY_(X)    (neon_enc_tab[(X) & 0x0fffffff].float_or_poly)
+#define NEON_ENC_FLOAT_(X)   (neon_enc_tab[(X) & 0x0fffffff].float_or_poly)
+#define NEON_ENC_SCALAR_(X)  (neon_enc_tab[(X) & 0x0fffffff].scalar_or_imm)
+#define NEON_ENC_IMMED_(X)   (neon_enc_tab[(X) & 0x0fffffff].scalar_or_imm)
+#define NEON_ENC_INTERLV_(X) (neon_enc_tab[(X) & 0x0fffffff].integer)
+#define NEON_ENC_LANE_(X)    (neon_enc_tab[(X) & 0x0fffffff].float_or_poly)
+#define NEON_ENC_DUP_(X)     (neon_enc_tab[(X) & 0x0fffffff].scalar_or_imm)
+#define NEON_ENC_SINGLE_(X) \
   ((neon_enc_tab[(X) & 0x0fffffff].integer) | ((X) & 0xf0000000))
-#define NEON_ENC_DOUBLE(X) \
+#define NEON_ENC_DOUBLE_(X) \
   ((neon_enc_tab[(X) & 0x0fffffff].float_or_poly) | ((X) & 0xf0000000))
+
+#define NEON_ENCODE(type, inst)					\
+  do								\
+    {								\
+      inst.instruction = NEON_ENC_##type##_ (inst.instruction);	\
+      inst.is_neon = 1;						\
+    }								\
+  while (0)
+
+#define check_neon_suffixes						\
+  do									\
+    {									\
+      if (!inst.error && inst.vectype.elems > 0 && !inst.is_neon)	\
+	{								\
+	  as_bad (_("invalid neon suffix for non neon instruction"));	\
+	  return;							\
+	}								\
+    }									\
+  while (0)
 
 /* Define shapes for instruction operands. The following mnemonic characters
    are used in this table:
@@ -12104,6 +12096,8 @@ neon_check_type (unsigned els, enum neon_shape ns, ...)
 static void
 do_vfp_cond_or_thumb (void)
 {
+  inst.is_neon = 1;
+
   if (thumb_mode)
     inst.instruction |= 0xe0000000;
   else
@@ -12131,6 +12125,8 @@ do_vfp_nsyn_opcode (const char *opname)
   constraint (!ARM_CPU_HAS_FEATURE (cpu_variant,
                 thumb_mode ? *opcode->tvariant : *opcode->avariant),
               _(BAD_FPU));
+
+  inst.is_neon = 1;
 
   if (thumb_mode)
     {
@@ -12333,12 +12329,12 @@ do_vfp_nsyn_nmul (void)
 
   if (rs == NS_FFF)
     {
-      inst.instruction = NEON_ENC_SINGLE (inst.instruction);
+      NEON_ENCODE (SINGLE, inst);
       do_vfp_sp_dyadic ();
     }
   else
     {
-      inst.instruction = NEON_ENC_DOUBLE (inst.instruction);
+      NEON_ENCODE (DOUBLE, inst);
       do_vfp_dp_rd_rn_rm ();
     }
   do_vfp_cond_or_thumb ();
@@ -12354,12 +12350,12 @@ do_vfp_nsyn_cmp (void)
 
       if (rs == NS_FF)
         {
-          inst.instruction = NEON_ENC_SINGLE (inst.instruction);
+          NEON_ENCODE (SINGLE, inst);
           do_vfp_sp_monadic ();
         }
       else
         {
-          inst.instruction = NEON_ENC_DOUBLE (inst.instruction);
+          NEON_ENCODE (DOUBLE, inst);
           do_vfp_dp_rd_rm ();
         }
     }
@@ -12382,12 +12378,12 @@ do_vfp_nsyn_cmp (void)
 
       if (rs == NS_FI)
         {
-          inst.instruction = NEON_ENC_SINGLE (inst.instruction);
+          NEON_ENCODE (SINGLE, inst);
           do_vfp_sp_compare_z ();
         }
       else
         {
-          inst.instruction = NEON_ENC_DOUBLE (inst.instruction);
+          NEON_ENCODE (DOUBLE, inst);
           do_vfp_dp_rd ();
         }
     }
@@ -12428,9 +12424,12 @@ do_vfp_nsyn_pop (void)
 /* Fix up Neon data-processing instructions, ORing in the correct bits for
    ARM mode or Thumb mode and moving the encoded bit 24 to bit 28.  */
 
-static unsigned
-neon_dp_fixup (unsigned i)
+static void
+neon_dp_fixup (struct arm_it* insn)
 {
+  unsigned int i = insn->instruction;
+  insn->is_neon = 1;
+
   if (thumb_mode)
     {
       /* The U bit is at bit 24 by default. Move to bit 28 in Thumb mode.  */
@@ -12444,7 +12443,7 @@ neon_dp_fixup (unsigned i)
   else
     i |= 0xf2000000;
 
-  return i;
+  insn->instruction = i;
 }
 
 /* Turn a size (8, 16, 32, 64) into the respective bit number minus 3
@@ -12481,7 +12480,7 @@ neon_three_same (int isquad, int ubit, int size)
   if (size != -1)
     inst.instruction |= neon_logbits (size) << 20;
 
-  inst.instruction = neon_dp_fixup (inst.instruction);
+  neon_dp_fixup (&inst);
 }
 
 /* Encode instructions of the form:
@@ -12504,7 +12503,7 @@ neon_two_same (int qbit, int ubit, int size)
   if (size != -1)
     inst.instruction |= neon_logbits (size) << 18;
 
-  inst.instruction = neon_dp_fixup (inst.instruction);
+  neon_dp_fixup (&inst);
 }
 
 /* Neon instruction encoders, in approximate order of appearance.  */
@@ -12543,7 +12542,7 @@ neon_imm_shift (int write_ubit, int uval, int isquad, struct neon_type_el et,
   if (write_ubit)
     inst.instruction |= (uval != 0) << 24;
 
-  inst.instruction = neon_dp_fixup (inst.instruction);
+  neon_dp_fixup (&inst);
 }
 
 static void
@@ -12553,7 +12552,7 @@ do_neon_shl_imm (void)
     {
       enum neon_shape rs = neon_select_shape (NS_DDI, NS_QQI, NS_NULL);
       struct neon_type_el et = neon_check_type (2, rs, N_EQK, N_KEY | N_I_ALL);
-      inst.instruction = NEON_ENC_IMMED (inst.instruction);
+      NEON_ENCODE (IMMED, inst);
       neon_imm_shift (FALSE, 0, neon_quad (rs), et, inst.operands[2].imm);
     }
   else
@@ -12573,7 +12572,7 @@ do_neon_shl_imm (void)
       tmp = inst.operands[2].reg;
       inst.operands[2].reg = inst.operands[1].reg;
       inst.operands[1].reg = tmp;
-      inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+      NEON_ENCODE (INTEGER, inst);
       neon_three_same (neon_quad (rs), et.type == NT_unsigned, et.size);
     }
 }
@@ -12586,7 +12585,7 @@ do_neon_qshl_imm (void)
       enum neon_shape rs = neon_select_shape (NS_DDI, NS_QQI, NS_NULL);
       struct neon_type_el et = neon_check_type (2, rs, N_EQK, N_SU_ALL | N_KEY);
 
-      inst.instruction = NEON_ENC_IMMED (inst.instruction);
+      NEON_ENCODE (IMMED, inst);
       neon_imm_shift (TRUE, et.type == NT_unsigned, neon_quad (rs), et,
                       inst.operands[2].imm);
     }
@@ -12601,7 +12600,7 @@ do_neon_qshl_imm (void)
       tmp = inst.operands[2].reg;
       inst.operands[2].reg = inst.operands[1].reg;
       inst.operands[1].reg = tmp;
-      inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+      NEON_ENCODE (INTEGER, inst);
       neon_three_same (neon_quad (rs), et.type == NT_unsigned, et.size);
     }
 }
@@ -12875,12 +12874,17 @@ do_neon_logic (void)
       enum neon_shape rs = neon_select_shape (NS_DDD, NS_QQQ, NS_NULL);
       neon_check_type (3, rs, N_IGNORE_TYPE);
       /* U bit and size field were set as part of the bitmask.  */
-      inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+      NEON_ENCODE (INTEGER, inst);
       neon_three_same (neon_quad (rs), 0, -1);
     }
   else
     {
-      enum neon_shape rs = neon_select_shape (NS_DI, NS_QI, NS_NULL);
+      const int three_ops_form = (inst.operands[2].present
+				  && !inst.operands[2].isreg);
+      const int immoperand = (three_ops_form ? 2 : 1);
+      enum neon_shape rs = (three_ops_form
+			    ? neon_select_shape (NS_DDI, NS_QQI, NS_NULL)
+			    : neon_select_shape (NS_DI, NS_QI, NS_NULL));
       struct neon_type_el et = neon_check_type (2, rs,
         N_I8 | N_I16 | N_I32 | N_I64 | N_F32 | N_KEY, N_EQK);
       enum neon_opc opcode = (enum neon_opc) inst.instruction & 0x0fffffff;
@@ -12890,15 +12894,19 @@ do_neon_logic (void)
       if (et.type == NT_invtype)
         return;
 
-      inst.instruction = NEON_ENC_IMMED (inst.instruction);
+      if (three_ops_form)
+	constraint (inst.operands[0].reg != inst.operands[1].reg,
+		    _("first and second operands shall be the same register"));
 
-      immbits = inst.operands[1].imm;
+      NEON_ENCODE (IMMED, inst);
+
+      immbits = inst.operands[immoperand].imm;
       if (et.size == 64)
 	{
 	  /* .i64 is a pseudo-op, so the immediate must be a repeating
 	     pattern.  */
-	  if (immbits != (inst.operands[1].regisimm ?
-			  inst.operands[1].reg : 0))
+	  if (immbits != (inst.operands[immoperand].regisimm ?
+			  inst.operands[immoperand].reg : 0))
 	    {
 	      /* Set immbits to an invalid constant.  */
 	      immbits = 0xdeadbeef;
@@ -12940,7 +12948,7 @@ do_neon_logic (void)
       inst.instruction |= cmode << 8;
       neon_write_immbits (immbits);
 
-      inst.instruction = neon_dp_fixup (inst.instruction);
+      neon_dp_fixup (&inst);
     }
 }
 
@@ -12961,12 +12969,12 @@ neon_dyadic_misc (enum neon_el_type ubit_meaning, unsigned types,
                                             types | N_KEY);
   if (et.type == NT_float)
     {
-      inst.instruction = NEON_ENC_FLOAT (inst.instruction);
+      NEON_ENCODE (FLOAT, inst);
       neon_three_same (neon_quad (rs), 0, -1);
     }
   else
     {
-      inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+      NEON_ENCODE (INTEGER, inst);
       neon_three_same (neon_quad (rs), et.type == ubit_meaning, et.size);
     }
 }
@@ -13099,7 +13107,7 @@ neon_compare (unsigned regtypes, unsigned immtypes, int invert)
       struct neon_type_el et = neon_check_type (2, rs,
         N_EQK | N_SIZ, immtypes | N_KEY);
 
-      inst.instruction = NEON_ENC_IMMED (inst.instruction);
+      NEON_ENCODE (IMMED, inst);
       inst.instruction |= LOW4 (inst.operands[0].reg) << 12;
       inst.instruction |= HI1 (inst.operands[0].reg) << 22;
       inst.instruction |= LOW4 (inst.operands[1].reg);
@@ -13108,7 +13116,7 @@ neon_compare (unsigned regtypes, unsigned immtypes, int invert)
       inst.instruction |= (et.type == NT_float) << 10;
       inst.instruction |= neon_logbits (et.size) << 18;
 
-      inst.instruction = neon_dp_fixup (inst.instruction);
+      neon_dp_fixup (&inst);
     }
 }
 
@@ -13184,7 +13192,7 @@ neon_mul_mac (struct neon_type_el et, int ubit)
   inst.instruction |= neon_logbits (et.size) << 20;
   inst.instruction |= (ubit != 0) << 24;
 
-  inst.instruction = neon_dp_fixup (inst.instruction);
+  neon_dp_fixup (&inst);
 }
 
 static void
@@ -13201,7 +13209,7 @@ do_neon_mac_maybe_scalar (void)
       enum neon_shape rs = neon_select_shape (NS_DDS, NS_QQS, NS_NULL);
       struct neon_type_el et = neon_check_type (3, rs,
         N_EQK, N_EQK, N_I16 | N_I32 | N_F32 | N_KEY);
-      inst.instruction = NEON_ENC_SCALAR (inst.instruction);
+      NEON_ENCODE (SCALAR, inst);
       neon_mul_mac (et, neon_quad (rs));
     }
   else
@@ -13260,7 +13268,7 @@ do_neon_qdmulh (void)
       enum neon_shape rs = neon_select_shape (NS_DDS, NS_QQS, NS_NULL);
       struct neon_type_el et = neon_check_type (3, rs,
         N_EQK, N_EQK, N_S16 | N_S32 | N_KEY);
-      inst.instruction = NEON_ENC_SCALAR (inst.instruction);
+      NEON_ENCODE (SCALAR, inst);
       neon_mul_mac (et, neon_quad (rs));
     }
   else
@@ -13268,7 +13276,7 @@ do_neon_qdmulh (void)
       enum neon_shape rs = neon_select_shape (NS_DDD, NS_QQQ, NS_NULL);
       struct neon_type_el et = neon_check_type (3, rs,
         N_EQK, N_EQK, N_S16 | N_S32 | N_KEY);
-      inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+      NEON_ENCODE (INTEGER, inst);
       /* The U bit (rounding) comes from bit mask.  */
       neon_three_same (neon_quad (rs), 0, et.size);
     }
@@ -13321,7 +13329,7 @@ do_neon_abs_neg (void)
   inst.instruction |= (et.type == NT_float) << 10;
   inst.instruction |= neon_logbits (et.size) << 18;
 
-  inst.instruction = neon_dp_fixup (inst.instruction);
+  neon_dp_fixup (&inst);
 }
 
 static void
@@ -13372,7 +13380,7 @@ do_neon_qmovn (void)
     N_EQK | N_HLF, N_SU_16_64 | N_KEY);
   /* Saturating move where operands can be signed or unsigned, and the
      destination has the same signedness.  */
-  inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+  NEON_ENCODE (INTEGER, inst);
   if (et.type == NT_unsigned)
     inst.instruction |= 0xc0;
   else
@@ -13386,7 +13394,7 @@ do_neon_qmovun (void)
   struct neon_type_el et = neon_check_type (2, NS_DQ,
     N_EQK | N_HLF | N_UNS, N_S16 | N_S32 | N_S64 | N_KEY);
   /* Saturating move with unsigned results. Operands must be signed.  */
-  inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+  NEON_ENCODE (INTEGER, inst);
   neon_two_same (0, 1, et.size / 2);
 }
 
@@ -13452,7 +13460,7 @@ do_neon_movn (void)
 {
   struct neon_type_el et = neon_check_type (2, NS_DQ,
     N_EQK | N_HLF, N_I16 | N_I32 | N_I64 | N_KEY);
-  inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+  NEON_ENCODE (INTEGER, inst);
   neon_two_same (0, 1, et.size / 2);
 }
 
@@ -13492,21 +13500,21 @@ do_neon_shll (void)
   if (imm == et.size)
     {
       /* Maximum shift variant.  */
-      inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+      NEON_ENCODE (INTEGER, inst);
       inst.instruction |= LOW4 (inst.operands[0].reg) << 12;
       inst.instruction |= HI1 (inst.operands[0].reg) << 22;
       inst.instruction |= LOW4 (inst.operands[1].reg);
       inst.instruction |= HI1 (inst.operands[1].reg) << 5;
       inst.instruction |= neon_logbits (et.size) << 18;
 
-      inst.instruction = neon_dp_fixup (inst.instruction);
+      neon_dp_fixup (&inst);
     }
   else
     {
       /* A more-specific type check for non-max versions.  */
       et = neon_check_type (2, NS_QDI,
         N_EQK | N_DBL, N_SU_32 | N_KEY);
-      inst.instruction = NEON_ENC_IMMED (inst.instruction);
+      NEON_ENCODE (IMMED, inst);
       neon_imm_shift (TRUE, et.type == NT_unsigned, 0, et, imm);
     }
 }
@@ -13658,11 +13666,21 @@ do_vfp_nsyn_cvtz (void)
 }
 
 static void
-do_neon_cvt (void)
+do_neon_cvt_1 (bfd_boolean round_to_zero ATTRIBUTE_UNUSED)
 {
   enum neon_shape rs = neon_select_shape (NS_DDI, NS_QQI, NS_FFI, NS_DD, NS_QQ,
     NS_FD, NS_DF, NS_FF, NS_QD, NS_DQ, NS_NULL);
   int flavour = neon_cvt_flavour (rs);
+
+  /* PR11109: Handle round-to-zero for VCVT conversions.  */
+  if (round_to_zero
+      && ARM_CPU_HAS_FEATURE (cpu_variant, fpu_arch_vfp_v2)
+      && (flavour == 0 || flavour == 1 || flavour == 8 || flavour == 9)
+      && (rs == NS_FD || rs == NS_FF))
+    {
+      do_vfp_nsyn_cvtz ();
+      return;
+    }
 
   /* VFP rather than Neon conversions.  */
   if (flavour >= 6)
@@ -13687,7 +13705,7 @@ do_neon_cvt (void)
         if (inst.operands[2].present && inst.operands[2].imm == 0)
           goto int_encode;
        immbits = 32 - inst.operands[2].imm;
-        inst.instruction = NEON_ENC_IMMED (inst.instruction);
+        NEON_ENCODE (IMMED, inst);
         if (flavour != -1)
           inst.instruction |= enctab[flavour];
         inst.instruction |= LOW4 (inst.operands[0].reg) << 12;
@@ -13698,7 +13716,7 @@ do_neon_cvt (void)
         inst.instruction |= 1 << 21;
         inst.instruction |= immbits << 16;
 
-        inst.instruction = neon_dp_fixup (inst.instruction);
+        neon_dp_fixup (&inst);
       }
       break;
 
@@ -13708,7 +13726,7 @@ do_neon_cvt (void)
       {
         unsigned enctab[] = { 0x100, 0x180, 0x0, 0x080 };
 
-        inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+        NEON_ENCODE (INTEGER, inst);
 
         if (vfp_or_neon_is_neon (NEON_CHECK_CC | NEON_CHECK_ARCH) == FAIL)
           return;
@@ -13723,7 +13741,7 @@ do_neon_cvt (void)
         inst.instruction |= neon_quad (rs) << 6;
         inst.instruction |= 2 << 18;
 
-        inst.instruction = neon_dp_fixup (inst.instruction);
+        neon_dp_fixup (&inst);
       }
     break;
 
@@ -13754,13 +13772,25 @@ do_neon_cvt (void)
       inst.instruction |= HI1 (inst.operands[0].reg) << 22;
       inst.instruction |= LOW4 (inst.operands[1].reg);
       inst.instruction |= HI1 (inst.operands[1].reg) << 5;
-      inst.instruction = neon_dp_fixup (inst.instruction);
+      neon_dp_fixup (&inst);
       break;
 
     default:
       /* Some VFP conversions go here (s32 <-> f32, u32 <-> f32).  */
       do_vfp_nsyn_cvt (rs, flavour);
     }
+}
+
+static void
+do_neon_cvtr (void)
+{
+  do_neon_cvt_1 (FALSE);
+}
+
+static void
+do_neon_cvt (void)
+{
+  do_neon_cvt_1 (TRUE);
 }
 
 static void
@@ -13850,7 +13880,7 @@ do_neon_mvn (void)
     {
       enum neon_shape rs = neon_select_shape (NS_DD, NS_QQ, NS_NULL);
 
-      inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+      NEON_ENCODE (INTEGER, inst);
       inst.instruction |= LOW4 (inst.operands[0].reg) << 12;
       inst.instruction |= HI1 (inst.operands[0].reg) << 22;
       inst.instruction |= LOW4 (inst.operands[1].reg);
@@ -13859,11 +13889,11 @@ do_neon_mvn (void)
     }
   else
     {
-      inst.instruction = NEON_ENC_IMMED (inst.instruction);
+      NEON_ENCODE (IMMED, inst);
       neon_move_immediate ();
     }
 
-  inst.instruction = neon_dp_fixup (inst.instruction);
+  neon_dp_fixup (&inst);
 }
 
 /* Encode instructions of form:
@@ -13883,7 +13913,7 @@ neon_mixed_length (struct neon_type_el et, unsigned size)
   inst.instruction |= (et.type == NT_unsigned) << 24;
   inst.instruction |= neon_logbits (size) << 20;
 
-  inst.instruction = neon_dp_fixup (inst.instruction);
+  neon_dp_fixup (&inst);
 }
 
 static void
@@ -13910,14 +13940,14 @@ neon_mac_reg_scalar_long (unsigned regtypes, unsigned scalartypes)
     {
       struct neon_type_el et = neon_check_type (3, NS_QDS,
         N_EQK | N_DBL, N_EQK, regtypes | N_KEY);
-      inst.instruction = NEON_ENC_SCALAR (inst.instruction);
+      NEON_ENCODE (SCALAR, inst);
       neon_mul_mac (et, et.type == NT_unsigned);
     }
   else
     {
       struct neon_type_el et = neon_check_type (3, NS_QDD,
         N_EQK | N_DBL, N_EQK, scalartypes | N_KEY);
-      inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+      NEON_ENCODE (INTEGER, inst);
       neon_mixed_length (et, et.size);
     }
 }
@@ -13963,9 +13993,9 @@ do_neon_vmull (void)
       struct neon_type_el et = neon_check_type (3, NS_QDD,
         N_EQK | N_DBL, N_EQK, N_SU_32 | N_P8 | N_KEY);
       if (et.type == NT_poly)
-        inst.instruction = NEON_ENC_POLY (inst.instruction);
+        NEON_ENCODE (POLY, inst);
       else
-        inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+        NEON_ENCODE (INTEGER, inst);
       /* For polynomial encoding, size field must be 0b00 and the U bit must be
          zero. Should be OK as-is.  */
       neon_mixed_length (et, et.size);
@@ -13991,7 +14021,7 @@ do_neon_ext (void)
   inst.instruction |= neon_quad (rs) << 6;
   inst.instruction |= imm << 8;
 
-  inst.instruction = neon_dp_fixup (inst.instruction);
+  neon_dp_fixup (&inst);
 }
 
 static void
@@ -14027,7 +14057,7 @@ do_neon_dup (void)
       if (vfp_or_neon_is_neon (NEON_CHECK_CC) == FAIL)
         return;
 
-      inst.instruction = NEON_ENC_SCALAR (inst.instruction);
+      NEON_ENCODE (SCALAR, inst);
       inst.instruction |= LOW4 (inst.operands[0].reg) << 12;
       inst.instruction |= HI1 (inst.operands[0].reg) << 22;
       inst.instruction |= LOW4 (dm);
@@ -14036,7 +14066,7 @@ do_neon_dup (void)
       inst.instruction |= x << 17;
       inst.instruction |= sizebits << 16;
 
-      inst.instruction = neon_dp_fixup (inst.instruction);
+      neon_dp_fixup (&inst);
     }
   else
     {
@@ -14044,7 +14074,7 @@ do_neon_dup (void)
       struct neon_type_el et = neon_check_type (2, rs,
         N_8 | N_16 | N_32 | N_KEY, N_EQK);
       /* Duplicate ARM register to lanes of vector.  */
-      inst.instruction = NEON_ENC_ARMREG (inst.instruction);
+      NEON_ENCODE (ARMREG, inst);
       switch (et.size)
         {
         case 8:  inst.instruction |= 0x400000; break;
@@ -14141,7 +14171,7 @@ do_neon_mov (void)
         inst.instruction |= HI1 (inst.operands[1].reg) << 7;
         inst.instruction |= neon_quad (rs) << 6;
 
-        inst.instruction = neon_dp_fixup (inst.instruction);
+        neon_dp_fixup (&inst);
       }
       break;
 
@@ -14161,7 +14191,7 @@ do_neon_mov (void)
         return;
       inst.instruction = 0x0800010;
       neon_move_immediate ();
-      inst.instruction = neon_dp_fixup (inst.instruction);
+      neon_dp_fixup (&inst);
       break;
 
     case NS_SR:  /* case 4.  */
@@ -14350,7 +14380,7 @@ do_neon_trn (void)
   enum neon_shape rs = neon_select_shape (NS_DD, NS_QQ, NS_NULL);
   struct neon_type_el et = neon_check_type (2, rs,
     N_EQK, N_8 | N_16 | N_32 | N_KEY);
-  inst.instruction = NEON_ENC_INTEGER (inst.instruction);
+  NEON_ENCODE (INTEGER, inst);
   neon_two_same (neon_quad (rs), 1, et.size);
 }
 
@@ -14454,7 +14484,7 @@ do_neon_tbl_tbx (void)
   inst.instruction |= HI1 (inst.operands[2].reg) << 5;
   inst.instruction |= listlenbits << 8;
 
-  inst.instruction = neon_dp_fixup (inst.instruction);
+  neon_dp_fixup (&inst);
 }
 
 static void
@@ -14780,20 +14810,23 @@ do_neon_ld_dup (void)
 static void
 do_neon_ldx_stx (void)
 {
+  if (inst.operands[1].isreg)
+    constraint (inst.operands[1].reg == REG_PC, BAD_PC);
+
   switch (NEON_LANE (inst.operands[0].imm))
     {
     case NEON_INTERLEAVE_LANES:
-      inst.instruction = NEON_ENC_INTERLV (inst.instruction);
+      NEON_ENCODE (INTERLV, inst);
       do_neon_ld_st_interleave ();
       break;
 
     case NEON_ALL_LANES:
-      inst.instruction = NEON_ENC_DUP (inst.instruction);
+      NEON_ENCODE (DUP, inst);
       do_neon_ld_dup ();
       break;
 
     default:
-      inst.instruction = NEON_ENC_LANE (inst.instruction);
+      NEON_ENCODE (LANE, inst);
       do_neon_ld_st_lane ();
     }
 
@@ -15651,6 +15684,8 @@ md_assemble (char *str)
 	ARM_MERGE_FEATURE_SETS (thumb_arch_used, thumb_arch_used,
 				arm_ext_v6t2);
 
+      check_neon_suffixes;
+
       if (!inst.error)
 	{
 	  mapping_state (MAP_THUMB);
@@ -15696,6 +15731,9 @@ md_assemble (char *str)
       else
 	ARM_MERGE_FEATURE_SETS (arm_arch_used, arm_arch_used,
 				*opcode->avariant);
+
+      check_neon_suffixes;
+
       if (!inst.error)
 	{
 	  mapping_state (MAP_ARM);
@@ -17400,7 +17438,8 @@ static const struct asm_opcode insns[] =
  NCE(vldr,      d100b00, 2, (RVSD, ADDRGLDC), neon_ldr_str),
  NCE(vstr,      d000b00, 2, (RVSD, ADDRGLDC), neon_ldr_str),
 
- nCEF(vcvt,     _vcvt,    3, (RNSDQ, RNSDQ, oI32b), neon_cvt),
+ nCEF(vcvt,     _vcvt,   3, (RNSDQ, RNSDQ, oI32b), neon_cvt),
+ nCEF(vcvtr,    _vcvt,   2, (RNSDQ, RNSDQ), neon_cvtr),
  nCEF(vcvtb,	_vcvt,	 2, (RVS, RVS), neon_cvtb),
  nCEF(vcvtt,	_vcvt,	 2, (RVS, RVS), neon_cvtt),
 
@@ -17441,16 +17480,16 @@ static const struct asm_opcode insns[] =
  nUF(vqshl,     _vqshl,   3, (RNDQ, oRNDQ, RNDQ_I63b), neon_qshl_imm),
  nUF(vqshlq,    _vqshl,   3, (RNQ,  oRNQ,  RNDQ_I63b), neon_qshl_imm),
   /* Logic ops, types optional & ignored.  */
- nUF(vand,      _vand,    2, (RNDQ, NILO),        neon_logic),
- nUF(vandq,     _vand,    2, (RNQ,  NILO),        neon_logic),
- nUF(vbic,      _vbic,    2, (RNDQ, NILO),        neon_logic),
- nUF(vbicq,     _vbic,    2, (RNQ,  NILO),        neon_logic),
- nUF(vorr,      _vorr,    2, (RNDQ, NILO),        neon_logic),
- nUF(vorrq,     _vorr,    2, (RNQ,  NILO),        neon_logic),
- nUF(vorn,      _vorn,    2, (RNDQ, NILO),        neon_logic),
- nUF(vornq,     _vorn,    2, (RNQ,  NILO),        neon_logic),
- nUF(veor,      _veor,    3, (RNDQ, oRNDQ, RNDQ), neon_logic),
- nUF(veorq,     _veor,    3, (RNQ,  oRNQ,  RNQ),  neon_logic),
+ nUF(vand,      _vand,    3, (RNDQ, oRNDQ, RNDQ_Ibig), neon_logic),
+ nUF(vandq,     _vand,    3, (RNQ,  oRNQ,  RNDQ_Ibig), neon_logic),
+ nUF(vbic,      _vbic,    3, (RNDQ, oRNDQ, RNDQ_Ibig), neon_logic),
+ nUF(vbicq,     _vbic,    3, (RNQ,  oRNQ,  RNDQ_Ibig), neon_logic),
+ nUF(vorr,      _vorr,    3, (RNDQ, oRNDQ, RNDQ_Ibig), neon_logic),
+ nUF(vorrq,     _vorr,    3, (RNQ,  oRNQ,  RNDQ_Ibig), neon_logic),
+ nUF(vorn,      _vorn,    3, (RNDQ, oRNDQ, RNDQ_Ibig), neon_logic),
+ nUF(vornq,     _vorn,    3, (RNQ,  oRNQ,  RNDQ_Ibig), neon_logic),
+ nUF(veor,      _veor,    3, (RNDQ, oRNDQ, RNDQ),      neon_logic),
+ nUF(veorq,     _veor,    3, (RNQ,  oRNQ,  RNQ),       neon_logic),
   /* Bitfield ops, untyped.  */
  NUF(vbsl,      1100110, 3, (RNDQ, RNDQ, RNDQ), neon_bitfield),
  NUF(vbslq,     1100110, 3, (RNQ,  RNQ,  RNQ),  neon_bitfield),
@@ -17549,8 +17588,8 @@ static const struct asm_opcode insns[] =
   /* CVT with optional immediate for fixed-point variant.  */
  nUF(vcvtq,     _vcvt,    3, (RNQ, RNQ, oI32b), neon_cvt),
 
- nUF(vmvn,      _vmvn,    2, (RNDQ, RNDQ_IMVNb), neon_mvn),
- nUF(vmvnq,     _vmvn,    2, (RNQ,  RNDQ_IMVNb), neon_mvn),
+ nUF(vmvn,      _vmvn,    2, (RNDQ, RNDQ_Ibig), neon_mvn),
+ nUF(vmvnq,     _vmvn,    2, (RNQ,  RNDQ_Ibig), neon_mvn),
 
   /* Data processing, three registers of different lengths.  */
   /* Dyadic, long insns. Types S8 S16 S32 U8 U16 U32.  */
@@ -19536,6 +19575,31 @@ arm_optimize_expr (expressionS *l, operatorT op, expressionS *r)
   return FALSE;
 }
 
+/* Encode Thumb2 unconditional branches and calls. The encoding
+   for the 2 are identical for the immediate values.  */
+
+static void
+encode_thumb2_b_bl_offset (char * buf, offsetT value)
+{
+#define T2I1I2MASK  ((1 << 13) | (1 << 11))
+  offsetT newval;
+  offsetT newval2;
+  addressT S, I1, I2, lo, hi;
+
+  S = (value >> 24) & 0x01;
+  I1 = (value >> 23) & 0x01;
+  I2 = (value >> 22) & 0x01;
+  hi = (value >> 12) & 0x3ff;
+  lo = (value >> 1) & 0x7ff; 
+  newval   = md_chars_to_number (buf, THUMB_SIZE);
+  newval2  = md_chars_to_number (buf + THUMB_SIZE, THUMB_SIZE);
+  newval  |= (S << 10) | hi;
+  newval2 &=  ~T2I1I2MASK;
+  newval2 |= (((I1 ^ S) << 13) | ((I2 ^ S) << 11) | lo) ^ T2I1I2MASK;
+  md_number_to_chars (buf, newval, THUMB_SIZE);
+  md_number_to_chars (buf + THUMB_SIZE, newval2, THUMB_SIZE);
+}
+
 void
 md_apply_fix (fixS *	fixP,
 	       valueT * valP,
@@ -20228,10 +20292,6 @@ md_apply_fix (fixS *	fixP,
 	 fixP->fx_r_type = BFD_RELOC_THUMB_PCREL_BRANCH23;
 #endif
 
-      if ((value & ~0x3fffff) && ((value & ~0x3fffff) != ~0x3fffff))
-	as_bad_where (fixP->fx_file, fixP->fx_line,
-		      _("branch out of range"));
-
       if (fixP->fx_r_type == BFD_RELOC_THUMB_PCREL_BLX)
 	/* For a BLX instruction, make sure that the relocation is rounded up
 	   to a word boundary.  This follows the semantics of the instruction
@@ -20239,17 +20299,25 @@ md_apply_fix (fixS *	fixP,
 	   1 of the base address.  */
 	value = (value + 1) & ~ 1;
 
-      if (fixP->fx_done || !seg->use_rela_p)
-	{
-	  offsetT newval2;
 
-	  newval   = md_chars_to_number (buf, THUMB_SIZE);
-	  newval2  = md_chars_to_number (buf + THUMB_SIZE, THUMB_SIZE);
-	  newval  |= (value & 0x7fffff) >> 12;
-	  newval2 |= (value & 0xfff) >> 1;
-	  md_number_to_chars (buf, newval, THUMB_SIZE);
-	  md_number_to_chars (buf + THUMB_SIZE, newval2, THUMB_SIZE);
+       if ((value & ~0x3fffff) && ((value & ~0x3fffff) != ~0x3fffff))
+	{
+	  if (!(ARM_CPU_HAS_FEATURE (cpu_variant, arm_arch_t2)))
+	    {
+	      as_bad_where (fixP->fx_file, fixP->fx_line,
+			    _("branch out of range"));
+	    }
+	  else if ((value & ~0x1ffffff)
+		   && ((value & ~0x1ffffff) != ~0x1ffffff))
+	      {
+		as_bad_where (fixP->fx_file, fixP->fx_line,
+			    _("Thumb2 branch out of range"));
+	      }
 	}
+
+      if (fixP->fx_done || !seg->use_rela_p)
+	encode_thumb2_b_bl_offset (buf, value);
+
       break;
 
     case BFD_RELOC_THUMB_PCREL_BRANCH25:
@@ -20258,26 +20326,8 @@ md_apply_fix (fixS *	fixP,
 		      _("branch out of range"));
 
       if (fixP->fx_done || !seg->use_rela_p)
-	{
-	  offsetT newval2;
-	  addressT S, I1, I2, lo, hi;
+	  encode_thumb2_b_bl_offset (buf, value);
 
-	  S  = (value & 0x01000000) >> 24;
-	  I1 = (value & 0x00800000) >> 23;
-	  I2 = (value & 0x00400000) >> 22;
-	  hi = (value & 0x003ff000) >> 12;
-	  lo = (value & 0x00000ffe) >> 1;
-
-	  I1 = !(I1 ^ S);
-	  I2 = !(I2 ^ S);
-
-	  newval   = md_chars_to_number (buf, THUMB_SIZE);
-	  newval2  = md_chars_to_number (buf + THUMB_SIZE, THUMB_SIZE);
-	  newval  |= (S << 10) | hi;
-	  newval2 |= (I1 << 13) | (I2 << 11) | lo;
-	  md_number_to_chars (buf, newval, THUMB_SIZE);
-	  md_number_to_chars (buf + THUMB_SIZE, newval2, THUMB_SIZE);
-	}
       break;
 
     case BFD_RELOC_8:
