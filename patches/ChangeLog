@@ -1,12 +1,21 @@
+2010-01-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr11133-3.patch: New file. Replace ...
+	* binutils-pr11133-2.patch: This.  Removed.
+	* README: Likewise.
+
+	* binutils-pr11143-1.patch: Removed.
+	* README: Don't apply it.
+
 2010-01-06  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-gold-6.patch: New file. Replace ...
 	* binutils-gold-5.patch: This.  Removed.
 	* README: Likewise.
-	* README: Apply them.
 
 	* binutils-pr11133-2.patch: New.
 	* binutils-pr11143-1.patch: Likewise.
+	* README: Apply them.
 
 2009-12-12  H.J. Lu  <hjl.tools@gmail.com>
 

@@ -5,8 +5,7 @@ bfd/
 	PR ld/11133
 	* elflink.c (_bfd_elf_gc_mark_hook): Check section XXX for
 	undefined __start_XXX/__stop_XXX in all input files and set
-	its gc_mark to 1.
-	(elf_gc_sweep): Keep SHT_NOTE section.
+	SEC_KEEP.
 
 ld/testsuite/
 
@@ -19,10 +18,10 @@ ld/testsuite/
 	* ld-gc/start.s: Likewise.
 
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index bbdfe5e..0c685bc 100644
+index 284bff1..b587ef6 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
-@@ -11331,6 +11331,8 @@ _bfd_elf_gc_mark_hook (asection *sec,
+@@ -11331,6 +11336,8 @@ _bfd_elf_gc_mark_hook (asection *sec,
  		       struct elf_link_hash_entry *h,
  		       Elf_Internal_Sym *sym)
  {
@@ -31,7 +30,7 @@ index bbdfe5e..0c685bc 100644
    if (h != NULL)
      {
        switch (h->root.type)
-@@ -11342,6 +11344,31 @@ _bfd_elf_gc_mark_hook (asection *sec,
+@@ -11342,6 +11349,31 @@ _bfd_elf_gc_mark_hook (asection *sec,
  	case bfd_link_hash_common:
  	  return h->root.u.c.p->section;
  
@@ -55,7 +54,7 @@ index bbdfe5e..0c685bc 100644
 +		{
 +		  sec = bfd_get_section_by_name (i, sec_name);
 +		  if (sec)
-+		    sec->gc_mark = 1;
++		    sec->flags |= SEC_KEEP;
 +		}
 +	    }
 +	  break;
@@ -64,13 +63,13 @@ index bbdfe5e..0c685bc 100644
  	  break;
  	}
 diff --git a/ld/testsuite/ld-gc/gc.exp b/ld/testsuite/ld-gc/gc.exp
-index c85d4f2..c85b909 100644
+index 36df233..c271a3d 100644
 --- a/ld/testsuite/ld-gc/gc.exp
 +++ b/ld/testsuite/ld-gc/gc.exp
-@@ -90,3 +90,4 @@ test_gc "Check --gc-section/-r/-e" "gcrel" $ld "-r --gc-sections -e main"
- test_gc "Check --gc-section/-r/-u" "gcrel" $ld "-r --gc-sections -u used_func"
+@@ -91,3 +91,4 @@ test_gc "Check --gc-section/-r/-u" "gcrel" $ld "-r --gc-sections -u used_func"
  
  run_dump_test "noent"
+ run_dump_test "abi-note"
 +run_dump_test "start"
 diff --git a/ld/testsuite/ld-gc/start.d b/ld/testsuite/ld-gc/start.d
 new file mode 100644
