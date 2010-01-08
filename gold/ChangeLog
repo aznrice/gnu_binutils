@@ -1,3 +1,77 @@
+2010-01-07  Ian Lance Taylor  <iant@google.com>
+
+	PR 11061
+	* output.h (class Output_reloc) [SHT_RELA]: Add is_relative
+	function.
+	(class Output_data_reloc_generic): Define.
+	(class Output_data_reloc_base): Change base class to
+	Output_data_reloc_generic.  Change add() method to call
+	bump_relative_reloc_count for a relative reloc.  Remove
+	sort_relocs_ field.
+	* output.cc (Output_data_reloc_base::do_write): Change sort_reloc_
+	to sort_relocs().
+	* layout.cc (Layout::add_target_dynamic_tags): Change dyn_rel to
+	Output_data_reloc_generic*.  Add DT_RELCOUNT/DT_RELACOUNT tag if
+	appropriate.
+	* layout.h (class Layout): Update declaration.
+
+2010-01-07  Ian Lance Taylor  <iant@google.com>
+
+	* output.h (class Output_data): Add const version of
+	output_section and do_output_section.
+	(class Output_section_data): Add const version of
+	do_output_section.
+	(class Output_section): Likewise.
+	* layout.cc (Layout::add_target_dynamic_tags): New function.
+	* layout.h (class Layout): Update declarations.
+	* arm.cc (Target_arm::do_finalize_sections): Use
+	add_target_dynamic_tags.
+	* i386.cc (Target_i386::do_finalize_sections): Likewise.
+	* powerpc.cc (Target_powerpc::do_finalize_sections): Likewise.
+	* sparc.cc (Target_sparc::do_finalize_sections): Likewise.
+	* x86_64.cc (Target_x86_64::do_finalize_sections): Likewise.
+
+2010-01-07  Ian Lance Taylor  <iant@google.com>
+
+	PR 11042
+	* copy-relocs.cc (Copy_relocs::emit_copy_reloc): Mark the dynamic
+	object as needed.
+
+2010-01-07  Dmitry Gorbachev  <d.g.gorbachev@gmail.com>
+	    Ian Lance Taylor  <iant@google.com>
+
+	PR 11019
+	* object.cc: Instantiate Xindex::initialize_symtab_xindex and
+	Xindex::read_symtab_xindex.
+
+2010-01-07  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Insn_template::Type): New enum value THUMB16_SPECIAL_TYPE.
+	(Insn_template::thumb16_bcond_insn): New method declaration.
+	(Insn_template): Fix spelling.
+	(Stub::thumb16_special): New method declaration.
+	(Stub::do_write): Define virtual method which was previously pure
+	virtual.
+	(Stub::do_thumb16_special): New method declaration.
+	(Stub::do_fixed_endian_write): New template member.
+	(Reloc_stub::do_write): Remove.
+	(Reloc_stub::do_fixed_endian_write): Remove.
+	(Cortex_a8_stub): New class definition.
+	(Stub_factory::make_cortex_a8_stub): New method definition.
+	(Stub_factory::Stub_factory): Add missing static storage class
+	qualifier for elf32_arm_stub_a8_veneer_blx.
+
+2010-01-07  Ian Lance Taylor  <iant@google.com>
+
+	PR 10980
+	* options.h (class General_options): Add --warn-unresolved-symbols
+	and --error-unresolved-symbols.
+	* errors.cc (Errors::undefined_symbol): Implement
+	--warn-unresolved-symbols.
+
+	* options.h (class General_options): Add -z text and -z textoff.
+	* layout.cc (Layout::finish_dynamic_section): Implement -z text.
+
 2010-01-06  Sriraman Tallam  <tmsriram@google.com>
 
 	* gc.h (Garbage_collection::Cident_section_map): New typedef.

@@ -3206,6 +3206,94 @@ Layout::create_interp(const Target* target)
     }
 }
 
+// Add dynamic tags for the PLT and the dynamic relocs.  This is
+// called by the target-specific code.  This does nothing if not doing
+// a dynamic link.
+
+// USE_REL is true for REL relocs rather than RELA relocs.
+
+// If PLT_GOT is not NULL, then DT_PLTGOT points to it.
+
+// If PLT_REL is not NULL, it is used for DT_PLTRELSZ, and DT_JMPREL,
+// and we also set DT_PLTREL.
+
+// If DYN_REL is not NULL, it is used for DT_REL/DT_RELA,
+// DT_RELSZ/DT_RELASZ, DT_RELENT/DT_RELAENT.
+
+// If ADD_DEBUG is true, we add a DT_DEBUG entry when generating an
+// executable.
+
+void
+Layout::add_target_dynamic_tags(bool use_rel, const Output_data* plt_got,
+				const Output_data* plt_rel,
+				const Output_data_reloc_generic* dyn_rel,
+				bool add_debug)
+{
+  Output_data_dynamic* odyn = this->dynamic_data_;
+  if (odyn == NULL)
+    return;
+
+  if (plt_got != NULL && plt_got->output_section() != NULL)
+    odyn->add_section_address(elfcpp::DT_PLTGOT, plt_got);
+
+  if (plt_rel != NULL && plt_rel->output_section() != NULL)
+    {
+      odyn->add_section_size(elfcpp::DT_PLTRELSZ, plt_rel);
+      odyn->add_section_address(elfcpp::DT_JMPREL, plt_rel);
+      odyn->add_constant(elfcpp::DT_PLTREL,
+			 use_rel ? elfcpp::DT_REL : elfcpp::DT_RELA);
+    }
+
+  if (dyn_rel != NULL && dyn_rel->output_section() != NULL)
+    {
+      odyn->add_section_address(use_rel ? elfcpp::DT_REL : elfcpp::DT_RELA,
+				dyn_rel);
+      odyn->add_section_size(use_rel ? elfcpp::DT_RELSZ : elfcpp::DT_RELASZ,
+			     dyn_rel);
+      const int size = parameters->target().get_size();
+      elfcpp::DT rel_tag;
+      int rel_size;
+      if (use_rel)
+	{
+	  rel_tag = elfcpp::DT_RELENT;
+	  if (size == 32)
+	    rel_size = Reloc_types<elfcpp::SHT_REL, 32, false>::reloc_size;
+	  else if (size == 64)
+	    rel_size = Reloc_types<elfcpp::SHT_REL, 64, false>::reloc_size;
+	  else
+	    gold_unreachable();
+	}
+      else
+	{
+	  rel_tag = elfcpp::DT_RELAENT;
+	  if (size == 32)
+	    rel_size = Reloc_types<elfcpp::SHT_RELA, 32, false>::reloc_size;
+	  else if (size == 64)
+	    rel_size = Reloc_types<elfcpp::SHT_RELA, 64, false>::reloc_size;
+	  else
+	    gold_unreachable();
+	}
+      odyn->add_constant(rel_tag, rel_size);
+
+      if (parameters->options().combreloc())
+	{
+	  size_t c = dyn_rel->relative_reloc_count();
+	  if (c > 0)
+	    odyn->add_constant((use_rel
+				? elfcpp::DT_RELCOUNT
+				: elfcpp::DT_RELACOUNT),
+			       c);
+	}
+    }
+
+  if (add_debug && !parameters->options().shared())
+    {
+      // The value of the DT_DEBUG tag is filled in by the dynamic
+      // linker at run time, and used by the debugger.
+      odyn->add_constant(elfcpp::DT_DEBUG, 0);
+    }
+}
+
 // Finish the .dynamic section and PT_DYNAMIC segment.
 
 void
@@ -3353,8 +3441,10 @@ Layout::finish_dynamic_section(const Input_objects* input_objects,
       odyn->add_constant(elfcpp::DT_TEXTREL, 0);
       flags |= elfcpp::DF_TEXTREL;
 
-      if (parameters->options().warn_shared_textrel()
-	  && parameters->options().shared())
+      if (parameters->options().text())
+	gold_error(_("read-only segment has dynamic relocations"));
+      else if (parameters->options().warn_shared_textrel()
+	       && parameters->options().shared())
 	gold_warning(_("shared library text segment is not shareable"));
     }
   if (parameters->options().shared() && this->has_static_tls())
