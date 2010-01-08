@@ -352,6 +352,11 @@ Layout::include_section(Sized_relobj<size, big_endian>*, const char* name,
           if (is_prefix_of(".gnu.lto_", name))
             return false;
         }
+      // The GNU linker strips .gnu_debuglink sections, so we do too.
+      // This is a feature used to keep debugging information in
+      // separate files.
+      if (strcmp(name, ".gnu_debuglink") == 0)
+	return false;
       return true;
 
     default:
@@ -3215,7 +3220,8 @@ Layout::create_interp(const Target* target)
 // If PLT_GOT is not NULL, then DT_PLTGOT points to it.
 
 // If PLT_REL is not NULL, it is used for DT_PLTRELSZ, and DT_JMPREL,
-// and we also set DT_PLTREL.
+// and we also set DT_PLTREL.  We use PLT_REL's output section, since
+// some targets have multiple reloc sections in PLT_REL.
 
 // If DYN_REL is not NULL, it is used for DT_REL/DT_RELA,
 // DT_RELSZ/DT_RELASZ, DT_RELENT/DT_RELAENT.
@@ -3238,8 +3244,8 @@ Layout::add_target_dynamic_tags(bool use_rel, const Output_data* plt_got,
 
   if (plt_rel != NULL && plt_rel->output_section() != NULL)
     {
-      odyn->add_section_size(elfcpp::DT_PLTRELSZ, plt_rel);
-      odyn->add_section_address(elfcpp::DT_JMPREL, plt_rel);
+      odyn->add_section_size(elfcpp::DT_PLTRELSZ, plt_rel->output_section());
+      odyn->add_section_address(elfcpp::DT_JMPREL, plt_rel->output_section());
       odyn->add_constant(elfcpp::DT_PLTREL,
 			 use_rel ? elfcpp::DT_REL : elfcpp::DT_RELA);
     }
