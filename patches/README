@@ -28,7 +28,6 @@ patches="
 	binutils-group-10.patch
 	binutils-gold-6.patch
 	binutils-pr11146-1.patch
-	binutils-TLSDESC-1.patch
 "
 
 if [ -n "$clean" ]

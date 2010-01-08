@@ -1,5 +1,10 @@
 2010-01-08  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-TLSDESC-1.patch: Removed.
+	* README: Don't apply it.
+
+2010-01-08  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-pr11146-1.patch: New.
 	* README: Apply it.
 
