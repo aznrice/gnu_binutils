@@ -27,7 +27,6 @@ patches="
 	ld-needed-4.patch
 	binutils-group-10.patch
 	binutils-gold-6.patch
-	binutils-pr11133-3.patch
 	binutils-TLSDESC-1.patch
 "
 
