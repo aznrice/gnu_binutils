@@ -1,3 +1,31 @@
+2010-01-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/11138
+	* ld-elf/pr11138-1.c: New.
+	* ld-elf/pr11138-1.map: Likewise.
+	* ld-elf/pr11138-2.c: Likewise.
+	* ld-elf/pr11138-2.map: Likewise.
+	* ld-elf/pr11138.out: Likewise.
+
+	* ld-elf/shared.exp (build_tests): Add libpr11138-1.so and
+	libpr11138-2.o.
+	(run_tests): Add 2 tests for PR ld/11138.
+
+2010-01-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/11133
+	* ld-gc/gc.exp: Run start.
+
+	* ld-gc/start.d: New.
+	* ld-gc/start.s: Likewise.
+
+2010-01-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/11143
+	* ld-gc/gc.exp: Run abi-note.
+
+	* ld-gc/abi-note.d: New.
+	* ld-gc/abi-note.s: Likewise.
 
 For older changes see ChangeLog-2009
 
