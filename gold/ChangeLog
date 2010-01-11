@@ -1,3 +1,89 @@
+2010-01-10  Doug Kwan  <dougkwan@google.com>
+
+	* options.h (DEFINE_var): Use parentheses around argument varname__
+	in macro body to avoid any unintended subsequent substitutions.
+
+2010-01-10  Ian Lance Taylor  <iant@google.com>
+
+	* resolve.cc (Symbol_table::resolve): Add symbols to list of ODR
+	candidates before doing symbol resolution.
+
+	* resolve.cc (Symbol_table::resolve): Add symbols to the list of
+	ODR candidates if only one is weak.
+
+2010-01-08  Ian Lance Taylor  <iant@google.com>
+
+	* script.cc (Version_script_info::build_expression_list_lookup):
+	Don't warn about ambiguous version, just record the ambiguity.
+	(Version_script_info::get_symbol_version_helper): Give error if
+	version is ambiguous.
+
+2010-01-08  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Stub_table::Stub_table): Initalize cortex_a8_stubs_,
+	  prev_data_size_ and prev_addralign_.  Remove initializer for
+	  deleted data member has_been_changed_.
+	  (Stub_table::empty): Look at both reloc_stubs_ and cortex_a8_stubs_
+	  to determine if the table is empty.
+	  (Stub_table::has_been_changed, Stub_table_set_has_been_changed):
+	  Remove.
+	  (Stub_table::add_reloc_stub): Define method in class definition
+	  instead of just declaring it there.
+	  (Stub_table::add_cortex_a8_stub): New method definition.
+	  (Stub_table::update_data_size_and_addralign): Ditto.
+	  (Stub_table::finalize_stubs): Ditto.
+	  (Stub_table::apply_cortex_a8_workaround_to_address_range): Ditto.
+	  (Stub_table::do_addralign_): Return address alignment in the
+	  (Stub_table::do_reset_address_and_file_offset): Define method in
+	  class definition instead of declaring it there.  Set current data
+	  size to be the data size of the previous pass.
+	  (Stub_table::set_final_data_size): Use current data size as the
+	  final data size.
+	  (Stub_table::relocate_stub): Change parameter type of stub from
+	  Reloc_stub pointer to Stub pointer.
+	  (Stub_table::addralign_, Stub_table::has_been_changed_): Remove.
+	  (Stub_table::Cortex_a8_stub_list): New typedef.
+	  (Stub_table::cortex_a8_stubs_, Stub_table::prev_data_size_,
+	   Stub_table::prev_addralign_): New data member.
+	  (Arm_relobj::Arm_relobj): Initialize data member
+	  section_has_cortex_a8_workaround_.
+	  (Arm_relobj::section_has_cortex_a8_workaround,
+	   Arm_relobj::mark_section_for_cortex_a8_workaround): New method
+	   definitions.
+	  (Arm_relobj::section_has_cortex_a8_workaround_): New data member
+	  declarations.
+	  (Target_arm::relocate_stub): Change parameter type of stub from
+	  Reloc_stub pointer to Stub pointer.
+	  (Insn_template::size, Insn_template::alignment): Handle
+	  THUMB16_SPECIAL_TYPE.
+	  (Stub_table::remove_all_cortex_a8_stubs, Stub_table::finalize_stubs,
+	   Stub_table::update_data_size_and_addralign,
+	   Stub_table::apply_cortex_a8_workaround_to_address_range): New method
+	  definitions.
+ 	  (Stub_table::relocate_stubs): Handle Cortex-A8 stubs.
+	  (Stub_table::do_write): Ditto.
+	  (Target_arm::do_relax): Adjust code for changes in Stub_table.
+
+2010-01-08  Ian Lance Taylor  <iant@google.com>
+
+	PR 11108
+	* symtab.h (class Symbol): Remove fields is_target_special_ and
+	has_plt_offset_.  Add field is_defined_in_discarded_section_.
+	(Symbol::is_defined_in_discarded_section): New function.
+	(Symbol::set_is_defined_in_discarded_section): New function.
+	(Symbol::has_plt_offset): Rewrite.
+	(Symbol::set_plt_offset): Verify that new offset is not -1U.
+	* symtab.cc (Symbol::init_fields): Initialize plt_offset_ to -1U.
+	Don't initialize is_target_special_ or has_plt_offset_.
+	Initialize is_defined_in_discarded_section_.
+	(Symbol_table::add_from_relobj): If appropriate, set
+	is_defined_in_discarded_section.
+	* resolve.cc (Symbol::override_base_with_special): Don't test
+	is_target_special_.  Change has_plt_offset_ to has_plt_offset().
+	* target-reloc.h (relocate_section): Do special handling for
+	symbols defined in discarded sections for global symbols as well
+	as local symbols.
+
 2010-01-08  Ian Lance Taylor  <iant@google.com>
 
 	* dynobj.cc (big_endian>::find_dynsym_sections): Set pi to NULL in
