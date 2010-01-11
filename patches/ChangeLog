@@ -1,5 +1,11 @@
 2010-01-11  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-gold-7.patch: New file. Replace ...
+	* binutils-gold-6.patch: This.  Removed.
+	* README: Likewise.
+
+2010-01-11  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-pr11144-1.patch: New.
 	* README: Apply it.
 
