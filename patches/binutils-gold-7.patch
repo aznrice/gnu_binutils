@@ -33,7 +33,7 @@ ld/
 	* configure: Regenerated.
 
 diff --git a/configure b/configure
-index 9aa4685..0898bcf 100755
+index 9aa4685..1946a2c 100755
 --- a/configure
 +++ b/configure
 @@ -1482,7 +1482,7 @@ Optional Features:
@@ -81,11 +81,11 @@ index 9aa4685..0898bcf 100755
 +          configdirs="`echo " ${configdirs} " | sed -e 's/ ld / gold /'`"
 +	  ;;
 +	esac
++	ENABLE_GOLD=yes
          ;;
      esac
    fi
 -fi
-+  ENABLE_GOLD=yes
 +  ;;
 +no)
 +  ;;
@@ -97,7 +97,7 @@ index 9aa4685..0898bcf 100755
  # Configure extra directories which are host specific
  
 diff --git a/configure.ac b/configure.ac
-index 596b527..d78bae4 100644
+index 596b527..562756f 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -314,12 +314,19 @@ case ${with_newlib} in
@@ -135,11 +135,11 @@ index 596b527..d78bae4 100644
 +          configdirs="`echo " ${configdirs} " | sed -e 's/ ld / gold /'`"
 +	  ;;
 +	esac
++	ENABLE_GOLD=yes
          ;;
      esac
    fi
 -fi
-+  ENABLE_GOLD=yes
 +  ;;
 +no)
 +  ;;
@@ -151,10 +151,10 @@ index 596b527..d78bae4 100644
  # Configure extra directories which are host specific
  
 diff --git a/gold/Makefile.am b/gold/Makefile.am
-index 9c2cbcf..2a9ab5f 100644
+index 784f821..552c2b1 100644
 --- a/gold/Makefile.am
 +++ b/gold/Makefile.am
-@@ -174,12 +174,20 @@ check: libgold.a
+@@ -175,12 +175,20 @@ check: libgold.a
  
  install-exec-local: ld-new$(EXEEXT)
  	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(tooldir)/bin
@@ -180,7 +180,7 @@ index 9c2cbcf..2a9ab5f 100644
  
  # We want install to imply install-info as per GNU standards, despite
 diff --git a/gold/Makefile.in b/gold/Makefile.in
-index 86e6348..4a7bbc4 100644
+index e118a51..68be5b9 100644
 --- a/gold/Makefile.in
 +++ b/gold/Makefile.in
 @@ -306,8 +306,10 @@ htmldir = @htmldir@
@@ -194,7 +194,7 @@ index 86e6348..4a7bbc4 100644
  localedir = @localedir@
  localstatedir = @localstatedir@
  mandir = @mandir@
-@@ -1221,12 +1223,20 @@ check: libgold.a
+@@ -1223,12 +1225,20 @@ check: libgold.a
  
  install-exec-local: ld-new$(EXEEXT)
  	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(tooldir)/bin
