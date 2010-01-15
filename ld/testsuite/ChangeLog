@@ -1,3 +1,29 @@
+2010-01-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/orphan4.d: Support 64bit targets.
+
+2010-01-13  DJ Delorie  <dj@redhat.com>
+
+	* ld-elf/orphan4.d: New.
+	* ld-elf/orphan4.ld: New.
+	* ld-elf/orphan4.s: New.
+
+2010-01-13  Chao-ying Fu  <fu@mips.com>
+
+	* ld-mips-elf/jr-to-b-1.d, ld-mips-elf/jr-to-b-2.d: New tests.
+	* ld-mips-elf/jr-to-b-1.s, ld-mips-elf/jr-to-b-2.s: Source.
+	* ld-mips-elf/mips-elf.exp: Run new tests.
+
+2010-01-13  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* ld-arm/arm-elf.exp (armelftests): Assemble Cortex-A8 tests with
+	-mcpu=cortex-a8.
+
+2010-01-13  Nick Clifton  <nickc@redhat.com>
+
+	* ld-scrips/sort.exp: Skip these tests when the target is the
+	h8300.
+
 2010-01-11  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/11146

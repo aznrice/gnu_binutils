@@ -1,3 +1,59 @@
+2010-01-13  Chao-ying Fu  <fu@mips.com>
+
+	* elfxx-mips.c (JR_TO_B_P): New define to transform JR to B.
+	It is true for all CPUs.
+	(jal_reloc_p): New function.
+	(mips_elf_calculate_relocation): Rename require_jalxp to
+	cross_mode_jump_p.
+	Update comment for CROSS_MODE_JUMP_P.
+	Set up cross_mode_jump_p based on the mode change.
+	(mips_elf_perform_relocation): Rename require_jalx to cross_mode_jump_p.
+	Update comment for CROSS_MODE_JUMP_P.
+	Test cross_mode_jump_p and jal_reloc_p to turn jal to jalx.
+	Use !cross_mode_jump_p to guard conversion.
+	Convert "jr t9" to "b", if possible.
+	(_bfd_mips_elf_relocate_section): Rename require_jalx to
+	cross_mode_jump_p.
+	Pass &cross_mode_jump_p to call mips_elf_calculate_relocation.
+	Pass cross_mode_jump_p to call mips_elf_perform_relocation.
+
+2010-01-13  Nick Clifton  <nickc@redhat.com>
+
+	* cpu-m32c.c (m32c_scan): New function.  Ensures that a scan for
+	"m32c" returns the m32c arch_info_struct and not the m16c
+	arch_info_struct.
+	(arch_info_struct): Use the new scan function.
+	(bfd_m32c_arch): Likewise.
+
+2010-01-13  Tristan Gingold  <gingold@adacore.com>
+
+	* config.bfd: Remove duplicated target vector for i386-*-darwin.
+	Appends new arch instead of overriding.
+	Use mach_o_x86_64_vec for x86_64-*-darwin.
+	* configure.in: Add mach_o_x86_64_vec.
+	* configure: Regenerate.
+	* targets.c: Declare mach_o_x86_64_vec, add it to _bfd_target_vector.
+	* Makefile.am (BFD64_BACKENDS): Add mach-o-x86-64.lo
+	(BFD64_BACKENDS_CFILES): Add mach-o-x86-64.c
+	* Makefile.in: Regenerate.
+	* mach-o-x86-64.c: New file.
+
+2010-01-13  Tristan Gingold  <gingold@adacore.com>
+
+	* reloc.c: Add MACH_O_X86_64 relocations.
+	* bfd-in2.h: Regenerate.
+	* libbfd.h: Regenerate.
+
+2010-01-13  Tristan Gingold  <gingold@adacore.com>
+
+	* archive.c (normalize): Use lbasename.
+	(bfd_bsd_truncate_arname): Ditto.
+	(bfd_gnu_truncate_arname): Ditto.
+
+2010-01-12  Tristan Gingold  <gingold@adacore.com>
+
+	* makefile.vms (CFLAGS): Turns warnings into informational messages.
+
 2010-01-11  Tristan Gingold  <gingold@adacore.com>
 
 	* mach-o.h: Add x86-64 relocation types.
@@ -17,7 +73,7 @@
 
 2010-01-11  Tristan Gingold  <gingold@adacore.com>
 
-        * archive.c (bfd_slurp_armap): Also check for Mach-O sorted armap.
+	* archive.c (bfd_slurp_armap): Also check for Mach-O sorted armap.
 
 2010-01-11  Nick Clifton  <nickc@redhat.com>
 

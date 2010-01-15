@@ -973,6 +973,18 @@ protected_2_DEPENDENCIES = gcctestdir/ld protected_1.so
 protected_2_LDFLAGS = -Bgcctestdir/ -Wl,-R,.
 protected_2_LDADD = protected_1.so
 
+check_DATA += protected_3.err
+MOSTLYCLEANFILES += protected_3.err
+protected_4_pic.o: protected_4.cc
+	$(CXXCOMPILE) -c -fpic -o $@ $<
+protected_3.err: protected_4_pic.o gcctestdir/ld
+	@echo $(CXXLINK) -Bgcctestdir/ -shared -o protected_4.so protected_4_pic.o "2>$@"
+	@if $(CXXLINK) -Bgcctestdir/ -shared -o protected_4.so protected_4_pic.o 2>$@; then \
+	  echo 1>&2 "Link of protected_4.so should have failed"; \
+	  rm -f $@; \
+	  exit 1; \
+	fi
+
 check_PROGRAMS += relro_test
 relro_test_SOURCES = relro_test_main.cc
 relro_test_DEPENDENCIES = gcctestdir/ld relro_test.so
@@ -1097,7 +1109,7 @@ dynamic_list: basic_test.o gcctestdir/ld $(srcdir)/dynamic_list.t
 	  -Wl,--dynamic-list-cpp-new \
 	  -Wl,--dynamic-list-cpp-typeinfo
 dynamic_list.stdout: dynamic_list
-	$(TEST_READELF) -DWs dynamic_list > dynamic_list.stdout
+	$(TEST_READELF) -W --dyn-syms dynamic_list > dynamic_list.stdout
 
 check_PROGRAMS += thin_archive_test_1
 MOSTLYCLEANFILES += libthin1.a libthin3.a libthinall.a \

@@ -1069,7 +1069,8 @@ class Arm_relobj : public Sized_relobj<32, big_endian>
              const typename elfcpp::Ehdr<32, big_endian>& ehdr)
     : Sized_relobj<32, big_endian>(name, input_file, offset, ehdr),
       stub_tables_(), local_symbol_is_thumb_function_(),
-      attributes_section_data_(NULL), section_has_cortex_a8_workaround_(NULL)
+      attributes_section_data_(NULL), mapping_symbols_info_(),
+      section_has_cortex_a8_workaround_(NULL)
   { }
 
   ~Arm_relobj()
@@ -1133,6 +1134,26 @@ class Arm_relobj : public Sized_relobj<32, big_endian>
   attributes_section_data() const
   { return this->attributes_section_data_; }
 
+  // Mapping symbol location.
+  typedef std::pair<unsigned int, Arm_address> Mapping_symbol_position;
+
+  // Functor for STL container.
+  struct Mapping_symbol_position_less
+  {
+    bool
+    operator()(const Mapping_symbol_position& p1,
+	       const Mapping_symbol_position& p2) const
+    {
+      return (p1.first < p2.first
+	      || (p1.first == p2.first && p1.second < p2.second));
+    }
+  };
+  
+  // We only care about the first character of a mapping symbol, so
+  // we only store that instead of the whole symbol name.
+  typedef std::map<Mapping_symbol_position, char,
+		   Mapping_symbol_position_less> Mapping_symbols_info;
+
   // Whether a section contains any Cortex-A8 workaround.
   bool
   section_has_cortex_a8_workaround(unsigned int shndx) const
@@ -1178,7 +1199,30 @@ class Arm_relobj : public Sized_relobj<32, big_endian>
   void
   do_read_symbols(Read_symbols_data* sd);
 
+  // Process relocs for garbage collection.
+  void
+  do_gc_process_relocs(Symbol_table*, Layout*, Read_relocs_data*);
+
  private:
+
+  // Whether a section needs to be scanned for relocation stubs.
+  bool
+  section_needs_reloc_stub_scanning(const elfcpp::Shdr<32, big_endian>&,
+				    const Relobj::Output_sections&,
+				    const Symbol_table *);
+
+  // Whether a section needs to be scanned for the Cortex-A8 erratum.
+  bool
+  section_needs_cortex_a8_stub_scanning(const elfcpp::Shdr<32, big_endian>&,
+					unsigned int, Output_section*,
+					const Symbol_table *);
+
+  // Scan a section for the Cortex-A8 erratum.
+  void
+  scan_section_for_cortex_a8_erratum(const elfcpp::Shdr<32, big_endian>&,
+				     unsigned int, Output_section*,
+				     Target_arm<big_endian>*);
+
   // List of stub tables.
   typedef std::vector<Stub_table<big_endian>*> Stub_table_list;
   Stub_table_list stub_tables_;
@@ -1189,6 +1233,8 @@ class Arm_relobj : public Sized_relobj<32, big_endian>
   elfcpp::Elf_Word processor_specific_flags_;
   // Object attributes if there is an .ARM.attributes section or NULL.
   Attributes_section_data* attributes_section_data_;
+  // Mapping symbols information.
+  Mapping_symbols_info mapping_symbols_info_;
   // Bitmap to indicate sections with Cortex-A8 workaround or NULL.
   std::vector<bool>* section_has_cortex_a8_workaround_;
 };
@@ -1282,6 +1328,49 @@ struct Stub_addend_reader<elfcpp::SHT_RELA, big_endian>
   { return reloc.get_r_addend(); }
 };
 
+// Cortex_a8_reloc class.  We keep record of relocation that may need
+// the Cortex-A8 erratum workaround.
+
+class Cortex_a8_reloc
+{
+ public:
+  Cortex_a8_reloc(Reloc_stub* reloc_stub, unsigned r_type,
+		  Arm_address destination)
+    : reloc_stub_(reloc_stub), r_type_(r_type), destination_(destination)
+  { }
+
+  ~Cortex_a8_reloc()
+  { }
+
+  // Accessors:  This is a read-only class.
+  
+  // Return the relocation stub associated with this relocation if there is
+  // one.
+  const Reloc_stub*
+  reloc_stub() const
+  { return this->reloc_stub_; } 
+  
+  // Return the relocation type.
+  unsigned int
+  r_type() const
+  { return this->r_type_; }
+
+  // Return the destination address of the relocation.  LSB stores the THUMB
+  // bit.
+  Arm_address
+  destination() const
+  { return this->destination_; }
+
+ private:
+  // Associated relocation stub if there is one, or NULL.
+  const Reloc_stub* reloc_stub_;
+  // Relocation type.
+  unsigned int r_type_;
+  // Destination address of this relocation.  LSB is used to distinguish
+  // ARM/THUMB mode.
+  Arm_address destination_;
+};
+
 // Utilities for manipulating integers of up to 32-bits
 
 namespace utils
@@ -1357,7 +1446,8 @@ class Target_arm : public Sized_target<32, big_endian>
       copy_relocs_(elfcpp::R_ARM_COPY), dynbss_(NULL), stub_tables_(),
       stub_factory_(Stub_factory::get_instance()), may_use_blx_(false),
       should_force_pic_veneer_(false), arm_input_section_map_(),
-      attributes_section_data_(NULL)
+      attributes_section_data_(NULL), fix_cortex_a8_(false),
+      cortex_a8_relocs_info_()
   { }
 
   // Whether we can use BLX.
@@ -1574,6 +1664,27 @@ class Target_arm : public Sized_target<32, big_endian>
   // Whether relocation type uses LSB to distinguish THUMB addresses.
   static bool
   reloc_uses_thumb_bit(unsigned int r_type);
+
+  // Whether NAME belongs to a mapping symbol.
+  static bool
+  is_mapping_symbol_name(const char* name)
+  {
+    return (name
+	    && name[0] == '$'
+	    && (name[1] == 'a' || name[1] == 't' || name[1] == 'd')
+	    && (name[2] == '\0' || name[2] == '.'));
+  }
+
+  // Whether we work around the Cortex-A8 erratum.
+  bool
+  fix_cortex_a8() const
+  { return this->fix_cortex_a8_; }
+
+  // Scan a span of THUMB code section for Cortex-A8 erratum.
+  void
+  scan_span_for_cortex_a8_erratum(Arm_relobj<big_endian>*, unsigned int,
+				  section_size_type, section_size_type,
+				  const unsigned char*, Arm_address);
 
  protected:
   // Make an ELF object.
@@ -1895,6 +2006,10 @@ class Target_arm : public Sized_target<32, big_endian>
 			Input_section_specifier::equal_to>
 	  Arm_input_section_map;
     
+  // Map output addresses to relocs for Cortex-A8 erratum.
+  typedef Unordered_map<Arm_address, const Cortex_a8_reloc*>
+	  Cortex_a8_relocs_info;
+
   // The GOT section.
   Output_data_got<32, big_endian>* got_;
   // The PLT section.
@@ -1919,6 +2034,10 @@ class Target_arm : public Sized_target<32, big_endian>
   Arm_input_section_map arm_input_section_map_;
   // Attributes section data in output.
   Attributes_section_data* attributes_section_data_;
+  // Whether we want to fix code for Cortex-A8 erratum.
+  bool fix_cortex_a8_;
+  // Map addresses to relocs for Cortex-A8 erratum.
+  Cortex_a8_relocs_info cortex_a8_relocs_info_;
 };
 
 template<bool big_endian>
@@ -2050,6 +2169,87 @@ class Arm_relocate_functions : public Relocate_functions<32, big_endian>
 		      const Symbol_value<32>*, Arm_address, Arm_address, bool);
 
  public:
+
+  // Return the branch offset of a 32-bit THUMB branch.
+  static inline int32_t
+  thumb32_branch_offset(uint16_t upper_insn, uint16_t lower_insn)
+  {
+    // We use the Thumb-2 encoding (backwards compatible with Thumb-1)
+    // involving the J1 and J2 bits.
+    uint32_t s = (upper_insn & (1U << 10)) >> 10;
+    uint32_t upper = upper_insn & 0x3ffU;
+    uint32_t lower = lower_insn & 0x7ffU;
+    uint32_t j1 = (lower_insn & (1U << 13)) >> 13;
+    uint32_t j2 = (lower_insn & (1U << 11)) >> 11;
+    uint32_t i1 = j1 ^ s ? 0 : 1;
+    uint32_t i2 = j2 ^ s ? 0 : 1;
+
+    return utils::sign_extend<25>((s << 24) | (i1 << 23) | (i2 << 22)
+				  | (upper << 12) | (lower << 1));
+  }
+
+  // Insert OFFSET to a 32-bit THUMB branch and return the upper instruction.
+  // UPPER_INSN is the original upper instruction of the branch.  Caller is
+  // responsible for overflow checking and BLX offset adjustment.
+  static inline uint16_t
+  thumb32_branch_upper(uint16_t upper_insn, int32_t offset)
+  {
+    uint32_t s = offset < 0 ? 1 : 0;
+    uint32_t bits = static_cast<uint32_t>(offset);
+    return (upper_insn & ~0x7ffU) | ((bits >> 12) & 0x3ffU) | (s << 10);
+  }
+
+  // Insert OFFSET to a 32-bit THUMB branch and return the lower instruction.
+  // LOWER_INSN is the original lower instruction of the branch.  Caller is
+  // responsible for overflow checking and BLX offset adjustment.
+  static inline uint16_t
+  thumb32_branch_lower(uint16_t lower_insn, int32_t offset)
+  {
+    uint32_t s = offset < 0 ? 1 : 0;
+    uint32_t bits = static_cast<uint32_t>(offset);
+    return ((lower_insn & ~0x2fffU)
+            | ((((bits >> 23) & 1) ^ !s) << 13)
+            | ((((bits >> 22) & 1) ^ !s) << 11)
+            | ((bits >> 1) & 0x7ffU));
+  }
+
+  // Return the branch offset of a 32-bit THUMB conditional branch.
+  static inline int32_t
+  thumb32_cond_branch_offset(uint16_t upper_insn, uint16_t lower_insn)
+  {
+    uint32_t s = (upper_insn & 0x0400U) >> 10;
+    uint32_t j1 = (lower_insn & 0x2000U) >> 13;
+    uint32_t j2 = (lower_insn & 0x0800U) >> 11;
+    uint32_t lower = (lower_insn & 0x07ffU);
+    uint32_t upper = (s << 8) | (j2 << 7) | (j1 << 6) | (upper_insn & 0x003fU);
+
+    return utils::sign_extend<21>((upper << 12) | (lower << 1));
+  }
+
+  // Insert OFFSET to a 32-bit THUMB conditional branch and return the upper
+  // instruction.  UPPER_INSN is the original upper instruction of the branch.
+  // Caller is responsible for overflow checking.
+  static inline uint16_t
+  thumb32_cond_branch_upper(uint16_t upper_insn, int32_t offset)
+  {
+    uint32_t s = offset < 0 ? 1 : 0;
+    uint32_t bits = static_cast<uint32_t>(offset);
+    return (upper_insn & 0xfbc0U) | (s << 10) | ((bits & 0x0003f000U) >> 12);
+  }
+
+  // Insert OFFSET to a 32-bit THUMB conditional branch and return the lower
+  // instruction.  LOWER_INSN is the original lower instruction of the branch.
+  // Caller is reponsible for overflow checking.
+  static inline uint16_t
+  thumb32_cond_branch_lower(uint16_t lower_insn, int32_t offset)
+  {
+    uint32_t bits = static_cast<uint32_t>(offset);
+    uint32_t j2 = (bits & 0x00080000U) >> 19;
+    uint32_t j1 = (bits & 0x00040000U) >> 18;
+    uint32_t lo = (bits & 0x00000ffeU) >> 1;
+
+    return (lower_insn & 0xd000U) | (j1 << 13) | (j2 << 11) | lo;
+  }
 
   // R_ARM_ABS8: S + A
   static inline typename This::Status
@@ -2183,6 +2383,12 @@ class Arm_relocate_functions : public Relocate_functions<32, big_endian>
 			       object, r_sym, psymval, address, thumb_bit,
 			       is_weakly_undefined_without_plt);
   }
+
+  // R_ARM_THM_JUMP24: (S + A) | T - P
+  static typename This::Status
+  thm_jump19(unsigned char *view, const Arm_relobj<big_endian>* object,
+	     const Symbol_value<32>* psymval, Arm_address address,
+	     Arm_address thumb_bit);
 
   // R_ARM_THM_XPC22: (S + A) | T - P
   static inline typename This::Status
@@ -2675,20 +2881,7 @@ Arm_relocate_functions<big_endian>::thumb_branch_common(
       return This::STATUS_OKAY;
     }
  
-  // Fetch the addend.  We use the Thumb-2 encoding (backwards compatible
-  // with Thumb-1) involving the J1 and J2 bits.
-  uint32_t s = (upper_insn & (1 << 10)) >> 10;
-  uint32_t upper = upper_insn & 0x3ff;
-  uint32_t lower = lower_insn & 0x7ff;
-  uint32_t j1 = (lower_insn & (1 << 13)) >> 13;
-  uint32_t j2 = (lower_insn & (1 << 11)) >> 11;
-  uint32_t i1 = j1 ^ s ? 0 : 1;
-  uint32_t i2 = j2 ^ s ? 0 : 1;
- 
-  int32_t addend = (i1 << 23) | (i2 << 22) | (upper << 12) | (lower << 1);
-  // Sign extend.
-  addend = (addend | ((s ? 0 : 1) << 24)) - (1 << 24);
-
+  int32_t addend = This::thumb32_branch_offset(upper_insn, lower_insn);
   Arm_address branch_target = psymval->value(object, addend);
   int32_t branch_offset = branch_target - address;
 
@@ -2740,33 +2933,70 @@ Arm_relocate_functions<big_endian>::thumb_branch_common(
       lower_insn |= 0x1000U;
     }
 
-  uint32_t reloc_sign = (branch_offset < 0) ? 1 : 0;
-  uint32_t relocation = static_cast<uint32_t>(branch_offset);
-
   if ((lower_insn & 0x5000U) == 0x4000U)
     // For a BLX instruction, make sure that the relocation is rounded up
     // to a word boundary.  This follows the semantics of the instruction
     // which specifies that bit 1 of the target address will come from bit
     // 1 of the base address.
-    relocation = (relocation + 2U) & ~3U;
+    branch_offset = (branch_offset + 2) & ~3;
 
   // Put BRANCH_OFFSET back into the insn.  Assumes two's complement.
   // We use the Thumb-2 encoding, which is safe even if dealing with
   // a Thumb-1 instruction by virtue of our overflow check above.  */
-  upper_insn = (upper_insn & ~0x7ffU)
-                | ((relocation >> 12) & 0x3ffU)
-                | (reloc_sign << 10);
-  lower_insn = (lower_insn & ~0x2fffU)
-                | (((!((relocation >> 23) & 1U)) ^ reloc_sign) << 13)
-                | (((!((relocation >> 22) & 1U)) ^ reloc_sign) << 11)
-                | ((relocation >> 1) & 0x7ffU);
+  upper_insn = This::thumb32_branch_upper(upper_insn, branch_offset);
+  lower_insn = This::thumb32_branch_lower(lower_insn, branch_offset);
 
   elfcpp::Swap<16, big_endian>::writeval(wv, upper_insn);
   elfcpp::Swap<16, big_endian>::writeval(wv + 1, lower_insn);
 
   return ((thumb2
-	   ? utils::has_overflow<25>(relocation)
-	   : utils::has_overflow<23>(relocation))
+	   ? utils::has_overflow<25>(branch_offset)
+	   : utils::has_overflow<23>(branch_offset))
+	  ? This::STATUS_OVERFLOW
+	  : This::STATUS_OKAY);
+}
+
+// Relocate THUMB-2 long conditional branches.
+// If IS_WEAK_UNDEFINED_WITH_PLT is true.  The target symbol is weakly
+// undefined and we do not use PLT in this relocation.  In such a case,
+// the branch is converted into an NOP.
+
+template<bool big_endian>
+typename Arm_relocate_functions<big_endian>::Status
+Arm_relocate_functions<big_endian>::thm_jump19(
+    unsigned char *view,
+    const Arm_relobj<big_endian>* object,
+    const Symbol_value<32>* psymval,
+    Arm_address address,
+    Arm_address thumb_bit)
+{
+  typedef typename elfcpp::Swap<16, big_endian>::Valtype Valtype;
+  Valtype* wv = reinterpret_cast<Valtype*>(view);
+  uint32_t upper_insn = elfcpp::Swap<16, big_endian>::readval(wv);
+  uint32_t lower_insn = elfcpp::Swap<16, big_endian>::readval(wv + 1);
+  int32_t addend = This::thumb32_cond_branch_offset(upper_insn, lower_insn);
+
+  Arm_address branch_target = psymval->value(object, addend);
+  int32_t branch_offset = branch_target - address;
+
+  // ??? Should handle interworking?  GCC might someday try to
+  // use this for tail calls.
+  // FIXME: We do support thumb entry to PLT yet.
+  if (thumb_bit == 0)
+    {
+      gold_error(_("conditional branch to PLT in THUMB-2 not supported yet."));
+      return This::STATUS_BAD_RELOC;
+    }
+
+  // Put RELOCATION back into the insn.
+  upper_insn = This::thumb32_cond_branch_upper(upper_insn, branch_offset);
+  lower_insn = This::thumb32_cond_branch_lower(lower_insn, branch_offset);
+
+  // Put the relocated value back in the object file:
+  elfcpp::Swap<16, big_endian>::writeval(wv, upper_insn);
+  elfcpp::Swap<16, big_endian>::writeval(wv + 1, lower_insn);
+
+  return (utils::has_overflow<21>(branch_offset)
 	  ? This::STATUS_OVERFLOW
 	  : This::STATUS_OKAY);
 }
@@ -2893,6 +3123,7 @@ Stub_template::Stub_template(
       switch (insns[i].type())
 	{
 	case Insn_template::THUMB16_TYPE:
+	case Insn_template::THUMB16_SPECIAL_TYPE:
 	  if (i == 0)
 	    this->entry_in_thumb_mode_ = true;
 	  break;
@@ -3936,6 +4167,157 @@ Arm_output_section<big_endian>::group_sections(
 
 // Arm_relobj methods.
 
+// Determine if we want to scan the SHNDX-th section for relocation stubs.
+// This is a helper for Arm_relobj::scan_sections_for_stubs() below.
+
+template<bool big_endian>
+bool
+Arm_relobj<big_endian>::section_needs_reloc_stub_scanning(
+    const elfcpp::Shdr<32, big_endian>& shdr,
+    const Relobj::Output_sections& out_sections,
+    const Symbol_table *symtab)
+{
+  unsigned int sh_type = shdr.get_sh_type();
+  if (sh_type != elfcpp::SHT_REL && sh_type != elfcpp::SHT_RELA)
+    return false;
+
+  // Ignore empty section.
+  off_t sh_size = shdr.get_sh_size();
+  if (sh_size == 0)
+    return false;
+
+  // Ignore reloc section with bad info.  This error will be
+  // reported in the final link.
+  unsigned int index = this->adjust_shndx(shdr.get_sh_info());
+  if (index >= this->shnum())
+    return false;
+
+  // This relocation section is against a section which we
+  // discarded or if the section is folded into another
+  // section due to ICF.
+  if (out_sections[index] == NULL || symtab->is_section_folded(this, index))
+    return false;
+
+  // Ignore reloc section with unexpected symbol table.  The
+  // error will be reported in the final link.
+  if (this->adjust_shndx(shdr.get_sh_link()) != this->symtab_shndx())
+    return false;
+
+  unsigned int reloc_size;
+  if (sh_type == elfcpp::SHT_REL)
+    reloc_size = elfcpp::Elf_sizes<32>::rel_size;
+  else
+    reloc_size = elfcpp::Elf_sizes<32>::rela_size;
+
+  // Ignore reloc section with unexpected entsize or uneven size.
+  // The error will be reported in the final link.
+  if (reloc_size != shdr.get_sh_entsize() || sh_size % reloc_size != 0)
+    return false;
+
+  return true;
+}
+
+// Determine if we want to scan the SHNDX-th section for non-relocation stubs.
+// This is a helper for Arm_relobj::scan_sections_for_stubs() below.
+
+template<bool big_endian>
+bool
+Arm_relobj<big_endian>::section_needs_cortex_a8_stub_scanning(
+    const elfcpp::Shdr<32, big_endian>& shdr,
+    unsigned int shndx,
+    Output_section* os,
+    const Symbol_table* symtab)
+{
+  // We only scan non-empty code sections.
+  if ((shdr.get_sh_flags() & elfcpp::SHF_EXECINSTR) == 0
+      || shdr.get_sh_size() == 0)
+    return false;
+
+  // Ignore discarded or ICF'ed sections.
+  if (os == NULL || symtab->is_section_folded(this, shndx))
+    return false;
+  
+  // Find output address of section.
+  Arm_address address = os->output_address(this, shndx, 0);
+
+  // If the section does not cross any 4K-boundaries, it does not need to
+  // be scanned.
+  if ((address & ~0xfffU) == ((address + shdr.get_sh_size() - 1) & ~0xfffU))
+    return false;
+
+  return true;
+}
+
+// Scan a section for Cortex-A8 workaround.
+
+template<bool big_endian>
+void
+Arm_relobj<big_endian>::scan_section_for_cortex_a8_erratum(
+    const elfcpp::Shdr<32, big_endian>& shdr,
+    unsigned int shndx,
+    Output_section* os,
+    Target_arm<big_endian>* arm_target)
+{
+  Arm_address output_address = os->output_address(this, shndx, 0);
+
+  // Get the section contents.
+  section_size_type input_view_size = 0;
+  const unsigned char* input_view =
+    this->section_contents(shndx, &input_view_size, false);
+
+  // We need to go through the mapping symbols to determine what to
+  // scan.  There are two reasons.  First, we should look at THUMB code and
+  // THUMB code only.  Second, we only want to look at the 4K-page boundary
+  // to speed up the scanning.
+  
+  // Look for the first mapping symbol in this section.  It should be
+  // at (shndx, 0).
+  Mapping_symbol_position section_start(shndx, 0);
+  typename Mapping_symbols_info::const_iterator p =
+    this->mapping_symbols_info_.lower_bound(section_start);
+
+  if (p == this->mapping_symbols_info_.end()
+      || p->first != section_start)
+    {
+      gold_warning(_("Cortex-A8 erratum scanning failed because there "
+		     "is no mapping symbols for section %u of %s"),
+		   shndx, this->name().c_str());
+      return;
+    }
+ 
+  while (p != this->mapping_symbols_info_.end()
+	&& p->first.first == shndx)
+    {
+      typename Mapping_symbols_info::const_iterator next =
+	this->mapping_symbols_info_.upper_bound(p->first);
+
+      // Only scan part of a section with THUMB code.
+      if (p->second == 't')
+	{
+	  // Determine the end of this range.
+	  section_size_type span_start =
+	    convert_to_section_size_type(p->first.second);
+	  section_size_type span_end;
+	  if (next != this->mapping_symbols_info_.end()
+	      && next->first.first == shndx)
+	    span_end = convert_to_section_size_type(next->first.second);
+	  else
+	    span_end = convert_to_section_size_type(shdr.get_sh_size());
+	  
+	  if (((span_start + output_address) & ~0xfffUL)
+	      != ((span_end + output_address - 1) & ~0xfffUL))
+	    {
+	      arm_target->scan_span_for_cortex_a8_erratum(this, shndx,
+							  span_start, span_end,
+							  input_view,
+							  output_address);
+	    }
+	}
+
+      p = next; 
+    }
+}
+
 // Scan relocations for stub generation.
 
 template<bool big_endian>
@@ -3964,87 +4346,75 @@ Arm_relobj<big_endian>::scan_sections_for_stubs(
   relinfo.layout = layout;
   relinfo.object = this;
 
+  // Do relocation stubs scanning.
   const unsigned char* p = pshdrs + shdr_size;
   for (unsigned int i = 1; i < shnum; ++i, p += shdr_size)
     {
-      typename elfcpp::Shdr<32, big_endian> shdr(p);
-
-      unsigned int sh_type = shdr.get_sh_type();
-      if (sh_type != elfcpp::SHT_REL && sh_type != elfcpp::SHT_RELA)
-	continue;
-
-      off_t sh_size = shdr.get_sh_size();
-      if (sh_size == 0)
-	continue;
-
-      unsigned int index = this->adjust_shndx(shdr.get_sh_info());
-      if (index >= this->shnum())
+      const elfcpp::Shdr<32, big_endian> shdr(p);
+      if (this->section_needs_reloc_stub_scanning(shdr, out_sections, symtab))
 	{
-	  // Ignore reloc section with bad info.  This error will be
-	  // reported in the final link.
-	  continue;
-	}
+	  unsigned int index = this->adjust_shndx(shdr.get_sh_info());
+	  Arm_address output_offset = this->get_output_section_offset(index);
+	  Arm_address output_address;
+	  if(output_offset != invalid_address)
+	    output_address = out_sections[index]->address() + output_offset;
+	  else
+	    {
+	      // Currently this only happens for a relaxed section.
+	      const Output_relaxed_input_section* poris =
+	      out_sections[index]->find_relaxed_input_section(this, index);
+	      gold_assert(poris != NULL);
+	      output_address = poris->address();
+	    }
 
-      Output_section* os = out_sections[index];
-      if (os == NULL
-	  || symtab->is_section_folded(this, index))
+	  // Get the relocations.
+	  const unsigned char* prelocs = this->get_view(shdr.get_sh_offset(),
+							shdr.get_sh_size(),
+							true, false);
+
+	  // Get the section contents.  This does work for the case in which
+	  // we modify the contents of an input section.  We need to pass the
+	  // output view under such circumstances.
+	  section_size_type input_view_size = 0;
+	  const unsigned char* input_view =
+	    this->section_contents(index, &input_view_size, false);
+
+	  relinfo.reloc_shndx = i;
+	  relinfo.data_shndx = index;
+	  unsigned int sh_type = shdr.get_sh_type();
+	  unsigned int reloc_size;
+	  if (sh_type == elfcpp::SHT_REL)
+	    reloc_size = elfcpp::Elf_sizes<32>::rel_size;
+	  else
+	    reloc_size = elfcpp::Elf_sizes<32>::rela_size;
+
+	  Output_section* os = out_sections[index];
+	  arm_target->scan_section_for_stubs(&relinfo, sh_type, prelocs,
+					     shdr.get_sh_size() / reloc_size,
+					     os,
+					     output_offset == invalid_address,
+					     input_view, output_address,
+					     input_view_size);
+	}
+    }
+
+  // Do Cortex-A8 erratum stubs scanning.  This has to be done for a section
+  // after its relocation section, if there is one, is processed for
+  // relocation stubs.  Merging this loop with the one above would have been
+  // complicated since we would have had to make sure that relocation stub
+  // scanning is done first.
+  if (arm_target->fix_cortex_a8())
+    {
+      const unsigned char* p = pshdrs + shdr_size;
+      for (unsigned int i = 1; i < shnum; ++i, p += shdr_size)
 	{
-	  // This relocation section is against a section which we
-	  // discarded or if the section is folded into another
-	  // section due to ICF.
-	  continue;
+	  const elfcpp::Shdr<32, big_endian> shdr(p);
+	  if (this->section_needs_cortex_a8_stub_scanning(shdr, i,
+							  out_sections[i],
+							  symtab))
+	    this->scan_section_for_cortex_a8_erratum(shdr, i, out_sections[i],
+						     arm_target);
 	}
-      Arm_address output_offset = this->get_output_section_offset(index);
-
-      if (this->adjust_shndx(shdr.get_sh_link()) != this->symtab_shndx())
-	{
-	  // Ignore reloc section with unexpected symbol table.  The
-	  // error will be reported in the final link.
-	  continue;
-	}
-
-      const unsigned char* prelocs = this->get_view(shdr.get_sh_offset(),
-						    sh_size, true, false);
-
-      unsigned int reloc_size;
-      if (sh_type == elfcpp::SHT_REL)
-	reloc_size = elfcpp::Elf_sizes<32>::rel_size;
-      else
-	reloc_size = elfcpp::Elf_sizes<32>::rela_size;
-
-      if (reloc_size != shdr.get_sh_entsize())
-	{
-	  // Ignore reloc section with unexpected entsize.  The error
-	  // will be reported in the final link.
-	  continue;
-	}
-
-      size_t reloc_count = sh_size / reloc_size;
-      if (static_cast<off_t>(reloc_count * reloc_size) != sh_size)
-	{
-	  // Ignore reloc section with uneven size.  The error will be
-	  // reported in the final link.
-	  continue;
-	}
-
-      gold_assert(output_offset != invalid_address
-		  || this->relocs_must_follow_section_writes());
-
-      // Get the section contents.  This does work for the case in which
-      // we modify the contents of an input section.  We need to pass the
-      // output view under such circumstances.
-      section_size_type input_view_size = 0;
-      const unsigned char* input_view =
-	this->section_contents(index, &input_view_size, false);
-
-      relinfo.reloc_shndx = i;
-      relinfo.data_shndx = index;
-      arm_target->scan_section_for_stubs(&relinfo, sh_type, prelocs,
-					 reloc_count, os,
-					 output_offset == invalid_address,
-					 input_view,
-					 os->address(),
-					 input_view_size);
     }
 
   // After we've done the relocations, we release the hash tables,
@@ -4093,6 +4463,27 @@ Arm_relobj<big_endian>::do_count_local_symbols(
   const unsigned char* psyms = this->get_view(symtabshdr.get_sh_offset(),
 					      locsize, true, true);
 
+  // For mapping symbol processing, we need to read the symbol names.
+  unsigned int strtab_shndx = this->adjust_shndx(symtabshdr.get_sh_link());
+  if (strtab_shndx >= this->shnum())
+    {
+      this->error(_("invalid symbol table name index: %u"), strtab_shndx);
+      return;
+    }
+
+  elfcpp::Shdr<32, big_endian>
+    strtabshdr(this, this->elf_file()->section_header(strtab_shndx));
+  if (strtabshdr.get_sh_type() != elfcpp::SHT_STRTAB)
+    {
+      this->error(_("symbol table name section has wrong type: %u"),
+	          static_cast<unsigned int>(strtabshdr.get_sh_type()));
+      return;
+    }
+  const char* pnames =
+    reinterpret_cast<const char*>(this->get_view(strtabshdr.get_sh_offset(),
+						 strtabshdr.get_sh_size(),
+						 false, false));
+
   // Loop over the local symbols and mark any local symbols pointing
   // to THUMB functions.
 
@@ -4106,6 +4497,17 @@ Arm_relobj<big_endian>::do_count_local_symbols(
       elfcpp::STT st_type = sym.get_st_type();
       Symbol_value<32>& lv((*plocal_values)[i]);
       Arm_address input_value = lv.input_value();
+
+      // Check to see if this is a mapping symbol.
+      const char* sym_name = pnames + sym.get_st_name();
+      if (Target_arm<big_endian>::is_mapping_symbol_name(sym_name))
+	{
+	  unsigned int input_shndx = sym.get_st_shndx();  
+
+	  // Strip of LSB in case this is a THUMB symbol.
+	  Mapping_symbol_position msp(input_shndx, input_value & ~1U);
+	  this->mapping_symbols_info_[msp] = sym_name[1];
+	}
 
       if (st_type == elfcpp::STT_ARM_TFUNC
 	  || (st_type == elfcpp::STT_FUNC && ((input_value & 1) != 0)))
@@ -4235,6 +4637,44 @@ Arm_relobj<big_endian>::do_read_symbols(Read_symbols_data* sd)
     read_arm_attributes_section<big_endian>(this, sd); 
 }
 
+// Process relocations for garbage collection.  The ARM target uses .ARM.exidx
+// sections for unwinding.  These sections are referenced implicitly by 
+// text sections linked in the section headers.  If we ignore these implict
+// references, the .ARM.exidx sections and any .ARM.extab sections they use
+// will be garbage-collected incorrectly.  Hence we override the same function
+// in the base class to handle these implicit references.
+
+template<bool big_endian>
+void
+Arm_relobj<big_endian>::do_gc_process_relocs(Symbol_table* symtab,
+					     Layout* layout,
+					     Read_relocs_data* rd)
+{
+  // First, call base class method to process relocations in this object.
+  Sized_relobj<32, big_endian>::do_gc_process_relocs(symtab, layout, rd);
+
+  unsigned int shnum = this->shnum();
+  const unsigned int shdr_size = elfcpp::Elf_sizes<32>::shdr_size;
+  const unsigned char* pshdrs = this->get_view(this->elf_file()->shoff(),
+					       shnum * shdr_size,
+					       true, true);
+
+  // Scan section headers for sections of type SHT_ARM_EXIDX.  Add references
+  // to these from the linked text sections.
+  const unsigned char* ps = pshdrs + shdr_size;
+  for (unsigned int i = 1; i < shnum; ++i, ps += shdr_size)
+    {
+      elfcpp::Shdr<32, big_endian> shdr(ps);
+      if (shdr.get_sh_type() == elfcpp::SHT_ARM_EXIDX)
+	{
+	  // Found an .ARM.exidx section, add it to the set of reachable
+	  // sections from its linked text section.
+	  unsigned int text_shndx = this->adjust_shndx(shdr.get_sh_link());
+	  symtab->gc()->add_reference(this, text_shndx, this, i);
+	}
+    }
+}
+
 // Arm_dynobj methods.
 
 // Read the symbol information.
@@ -4267,6 +4707,8 @@ Stub_addend_reader<elfcpp::SHT_REL, big_endian>::operator()(
     const unsigned char* view,
     const typename Reloc_types<elfcpp::SHT_REL, 32, big_endian>::Reloc&) const
 {
+  typedef struct Arm_relocate_functions<big_endian> RelocFuncs;
+  
   switch (r_type)
     {
     case elfcpp::R_ARM_CALL:
@@ -4283,23 +4725,11 @@ Stub_addend_reader<elfcpp::SHT_REL, big_endian>::operator()(
     case elfcpp::R_ARM_THM_JUMP24:
     case elfcpp::R_ARM_THM_XPC22:
       {
-	// Fetch the addend.  We use the Thumb-2 encoding (backwards
-	// compatible with Thumb-1) involving the J1 and J2 bits.
 	typedef typename elfcpp::Swap<16, big_endian>::Valtype Valtype;
 	const Valtype* wv = reinterpret_cast<const Valtype*>(view);
 	Valtype upper_insn = elfcpp::Swap<16, big_endian>::readval(wv);
 	Valtype lower_insn = elfcpp::Swap<16, big_endian>::readval(wv + 1);
-
-	uint32_t s = (upper_insn & (1 << 10)) >> 10;
-	uint32_t upper = upper_insn & 0x3ff;
-	uint32_t lower = lower_insn & 0x7ff;
-	uint32_t j1 = (lower_insn & (1 << 13)) >> 13;
-	uint32_t j2 = (lower_insn & (1 << 11)) >> 11;
-	uint32_t i1 = j1 ^ s ? 0 : 1;
-	uint32_t i2 = j2 ^ s ? 0 : 1;
-
-	return utils::sign_extend<25>((s << 24) | (i1 << 23) | (i2 << 22)
-				      | (upper << 12) | (lower << 1));
+	return RelocFuncs::thumb32_branch_offset(upper_insn, lower_insn);
       }
 
     case elfcpp::R_ARM_THM_JUMP19:
@@ -4308,16 +4738,7 @@ Stub_addend_reader<elfcpp::SHT_REL, big_endian>::operator()(
 	const Valtype* wv = reinterpret_cast<const Valtype*>(view);
 	Valtype upper_insn = elfcpp::Swap<16, big_endian>::readval(wv);
 	Valtype lower_insn = elfcpp::Swap<16, big_endian>::readval(wv + 1);
-
-	// Reconstruct the top three bits and squish the two 11 bit pieces
-	// together.
-	uint32_t S = (upper_insn & 0x0400) >> 10;
-	uint32_t J1 = (lower_insn & 0x2000) >> 13;
-	uint32_t J2 = (lower_insn & 0x0800) >> 11;
-	uint32_t upper =
-	  (S << 8) | (J2 << 7) | (J1 << 6) | (upper_insn & 0x003f);
-	uint32_t lower = (lower_insn & 0x07ff);
-	return utils::sign_extend<23>((upper << 12) | (lower << 1));
+	return RelocFuncs::thumb32_cond_branch_offset(upper_insn, lower_insn);
       }
 
     default:
@@ -5081,12 +5502,12 @@ Target_arm<big_endian>::do_finalize_sections(
 				    Symbol_table::PREDEFINED,
 				    exidx_section, 0, 0, elfcpp::STT_OBJECT,
 				    elfcpp::STB_GLOBAL, elfcpp::STV_HIDDEN, 0,
-				    false, false);
+				    false, true);
       symtab->define_in_output_data("__exidx_end", NULL,
 				    Symbol_table::PREDEFINED,
 				    exidx_section, 0, 0, elfcpp::STT_OBJECT,
 				    elfcpp::STB_GLOBAL, elfcpp::STV_HIDDEN, 0,
-				    true, false);
+				    true, true);
 
       // For the ARM target, we need to add a PT_ARM_EXIDX segment for
       // the .ARM.exidx section.
@@ -6881,34 +7302,49 @@ Target_arm<big_endian>::scan_reloc_for_stub(
       gold_unreachable();
     }
 
+  Reloc_stub* stub = NULL;
   Stub_type stub_type =
     Reloc_stub::stub_type_for_reloc(r_type, address, destination,
 				    target_is_thumb);
-
-  // This reloc does not need a stub.
-  if (stub_type == arm_stub_none)
-    return;
-
-  // Try looking up an existing stub from a stub table.
-  Stub_table<big_endian>* stub_table = 
-    arm_relobj->stub_table(relinfo->data_shndx);
-  gold_assert(stub_table != NULL);
-   
-  // Locate stub by destination.
-  Reloc_stub::Key stub_key(stub_type, gsym, arm_relobj, r_sym, addend);
-
-  // Create a stub if there is not one already
-  Reloc_stub* stub = stub_table->find_reloc_stub(stub_key);
-  if (stub == NULL)
+  if (stub_type != arm_stub_none)
     {
-      // create a new stub and add it to stub table.
-      stub = this->stub_factory().make_reloc_stub(stub_type);
-      stub_table->add_reloc_stub(stub, stub_key);
+      // Try looking up an existing stub from a stub table.
+      Stub_table<big_endian>* stub_table = 
+	arm_relobj->stub_table(relinfo->data_shndx);
+      gold_assert(stub_table != NULL);
+   
+      // Locate stub by destination.
+      Reloc_stub::Key stub_key(stub_type, gsym, arm_relobj, r_sym, addend);
+
+      // Create a stub if there is not one already
+      stub = stub_table->find_reloc_stub(stub_key);
+      if (stub == NULL)
+	{
+	  // create a new stub and add it to stub table.
+	  stub = this->stub_factory().make_reloc_stub(stub_type);
+	  stub_table->add_reloc_stub(stub, stub_key);
+	}
+
+      // Record the destination address.
+      stub->set_destination_address(destination
+				    | (target_is_thumb ? 1 : 0));
     }
 
-  // Record the destination address.
-  stub->set_destination_address(destination
-				| (target_is_thumb ? 1 : 0));
+  // For Cortex-A8, we need to record a relocation at 4K page boundary.
+  if (this->fix_cortex_a8_
+      && (r_type == elfcpp::R_ARM_THM_JUMP24
+	  || r_type == elfcpp::R_ARM_THM_JUMP19
+	  || r_type == elfcpp::R_ARM_THM_CALL
+	  || r_type == elfcpp::R_ARM_THM_XPC22)
+      && (address & 0xfffU) == 0xffeU)
+    {
+      // Found a candidate.  Note we haven't checked the destination is
+      // within 4K here: if we do so (and don't create a record) we can't
+      // tell that a branch should have been relocated when scanning later.
+      this->cortex_a8_relocs_info_[address] =
+	new Cortex_a8_reloc(stub, r_type,
+			    destination | (target_is_thumb ? 1 : 0));
+    }
 }
 
 // This function scans a relocation sections for stub generation.
@@ -7172,6 +7608,12 @@ Target_arm<big_endian>::do_relax(
       bool stubs_always_after_branch = stub_group_size_param < 0;
       section_size_type stub_group_size = abs(stub_group_size_param);
 
+      // The Cortex-A8 erratum fix depends on stubs not being in the same 4K
+      // page as the first half of a 32-bit branch straddling two 4K pages.
+      // This is a crude way of enforcing that.
+      if (this->fix_cortex_a8_)
+	stubs_always_after_branch = true;
+
       if (stub_group_size == 1)
 	{
 	  // Default value.
@@ -7189,9 +7631,30 @@ Target_arm<big_endian>::do_relax(
       group_sections(layout, stub_group_size, stubs_always_after_branch);
     }
 
+  // The Cortex-A8 stubs are sensitive to layout of code sections.  At the
+  // beginning of each relaxation pass, just blow away all the stubs.
+  // Alternatively, we could selectively remove only the stubs and reloc
+  // information for code sections that have moved since the last pass.
+  // That would require more book-keeping.
   typedef typename Stub_table_list::iterator Stub_table_iterator;
+  if (this->fix_cortex_a8_)
+    {
+      // Clear all Cortex-A8 reloc information.
+      for (typename Cortex_a8_relocs_info::const_iterator p =
+	     this->cortex_a8_relocs_info_.begin();
+	   p != this->cortex_a8_relocs_info_.end();
+	   ++p)
+	delete p->second;
+      this->cortex_a8_relocs_info_.clear();
 
-  // scan relocs for stubs
+      // Remove all Cortex-A8 stubs.
+      for (Stub_table_iterator sp = this->stub_tables_.begin();
+	   sp != this->stub_tables_.end();
+	   ++sp)
+	(*sp)->remove_all_cortex_a8_stubs();
+    }
+  
+  // Scan relocs for relocation stubs
   for (Input_objects::Relobj_iterator op = input_objects->relobj_begin();
        op != input_objects->relobj_end();
        ++op)
@@ -7314,6 +7777,176 @@ Target_arm<big_endian>::do_attributes_order(int num) const
   if ((num - 1) < elfcpp::Tag_conformance)
     return num - 1;
   return num;
+}
+
+// Scan a span of THUMB code for Cortex-A8 erratum.
+
+template<bool big_endian>
+void
+Target_arm<big_endian>::scan_span_for_cortex_a8_erratum(
+    Arm_relobj<big_endian>* arm_relobj,
+    unsigned int shndx,
+    section_size_type span_start,
+    section_size_type span_end,
+    const unsigned char* view,
+    Arm_address address)
+{
+  // Scan for 32-bit Thumb-2 branches which span two 4K regions, where:
+  //
+  // The opcode is BLX.W, BL.W, B.W, Bcc.W
+  // The branch target is in the same 4KB region as the
+  // first half of the branch.
+  // The instruction before the branch is a 32-bit
+  // length non-branch instruction.
+  section_size_type i = span_start;
+  bool last_was_32bit = false;
+  bool last_was_branch = false;
+  while (i < span_end)
+    {
+      typedef typename elfcpp::Swap<16, big_endian>::Valtype Valtype;
+      const Valtype* wv = reinterpret_cast<const Valtype*>(view + i);
+      uint32_t insn = elfcpp::Swap<16, big_endian>::readval(wv);
+      bool is_blx = false, is_b = false;
+      bool is_bl = false, is_bcc = false;
+
+      bool insn_32bit = (insn & 0xe000) == 0xe000 && (insn & 0x1800) != 0x0000;
+      if (insn_32bit)
+	{
+	  // Load the rest of the insn (in manual-friendly order).
+	  insn = (insn << 16) | elfcpp::Swap<16, big_endian>::readval(wv + 1);
+
+	  // Encoding T4: B<c>.W.
+	  is_b = (insn & 0xf800d000U) == 0xf0009000U;
+	  // Encoding T1: BL<c>.W.
+      	  is_bl = (insn & 0xf800d000U) == 0xf000d000U;
+       	  // Encoding T2: BLX<c>.W.
+       	  is_blx = (insn & 0xf800d000U) == 0xf000c000U;
+	  // Encoding T3: B<c>.W (not permitted in IT block).
+	  is_bcc = ((insn & 0xf800d000U) == 0xf0008000U
+		    && (insn & 0x07f00000U) != 0x03800000U);
+	}
+
+      bool is_32bit_branch = is_b || is_bl || is_blx || is_bcc;
+			   
+      // If this instruction is a 32-bit THUMB branch that crosses a 4K
+      // page boundary and it follows 32-bit non-branch instruction,
+      // we need to work around.
+      if (is_32bit_branch
+	  && ((address + i) & 0xfffU) == 0xffeU
+	  && last_was_32bit
+	  && !last_was_branch)
+	{
+	  // Check to see if there is a relocation stub for this branch.
+	  bool force_target_arm = false;
+	  bool force_target_thumb = false;
+	  const Cortex_a8_reloc* cortex_a8_reloc = NULL;
+	  Cortex_a8_relocs_info::const_iterator p =
+	    this->cortex_a8_relocs_info_.find(address + i);
+
+	  if (p != this->cortex_a8_relocs_info_.end())
+	    {
+	      cortex_a8_reloc = p->second;
+	      bool target_is_thumb = (cortex_a8_reloc->destination() & 1) != 0;
+
+	      if (cortex_a8_reloc->r_type() == elfcpp::R_ARM_THM_CALL
+		  && !target_is_thumb)
+		force_target_arm = true;
+	      else if (cortex_a8_reloc->r_type() == elfcpp::R_ARM_THM_CALL
+		       && target_is_thumb)
+		force_target_thumb = true;
+	    }
+
+	  off_t offset;
+	  Stub_type stub_type = arm_stub_none;
+
+	  // Check if we have an offending branch instruction.
+	  uint16_t upper_insn = (insn >> 16) & 0xffffU;
+	  uint16_t lower_insn = insn & 0xffffU;
+	  typedef struct Arm_relocate_functions<big_endian> RelocFuncs;
+
+	  if (cortex_a8_reloc != NULL
+	      && cortex_a8_reloc->reloc_stub() != NULL)
+	    // We've already made a stub for this instruction, e.g.
+	    // it's a long branch or a Thumb->ARM stub.  Assume that
+	    // stub will suffice to work around the A8 erratum (see
+	    // setting of always_after_branch above).
+	    ;
+	  else if (is_bcc)
+	    {
+	      offset = RelocFuncs::thumb32_cond_branch_offset(upper_insn,
+							      lower_insn);
+	      stub_type = arm_stub_a8_veneer_b_cond;
+	    }
+	  else if (is_b || is_bl || is_blx)
+	    {
+	      offset = RelocFuncs::thumb32_branch_offset(upper_insn,
+							 lower_insn);
+	      if (is_blx)
+	        offset &= ~3;
+
+	      stub_type = (is_blx
+			   ? arm_stub_a8_veneer_blx
+			   : (is_bl
+			      ? arm_stub_a8_veneer_bl
+			      : arm_stub_a8_veneer_b));
+	    }
+
+	  if (stub_type != arm_stub_none)
+	    {
+	      Arm_address pc_for_insn = address + i + 4;
+
+	      // The original instruction is a BL, but the target is
+	      // an ARM instruction.  If we were not making a stub,
+	      // the BL would have been converted to a BLX.  Use the
+	      // BLX stub instead in that case.
+	      if (this->may_use_blx() && force_target_arm
+		  && stub_type == arm_stub_a8_veneer_bl)
+		{
+		  stub_type = arm_stub_a8_veneer_blx;
+		  is_blx = true;
+		  is_bl = false;
+		}
+	      // Conversely, if the original instruction was
+	      // BLX but the target is Thumb mode, use the BL stub.
+	      else if (force_target_thumb
+		       && stub_type == arm_stub_a8_veneer_blx)
+		{
+		  stub_type = arm_stub_a8_veneer_bl;
+		  is_blx = false;
+		  is_bl = true;
+		}
+
+	      if (is_blx)
+		pc_for_insn &= ~3;
+
+              // If we found a relocation, use the proper destination,
+	      // not the offset in the (unrelocated) instruction.
+	      // Note this is always done if we switched the stub type above.
+              if (cortex_a8_reloc != NULL)
+                offset = (off_t) (cortex_a8_reloc->destination() - pc_for_insn);
+
+              Arm_address target = (pc_for_insn + offset) | (is_blx ? 0 : 1);
+
+	      // Add a new stub if destination address in in the same page.
+              if (((address + i) & ~0xfffU) == (target & ~0xfffU))
+                {
+		  Cortex_a8_stub* stub =
+		    this->stub_factory_.make_cortex_a8_stub(stub_type,
+							    arm_relobj, shndx,
+							    address + i,
+							    target, insn);
+		  Stub_table<big_endian>* stub_table =
+		    arm_relobj->stub_table(shndx);
+		  gold_assert(stub_table != NULL);
+		  stub_table->add_cortex_a8_stub(address + i, stub);
+                }
+            }
+        }
+
+      i += insn_32bit ? 4 : 2;
+      last_was_32bit = insn_32bit;
+      last_was_branch = is_32bit_branch;
+    }
 }
 
 template<bool big_endian>
