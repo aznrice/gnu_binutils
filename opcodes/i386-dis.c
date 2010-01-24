@@ -5304,7 +5304,6 @@ static const struct dis386 prefix_table[][4] = {
     { Bad_Opcode },
     { Bad_Opcode },
     { VEX_LEN_TABLE (VEX_LEN_3ADF_P_2) },
-    { Bad_Opcode },
   },
 };
 
@@ -8638,7 +8637,6 @@ static const struct dis386 vex_len_table[][2] = {
   /* VEX_LEN_F2_P_2 */
   {
     { VEX_W_TABLE (VEX_W_F2_P_2) },
-    { Bad_Opcode },
   },
 
   /* VEX_LEN_F3_P_2 */
