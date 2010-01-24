@@ -28,6 +28,7 @@
 
 #include "elfcpp.h"
 #include "symtab.h"
+#include "object.h"
 #include "icf.h"
 
 namespace gold
@@ -45,16 +46,8 @@ class Output_section;
 class General_options;
 class Layout;
 
-typedef std::pair<Object *, unsigned int> Section_id;
-
 class Garbage_collection
 {
-  struct Section_id_hash
-  {
-    size_t operator()(const Section_id& loc) const
-    { return reinterpret_cast<uintptr_t>(loc.first) ^ loc.second; }
-  };
-
  public:
 
   typedef Unordered_set<Section_id, Section_id_hash> Sections_reachable;
@@ -107,6 +100,21 @@ class Garbage_collection
   add_cident_section(std::string section_name,
 		     Section_id secn)
   { this->cident_sections_[section_name].insert(secn); }
+
+  // Add a reference from the SRC_SHNDX-th section of SRC_OBJECT to
+  // DST_SHNDX-th section of DST_OBJECT.
+  void
+  add_reference(Object* src_object, unsigned int src_shndx,
+		Object* dst_object, unsigned int dst_shndx)
+  {
+    Section_id src_id(src_object, src_shndx);
+    Section_id dst_id(dst_object, dst_shndx);
+    Section_ref::iterator p = this->section_reloc_map_.find(src_id);
+    if (p == this->section_reloc_map_.end())
+      this->section_reloc_map_[src_id].insert(dst_id);
+    else
+      p->second.insert(dst_id);
+  }
 
  private:
 
@@ -261,25 +269,14 @@ gc_process_relocs(
         }
       if (parameters->options().gc_sections())
         {
-          Section_id src_id(src_obj, src_indx);
-          Section_id dst_id(dst_obj, dst_indx);
-          Garbage_collection::Section_ref::iterator map_it;
-          map_it = symtab->gc()->section_reloc_map().find(src_id);
-          if (map_it == symtab->gc()->section_reloc_map().end())
-            {
-              symtab->gc()->section_reloc_map()[src_id].insert(dst_id);
-            }
-          else
-            {
-              Garbage_collection::Sections_reachable& v(map_it->second);
-              v.insert(dst_id);
-            }
+	  symtab->gc()->add_reference(src_obj, src_indx, dst_obj, dst_indx);
           if (cident_section_name != NULL)
             {
               Garbage_collection::Cident_section_map::iterator ele =
                 symtab->gc()->cident_sections()->find(std::string(cident_section_name));
               if (ele == symtab->gc()->cident_sections()->end())
                 continue;
+	      Section_id src_id(src_obj, src_indx);
               Garbage_collection::Sections_reachable&
                 v(symtab->gc()->section_reloc_map()[src_id]);
               Garbage_collection::Sections_reachable& cident_secn(ele->second);

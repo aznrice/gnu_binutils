@@ -144,10 +144,7 @@ static int prefixes;
 static int rex;
 /* Bits of REX we've already used.  */
 static int rex_used;
-/* Original REX prefix.  */
-static int rex_original;
-/* REX bits in original REX prefix ignored.  It may not be the same
-   as rex_original since some bits may not be ignored.  */
+/* REX bits in original REX prefix ignored.  */
 static int rex_ignored;
 /* Mark parts used in the REX prefix.  When we are testing for
    empty prefix (for 8bit register REX extension), just mask it
@@ -2369,6 +2366,44 @@ static const char *att_index64 = "%riz";
 static const char *att_index32 = "%eiz";
 static const char *att_index16[] = {
   "%bx,%si", "%bx,%di", "%bp,%si", "%bp,%di", "%si", "%di", "%bp", "%bx"
+};
+
+static const char **names_mm;
+static const char *intel_names_mm[] = {
+  "mm0", "mm1", "mm2", "mm3",
+  "mm4", "mm5", "mm6", "mm7"
+};
+static const char *att_names_mm[] = {
+  "%mm0", "%mm1", "%mm2", "%mm3",
+  "%mm4", "%mm5", "%mm6", "%mm7"
+};
+
+static const char **names_xmm;
+static const char *intel_names_xmm[] = {
+  "xmm0", "xmm1", "xmm2", "xmm3",
+  "xmm4", "xmm5", "xmm6", "xmm7",
+  "xmm8", "xmm9", "xmm10", "xmm11",
+  "xmm12", "xmm13", "xmm14", "xmm15"
+};
+static const char *att_names_xmm[] = {
+  "%xmm0", "%xmm1", "%xmm2", "%xmm3",
+  "%xmm4", "%xmm5", "%xmm6", "%xmm7",
+  "%xmm8", "%xmm9", "%xmm10", "%xmm11",
+  "%xmm12", "%xmm13", "%xmm14", "%xmm15"
+};
+
+static const char **names_ymm;
+static const char *intel_names_ymm[] = {
+  "ymm0", "ymm1", "ymm2", "ymm3",
+  "ymm4", "ymm5", "ymm6", "ymm7",
+  "ymm8", "ymm9", "ymm10", "ymm11",
+  "ymm12", "ymm13", "ymm14", "ymm15"
+};
+static const char *att_names_ymm[] = {
+  "%ymm0", "%ymm1", "%ymm2", "%ymm3",
+  "%ymm4", "%ymm5", "%ymm6", "%ymm7",
+  "%ymm8", "%ymm9", "%ymm10", "%ymm11",
+  "%ymm12", "%ymm13", "%ymm14", "%ymm15"
 };
 
 static const struct dis386 reg_table[][8] = {
@@ -11146,17 +11181,17 @@ static const struct dis386 mod_table[][2] = {
   },
   {
     /* MOD_0FAE_REG_4 */
-    { "xsave",		{ M } },
+    { "xsave",		{ FXSAVE } },
     { "(bad)",		{ XX } },
   },
   {
     /* MOD_0FAE_REG_5 */
-    { "xrstor",		{ M } },
+    { "xrstor",		{ FXSAVE } },
     { RM_TABLE (RM_0FAE_REG_5) },
   },
   {
     /* MOD_0FAE_REG_6 */
-    { "xsaveopt",	{ M } },
+    { "(bad)",		{ XX } },
     { RM_TABLE (RM_0FAE_REG_6) },
   },
   {
@@ -11477,7 +11512,6 @@ ckprefix (void)
 {
   int newrex, i, length;
   rex = 0;
-  rex_original = 0;
   rex_ignored = 0;
   prefixes = 0;
   used_prefixes = 0;
@@ -11591,7 +11625,6 @@ ckprefix (void)
       if (*codep != FWAIT_OPCODE)
 	all_prefixes[i++] = *codep;
       rex = newrex;
-      rex_original = rex;
       codep++;
       length++;
     }
@@ -12185,6 +12218,9 @@ print_insn (bfd_vma pc, disassemble_info *info)
       names8 = intel_names8;
       names8rex = intel_names8rex;
       names_seg = intel_names_seg;
+      names_mm = intel_names_mm;
+      names_xmm = intel_names_xmm;
+      names_ymm = intel_names_ymm;
       index64 = intel_index64;
       index32 = intel_index32;
       index16 = intel_index16;
@@ -12201,6 +12237,9 @@ print_insn (bfd_vma pc, disassemble_info *info)
       names8 = att_names8;
       names8rex = att_names8rex;
       names_seg = att_names_seg;
+      names_mm = att_names_mm;
+      names_xmm = att_names_xmm;
+      names_ymm = att_names_ymm;
       index64 = att_index64;
       index32 = att_index32;
       index16 = att_index16;
@@ -12394,23 +12433,23 @@ print_insn (bfd_vma pc, disassemble_info *info)
 	  }
     }
 
-  /* Check if the REX prefix used.  */
+  /* Check if the REX prefix is used.  */
   if (rex_ignored == 0 && (rex ^ rex_used) == 0)
     all_prefixes[last_rex_prefix] = 0;
 
-  /* Check if the SEG prefix used.  */
+  /* Check if the SEG prefix is used.  */
   if ((prefixes & (PREFIX_CS | PREFIX_SS | PREFIX_DS | PREFIX_ES
 		   | PREFIX_FS | PREFIX_GS)) != 0
       && (used_prefixes
 	  & seg_prefix (all_prefixes[last_seg_prefix])) != 0)
     all_prefixes[last_seg_prefix] = 0;
 
-  /* Check if the ADDR prefix used.  */
+  /* Check if the ADDR prefix is used.  */
   if ((prefixes & PREFIX_ADDR) != 0
       && (used_prefixes & PREFIX_ADDR) != 0)
     all_prefixes[last_addr_prefix] = 0;
 
-  /* Check if the DATA prefix used.  */
+  /* Check if the DATA prefix is used.  */
   if ((prefixes & PREFIX_DATA) != 0
       && (used_prefixes & PREFIX_DATA) != 0)
     all_prefixes[last_data_prefix] = 0;
@@ -14684,53 +14723,56 @@ OP_R (int bytemode, int sizeflag)
 static void
 OP_MMX (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
+  int reg = modrm.reg;
+  const char **names;
+
   used_prefixes |= (prefixes & PREFIX_DATA);
   if (prefixes & PREFIX_DATA)
     {
-      int add;
+      names = names_xmm;
       USED_REX (REX_R);
       if (rex & REX_R)
-	add = 8;
-      else
-	add = 0;
-      sprintf (scratchbuf, "%%xmm%d", modrm.reg + add);
+	reg += 8;
     }
   else
-    sprintf (scratchbuf, "%%mm%d", modrm.reg);
-  oappend (scratchbuf + intel_syntax);
+    names = names_mm;
+  oappend (names[reg]);
 }
 
 static void
 OP_XMM (int bytemode, int sizeflag ATTRIBUTE_UNUSED)
 {
-  int add;
+  int reg = modrm.reg;
+  const char **names;
+
   USED_REX (REX_R);
   if (rex & REX_R)
-    add = 8;
-  else
-    add = 0;
+    reg += 8;
   if (need_vex && bytemode != xmm_mode)
     {
       switch (vex.length)
 	{
 	case 128:
-	  sprintf (scratchbuf, "%%xmm%d", modrm.reg + add);
+	  names = names_xmm;
 	  break;
 	case 256:
-	  sprintf (scratchbuf, "%%ymm%d", modrm.reg + add);
+	  names = names_ymm;
 	  break;
 	default:
 	  abort ();
 	}
     }
   else
-    sprintf (scratchbuf, "%%xmm%d", modrm.reg + add);
-  oappend (scratchbuf + intel_syntax);
+    names = names_xmm;
+  oappend (names[reg]);
 }
 
 static void
 OP_EM (int bytemode, int sizeflag)
 {
+  int reg;
+  const char **names;
+
   if (modrm.mod != 3)
     {
       if (intel_syntax
@@ -14750,20 +14792,17 @@ OP_EM (int bytemode, int sizeflag)
   MODRM_CHECK;
   codep++;
   used_prefixes |= (prefixes & PREFIX_DATA);
+  reg = modrm.rm;
   if (prefixes & PREFIX_DATA)
     {
-      int add;
-
+      names = names_xmm;
       USED_REX (REX_B);
       if (rex & REX_B)
-	add = 8;
-      else
-	add = 0;
-      sprintf (scratchbuf, "%%xmm%d", modrm.rm + add);
+	reg += 8;
     }
   else
-    sprintf (scratchbuf, "%%mm%d", modrm.rm);
-  oappend (scratchbuf + intel_syntax);
+    names = names_mm;
+  oappend (names[reg]);
 }
 
 /* cvt* are the only instructions in sse2 which have
@@ -14789,22 +14828,21 @@ OP_EMC (int bytemode, int sizeflag)
   MODRM_CHECK;
   codep++;
   used_prefixes |= (prefixes & PREFIX_DATA);
-  sprintf (scratchbuf, "%%mm%d", modrm.rm);
-  oappend (scratchbuf + intel_syntax);
+  oappend (names_mm[modrm.rm]);
 }
 
 static void
 OP_MXC (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   used_prefixes |= (prefixes & PREFIX_DATA);
-  sprintf (scratchbuf, "%%mm%d", modrm.reg);
-  oappend (scratchbuf + intel_syntax);
+  oappend (names_mm[modrm.reg]);
 }
 
 static void
 OP_EX (int bytemode, int sizeflag)
 {
-  int add;
+  int reg;
+  const char **names;
 
   /* Skip mod/rm byte.  */
   MODRM_CHECK;
@@ -14816,11 +14854,10 @@ OP_EX (int bytemode, int sizeflag)
       return;
     }
 
+  reg = modrm.rm;
   USED_REX (REX_B);
   if (rex & REX_B)
-    add = 8;
-  else
-    add = 0;
+    reg += 8;
 
   if ((sizeflag & SUFFIX_ALWAYS)
       && (bytemode == x_swap_mode
@@ -14835,18 +14872,18 @@ OP_EX (int bytemode, int sizeflag)
       switch (vex.length)
 	{
 	case 128:
-	  sprintf (scratchbuf, "%%xmm%d", modrm.rm + add);
+	  names = names_xmm;
 	  break;
 	case 256:
-	  sprintf (scratchbuf, "%%ymm%d", modrm.rm + add);
+	  names = names_ymm;
 	  break;
 	default:
 	  abort ();
 	}
     }
   else
-    sprintf (scratchbuf, "%%xmm%d", modrm.rm + add);
-  oappend (scratchbuf + intel_syntax);
+    names = names_xmm;
+  oappend (names[reg]);
 }
 
 static void
@@ -15145,23 +15182,25 @@ CMPXCHG8B_Fixup (int bytemode, int sizeflag)
 static void
 XMM_Fixup (int reg, int sizeflag ATTRIBUTE_UNUSED)
 {
+  const char **names;
+
   if (need_vex)
     {
       switch (vex.length)
 	{
 	case 128:
-	  sprintf (scratchbuf, "%%xmm%d", reg);
+	  names = names_xmm;
 	  break;
 	case 256:
-	  sprintf (scratchbuf, "%%ymm%d", reg);
+	  names = names_ymm;
 	  break;
 	default:
 	  abort ();
 	}
     }
   else
-    sprintf (scratchbuf, "%%xmm%d", reg);
-  oappend (scratchbuf + intel_syntax);
+    names = names_xmm;
+  oappend (names[reg]);
 }
 
 static void
@@ -15257,6 +15296,8 @@ FXSAVE_Fixup (int bytemode, int sizeflag)
 static void
 OP_VEX (int bytemode, int sizeflag ATTRIBUTE_UNUSED)
 {
+  const char **names;
+
   if (!need_vex)
     abort ();
 
@@ -15276,7 +15317,7 @@ OP_VEX (int bytemode, int sizeflag ATTRIBUTE_UNUSED)
 	  return;
 	}
 
-      sprintf (scratchbuf, "%%xmm%d", vex.register_specifier);
+      names = names_xmm;
       break;
     case 256:
       switch (bytemode)
@@ -15289,13 +15330,13 @@ OP_VEX (int bytemode, int sizeflag ATTRIBUTE_UNUSED)
 	  return;
 	}
 
-      sprintf (scratchbuf, "%%ymm%d", vex.register_specifier);
+      names = names_ymm;
       break;
     default:
       abort ();
       break;
     }
-  oappend (scratchbuf + intel_syntax);
+  oappend (names[vex.register_specifier]);
 }
 
 /* Get the VEX immediate byte without moving codep.  */
@@ -15390,6 +15431,8 @@ get_vex_imm8 (int sizeflag, int opnum)
 static void
 OP_EX_VexReg (int bytemode, int sizeflag, int reg)
 {
+  const char **names;
+
   if (reg == -1 && modrm.mod != 3)
     {
       OP_E_memory (bytemode, sizeflag);
@@ -15411,15 +15454,15 @@ OP_EX_VexReg (int bytemode, int sizeflag, int reg)
   switch (vex.length)
     {
     case 128:
-      sprintf (scratchbuf, "%%xmm%d", reg);
+      names = names_xmm;
       break;
     case 256:
-      sprintf (scratchbuf, "%%ymm%d", reg);
+      names = names_ymm;
       break;
     default:
       abort ();
     }
-  oappend (scratchbuf + intel_syntax);
+  oappend (names[reg]);
 }
 
 static void
@@ -15427,9 +15470,11 @@ OP_Vex_2src (int bytemode, int sizeflag)
 {
   if (modrm.mod == 3)
     {
+      int reg = modrm.rm;
       USED_REX (REX_B);
-      sprintf (scratchbuf, "%%xmm%d", rex & REX_B ? modrm.rm + 8 : modrm.rm);
-      oappend (scratchbuf + intel_syntax);
+      if (rex & REX_B)
+	reg += 8;
+      oappend (names_xmm[reg]);
     }
   else
     {
@@ -15454,10 +15499,7 @@ OP_Vex_2src_1 (int bytemode, int sizeflag)
     }
 
   if (vex.w)
-    {
-      sprintf (scratchbuf, "%%xmm%d", vex.register_specifier);
-      oappend (scratchbuf + intel_syntax);
-    }
+    oappend (names_xmm[vex.register_specifier]);
   else
     OP_Vex_2src (bytemode, sizeflag);
 }
@@ -15468,10 +15510,7 @@ OP_Vex_2src_2 (int bytemode, int sizeflag)
   if (vex.w)
     OP_Vex_2src (bytemode, sizeflag);
   else
-    {
-      sprintf (scratchbuf, "%%xmm%d", vex.register_specifier);
-      oappend (scratchbuf + intel_syntax);
-    }
+    oappend (names_xmm[vex.register_specifier]);
 }
 
 static void
@@ -15513,6 +15552,8 @@ static void
 OP_REG_VexI4 (int bytemode, int sizeflag ATTRIBUTE_UNUSED)
 {
   int reg;
+  const char **names;
+
   FETCH_DATA (the_info, codep + 1);
   reg = *codep++;
 
@@ -15529,15 +15570,15 @@ OP_REG_VexI4 (int bytemode, int sizeflag ATTRIBUTE_UNUSED)
   switch (vex.length)
     {
     case 128:
-      sprintf (scratchbuf, "%%xmm%d", reg);
+      names = names_xmm;
       break;
     case 256:
-      sprintf (scratchbuf, "%%ymm%d", reg);
+      names = names_ymm;
       break;
     default:
       abort ();
     }
-  oappend (scratchbuf + intel_syntax);
+  oappend (names[reg]);
 }
 
 static void
