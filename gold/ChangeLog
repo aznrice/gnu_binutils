@@ -1,3 +1,165 @@
+2010-01-25  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_exidx_merged_section::do_output_offset):
+	Fix warning due to signed and unsigned comparison on a 32-bit host.
+
+2010-01-22  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::do_relax): Record an output section for section
+	offset adjustment it contains any stub table that has changed.
+	* layout.cc (Layout::clean_up_after_relaxation): Adjust section
+	offsets in an output section if necessary.
+	* output.cc (Output_section::Output_section): Initialize
+	section_offsets_need_adjustments_.
+	(Output_section::add_input_section_for_script): Renamed to
+	Output_section::add_simple_input_section.
+	(Output_section::save_states): Add a comment.
+	(Output_section::discard_states): New method defintion.
+	(Output_section::adjust_section_offsets): Same.
+	* output.h (Output_section::add_input_section_for_script): Renamed to
+	Output_section::add_simple_input_section.
+	(Output_section::discard_states): New method declaration.
+	(Output_section::adjust_section_offsets): Same.
+	(Output_section::section_offsets_need_adjustment,
+	Output_section::set_section_offsets_need_adjustment): New method
+	definitions.
+	(Output_section::section_offsets_need_adjustment_): New data member.
+	* script-sections.cc
+	(Output_section_element_input::set_section_address): Adjust code for
+	renaming of Output_section::add_input_section_for_script.
+	(Orphan_output_section::set_section_address): Same.
+
+2010-01-22  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
+
+	* gold/arm.cc (Target_arm): Updated fix_v4bx method and usage of
+	Fix_v4bx enum values .
+	* gold/options.h (General_options): New option definitions.
+	(General_options::fix_v4bx): New method.
+	(General_options::Fix_v4bx): New enum.
+	* gold/options.cc (General_options::parse_fix_v4bx): New method.
+	(General_options::parse_fix_v4bx_interworking): New method.
+
+2010-01-22  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_exidx_fixup): New class.
+
+2010-01-21  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_exidx_cantunwind, Arm_exidx_merged_section): New
+	classes.
+	(Arm_exidx_section_offset_map): New type.
+
+2010-01-21  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_exidx_input_section): New class.
+	(Arm_relobj::exidx_input_section_by_link,
+	Arm_relobj::exidx_input_section_by_shndx,
+	Arm_relobj::make_exidx_input_section): New methods.
+	(read_arm_attributes_section): Remove.
+	(Arm_relobj::do_read_symbols): Look for ARM.exidx sections and record
+	information about them.
+	(Arm_dynobj::do_read_symbols): Move code in read_arm_attributes_section
+	to here.
+
+2010-01-20  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::Arm_input_section_map): Change key type from
+	Input_section_specifier to Section_id.
+	(Target_arm::new_arm_input_section: Adjust code for change of key
+	type.
+	(Target_arm::find_arm_input_section): Ditto.
+	* gc.h (object.h): Include for Section_id nand Section_id_hash.
+	(Section_id): Remove.
+	(Garbage_collection::Section_id_hash): Remove.
+	* icf.h (object.h): Include for Section_id nand Section_id_hash.
+	(Section_id): Remove.
+	(Icf::Section_id_hash): Remove.
+	* object.h (Section_id, Const_section_id, Section_id_hash,
+	Const_section_id_hash): New type definitions.
+	* output.cc (Output_section::add_relaxed_input_section): Change to
+	use Const_section_id instead of Input_section_specifier as key type.
+	(Output_section::add_merge_input_section): Ditto.
+	(Output_section::build_relaxation_map): Change to use Section_id
+	instead of Input_section_specifier as key type.
+ 	(Output_section::convert_input_sections_in_list_to_relaxed_sections):
+	Ditto.
+	(Output_section::convert_input_sections_to_relaxed_sections): Change
+	to use Const_section_id instead of Input_section_specifier as key type.
+ 	(Output_section::find_merge_section): Ditto.
+	(Output_section::find_relaxed_input_section): Ditto.
+	* output.h (Input_section_specifier): Remove class.
+	(Output_section::Output_section_data_by_input_section_map): Change
+	key type to Const_section_id.
+	(Output_section::Output_relaxed_input_section_by_input_section_map):
+	Ditto.
+	(Output_section::Relaxation_map): Change key type to Section_id.
+
+2010-01-20  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
+
+	* gold/arm.cc: Added support for R_ARM_V4BX relocation
+	(class Arm_v4bx_stub): New class.
+	(DEF_STUBS): Updated definition to support v4_veneer_bx.
+	(Stub_factory::make_arm_v4bx_stub): New method.
+	(Stub_factory::elf32_arm_stub_v4_veneer_bx): New veneer template.
+	(Stub_table::empty): Handle v4bx stubs.
+	(Stub_table::add_arm_v4bx_stub): New method.
+	(Stub_table::find_arm_v4bx_stub): New method.
+	(Arm_relocate_functions::v4bx): New method.
+	(Target_arm::fix_v4bx): New method.
+	(Target_arm::Target_arm): Handle R_ARM_V4BX.
+	(Stub_table::relocate_stubs): Likewise.
+	(Stub_table::do_write): Likewise.
+	(Stub_table::update_data_size_and_addralign): Likewise.
+	(Stub_table::finalize_stubs):  Likewise.
+	(Target_arm::Scan::local): Likewise.
+	(Target_arm::Scan::global): Likewise.
+	(Target_arm::do_finalize_sections): Likewise.
+	(Target_arm::Relocate::relocate): Likewise.
+	(Target_arm::Relocatable_size_for_reloc::get_size_for_reloc):
+	Likewise.
+	(Target_arm::scan_reloc_for_stub): Likewise.
+	(Target_arm::scan_reloc_section_for_stubs): Likewise.
+
+2010-01-19  Ian Lance Taylor  <iant@google.com>
+
+	* output.cc (Output_section_headers::do_sized_write): Write large
+	segment count to sh_info field.
+	(Output_file_header::do_sized_write): For large segment count,
+	write PN_XNUM to e_phnum field.
+
+2010-01-15  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
+
+	* arm.cc (Arm_relocate_functions::thm_jump6): New function.
+	(Arm_relocate_functions::thm_jump8): New function.
+	(Arm_relocate_functions::thm_jump11): New function.
+	(Target_arm::Scan::local): Handle R_ARM_THM_JUMP6, R_ARM_THM_JUMP8,
+	R_ARM_THM_JUMP11.
+	(Target_arm::Scan::global): Likewise.
+	(Target_arm::Relocate::relocate): Likewise.
+	(Target_arm::Relocatable_size_for_reloc::get_size_for_reloc):
+	Likewise.
+
+2010-01-14  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (map, utility): Include headers.
+	(Target_arm::apply_cortex_a8_workaround): New method.
+	(Arm_relobj::do_relocate_sections): Apply any Cortex-A8 workaround.
+	(Target_arm::Scan::local): Handle R_ARM_THM_JUMP24, R_ARM_THM_JUMP19.
+	(Target_arm::Scan::global): R_ARM_THM_JUMP19.
+	(Target_arm::do_finalize_sections): Set fix_cortex_a8_ according to
+	the --[no-]fix-cortex-a8 command line options.
+	(Target_arm::Relocate::relocate): Handle R_ARM_JUMP19.
+	(Target_arm::relocate_stub): Use addend in instruction template.
+	* options.h (DEFINE_bool): Set the user-set flag.
+	(General_options): Add --[no-]-fix-cortex options.
+	* output.cc (Output_section::convert_input_sections_to_relaxed_sections)
+	: Update fast look-up map after conversion. 
+
+2010-01-14  Sriraman Tallam  <tmsriram@google.com>
+
+	* object.cc (Sized_relobj::do_layout): Change to call layout_gnu_stack
+	in the first pass of do_layout.
+
 2010-01-13  Doug Kwan  <dougkwan@google.com>
 
 	* arm.cc (Arm_relobj::section_needs_reloc_stub_scanning,

@@ -1,3 +1,53 @@
+2010-01-24  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (build_vex_prefix): Set i.vex.bytes[0] to
+	0xc4 individually.
+
+2010-01-23  Richard Sandiford  <r.sandiford@uk.ibm.com>
+
+	* write.h (fix_at_start): Declare.
+	* write.c (fix_new_internal): Add at_beginning parameter.
+	Use it instead of REVERSE_SORT_RELOCS.  Fix the handling of
+	seg_fix_tailP for the at_beginning/REVERSE_SORT_RELOCS case.
+	(fix_new, fix_new_exp): Update accordingly.
+	(fix_at_start): New function.
+	* config/tc-ppc.c (md_pseudo_table): Add .ref to the OBJ_XCOFF section.
+	(ppc_ref): New function, for OBJ_XCOFF.
+	(md_apply_fix): Handle BFD_RELOC_NONE for OBJ_XCOFF.
+	* config/te-i386aix.h (REVERSE_SORT_RELOCS): Remove #undef.
+
+2010-01-21  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config/te-solaris.h (DWARF2_EH_FRAME_READ_ONLY): Make read-only
+	on 64-bit Solaris/x86.
+	Include obj-format.h earlier.
+
+2010-01-21  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+	
+	* config/tc-s390.c (s390_elf_final_processing): New function.
+	* config/tc-s390.h (elf_tc_final_processing): New macro definition.
+	(s390_elf_final_processing): Added prototype.
+
+
+2010-01-20  Nick Clifton  <nickc@redhat.com>
+
+	PR 11109
+	* config/tc-arm.c (do_neon_cvt): Rename to do_neon_cvt_1.  Add
+	code to handle round-to-zero for VCVT conversions.
+	(do_neon_cvt): New.  Call do_neon_cvt_1.
+	(do_neon_cvtr): New.  Call do_neon_cvt_1.
+	(insns): Use do_neon_cvt for VCVT insn and do_neon_cvtr for VCVTR
+	insn.
+
+2010-01-18  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-ia64.c (ia64_vms_note): Generate 24 bytes note headers.
+
+2010-01-15  Sebastian Pop  <sebastian.pop@amd.com>
+
+	* config/tc-i386.c (md_assemble): Before accessing the IMM field
+	check that it's not an XOP insn.
+
 2010-01-14  Jie Zhang  <jie.zhang@analog.com>
 
 	* config/bfin-aux.h: Remove argument names in function

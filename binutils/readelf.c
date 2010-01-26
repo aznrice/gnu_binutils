@@ -2508,6 +2508,10 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	    strcat (buf, ", 64-bit doubles");
 	  if (e_flags & E_FLAG_RX_DSP)
 	    strcat (buf, ", dsp");	  
+
+	case EM_S390:
+	  if (e_flags & EF_S390_HIGH_GPRS)
+	    strcat (buf, ", highgprs");
 	}
     }
 
@@ -3340,8 +3344,13 @@ process_file_header (void)
 	      (long) elf_header.e_ehsize);
       printf (_("  Size of program headers:           %ld (bytes)\n"),
 	      (long) elf_header.e_phentsize);
-      printf (_("  Number of program headers:         %ld\n"),
+      printf (_("  Number of program headers:         %ld"),
 	      (long) elf_header.e_phnum);
+      if (section_headers != NULL
+	  && elf_header.e_phnum == PN_XNUM
+	  && section_headers[0].sh_info != 0)
+	printf (_(" (%ld)"), (long) section_headers[0].sh_info);
+      putc ('\n', stdout);
       printf (_("  Size of section headers:           %ld (bytes)\n"),
 	      (long) elf_header.e_shentsize);
       printf (_("  Number of section headers:         %ld"),
@@ -3362,6 +3371,9 @@ process_file_header (void)
 
   if (section_headers != NULL)
     {
+      if (elf_header.e_phnum == PN_XNUM
+	  && section_headers[0].sh_info != 0)
+	elf_header.e_phnum = section_headers[0].sh_info;
       if (elf_header.e_shnum == SHN_UNDEF)
 	elf_header.e_shnum = section_headers[0].sh_size;
       if (elf_header.e_shstrndx == (SHN_XINDEX & 0xffff))

@@ -2749,18 +2749,20 @@ build_vex_prefix (const insn_template *t)
       unsigned int m, w;
 
       i.vex.length = 3;
-      i.vex.bytes[0] = 0xc4;
 
       switch (i.tm.opcode_modifier.vexopcode)
 	{
 	case VEX0F:
 	  m = 0x1;
+	  i.vex.bytes[0] = 0xc4;
 	  break;
 	case VEX0F38:
 	  m = 0x2;
+	  i.vex.bytes[0] = 0xc4;
 	  break;
 	case VEX0F3A:
 	  m = 0x3;
+	  i.vex.bytes[0] = 0xc4;
 	  break;
 	case XOP08:
 	  m = 0x8;
@@ -3018,8 +3020,8 @@ md_assemble (char *line)
      instructions may define INT_OPCODE as well, so avoid this corner
      case for those instructions that use MODRM.  */
   if (i.tm.base_opcode == INT_OPCODE
-      && i.op[0].imms->X_add_number == 3
-      && !i.tm.opcode_modifier.modrm)
+      && !i.tm.opcode_modifier.modrm
+      && i.op[0].imms->X_add_number == 3)
     {
       i.tm.base_opcode = INT3_OPCODE;
       i.imm_operands = 0;
