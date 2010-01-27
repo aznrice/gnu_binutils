@@ -28,6 +28,7 @@ patches="
 	binutils-group-10.patch
 	binutils-gold-7.patch
 	binutils-pr11137-1.patch
+	binutils-xsave-1.patch
 "
 
 if [ -n "$clean" ]
