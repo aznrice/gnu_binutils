@@ -1,3 +1,108 @@
+2010-02-03  Nick Clifton  <nickc@redhat.com>
+
+	* elf-bfd.h (emum elf_object_id): Rename to elf_target_id.  Add
+	entries for other architectures.
+	(struct elf_link_hash_table): Add hash_table_id field.
+	(elf_hash_table_id): New accessor macro.
+	* elflink.c (_bfd_elf_link_hash_table_init): Add target_id
+	parameter.
+	* elf-m10300.c (elf32_mn10300_hash_table): Check table id before
+	returning cast pointer.
+	(elf32_mn10300_link_hash_table_create): Identify new table as
+	containing MN10300 extensions.
+	(mn10300_elf_relax_section): Check pointer returned by
+	elf32_mn10300_hash_table.
+	* elf32-arm.c: Likewise, except using ARM extensions.
+	* elf32-avr.c: Likewise, except using AVR extensions.
+	* elf32-bfin.c: Likewise, except using BFIN extensions.
+	* elf32-cris.c: Likewise, except using CRIS extensions.
+	* elf32-frv.c: Likewise, except using FRV extensions.
+	* elf32-hppa.c: Likewise, except using HPPA32 extensions.
+	* elf32-i386.c: Likewise, except using I386 extensions.
+	* elf32-lm32.c: Likewise, except using LM32 extensions.
+	* elf32-m32r.c: Likewise, except using M32RM extensions.
+	* elf32-m68hc11.c: Likewise, except using M68HC11 extensions.
+	* elf32-m68hc1x.c: Likewise, except using M68HC11 extensions.
+	* elf32-m68hc1x.h: Likewise, except using M68HC11 extensions.
+	* elf32-m68k.c: Likewise, except using M68K extensions.
+	* elf32-microblaze.c: Likewise, except using MICROBLAZE extensions.
+	* elf32-ppc.c: Likewise, except using PPC32 extensions.
+	* elf32-s390.c: Likewise, except using S390 extensions.
+	* elf32-sh.c: Likewise, except using SH extensions.
+	* elf32-spu.c: Likewise, except using SPU extensions.
+	* elf32-xtensa.c: Likewise, except using XTENSA extensions.
+	* elf64-alpha.c: Likewise, except using ALPHA extensions.
+	* elf64-hppa.c: Likewise, except using HPPA64 extensions.
+	* elf64-ppc.c: Likewise, except using PPC64 extensions.
+	* elf64-s390.c: Likewise, except using S390 extensions.
+	* elf64-x86-64.c: Likewise, except using X86_64 extensions.
+	* elfxx-ia64.c: Likewise, except using IA64 extensions.
+	* elfxx-mips.c: Likewise, except using MIPS extensions.
+	* elfxx-sparc.c: Likewise, except using SPARC extensions.
+	* elfxx-sparc.h: Likewise, except using SPARC extensions.
+	* elf32-cr16.c (struct elf32_cr16_link_hash_table): Delete
+	redundant structure.
+	(elf32_cr16_hash_table): Delete unused macro.
+	(elf32_cr16_link_hash_traverse): Delete unused macro.
+	* elf32-score.c: Likewise.
+	* elf32-score7.c: Likewise.
+	* elf32-vax.c: Likewise.
+	* elf64-sh64.c: Likewise.
+
+2010-02-03  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (struct plt_entry): Move earlier in file.
+	(struct got_entry): Likewise.  Add is_indirect and got.ent fields.
+	(struct ppc64_elf_obj_tdata): Change tlsld_got to be a struct got_entry.
+	Update all uses.
+	(struct ppc_link_hash_table): Add got_reli_size and second_toc_pass.
+	Remove no_multi_toc.
+	(update_local_sym_info, ppc64_elf_check_relocs): Clear is_indirect
+	when allocating a new struct got_entry.
+	(allocate_got): New function, extracted from..
+	(allocate_dynrelocs): ..here.  Abort on got entry in non-ppc64 bfd.
+	(ppc64_elf_size_dynamic_sections): Track got relocs allocated in
+	.reliplt by got_reli_size.  Set owner on ppc64_tlsld_got entries.
+	(ppc64_elf_setup_section_lists): Remove output_bfd param and
+	no_multi_toc, add add_stub_section and layout_sections_again.  Stash
+	new params in htab.  Extract some code to..
+	(ppc64_elf_start_multitoc_partition): ..here.  New function.
+	(ppc64_elf_next_toc_section): Check for linker script errors.  Handle
+	second pass toc scan.
+	(merge_got_entries, merge_global_got, reallocate_got): New functions.
+	(ppc64_elf_reinit_toc): Rename to..
+	(ppc64_elf_finish_multitoc_partition): ..this.
+	(ppc64_elf_layout_multitoc): New function.
+	(ppc64_elf_size_stubs): Delete output_bfd, add_stub_section and
+	layout_sections_again params.
+	(ppc64_elf_relocate_section): Handle indirect got entries.
+	* elf64-ppc.h: Update prototypes.  Declare new functions.
+
+2010-02-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf-bfd.h (elfcore_write_xstatereg): New.
+
+	* elf.c (elfcore_grok_xstatereg): New.
+	(elfcore_write_xstatereg): Likewise.
+	(elfcore_grok_note): Handle NT_X86_XSTATE.
+	(elfcore_write_register_note): Handle .reg-xstate section.
+
+2010-02-01  Tristan Gingold  <gingold@adacore.com>
+
+	* som.c (som_write_ar_hdr): Define this macro.
+
+2010-01-30  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	* elf32-hppa.c (final_link_relocate): Convert R_PARISC_TLS_GD21L,
+	R_PARISC_TLS_LDM21L and R_PARISC_TLS_IE21L relocations that use the
+	linkage table pointer to use the global table pointer if not doing
+	a shared link.
+
+2010-01-29  Joel Brobecker  <brobecker@adacore.com>
+
+	* elf.c (elfcore_grok_lwpstatus): Do not overwrite the core signal
+	if it has already been set.
+
 2010-01-27  Tristan Gingold  <gingold@adacore.com>
 
 	* vms.h: Remove trailing spaces.

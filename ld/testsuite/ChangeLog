@@ -1,3 +1,16 @@
+2010-02-01  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+        * ld-arm/jump-reloc-veneers-long.d: New test.
+        * ld-arm/jump-reloc-veneers-short1.d: Likewise.
+        * ld-arm/jump-reloc-veneers-short2.d: Likewise.
+        * ld-arm/jump-reloc-veneers.s: Likewise.
+        * ld-arm/arm-elf.exp (armelftests): Run them.
+
+2010-01-28  Nick Clifton  <nickc@redhat.com>
+
+	PR 11225
+	* ld-sh/refdbg-0-dso.d: Dump all sections.
+
 2010-01-26  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/11218
