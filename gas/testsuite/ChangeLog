@@ -1,3 +1,31 @@
+2010-02-10  Quentin Neill  <quentin.neill@amd.com>
+	    Sebastian Pop  <sebastian.pop@amd.com>
+
+	* gas/i386/x86-64-xop.d: Add vpermil2p[sd] tests.
+	* gas/i386/x86-64-xop.s: Likewise.
+	* gas/i386/xop.d: Likewise.
+	* gas/i386/xop.s: Likewise.
+
+2010-02-08  Christophe Lyon  <christophe.lyon@st.com>
+
+	* gas/arm/branch-reloc.s, gas/arm/branch-reloc.d,
+	gas/arm/branch-reloc.l: New tests and expected results with all
+	variants of call: ARM/Thumb, local/global, inter/intra-section,
+	using BL/BLX.
+
+2010-02-08  Christophe Lyon  <christophe.lyon@st.com>
+
+	* gas/arm/arm-it-auto.d: Update expected results.
+	* gas/arm/bl-local-v4t.d: Likewise.
+	* gas/arm/blx-local.d: Likewise.
+	* gas/arm/thumb-w-good.d: Likewise.
+	* gas/arm/wince.d: Likewise.
+
+2010-02-08  Philipp Tomsich  <philipp.tomsich@theobroma-systems.com>
+
+	* gas/ppc/titan.d, * gas/ppc/titan.s: New test.
+	* gas/ppc/ppc.exp: Run it.
+
 2010-02-03  Quentin Neill  <quentin.neill@amd.com>
 
 	* gas/i386/i386.exp: Rename amdfam15 test cases to bdver1.

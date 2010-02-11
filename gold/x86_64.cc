@@ -1741,7 +1741,7 @@ Target_x86_64::do_finalize_sections(
 				  ? NULL
 				  : this->plt_->rela_plt());
   layout->add_target_dynamic_tags(false, this->got_plt_, rel_plt,
-				  this->rela_dyn_, true);
+				  this->rela_dyn_, true, false);
 				  
   // Fill in some more dynamic tags.
   Output_data_dynamic* const odyn = layout->dynamic_data();
@@ -2053,7 +2053,7 @@ Target_x86_64::Relocate::relocate_tls(const Relocate_info<64, false>* relinfo,
   elfcpp::Elf_types<64>::Elf_Addr value = psymval->value(relinfo->object, 0);
 
   const bool is_final = (gsym == NULL
-			 ? !parameters->options().output_is_position_independent()
+			 ? !parameters->options().shared()
 			 : gsym->final_value_is_known());
   const tls::Tls_optimization optimized_type
       = Target_x86_64::optimize_tls_reloc(is_final, r_type);

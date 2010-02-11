@@ -47,10 +47,6 @@ struct _bfd_sparc_elf_link_hash_table
   struct elf_link_hash_table elf;
 
   /* Short-cuts to get to dynamic linker sections.  */
-  asection *sgot;
-  asection *srelgot;
-  asection *splt;
-  asection *srelplt;
   asection *sdynbss;
   asection *srelbss;
 
@@ -63,14 +59,15 @@ struct _bfd_sparc_elf_link_hash_table
   /* Small local sym cache.  */
   struct sym_cache sym_cache;
 
+  /* Used by local STT_GNU_IFUNC symbols.  */
+  htab_t loc_hash_table;
+  void *loc_hash_memory;
+
   /* True if the target system is VxWorks.  */
   int is_vxworks;
 
   /* The (unloaded but important) .rela.plt.unloaded section, for VxWorks.  */
   asection *srelplt2;
-
-  /* .got.plt is only used on VxWorks.  */
-  asection *sgotplt;
 
   void (*put_word) (bfd *, bfd_vma, void *);
   bfd_vma (*r_info) (Elf_Internal_Rela *, bfd_vma, bfd_vma);
@@ -109,6 +106,8 @@ extern bfd_boolean _bfd_sparc_elf_mkobject
   (bfd *);
 extern struct bfd_link_hash_table *_bfd_sparc_elf_link_hash_table_create
   (bfd *);
+extern void _bfd_sparc_elf_link_hash_table_free
+  (struct bfd_link_hash_table *);
 extern bfd_boolean _bfd_sparc_elf_create_dynamic_sections
   (bfd *, struct bfd_link_info *);
 extern void _bfd_sparc_elf_copy_indirect_symbol
