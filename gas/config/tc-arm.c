@@ -12043,8 +12043,17 @@ neon_check_type (unsigned els, enum neon_shape ns, ...)
             {
               if ((thisarg & N_VFP) != 0)
                 {
-                  enum neon_shape_el regshape = neon_shape_tab[ns].el[i];
-                  unsigned regwidth = neon_shape_el_size[regshape], match;
+                  enum neon_shape_el regshape;
+                  unsigned regwidth, match;
+
+		  /* PR 11136: Catch the case where we are passed a shape of NS_NULL.  */
+		  if (ns == NS_NULL)
+		    {
+		      first_error (_("invalid instruction shape"));
+		      return badtype;
+		    }
+                  regshape = neon_shape_tab[ns].el[i];
+                  regwidth = neon_shape_el_size[regshape];
 
                   /* In VFP mode, operands must match register widths. If we
                      have a key operand, use its width, else use the width of
@@ -12193,9 +12202,8 @@ try_vfp_nsyn (int args, void (*pfn) (enum neon_shape))
       pfn (rs);
       return SUCCESS;
     }
-  else
-    inst.error = NULL;
 
+  inst.error = NULL;
   return FAIL;
 }
 
@@ -19232,7 +19240,9 @@ md_pcrel_from_section (fixS * fixP, segT seg)
       return base + 4;
 
     case BFD_RELOC_THUMB_PCREL_BRANCH23:
-       if (fixP->fx_addsy
+      if (fixP->fx_addsy
+	  && (S_GET_SEGMENT (fixP->fx_addsy) == seg)
+	  && (!S_IS_EXTERNAL (fixP->fx_addsy))
 	  && ARM_IS_FUNC (fixP->fx_addsy)
  	  && ARM_CPU_HAS_FEATURE (selected_cpu, arm_ext_v5t))
  	base = fixP->fx_where + fixP->fx_frag->fr_address;
@@ -19240,8 +19250,10 @@ md_pcrel_from_section (fixS * fixP, segT seg)
 
       /* BLX is like branches above, but forces the low two bits of PC to
 	 zero.  */
-     case BFD_RELOC_THUMB_PCREL_BLX:
-       if (fixP->fx_addsy
+    case BFD_RELOC_THUMB_PCREL_BLX:
+      if (fixP->fx_addsy
+	  && (S_GET_SEGMENT (fixP->fx_addsy) == seg)
+	  && (!S_IS_EXTERNAL (fixP->fx_addsy))
  	  && THUMB_IS_FUNC (fixP->fx_addsy)
  	  && ARM_CPU_HAS_FEATURE (selected_cpu, arm_ext_v5t))
  	base = fixP->fx_where + fixP->fx_frag->fr_address;
@@ -19250,18 +19262,22 @@ md_pcrel_from_section (fixS * fixP, segT seg)
       /* ARM mode branches are offset by +8.  However, the Windows CE
 	 loader expects the relocation not to take this into account.  */
     case BFD_RELOC_ARM_PCREL_BLX:
-       if (fixP->fx_addsy
+      if (fixP->fx_addsy
+	  && (S_GET_SEGMENT (fixP->fx_addsy) == seg)
+	  && (!S_IS_EXTERNAL (fixP->fx_addsy))
  	  && ARM_IS_FUNC (fixP->fx_addsy)
  	  && ARM_CPU_HAS_FEATURE (selected_cpu, arm_ext_v5t))
  	base = fixP->fx_where + fixP->fx_frag->fr_address;
-       return base + 8;
+      return base + 8;
 
-      case BFD_RELOC_ARM_PCREL_CALL:
-       if (fixP->fx_addsy
+    case BFD_RELOC_ARM_PCREL_CALL:
+      if (fixP->fx_addsy
+	  && (S_GET_SEGMENT (fixP->fx_addsy) == seg)
+	  && (!S_IS_EXTERNAL (fixP->fx_addsy))
  	  && THUMB_IS_FUNC (fixP->fx_addsy)
  	  && ARM_CPU_HAS_FEATURE (selected_cpu, arm_ext_v5t))
  	base = fixP->fx_where + fixP->fx_frag->fr_address;
-       return base + 8;
+      return base + 8;
 
     case BFD_RELOC_ARM_PCREL_BRANCH:
     case BFD_RELOC_ARM_PCREL_JUMP:

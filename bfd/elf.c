@@ -232,7 +232,7 @@ bfd_elf_gnu_hash (const char *namearg)
 bfd_boolean
 bfd_elf_allocate_object (bfd *abfd,
 			 size_t object_size,
-			 enum elf_object_id object_id)
+			 enum elf_target_id object_id)
 {
   BFD_ASSERT (object_size >= sizeof (struct elf_obj_tdata));
   abfd->tdata.any = bfd_zalloc (abfd, object_size);
@@ -249,7 +249,7 @@ bfd_boolean
 bfd_elf_make_generic_object (bfd *abfd)
 {
   return bfd_elf_allocate_object (abfd, sizeof (struct elf_obj_tdata),
-				  GENERIC_ELF_TDATA);
+				  GENERIC_ELF_DATA);
 }
 
 bfd_boolean
@@ -4462,6 +4462,22 @@ assign_file_positions_for_load_sections (bfd *abfd,
 		}
 	      p->p_memsz += adjust;
 
+	      if (p->p_paddr + p->p_memsz != sec->lma)
+		{
+		  /* This behavior is a compromise--ld has long
+		     silently changed the lma of sections when
+		     lma - vma is not equal for every section in a
+		     pheader--but only in the internal elf structures.
+		     Silently changing the lma is probably a bug, but
+		     changing it would have subtle and unknown
+		     consequences for existing scripts.
+
+		     Instead modify the bfd data structure to reflect
+		     what happened.  This at least fixes the values
+		     for the lma in the mapfile.  */
+		  sec->lma = p->p_paddr + p->p_memsz;
+		}
+
 	      if (this_hdr->sh_type != SHT_NOBITS)
 		{
 		  if (p->p_filesz + adjust < p->p_memsz)
@@ -7628,6 +7644,16 @@ elfcore_grok_prxfpreg (bfd *abfd, Elf_Internal_Note *note)
   return elfcore_make_note_pseudosection (abfd, ".reg-xfp", note);
 }
 
+/* Linux dumps the Intel XSAVE extended state in a note named "LINUX"
+   with a note type of NT_X86_XSTATE.  Just include the whole note's
+   contents literally.  */
+
+static bfd_boolean
+elfcore_grok_xstatereg (bfd *abfd, Elf_Internal_Note *note)
+{
+  return elfcore_make_note_pseudosection (abfd, ".reg-xstate", note);
+}
+
 static bfd_boolean
 elfcore_grok_ppc_vmx (bfd *abfd, Elf_Internal_Note *note)
 {
@@ -7644,6 +7670,36 @@ static bfd_boolean
 elfcore_grok_s390_high_gprs (bfd *abfd, Elf_Internal_Note *note)
 {
   return elfcore_make_note_pseudosection (abfd, ".reg-s390-high-gprs", note);
+}
+
+static bfd_boolean
+elfcore_grok_s390_timer (bfd *abfd, Elf_Internal_Note *note)
+{
+  return elfcore_make_note_pseudosection (abfd, ".reg-s390-timer", note);
+}
+
+static bfd_boolean
+elfcore_grok_s390_todcmp (bfd *abfd, Elf_Internal_Note *note)
+{
+  return elfcore_make_note_pseudosection (abfd, ".reg-s390-todcmp", note);
+}
+
+static bfd_boolean
+elfcore_grok_s390_todpreg (bfd *abfd, Elf_Internal_Note *note)
+{
+  return elfcore_make_note_pseudosection (abfd, ".reg-s390-todpreg", note);
+}
+
+static bfd_boolean
+elfcore_grok_s390_ctrs (bfd *abfd, Elf_Internal_Note *note)
+{
+  return elfcore_make_note_pseudosection (abfd, ".reg-s390-ctrs", note);
+}
+
+static bfd_boolean
+elfcore_grok_s390_prefix (bfd *abfd, Elf_Internal_Note *note)
+{
+  return elfcore_make_note_pseudosection (abfd, ".reg-s390-prefix", note);
 }
 
 #if defined (HAVE_PRPSINFO_T)
@@ -7800,7 +7856,10 @@ elfcore_grok_lwpstatus (bfd *abfd, Elf_Internal_Note *note)
   memcpy (&lwpstat, note->descdata, sizeof (lwpstat));
 
   elf_tdata (abfd)->core_lwpid = lwpstat.pr_lwpid;
-  elf_tdata (abfd)->core_signal = lwpstat.pr_cursig;
+  /* Do not overwrite the core signal if it has already been set by
+     another thread.  */
+  if (elf_tdata (abfd)->core_signal == 0)
+    elf_tdata (abfd)->core_signal = lwpstat.pr_cursig;
 
   /* Make a ".reg/999" section.  */
 
@@ -7993,6 +8052,13 @@ elfcore_grok_note (bfd *abfd, Elf_Internal_Note *note)
       else
 	return TRUE;
 
+    case NT_X86_XSTATE:		/* Linux XSAVE extension */
+      if (note->namesz == 6
+	  && strcmp (note->namedata, "LINUX") == 0)
+	return elfcore_grok_xstatereg (abfd, note);
+      else
+	return TRUE;
+
     case NT_PPC_VMX:
       if (note->namesz == 6
 	  && strcmp (note->namedata, "LINUX") == 0)
@@ -8011,6 +8077,41 @@ elfcore_grok_note (bfd *abfd, Elf_Internal_Note *note)
       if (note->namesz == 6
           && strcmp (note->namedata, "LINUX") == 0)
         return elfcore_grok_s390_high_gprs (abfd, note);
+      else
+        return TRUE;
+
+    case NT_S390_TIMER:
+      if (note->namesz == 6
+          && strcmp (note->namedata, "LINUX") == 0)
+        return elfcore_grok_s390_timer (abfd, note);
+      else
+        return TRUE;
+
+    case NT_S390_TODCMP:
+      if (note->namesz == 6
+          && strcmp (note->namedata, "LINUX") == 0)
+        return elfcore_grok_s390_todcmp (abfd, note);
+      else
+        return TRUE;
+
+    case NT_S390_TODPREG:
+      if (note->namesz == 6
+          && strcmp (note->namedata, "LINUX") == 0)
+        return elfcore_grok_s390_todpreg (abfd, note);
+      else
+        return TRUE;
+
+    case NT_S390_CTRS:
+      if (note->namesz == 6
+          && strcmp (note->namedata, "LINUX") == 0)
+        return elfcore_grok_s390_ctrs (abfd, note);
+      else
+        return TRUE;
+
+    case NT_S390_PREFIX:
+      if (note->namesz == 6
+          && strcmp (note->namedata, "LINUX") == 0)
+        return elfcore_grok_s390_prefix (abfd, note);
       else
         return TRUE;
 
@@ -8633,6 +8734,15 @@ elfcore_write_prxfpreg (bfd *abfd,
 }
 
 char *
+elfcore_write_xstatereg (bfd *abfd, char *buf, int *bufsiz,
+			 const void *xfpregs, int size)
+{
+  char *note_name = "LINUX";
+  return elfcore_write_note (abfd, buf, bufsiz,
+			     note_name, NT_X86_XSTATE, xfpregs, size);
+}
+
+char *
 elfcore_write_ppc_vmx (bfd *abfd,
 		       char *buf,
 		       int *bufsiz,
@@ -8670,6 +8780,66 @@ elfcore_write_s390_high_gprs (bfd *abfd,
 }
 
 char *
+elfcore_write_s390_timer (bfd *abfd,
+                          char *buf,
+                          int *bufsiz,
+                          const void *s390_timer,
+                          int size)
+{
+  char *note_name = "LINUX";
+  return elfcore_write_note (abfd, buf, bufsiz,
+                             note_name, NT_S390_TIMER, s390_timer, size);
+}
+
+char *
+elfcore_write_s390_todcmp (bfd *abfd,
+                           char *buf,
+                           int *bufsiz,
+                           const void *s390_todcmp,
+                           int size)
+{
+  char *note_name = "LINUX";
+  return elfcore_write_note (abfd, buf, bufsiz,
+                             note_name, NT_S390_TODCMP, s390_todcmp, size);
+}
+
+char *
+elfcore_write_s390_todpreg (bfd *abfd,
+                            char *buf,
+                            int *bufsiz,
+                            const void *s390_todpreg,
+                            int size)
+{
+  char *note_name = "LINUX";
+  return elfcore_write_note (abfd, buf, bufsiz,
+                             note_name, NT_S390_TODPREG, s390_todpreg, size);
+}
+
+char *
+elfcore_write_s390_ctrs (bfd *abfd,
+                         char *buf,
+                         int *bufsiz,
+                         const void *s390_ctrs,
+                         int size)
+{
+  char *note_name = "LINUX";
+  return elfcore_write_note (abfd, buf, bufsiz,
+                             note_name, NT_S390_CTRS, s390_ctrs, size);
+}
+
+char *
+elfcore_write_s390_prefix (bfd *abfd,
+                           char *buf,
+                           int *bufsiz,
+                           const void *s390_prefix,
+                           int size)
+{
+  char *note_name = "LINUX";
+  return elfcore_write_note (abfd, buf, bufsiz,
+                             note_name, NT_S390_PREFIX, s390_prefix, size);
+}
+
+char *
 elfcore_write_register_note (bfd *abfd,
 			     char *buf,
 			     int *bufsiz,
@@ -8681,12 +8851,24 @@ elfcore_write_register_note (bfd *abfd,
     return elfcore_write_prfpreg (abfd, buf, bufsiz, data, size);
   if (strcmp (section, ".reg-xfp") == 0)
     return elfcore_write_prxfpreg (abfd, buf, bufsiz, data, size);
+  if (strcmp (section, ".reg-xstate") == 0)
+    return elfcore_write_xstatereg (abfd, buf, bufsiz, data, size);
   if (strcmp (section, ".reg-ppc-vmx") == 0)
     return elfcore_write_ppc_vmx (abfd, buf, bufsiz, data, size);
   if (strcmp (section, ".reg-ppc-vsx") == 0)
     return elfcore_write_ppc_vsx (abfd, buf, bufsiz, data, size);
   if (strcmp (section, ".reg-s390-high-gprs") == 0)
     return elfcore_write_s390_high_gprs (abfd, buf, bufsiz, data, size);
+  if (strcmp (section, ".reg-s390-timer") == 0)
+    return elfcore_write_s390_timer (abfd, buf, bufsiz, data, size);
+  if (strcmp (section, ".reg-s390-todcmp") == 0)
+    return elfcore_write_s390_todcmp (abfd, buf, bufsiz, data, size);
+  if (strcmp (section, ".reg-s390-todpreg") == 0)
+    return elfcore_write_s390_todpreg (abfd, buf, bufsiz, data, size);
+  if (strcmp (section, ".reg-s390-ctrs") == 0)
+    return elfcore_write_s390_ctrs (abfd, buf, bufsiz, data, size);
+  if (strcmp (section, ".reg-s390-prefix") == 0)
+    return elfcore_write_s390_prefix (abfd, buf, bufsiz, data, size);
   return NULL;
 }
 

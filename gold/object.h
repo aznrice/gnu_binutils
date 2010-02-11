@@ -1689,6 +1689,11 @@ class Sized_relobj : public Relobj
   do_relocate_sections(const Symbol_table* symtab, const Layout* layout,
 		       const unsigned char* pshdrs, Views* pviews);
 
+  // Allow a child to set output local symbol count.
+  void
+  set_output_local_symbol_count(unsigned int value)
+  { this->output_local_symbol_count_ = value; }
+   
  private:
   // For convenience.
   typedef Sized_relobj<size, big_endian> This;
@@ -2003,6 +2008,11 @@ class Input_objects
   bool
   any_dynamic() const
   { return !this->dynobj_list_.empty(); }
+
+  // Return the number of non dynamic objects.
+  int
+  number_of_relobjs() const
+  { return this->relobj_list_.size(); }
 
   // Return the number of input objects.
   int

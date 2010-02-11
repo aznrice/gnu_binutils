@@ -1,3 +1,268 @@
+2010-02-10  Ian Lance Taylor  <iant@google.com>
+
+	* dirsearch.cc (Dirsearch::initialize): Add all blockers before
+	queueing any tasks.
+	* gold.cc (queue_middle_gc_tasks): Likewise.  Fix final blocker.
+	(queue_middle_tasks): Add all blockers before queueing any tasks.
+	(queue_final_tasks): Likewise.
+	* token.h (Task_token::add_blockers): New function.
+	* object.h (Input_objects::number_of_relobjs): New function.
+
+2010-02-10  Ian Lance Taylor  <iant@google.com>
+
+	* i386.cc (Relocate::relocate_tls): A local symbol is final if not
+	shared, not if not position independent.
+	* x86_64.cc (Relocate::relocate_tls): Likewise.
+	* testsuite/Makefile.am (check_PROGRAMS): Add tls_pie_pic_test.
+	(tls_pie_pic_test): New target.
+	* testsuite/Makefile.in: Rebuild.
+
+	* testsuite/Makefile.am (check_PROGRAMS): Add tls_pie_test.
+	(tls_test_main_pie.o, tls_test_pie.o): New targets.
+	(tls_test_file2_pie.o, tls_test_c_pie.o, tls_pie_test): Likewise.
+	* testsuite/Makefile.in: Rebuild.
+
+2010-02-09  David S. Miller  <davem@davemloft.net>
+
+	* sparc.cc (Target_sparc::Scan::local): Do not emit relocs other than
+	R_SPARC_RELATIVE using ->add_local_relative().
+	(Target_sparc::Scan::global): Likewise for ->add_global_relative().
+
+	* output.h (Output_data_dynamic::add_section_size): New method
+	that takes two Output_data objects.
+	(Output_data_dynamic::Dynamic_entry): Create storage for secondary
+	entry param.  Handle it in initializers.
+	* output.cc (Output_data_dynamic::Dynamic_entry::write): For
+	DYNAMIC_SECTION_SIZE, add in second object size if non-NULL.
+	* layout.h (Layout::add_target_dynamic_tags): Add dynrel_includes_plt
+	arg.
+	* layout.cc (Layout::add_target_dynamic_tags): If dynrel_includes_plt,
+	and .rela.plt exists, set DT_REL{,A}SZ to sum of .rela.dyn and .rela.plt
+	* arm.cc (Target_arm::do_finalize_sections): Update to pass false
+	for dynrel_includes_plt.
+	* i386.cc (Target_i386::do_finalize_sections): Likewise.
+	* x86_64.cc (Target_x86_64::do_finalize_sections): Likewise.
+	* sparc.cc (Target_sparc::make_plt_entry): Force .rela.dyn to be output
+	before .rela.plt
+	(Target_sparc::do_finalize_sections): Update to pass true for
+	dynrel_includes_plt.
+	* powerpc.cc (Target_powerpc::make_plt_entry): Force .rela.dyn to be
+	output before .rela.plt
+	(Target_powerpc::do_finalize_sections): Update to pass true for
+	dynrel_includes_plt when 32-bit.
+
+2010-02-08  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_relobj::simple_input_section_output_address): New
+	method.
+	(Arm_relobj::section_needs_cortex_a8_stub_scanning,
+	Arm_relobj::scan_section_for_cortex_a8_stubs,
+	Arm_relobj::do_relocation_section): Instead of calling
+	Output_section::output_address, use faster
+	Arm_relobj::simple_input_section_output_address.
+
+2010-02-08  David S. Miller  <davem@davemloft.net>
+
+	* sparc.cc (Target_sparc::Relocate::relocate): If relocation offset is
+	unaligned for R_SPARC_16, R_SPARC_32, or R_SPARC_64, use the unaligned
+	relocation helper function.
+
+	* sparc.cc (Target_sparc::Scan::local): Handle R_SPARC_GOTDATA_OP*
+	just like R_SPARC_GOT{10,13,22}.
+	(Target_sparc::Scan::local): Likewise.
+	(Target_sparc::Relocate:relocate): Likewise.
+
+2010-02-06  Ian Lance Taylor  <iant@google.com>
+
+	* configure.ac: Rewrite targetobjs duplicate removal code to use
+	only shell constructs.
+	* configure: Rebuild.
+
+2010-02-05  Doug Kwan  <dougkwan@google.com>
+
+	PR 11247
+	* arm.cc (Arm_relobj::section_is_scannable): New method.
+	(Arm_relobj::section_needs_reloc_stub_scanning): Use it.
+	(Arm_relobj::section_needs_cortex_a8_stub_scanning): Same.
+
+2010-02-04  Doug Kwan  <dougkwan@google.com>
+
+	PR 11247
+	* arm-reloc-property.cc (cstdio): Include.
+	* configure.ac (targetobjs): Remove duplicates.
+	* configure: Regenerate.
+	* resolve.cc (Symbol_table::resolve): Explicit instantiate both
+	big and little endian version for a given address size.
+
+2010-02-03  Doug Kwan  <dougkwan@google.com>
+
+	* arm-reloc-property.cc
+	(Arm_reloc_property_table::reloc_name_in_error_message): New method
+	definition.
+	* arm-reloc-property.h
+	(Arm_reloc_property_table::get_implemented_static_reloc_property):
+	New method definition.
+	(Arm_reloc_property_table::reloc_name_in_error_message): New method
+	declaration.
+	* arm-reloc.def (THM_MOVT_ABS, THM_MOVT_PREL, THM_MOVT_BREL): Change
+	overflow to N.
+	(GOT_PREL): Change implemented to Y.
+	* arm.cc (Target_arm::reloc_uses_thumb_bit): Remove method.
+	(Target_arm::Relocate::reloc_needs_sym_origin): Remove method.
+	(Arm_relocate_functions::movw_abs_nc): Remove method.
+	(Arm_relocate_functions::movt_abs): Ditto.
+	(Arm_relocate_functions::thm_movw_abs_nc): Ditto.
+	(Arm_relocate_functions::thm_movt_abs): Ditto.
+	(Arm_relocate_functions::movw_rel_nc): Ditto.
+	(Arm_relocate_functions::movw_rel): Ditto.
+	(Arm_relocate_functions::movt_rel): Ditto.
+	(Arm_relocate_functions:thm_movw_rel_nc): Ditto.
+	(Arm_relocate_functions:thm_movw_rel): Ditto.
+	(Arm_relocate_functions:thm_movt_rel): Ditto.
+	(Arm_relocate_functions::movw, Arm_relocate_functions::movt,
+	(Arm_relocate_functions::thm_movw, Arm_relocate_functions::thm_movt):
+	New method definitions.
+	(Arm_relocation_functions::arm_grp_alu): Add assertion for group index.
+	(Arm_relocation_functions::arm_grp_ldr): Ditto.
+	(Arm_relocation_functions::arm_grp_ldrs): Ditto.
+	(Arm_relocation_functions::arm_grp_ldc): Ditto.
+	(Target_arm::Relocate::relocate): Check for non-static or
+	unimplemented relocation code and exit early.  Change calls to
+	Target_arm::reloc_uses_thumb_bit and
+	Target_arm::Reloc::reloc_needs_sym_origin to use relocation property
+	instead.  Refactor code to handle similar relocations to increase
+	code sharing.  Remove check for unsupported relocation code in switch
+	statement.
+	(Target_arm::Relocatable_size_for_reloc::get_size_for_reloc): Use
+	relocation property table to find out size.  Change error message to
+	print out the name of a relocation code instead of the numeric value.
+	(Target_arm::scan_reloc_for_stub): Use relocation property table
+	instead of calling Target_arm::reloc_uses_thumb_bit().
+
+2010-02-02  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::relocate_section): Do view adjustment for all
+	types of relaxed input section.
+
+2010-02-02  Doug Kwan  <dougkwan@google.com>
+
+	* Makefile.am (HFILES): Add arm-reloc-property.h.
+	(DEFFILES): New.
+ 	(TARGETSOURCES): Add arm-reloc-property.cc
+ 	(ALL_TARGETOBJS): Add arm-reloc-property.$(OBJEXT)
+	(libgold_a_SOURCES): $(DEFFILES)
+	* Makefile.in: Regenerate.
+	* arm-reloc-property.cc: New file.
+	* arm-reloc-property.h: New file.
+	* arm-reloc.def: New file.
+	* arm.cc: Update comments.
+	(arm-reloc-property.h): New included header.
+	(arm_reloc_property_table): New global variable.
+	(Target_arm::do_select_as_default_target): New method definition.
+	* configure.tgt (armeb*-*-*,armbe*-*-*,arm*-*-*): Add
+	arm-reloc-property to targ_extra_obj.
+	* parameters.cc (set_parameters_target): Call
+	Target::select_as_default_target().
+	* target.h (Target::select_as_default_target): New method definition.
+	(Target::do_select_as_default_target): Same.
+
+2010-02-01  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_exidx_fixup::Arm_exidx_fixup): Initialize
+	first_output_text_section_.
+	(Arm_exidx_fixup::first_output_text_section): New method definition.
+	(Arm_exidx_fixup::first_output_text_section_): New data member.
+	(Arm_exidx_fixup::process_exidx_section): Record the first text
+	output section seen.
+	(Arm_output_section::fix_exidx_coverage): Set correct linked section
+	and entsize in output section header.
+
+2010-01-29  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
+
+	* gold/arm.cc: Added support for the ARM relocations: R_ARM_THM_PC8,
+	R_ARM_THM_PC12, R_ARM_THM_ALU_PREL_11_0.
+	(Arm_relocate_functions::thm_alu11): New Method.
+	(Arm_relocate_functions::thm_pc8): New Method.
+	(Arm_relocate_functions::thm_pc12): New Method.
+	(Target_arm::Scan::local): Handle the relocations.
+	(Target_arm::Scan::global): Likewise.
+	(Target_arm::Relocate::relocate): Likewise.
+	(Target_arm:Relocatable_size_for_reloc::get_size_for_reloc): Likewise.
+
+2010-01-29  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::Scan::global): General PLTs for the same set
+	of relocation types as ld.
+
+2010-01-29  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_relocate_functions::arm_branch_common) Change visibility
+	to public.
+	(Arm_relocate_functions::thumb_branch_common): Ditto.
+	(Arm_relocate_functions::thm_call, Arm_relocate_functions::thm_jump24,
+	Arm_relocate_functions::thm_xpc22, Arm_relocate_functions::plt32,
+	Arm_relocate_functions::xpc25, Arm_relocate_functions::call,
+	Arm_relocate_functions::jump24): Remove.
+	(Target_arm::Relocate::relocate): Adjust code to call
+	Arm_relocation_functions::arm_branch_common and
+	Arm_relocation_functions::thumb_branch_common instead of their removed
+	wrappers.  Merge switch-cases together to reduce source code size.  
+
+2010-01-29  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_relobj::Arm_relobj): Initialize new data member
+	output_local_symbol_count_needs_update_.
+	(Arm_relobj::output_local_symbol_count_needs_update,
+	 Arm_relobj::set_output_local_symbol_count_needs_update,
+	 Arm_relobj::update_output_local_symbol_count): New methods.
+	(Arm_relobj::output_local_symbol_count_needs_update_): New data
+	member.
+	(Arm_exidx_cantunwind::do_fixed_endian_write): Write address
+	of pointed function as in a R_ARM_PREL31 relocation.
+	(Arm_output_section<big_endian>::fix_exidx_coverage): Mark objects
+	for output local symbol count updating.
+	(Target_arm::do_relax): Update output local symbol counts in objects
+	if necessary.
+	* object.h (Sized_relobj::set_output_local_symbol_count): New method.
+
+2010-01-29  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
+
+	* arm.cc: Added support for the ARM relocations:
+	R_ARM_MOVW_BREL_NC, R_ARM_MOVT_BREL, R_ARM_MOVW_BREL,
+	R_ARM_THM_MOVW_BREL_NC, R_ARM_THM_MOVT_BREL, R_ARM_THM_MOVW_BREL.
+	(Arm_relocate_functions::movw_rel_nc): Renamed (was
+	movw_prel_nc).
+	(Arm_relocate_functions::movw_rel): New method.
+	(Arm_relocate_functions::movt_rel): Renamed (was movt_prel).
+	(Arm_relocate_functions::thm_movw_rel_nc): Renamed (was
+	thm_movw_prel_nc).
+	(Arm_relocate_functions::thm_movw_rel): New method.
+	(Arm_relocate_functions::thm_movt_rel): Renamed (was
+	thm_movt_prel).
+	(Target_arm::Scan::local): Handle MOVW_BREL/MOVT_BREL
+	relocations.
+	(Target_arm::Scan::global): Likewise.
+	(Target_arm::Relocate::relocate): Likewise.
+	(Target_arm::Relocatable_size_for_reloc::get_size_for_reloc):
+	Likewise.
+
+2010-01-27  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
+
+	* arm.cc: Added support for ARM group relocations.
+	(Target_arm::reloc_needs_sym_origin): New method.
+	(Arm_relocate_functions::calc_grp_kn): New method.
+	(Arm_relocate_functions::calc_grp_residual): New method.
+	(Arm_relocate_functions::calc_grp_gn): New method.
+	(Arm_relocate_functions::arm_grp_alu): New Method.
+	(Arm_relocate_functions::arm_grp_ldr): New Method.
+	(Arm_relocate_functions::arm_grp_ldrs): New Method.
+	(Arm_relocate_functions::arm_grp_ldc): New Method.
+	(Target_arm::Scan::local): Handle the ARM group relocations.
+	(Target_arm::Scan::global): Likewise.
+	(Target_arm::Relocate::relocate): Likewise.
+	(Target_arm::Relocatable_size_for_reloc::get_size_for_reloc):
+	Likewise.
+
 2010-01-26  Doug Kwan  <dougkwan@google.com>
 
 	* arm.cc (set): Include.

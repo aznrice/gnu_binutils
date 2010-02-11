@@ -1,3 +1,46 @@
+2010-02-10  Richard Sandiford  <r.sandiford@uk.ibm.com>
+
+	* Makefile.am (CFILES): Add ldlex-wrapper.c.
+	(OFILES): Replace ldlex.c with ldlex-wrapper.c.
+	(ldlex.o): Replace with...
+	(ldlex-wrapper.o): ...this new rule.
+	(EXTRA_ld_new_SOURCES): Add ldlex.l.
+	(ld_new_SOURCES): Replace ldlex.l with ldlex-wrapper.c.
+	* Makefile.in: Regenerate.
+	* ldlex.l (sysdep.h): Don't include here.
+	* ldlex-wrapper.c: New file.
+
+2010-02-09  Alan Modra  <amodra@gmail.com>
+
+	* emultempl/ppc64elf.em (ppc_before_allocation): Update for changed
+	function parameters.
+
+2010-02-05  Nick Clifton  <nickc@redhat.com>
+
+	* configure.in (ALL_LIBGUAS): Add bg.
+	* configure: Regenerate.
+	* po/bg.po: New Bulgarian translation.
+
+2010-02-05  Ryan Mansfield  <rmansfield@qnx.com>
+
+	* emultempl/armelf.em (PARSE_AND_LIST_OPTIONS): Fix help for
+	--target1-abs and --target1-rel options.
+
+2010-02-03  Nick Clifton  <nickc@redhat.com>
+
+	* emultempl/alphaelf.em: Update value expected from elf_object_id.
+	* emultempl/hppaelf.em: Likewise.
+	* emultempl/mipself.em: Likewise.
+	* emultempl/ppc32elf.em: Likewise.
+	* emultempl/ppc64elf.em: Likewise.
+
+2010-02-03  Alan Modra  <amodra@gmail.com>
+
+	* emultempl/ppc64elf.em (build_toc_list): Report errors from
+	ppc64_elf_next_toc_section.
+	(after_allocation): Update for changed function names and params.
+	Run second pass of multitoc partitioning.
+
 2010-01-21  Jon Grant  <jg@jguk.org>
 	    Nick Clifton  <nickc@redhat.com>
 
