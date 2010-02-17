@@ -170,14 +170,28 @@ icf_keep_unique_test.stdout: icf_keep_unique_test
 	$(TEST_NM) -C icf_keep_unique_test > icf_keep_unique_test.stdout
 
 check_SCRIPTS += icf_safe_test.sh
-check_DATA += icf_safe_test.stdout
+check_DATA += icf_safe_test_1.stdout icf_safe_test_2.stdout
 MOSTLYCLEANFILES += icf_safe_test
-icf_safe_test.o: icf_safe_test.cc 
+icf_safe_test.o: icf_safe_test.cc
 	$(CXXCOMPILE) -O0 -c -ffunction-sections -g -o $@ $<
 icf_safe_test: icf_safe_test.o gcctestdir/ld
 	$(CXXLINK) -Bgcctestdir/ -Wl,--icf=safe icf_safe_test.o
-icf_safe_test.stdout: icf_safe_test
-	$(TEST_NM) icf_safe_test > icf_safe_test.stdout
+icf_safe_test_1.stdout: icf_safe_test
+	$(TEST_NM) icf_safe_test > icf_safe_test_1.stdout
+icf_safe_test_2.stdout: icf_safe_test
+	$(TEST_READELF) -h icf_safe_test > icf_safe_test_2.stdout
+
+check_SCRIPTS += icf_safe_so_test.sh
+check_DATA += icf_safe_so_test_1.stdout icf_safe_so_test_2.stdout
+MOSTLYCLEANFILES += icf_safe_so_test
+icf_safe_so_test.o: icf_safe_so_test.cc
+	$(CXXCOMPILE) -O0 -c -ffunction-sections -fPIC -g -o $@ $<
+icf_safe_so_test: icf_safe_so_test.o gcctestdir/ld
+	$(CXXLINK) -Bgcctestdir/ -Wl,--icf=safe icf_safe_so_test.o -fPIC -shared
+icf_safe_so_test_1.stdout: icf_safe_so_test
+	$(TEST_NM) icf_safe_so_test > icf_safe_so_test_1.stdout
+icf_safe_so_test_2.stdout: icf_safe_so_test
+	$(TEST_READELF) -h icf_safe_so_test > icf_safe_so_test_2.stdout
 
 check_PROGRAMS += basic_test
 check_PROGRAMS += basic_static_test
@@ -1435,3 +1449,22 @@ MOSTLYCLEANFILES += split_x86_64_1 split_x86_64_2 split_x86_64_3 \
 	split_x86_64_4 split_x86_64_r
 
 endif DEFAULT_TARGET_X86_64
+
+if DEFAULT_TARGET_ARM
+
+check_SCRIPTS += arm_abs_global.sh
+check_DATA += arm_abs_global.stdout
+arm_abs_lib.o: arm_abs_lib.s
+	$(TEST_AS) -march=armv7-a -o $@ $<
+libarm_abs.so: arm_abs_lib.o
+	../ld-new -shared -o $@ arm_abs_lib.o
+arm_abs_global.o: arm_abs_global.s
+	$(TEST_AS) -march=armv7-a -o $@ $<
+arm_abs_global: arm_abs_global.o libarm_abs.so
+	../ld-new -o $@ arm_abs_global.o -L. -larm_abs
+arm_abs_global.stdout: arm_abs_global
+	$(TEST_READELF) -r $< > $@
+
+MOSTLYCLEANFILES += arm_abs_global
+
+endif DEFAULT_TARGET_ARM
