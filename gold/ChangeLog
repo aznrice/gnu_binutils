@@ -1,3 +1,39 @@
+2010-02-19  Doug Kwan  <dougkwan@google.com>
+
+	* arm-reloc.def: Mark R_ARM_TLS_GD32, R_ARM_TLS_LDM32,
+	R_ARM_TLS_LDO32, R_ARM_TLS_IE32 and R_ARM_TLS_LE32 are implemented.
+	* arm.cc (Arm_relocation_functions): New forward declaration.
+	(Target_arm::Target_arm): Initialize new data members
+	got_mod_index_offset_ and tls_base_symbol_defined_.
+	(Target_arm::Relocate::relocate_tls): New method.
+	(Target_arm::optimize_tls_reloc, Target_arm::define_tls_base_symbol,
+	 Target_arm::got_mod_index_entry, Target_arm::rel_tls_desc_section):
+	New methods.
+   	(Target_arm::Got_type): Add GOT_TYPE_TLS_NOFFSET, GOT_TYPE_OFFSET,
+	GOT_TYPE_TLS_PAIR and GOT_TYPE_TLS_DESC.
+	(Target_arm::got_mod_index_offset_,
+	Target_arm::tls_base_symbol_defined_): New data members.
+	(Target_arm::Scan::local, Target::Scan::global,
+	Target_arm::Relocate::relocate): Handle 32-bit initial TLS
+	relocations.
+
+2010-02-18  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_relobj::find_linked_text_section): New method.
+	(Arm_relobj::make_exidx_input_section): Pass section index of linked
+	text section as a parameter becuase some broken tools may not set
+	the link in section header.
+	(Target_arm::has_got_section): New method.
+	(Target_arm::scan_section_for_cortex_a8_stubs): Treat an input section
+	without any mapping symbol as data only.  Remove warning.
+	(Arm_relobj::do_read_synbols): If an EXIDX input section has no
+	link in its section header, try to discover the link by inspecting the
+	REL31 relocation at the beginning of the section.
+	(Target_arm::Scan::check_non_pic): Report name of offending relocation
+	in error message.
+	(Target_arm::Scan::global): Treat any reference to the symbol
+	_GLOBAL_OFFSET_TABLE_ as a GOT access.
+
 2010-02-12  Sriraman Tallam  <tmsriram@google.com>
 
 	* arm.cc (Scan::local_reloc_may_be_function_pointer): New function.

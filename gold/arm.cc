@@ -81,6 +81,9 @@ template<bool big_endian>
 class Arm_relobj;
 
 template<bool big_endian>
+class Arm_relocate_functions;
+
+template<bool big_endian>
 class Target_arm;
 
 // For convenience.
@@ -1597,11 +1600,23 @@ class Arm_relobj : public Sized_relobj<32, big_endian>
 				     unsigned int, Output_section*,
 				     Target_arm<big_endian>*);
 
+  // Find the linked text section of an EXIDX section by looking at the
+  // first reloction of the EXIDX section.  PSHDR points to the section
+  // headers of a relocation section and PSYMS points to the local symbols.
+  // PSHNDX points to a location storing the text section index if found.
+  // Return whether we can find the linked section.
+  bool
+  find_linked_text_section(const unsigned char* pshdr,
+			   const unsigned char* psyms, unsigned int* pshndx);
+
+  //
   // Make a new Arm_exidx_input_section object for EXIDX section with
-  // index SHNDX and section header SHDR.
+  // index SHNDX and section header SHDR.  TEXT_SHNDX is the section
+  // index of the linked text section.
   void
   make_exidx_input_section(unsigned int shndx,
-			   const elfcpp::Shdr<32, big_endian>& shdr);
+			   const elfcpp::Shdr<32, big_endian>& shdr,
+			   unsigned int text_shndx);
 
   // Return the output address of either a plain input section or a
   // relaxed input section.  SHNDX is the section index.
@@ -1835,11 +1850,12 @@ class Target_arm : public Sized_target<32, big_endian>
   Target_arm()
     : Sized_target<32, big_endian>(&arm_info),
       got_(NULL), plt_(NULL), got_plt_(NULL), rel_dyn_(NULL),
-      copy_relocs_(elfcpp::R_ARM_COPY), dynbss_(NULL), stub_tables_(),
-      stub_factory_(Stub_factory::get_instance()), may_use_blx_(false),
-      should_force_pic_veneer_(false), arm_input_section_map_(),
-      attributes_section_data_(NULL), fix_cortex_a8_(false),
-      cortex_a8_relocs_info_()
+      copy_relocs_(elfcpp::R_ARM_COPY), dynbss_(NULL), 
+      got_mod_index_offset_(-1U), tls_base_symbol_defined_(false),
+      stub_tables_(), stub_factory_(Stub_factory::get_instance()),
+      may_use_blx_(false), should_force_pic_veneer_(false),
+      arm_input_section_map_(), attributes_section_data_(NULL),
+      fix_cortex_a8_(false), cortex_a8_relocs_info_()
   { }
 
   // Whether we can use BLX.
@@ -1995,6 +2011,11 @@ class Target_arm : public Sized_target<32, big_endian>
   bool
   do_is_defined_by_abi(Symbol* sym) const
   { return strcmp(sym->name(), "__tls_get_addr") == 0; }
+
+  // Return whether there is a GOT section.
+  bool
+  has_got_section() const
+  { return this->got_ != NULL; }
 
   // Return the size of the GOT section.
   section_size_type
@@ -2284,6 +2305,16 @@ class Target_arm : public Sized_target<32, big_endian>
 	  return true;
 	}
     }
+
+   private:
+    // Do a TLS relocation.
+    inline typename Arm_relocate_functions<big_endian>::Status
+    relocate_tls(const Relocate_info<32, big_endian>*, Target_arm<big_endian>*,
+                 size_t, const elfcpp::Rel<32, big_endian>&, unsigned int,
+		 const Sized_symbol<32>*, const Symbol_value<32>*,
+		 unsigned char*, elfcpp::Elf_types<32>::Elf_Addr,
+		 section_size_type);
+
   };
 
   // A class which returns the size required for a relocation type,
@@ -2294,6 +2325,11 @@ class Target_arm : public Sized_target<32, big_endian>
     unsigned int
     get_size_for_reloc(unsigned int, Relobj*);
   };
+
+  // Adjust TLS relocation type based on the options and whether this
+  // is a local symbol.
+  static tls::Tls_optimization
+  optimize_tls_reloc(bool is_final, int r_type);
 
   // Get the GOT section, creating it if necessary.
   Output_data_got<32, big_endian>*
@@ -2311,6 +2347,15 @@ class Target_arm : public Sized_target<32, big_endian>
   void
   make_plt_entry(Symbol_table*, Layout*, Symbol*);
 
+  // Define the _TLS_MODULE_BASE_ symbol in the TLS segment.
+  void
+  define_tls_base_symbol(Symbol_table*, Layout*);
+
+  // Create a GOT entry for the TLS module index.
+  unsigned int
+  got_mod_index_entry(Symbol_table* symtab, Layout* layout,
+		      Sized_relobj<32, big_endian>* object);
+
   // Get the PLT section.
   const Output_data_plt_arm<big_endian>*
   plt_section() const
@@ -2322,6 +2367,10 @@ class Target_arm : public Sized_target<32, big_endian>
   // Get the dynamic reloc section, creating it if necessary.
   Reloc_section*
   rel_dyn_section(Layout*);
+
+  // Get the section to use for TLS_DESC relocations.
+  Reloc_section*
+  rel_tls_desc_section(Layout*) const;
 
   // Return true if the symbol may need a COPY relocation.
   // References from an executable object to non-function symbols
@@ -2437,7 +2486,11 @@ class Target_arm : public Sized_target<32, big_endian>
   // The types of GOT entries needed for this platform.
   enum Got_type
   {
-    GOT_TYPE_STANDARD = 0	// GOT entry for a regular symbol
+    GOT_TYPE_STANDARD = 0,      // GOT entry for a regular symbol
+    GOT_TYPE_TLS_NOFFSET = 1,   // GOT entry for negative TLS offset
+    GOT_TYPE_TLS_OFFSET = 2,    // GOT entry for positive TLS offset
+    GOT_TYPE_TLS_PAIR = 3,      // GOT entry for TLS module/offset pair
+    GOT_TYPE_TLS_DESC = 4       // GOT entry for TLS_DESC pair
   };
 
   typedef typename std::vector<Stub_table<big_endian>*> Stub_table_list;
@@ -2464,6 +2517,10 @@ class Target_arm : public Sized_target<32, big_endian>
   Copy_relocs<elfcpp::SHT_REL, 32, big_endian> copy_relocs_;
   // Space for variables copied with a COPY reloc.
   Output_data_space* dynbss_;
+  // Offset of the GOT entry for the TLS module index.
+  unsigned int got_mod_index_offset_;
+  // True if the _TLS_MODULE_BASE_ symbol has been defined.
+  bool tls_base_symbol_defined_;
   // Vector of Stub_tables created.
   Stub_table_list stub_tables_;
   // Stub factory.
@@ -5618,6 +5675,17 @@ Arm_relobj<big_endian>::scan_section_for_cortex_a8_erratum(
     Output_section* os,
     Target_arm<big_endian>* arm_target)
 {
+  // Look for the first mapping symbol in this section.  It should be
+  // at (shndx, 0).
+  Mapping_symbol_position section_start(shndx, 0);
+  typename Mapping_symbols_info::const_iterator p =
+    this->mapping_symbols_info_.lower_bound(section_start);
+
+  // There are no mapping symbols for this section.  Treat it as a data-only
+  // section.
+  if (p == this->mapping_symbols_info_.end() || p->first.first != shndx)
+    return;
+
   Arm_address output_address =
     this->simple_input_section_output_address(shndx, os);
 
@@ -5631,21 +5699,6 @@ Arm_relobj<big_endian>::scan_section_for_cortex_a8_erratum(
   // THUMB code only.  Second, we only want to look at the 4K-page boundary
   // to speed up the scanning.
   
-  // Look for the first mapping symbol in this section.  It should be
-  // at (shndx, 0).
-  Mapping_symbol_position section_start(shndx, 0);
-  typename Mapping_symbols_info::const_iterator p =
-    this->mapping_symbols_info_.lower_bound(section_start);
-
-  if (p == this->mapping_symbols_info_.end()
-      || p->first != section_start)
-    {
-      gold_warning(_("Cortex-A8 erratum scanning failed because there "
-		     "is no mapping symbols for section %u of %s"),
-		   shndx, this->name().c_str());
-      return;
-    }
- 
   while (p != this->mapping_symbols_info_.end()
 	&& p->first.first == shndx)
     {
@@ -5979,27 +6032,95 @@ Arm_relobj<big_endian>::do_relocate_sections(
     }
 }
 
-// Create a new EXIDX input section object for EXIDX section SHNDX with
-// header SHDR.
+// Find the linked text section of an EXIDX section by looking the the first
+// relocation.  4.4.1 of the EHABI specifications says that an EXIDX section
+// must be linked to to its associated code section via the sh_link field of
+// its section header.  However, some tools are broken and the link is not
+// always set.  LD just drops such an EXIDX section silently, causing the
+// associated code not unwindabled.   Here we try a little bit harder to
+// discover the linked code section.
+//
+// PSHDR points to the section header of a relocation section of an EXIDX
+// section.  If we can find a linked text section, return true and
+// store the text section index in the location PSHNDX.  Otherwise
+// return false.
+
+template<bool big_endian>
+bool
+Arm_relobj<big_endian>::find_linked_text_section(
+    const unsigned char* pshdr,
+    const unsigned char* psyms,
+    unsigned int* pshndx)
+{
+  elfcpp::Shdr<32, big_endian> shdr(pshdr);
+  
+  // If there is no relocation, we cannot find the linked text section.
+  size_t reloc_size;
+  if (shdr.get_sh_type() == elfcpp::SHT_REL)
+      reloc_size = elfcpp::Elf_sizes<32>::rel_size;
+  else
+      reloc_size = elfcpp::Elf_sizes<32>::rela_size;
+  size_t reloc_count = shdr.get_sh_size() / reloc_size;
+ 
+  // Get the relocations.
+  const unsigned char* prelocs =
+      this->get_view(shdr.get_sh_offset(), shdr.get_sh_size(), true, false); 
+
+  // Find the REL31 relocation for the first word of the first EXIDX entry.
+  for (size_t i = 0; i < reloc_count; ++i, prelocs += reloc_size)
+    {
+      Arm_address r_offset;
+      typename elfcpp::Elf_types<32>::Elf_WXword r_info;
+      if (shdr.get_sh_type() == elfcpp::SHT_REL)
+	{
+	  typename elfcpp::Rel<32, big_endian> reloc(prelocs);
+	  r_info = reloc.get_r_info();
+	  r_offset = reloc.get_r_offset();
+	}
+      else
+	{
+	  typename elfcpp::Rela<32, big_endian> reloc(prelocs);
+	  r_info = reloc.get_r_info();
+	  r_offset = reloc.get_r_offset();
+	}
+
+      unsigned int r_type = elfcpp::elf_r_type<32>(r_info);
+      if (r_type != elfcpp::R_ARM_PREL31 && r_type != elfcpp::R_ARM_SBREL31)
+	continue;
+
+      unsigned int r_sym = elfcpp::elf_r_sym<32>(r_info);
+      if (r_sym == 0
+	  || r_sym >= this->local_symbol_count()
+	  || r_offset != 0)
+	continue;
+
+      // This is the relocation for the first word of the first EXIDX entry.
+      // We expect to see a local section symbol.
+      const int sym_size = elfcpp::Elf_sizes<32>::sym_size;
+      elfcpp::Sym<32, big_endian> sym(psyms + r_sym * sym_size);
+      if (sym.get_st_type() == elfcpp::STT_SECTION)
+	{
+	  *pshndx = this->adjust_shndx(sym.get_st_shndx());
+	  return true;
+	}
+      else
+	return false;
+    }
+
+  return false;
+}
+
+// Make an EXIDX input section object for an EXIDX section whose index is
+// SHNDX.  SHDR is the section header of the EXIDX section and TEXT_SHNDX
+// is the section index of the linked text section.
 
 template<bool big_endian>
 void
 Arm_relobj<big_endian>::make_exidx_input_section(
     unsigned int shndx,
-    const elfcpp::Shdr<32, big_endian>& shdr)
+    const elfcpp::Shdr<32, big_endian>& shdr,
+    unsigned int text_shndx)
 {
-  // Link .text section to its .ARM.exidx section in the same object.
-  unsigned int text_shndx = this->adjust_shndx(shdr.get_sh_link());
-
-  // Issue an error and ignore this EXIDX section if it does not point
-  // to any text section.
-  if (text_shndx == elfcpp::SHN_UNDEF)
-    {
-      gold_error(_("EXIDX section %u in %s has no linked text section"),
-		 shndx, this->name().c_str());
-      return;
-    }
-  
   // Issue an error and ignore this EXIDX section if it points to a text
   // section already has an EXIDX section.
   if (this->exidx_section_map_[text_shndx] != NULL)
@@ -6040,9 +6161,10 @@ Arm_relobj<big_endian>::do_read_symbols(Read_symbols_data* sd)
 
   // Go over the section headers and look for .ARM.attributes and .ARM.exidx
   // sections.
+  std::vector<unsigned int> deferred_exidx_sections;
   const size_t shdr_size = elfcpp::Elf_sizes<32>::shdr_size;
-  const unsigned char *ps =
-    sd->section_headers->data() + shdr_size;
+  const unsigned char* pshdrs = sd->section_headers->data();
+  const unsigned char *ps = pshdrs + shdr_size;
   for (unsigned int i = 1; i < this->shnum(); ++i, ps += shdr_size)
     {
       elfcpp::Shdr<32, big_endian> shdr(ps);
@@ -6058,7 +6180,79 @@ Arm_relobj<big_endian>::do_read_symbols(Read_symbols_data* sd)
 	    new Attributes_section_data(view->data(), section_size);
 	}
       else if (shdr.get_sh_type() == elfcpp::SHT_ARM_EXIDX)
-	this->make_exidx_input_section(i, shdr);
+	{
+	  unsigned int text_shndx = this->adjust_shndx(shdr.get_sh_link());
+	  if (text_shndx >= this->shnum())
+	    gold_error(_("EXIDX section %u linked to invalid section %u"),
+		       i, text_shndx);
+	  else if (text_shndx == elfcpp::SHN_UNDEF)
+	    deferred_exidx_sections.push_back(i);
+	  else
+	    this->make_exidx_input_section(i, shdr, text_shndx);
+	}
+    }
+
+  // Some tools are broken and they do not set the link of EXIDX sections. 
+  // We look at the first relocation to figure out the linked sections.
+  if (!deferred_exidx_sections.empty())
+    {
+      // We need to go over the section headers again to find the mapping
+      // from sections being relocated to their relocation sections.  This is
+      // a bit inefficient as we could do that in the loop above.  However,
+      // we do not expect any deferred EXIDX sections normally.  So we do not
+      // want to slow down the most common path.
+      typedef Unordered_map<unsigned int, unsigned int> Reloc_map;
+      Reloc_map reloc_map;
+      ps = pshdrs + shdr_size;
+      for (unsigned int i = 1; i < this->shnum(); ++i, ps += shdr_size)
+	{
+	  elfcpp::Shdr<32, big_endian> shdr(ps);
+	  elfcpp::Elf_Word sh_type = shdr.get_sh_type();
+	  if (sh_type == elfcpp::SHT_REL || sh_type == elfcpp::SHT_RELA)
+	    {
+	      unsigned int info_shndx = this->adjust_shndx(shdr.get_sh_info());
+	      if (info_shndx >= this->shnum())
+		gold_error(_("relocation section %u has invalid info %u"),
+			   i, info_shndx);
+	      Reloc_map::value_type value(info_shndx, i);
+	      std::pair<Reloc_map::iterator, bool> result =
+		reloc_map.insert(value);
+	      if (!result.second)
+		gold_error(_("section %u has multiple relocation sections "
+			     "%u and %u"),
+			   info_shndx, i, reloc_map[info_shndx]);
+	    }
+	}
+
+      // Read the symbol table section header.
+      const unsigned int symtab_shndx = this->symtab_shndx();
+      elfcpp::Shdr<32, big_endian>
+	  symtabshdr(this, this->elf_file()->section_header(symtab_shndx));
+      gold_assert(symtabshdr.get_sh_type() == elfcpp::SHT_SYMTAB);
+
+      // Read the local symbols.
+      const int sym_size =elfcpp::Elf_sizes<32>::sym_size;
+      const unsigned int loccount = this->local_symbol_count();
+      gold_assert(loccount == symtabshdr.get_sh_info());
+      off_t locsize = loccount * sym_size;
+      const unsigned char* psyms = this->get_view(symtabshdr.get_sh_offset(),
+						  locsize, true, true);
+
+      // Process the deferred EXIDX sections. 
+      for(unsigned int i = 0; i < deferred_exidx_sections.size(); ++i)
+	{
+	  unsigned int shndx = deferred_exidx_sections[i];
+	  elfcpp::Shdr<32, big_endian> shdr(pshdrs + shndx * shdr_size);
+	  unsigned int text_shndx;
+	  Reloc_map::const_iterator it = reloc_map.find(shndx);
+	  if (it != reloc_map.end()
+	      && find_linked_text_section(pshdrs + it->second * shdr_size,
+					  psyms, &text_shndx))
+	    this->make_exidx_input_section(shndx, shdr, text_shndx);
+	  else
+	    gold_error(_("EXIDX section %u has no linked text section."),
+		       shndx);
+	}
     }
 }
 
@@ -6519,6 +6713,79 @@ Target_arm<big_endian>::make_plt_entry(Symbol_table* symtab, Layout* layout,
   this->plt_->add_entry(gsym);
 }
 
+// Get the section to use for TLS_DESC relocations.
+
+template<bool big_endian>
+typename Target_arm<big_endian>::Reloc_section*
+Target_arm<big_endian>::rel_tls_desc_section(Layout* layout) const
+{
+  return this->plt_section()->rel_tls_desc(layout);
+}
+
+// Define the _TLS_MODULE_BASE_ symbol in the TLS segment.
+
+template<bool big_endian>
+void
+Target_arm<big_endian>::define_tls_base_symbol(
+    Symbol_table* symtab,
+    Layout* layout)
+{
+  if (this->tls_base_symbol_defined_)
+    return;
+
+  Output_segment* tls_segment = layout->tls_segment();
+  if (tls_segment != NULL)
+    {
+      bool is_exec = parameters->options().output_is_executable();
+      symtab->define_in_output_segment("_TLS_MODULE_BASE_", NULL,
+				       Symbol_table::PREDEFINED,
+				       tls_segment, 0, 0,
+				       elfcpp::STT_TLS,
+				       elfcpp::STB_LOCAL,
+				       elfcpp::STV_HIDDEN, 0,
+				       (is_exec
+					? Symbol::SEGMENT_END
+					: Symbol::SEGMENT_START),
+				       true);
+    }
+  this->tls_base_symbol_defined_ = true;
+}
+
+// Create a GOT entry for the TLS module index.
+
+template<bool big_endian>
+unsigned int
+Target_arm<big_endian>::got_mod_index_entry(
+    Symbol_table* symtab,
+    Layout* layout,
+    Sized_relobj<32, big_endian>* object)
+{
+  if (this->got_mod_index_offset_ == -1U)
+    {
+      gold_assert(symtab != NULL && layout != NULL && object != NULL);
+      Reloc_section* rel_dyn = this->rel_dyn_section(layout);
+      Output_data_got<32, big_endian>* got = this->got_section(symtab, layout);
+      unsigned int got_offset = got->add_constant(0);
+      rel_dyn->add_local(object, 0, elfcpp::R_ARM_TLS_DTPMOD32, got,
+                         got_offset);
+      got->add_constant(0);
+      this->got_mod_index_offset_ = got_offset;
+    }
+  return this->got_mod_index_offset_;
+}
+
+// Optimize the TLS relocation type based on what we know about the
+// symbol.  IS_FINAL is true if the final address of this symbol is
+// known at link time.
+
+template<bool big_endian>
+tls::Tls_optimization
+Target_arm<big_endian>::optimize_tls_reloc(bool, int)
+{
+  // FIXME: Currently we do not do any TLS optimization.
+  return tls::TLSOPT_NONE;
+}
+
 // Report an unsupported relocation against a local symbol.
 
 template<bool big_endian>
@@ -6562,15 +6829,21 @@ Target_arm<big_endian>::Scan::check_non_pic(Relobj* object,
       return;
 
     default:
-      // This prevents us from issuing more than one error per reloc
-      // section.  But we can still wind up issuing more than one
-      // error per object file.
-      if (this->issued_non_pic_error_)
+      {
+	// This prevents us from issuing more than one error per reloc
+	// section.  But we can still wind up issuing more than one
+	// error per object file.
+	if (this->issued_non_pic_error_)
+	  return;
+	const Arm_reloc_property* reloc_property =
+	  arm_reloc_property_table->get_reloc_property(r_type);
+	gold_assert(reloc_property != NULL);
+	object->error(_("requires unsupported dynamic reloc %s; "
+		      "recompile with -fPIC"),
+		      reloc_property->name().c_str());
+	this->issued_non_pic_error_ = true;
 	return;
-      object->error(_("requires unsupported dynamic reloc; "
-		      "recompile with -fPIC"));
-      this->issued_non_pic_error_ = true;
-      return;
+      }
 
     case elfcpp::R_ARM_NONE:
       gold_unreachable();
@@ -6769,6 +7042,97 @@ Target_arm<big_endian>::Scan::local(Symbol_table* symtab,
 		 object->name().c_str(), r_type);
       break;
 
+
+      // These are initial TLS relocs, which are expected when
+      // linking.
+    case elfcpp::R_ARM_TLS_GD32:	// Global-dynamic
+    case elfcpp::R_ARM_TLS_LDM32:	// Local-dynamic
+    case elfcpp::R_ARM_TLS_LDO32:	// Alternate local-dynamic
+    case elfcpp::R_ARM_TLS_IE32:	// Initial-exec
+    case elfcpp::R_ARM_TLS_LE32:	// Local-exec
+      {
+	bool output_is_shared = parameters->options().shared();
+	const tls::Tls_optimization optimized_type
+            = Target_arm<big_endian>::optimize_tls_reloc(!output_is_shared,
+							 r_type);
+	switch (r_type)
+	  {
+	  case elfcpp::R_ARM_TLS_GD32:		// Global-dynamic
+	    if (optimized_type == tls::TLSOPT_NONE)
+	      {
+	        // Create a pair of GOT entries for the module index and
+	        // dtv-relative offset.
+                Output_data_got<32, big_endian>* got
+                    = target->got_section(symtab, layout);
+                unsigned int r_sym = elfcpp::elf_r_sym<32>(reloc.get_r_info());
+		unsigned int shndx = lsym.get_st_shndx();
+		bool is_ordinary;
+		shndx = object->adjust_sym_shndx(r_sym, shndx, &is_ordinary);
+		if (!is_ordinary)
+		  object->error(_("local symbol %u has bad shndx %u"),
+			      r_sym, shndx);
+                else
+		  got->add_local_pair_with_rel(object, r_sym, shndx,
+					       GOT_TYPE_TLS_PAIR,
+					       target->rel_dyn_section(layout),
+					       elfcpp::R_ARM_TLS_DTPMOD32, 0);
+	      }
+	    else
+	      // FIXME: TLS optimization not supported yet.
+	      gold_unreachable();
+	    break;
+
+	  case elfcpp::R_ARM_TLS_LDM32:		// Local-dynamic
+	    if (optimized_type == tls::TLSOPT_NONE)
+	      {
+	        // Create a GOT entry for the module index.
+	        target->got_mod_index_entry(symtab, layout, object);
+	      }
+	    else
+	      // FIXME: TLS optimization not supported yet.
+	      gold_unreachable();
+	    break;
+
+	  case elfcpp::R_ARM_TLS_LDO32:		// Alternate local-dynamic
+	    break;
+
+	  case elfcpp::R_ARM_TLS_IE32:		// Initial-exec
+	    layout->set_has_static_tls();
+	    if (optimized_type == tls::TLSOPT_NONE)
+	      {
+	        // Create a GOT entry for the tp-relative offset.
+                Output_data_got<32, big_endian>* got
+                    = target->got_section(symtab, layout);
+                unsigned int r_sym = elfcpp::elf_r_sym<32>(reloc.get_r_info());
+		got->add_local_with_rel(object, r_sym, GOT_TYPE_TLS_OFFSET,
+					target->rel_dyn_section(layout),
+					elfcpp::R_ARM_TLS_TPOFF32);
+	      }
+	    else
+	      // FIXME: TLS optimization not supported yet.
+	      gold_unreachable();
+	    break;
+
+	  case elfcpp::R_ARM_TLS_LE32:		// Local-exec
+	    layout->set_has_static_tls();
+	    if (output_is_shared)
+	      {
+	        // We need to create a dynamic relocation.
+                gold_assert(lsym.get_st_type() != elfcpp::STT_SECTION);
+                unsigned int r_sym = elfcpp::elf_r_sym<32>(reloc.get_r_info());
+		Reloc_section* rel_dyn = target->rel_dyn_section(layout);
+		rel_dyn->add_local(object, r_sym, elfcpp::R_ARM_TLS_TPOFF32,
+				   output_section, data_shndx,
+				   reloc.get_r_offset());
+	      }
+	    break;
+
+	  default:
+	    gold_unreachable();
+	  }
+      }
+      break;
+
     default:
       unsupported_reloc_local(object, r_type);
       break;
@@ -6802,6 +7166,13 @@ Target_arm<big_endian>::Scan::global(Symbol_table* symtab,
 				     unsigned int r_type,
 				     Symbol* gsym)
 {
+  // A reference to _GLOBAL_OFFSET_TABLE_ implies that we need a got
+  // section.  We check here to avoid creating a dynamic reloc against
+  // _GLOBAL_OFFSET_TABLE_.
+  if (!target->has_got_section()
+      && strcmp(gsym->name(), "_GLOBAL_OFFSET_TABLE_") == 0)
+    target->got_section(symtab, layout);
+
   r_type = get_real_reloc_type(r_type);
   switch (r_type)
     {
@@ -7016,6 +7387,84 @@ Target_arm<big_endian>::Scan::global(Symbol_table* symtab,
       // dynamic linker, and should never be seen here.
       gold_error(_("%s: unexpected reloc %u in object file"),
 		 object->name().c_str(), r_type);
+      break;
+
+      // These are initial tls relocs, which are expected when
+      // linking.
+    case elfcpp::R_ARM_TLS_GD32:	// Global-dynamic
+    case elfcpp::R_ARM_TLS_LDM32:	// Local-dynamic
+    case elfcpp::R_ARM_TLS_LDO32:	// Alternate local-dynamic
+    case elfcpp::R_ARM_TLS_IE32:	// Initial-exec
+    case elfcpp::R_ARM_TLS_LE32:	// Local-exec
+      {
+	const bool is_final = gsym->final_value_is_known();
+	const tls::Tls_optimization optimized_type
+            = Target_arm<big_endian>::optimize_tls_reloc(is_final, r_type);
+	switch (r_type)
+	  {
+	  case elfcpp::R_ARM_TLS_GD32:		// Global-dynamic
+	    if (optimized_type == tls::TLSOPT_NONE)
+	      {
+	        // Create a pair of GOT entries for the module index and
+	        // dtv-relative offset.
+                Output_data_got<32, big_endian>* got
+                    = target->got_section(symtab, layout);
+                got->add_global_pair_with_rel(gsym, GOT_TYPE_TLS_PAIR,
+					      target->rel_dyn_section(layout),
+					      elfcpp::R_ARM_TLS_DTPMOD32,
+					      elfcpp::R_ARM_TLS_DTPOFF32);
+	      }
+	    else
+	      // FIXME: TLS optimization not supported yet.
+	      gold_unreachable();
+	    break;
+
+	  case elfcpp::R_ARM_TLS_LDM32:		// Local-dynamic
+	    if (optimized_type == tls::TLSOPT_NONE)
+	      {
+	        // Create a GOT entry for the module index.
+	        target->got_mod_index_entry(symtab, layout, object);
+	      }
+	    else
+	      // FIXME: TLS optimization not supported yet.
+	      gold_unreachable();
+	    break;
+
+	  case elfcpp::R_ARM_TLS_LDO32:		// Alternate local-dynamic
+	    break;
+
+	  case elfcpp::R_ARM_TLS_IE32:		// Initial-exec
+	    layout->set_has_static_tls();
+	    if (optimized_type == tls::TLSOPT_NONE)
+	      {
+	        // Create a GOT entry for the tp-relative offset.
+                Output_data_got<32, big_endian>* got
+                    = target->got_section(symtab, layout);
+                got->add_global_with_rel(gsym, GOT_TYPE_TLS_OFFSET,
+                                         target->rel_dyn_section(layout),
+                                         elfcpp::R_ARM_TLS_TPOFF32);
+	      }
+	    else
+	      // FIXME: TLS optimization not supported yet.
+	      gold_unreachable();
+	    break;
+
+	  case elfcpp::R_ARM_TLS_LE32:	// Local-exec
+	    layout->set_has_static_tls();
+	    if (parameters->options().shared())
+	      {
+	        // We need to create a dynamic relocation.
+                Reloc_section* rel_dyn = target->rel_dyn_section(layout);
+                rel_dyn->add_global(gsym, elfcpp::R_ARM_TLS_TPOFF32,
+				    output_section, object,
+                                    data_shndx, reloc.get_r_offset());
+	      }
+	    break;
+
+	  default:
+	    gold_unreachable();
+	  }
+      }
       break;
 
     default:
@@ -7269,7 +7718,7 @@ Target_arm<big_endian>::Relocate::relocate(
     const Symbol_value<32>* psymval,
     unsigned char* view,
     Arm_address address,
-    section_size_type /* view_size */ )
+    section_size_type view_size)
 {
   typedef Arm_relocate_functions<big_endian> Arm_relocate_functions;
 
@@ -7417,6 +7866,10 @@ Target_arm<big_endian>::Relocate::relocate(
   switch(reloc_property->relative_address_base())
     {
     case Arm_reloc_property::RAB_NONE:
+    // Relocations with relative address bases RAB_TLS and RAB_tp are
+    // handled by relocate_tls.  So we do not need to do anything here.
+    case Arm_reloc_property::RAB_TLS:
+    case Arm_reloc_property::RAB_tp:
       break;
     case Arm_reloc_property::RAB_B_S:
       relative_address_base = sym_origin;
@@ -7720,6 +8173,18 @@ Target_arm<big_endian>::Relocate::relocate(
 					      relative_address_base);
       break;
 
+      // These are initial tls relocs, which are expected when
+      // linking.
+    case elfcpp::R_ARM_TLS_GD32:	// Global-dynamic
+    case elfcpp::R_ARM_TLS_LDM32:	// Local-dynamic
+    case elfcpp::R_ARM_TLS_LDO32:	// Alternate local-dynamic
+    case elfcpp::R_ARM_TLS_IE32:	// Initial-exec
+    case elfcpp::R_ARM_TLS_LE32:	// Local-exec
+      reloc_status =
+	this->relocate_tls(relinfo, target, relnum, rel, r_type, gsym, psymval,
+			   view, address, view_size);
+      break;
+
     default:
       gold_unreachable();
     }
@@ -7747,6 +8212,125 @@ Target_arm<big_endian>::Relocate::relocate(
     }
 
   return true;
+}
+
+// Perform a TLS relocation.
+
+template<bool big_endian>
+inline typename Arm_relocate_functions<big_endian>::Status
+Target_arm<big_endian>::Relocate::relocate_tls(
+    const Relocate_info<32, big_endian>* relinfo,
+    Target_arm<big_endian>* target,
+    size_t relnum,
+    const elfcpp::Rel<32, big_endian>& rel,
+    unsigned int r_type,
+    const Sized_symbol<32>* gsym,
+    const Symbol_value<32>* psymval,
+    unsigned char* view,
+    elfcpp::Elf_types<32>::Elf_Addr,
+    section_size_type /*view_size*/ )
+{
+  typedef Arm_relocate_functions<big_endian> ArmRelocFuncs;
+  Output_segment* tls_segment = relinfo->layout->tls_segment();
+
+  const Sized_relobj<32, big_endian>* object = relinfo->object;
+
+  elfcpp::Elf_types<32>::Elf_Addr value = psymval->value(object, 0);
+
+  const bool is_final = (gsym == NULL
+			 ? !parameters->options().shared()
+			 : gsym->final_value_is_known());
+  const tls::Tls_optimization optimized_type
+      = Target_arm<big_endian>::optimize_tls_reloc(is_final, r_type);
+  switch (r_type)
+    {
+    case elfcpp::R_ARM_TLS_GD32:	// Global-dynamic
+        {
+          unsigned int got_type = GOT_TYPE_TLS_PAIR;
+          unsigned int got_offset;
+          if (gsym != NULL)
+            {
+              gold_assert(gsym->has_got_offset(got_type));
+              got_offset = gsym->got_offset(got_type) - target->got_size();
+            }
+          else
+            {
+              unsigned int r_sym = elfcpp::elf_r_sym<32>(rel.get_r_info());
+              gold_assert(object->local_has_got_offset(r_sym, got_type));
+              got_offset = (object->local_got_offset(r_sym, got_type)
+			    - target->got_size());
+            }
+          if (optimized_type == tls::TLSOPT_NONE)
+            {
+              // Relocate the field with the offset of the pair of GOT
+              // entries.
+              Relocate_functions<32, big_endian>::rel32(view, got_offset);
+              return ArmRelocFuncs::STATUS_OKAY;
+            }
+        }
+      break;
+
+    case elfcpp::R_ARM_TLS_LDM32:	// Local-dynamic
+      if (optimized_type == tls::TLSOPT_NONE)
+        {
+          // Relocate the field with the offset of the GOT entry for
+          // the module index.
+          unsigned int got_offset;
+          got_offset = (target->got_mod_index_entry(NULL, NULL, NULL)
+			- target->got_size());
+          Relocate_functions<32, big_endian>::rel32(view, got_offset);
+	  return ArmRelocFuncs::STATUS_OKAY;
+        }
+      break;
+
+    case elfcpp::R_ARM_TLS_LDO32:	// Alternate local-dynamic
+      Relocate_functions<32, big_endian>::rel32(view, value);
+      return ArmRelocFuncs::STATUS_OKAY;
+
+    case elfcpp::R_ARM_TLS_IE32:	// Initial-exec
+      if (optimized_type == tls::TLSOPT_NONE)
+        {
+          // Relocate the field with the offset of the GOT entry for
+          // the tp-relative offset of the symbol.
+	  unsigned int got_type = GOT_TYPE_TLS_OFFSET;
+          unsigned int got_offset;
+          if (gsym != NULL)
+            {
+              gold_assert(gsym->has_got_offset(got_type));
+              got_offset = gsym->got_offset(got_type);
+            }
+          else
+            {
+              unsigned int r_sym = elfcpp::elf_r_sym<32>(rel.get_r_info());
+              gold_assert(object->local_has_got_offset(r_sym, got_type));
+              got_offset = object->local_got_offset(r_sym, got_type);
+            }
+          // All GOT offsets are relative to the end of the GOT.
+          got_offset -= target->got_size();
+          Relocate_functions<32, big_endian>::rel32(view, got_offset);
+	  return ArmRelocFuncs::STATUS_OKAY;
+        }
+      break;
+
+    case elfcpp::R_ARM_TLS_LE32:	// Local-exec
+      // If we're creating a shared library, a dynamic relocation will
+      // have been created for this location, so do not apply it now.
+      if (!parameters->options().shared())
+        {
+          gold_assert(tls_segment != NULL);
+          value = tls_segment->memsz() - value;
+          Relocate_functions<32, false>::rel32(view, value);
+        }
+      return ArmRelocFuncs::STATUS_OKAY;
+    
+    default:
+      gold_unreachable();
+    }
+
+  gold_error_at_location(relinfo, relnum, rel.get_r_offset(),
+			 _("unsupported reloc %u"),
+			 r_type);
+  return ArmRelocFuncs::STATUS_BAD_RELOC;
 }
 
 // Relocate section data.
