@@ -97,13 +97,12 @@ enum arm_float_abi
 
 /* Types of processor to assemble for.	*/
 #ifndef CPU_DEFAULT
-#if defined __XSCALE__
-#define CPU_DEFAULT	ARM_ARCH_XSCALE
-#else
-#if defined __thumb__
-#define CPU_DEFAULT	ARM_ARCH_V5T
-#endif
-#endif
+/* The code that was here used to select a default CPU depending on compiler
+   pre-defines which were only present when doing native builds, thus 
+   changing gas' default behaviour depending upon the build host.
+
+   If you have a target that requires a default CPU option then the you
+   should define CPU_DEFAULT here.  */
 #endif
 
 #ifndef FPU_DEFAULT
@@ -6971,8 +6970,16 @@ do_rd_rm_rn (void)
   unsigned Rn = inst.operands[2].reg;
   /* Enforce restrictions on SWP instruction.  */
   if ((inst.instruction & 0x0fbfffff) == 0x01000090)
-    constraint (Rn == inst.operands[0].reg || Rn == inst.operands[1].reg,
-		_("Rn must not overlap other operands"));
+    {
+      constraint (Rn == inst.operands[0].reg || Rn == inst.operands[1].reg,
+		  _("Rn must not overlap other operands"));
+
+      /* SWP{b} is deprecated for ARMv6* and ARMv7.  */
+      if (warn_on_deprecated
+	  && ARM_CPU_HAS_FEATURE (selected_cpu, arm_ext_v6))
+	as_warn (_("swp{b} use is deprecated for this architecture"));
+
+    }
   inst.instruction |= inst.operands[0].reg << 12;
   inst.instruction |= inst.operands[1].reg;
   inst.instruction |= Rn << 16;

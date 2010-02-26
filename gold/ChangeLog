@@ -1,3 +1,109 @@
+2010-02-24  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::got_section): Make the .got section the first
+	non RELRO section in the data segment.
+	* testsuite/script_test_5.sh: Fix match patterns to avoid matching
+	suffixes of section names.
+
+2010-02-24  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::do_finalize_sections): Skip processor specific
+	flags and attributes merging if an input file is a binary file.
+	* fileread.cc (Input_file::open): Record format of original file.
+	* fileread.h (Input_file::Format): New enum type.
+   	(Input_file::Input_file): Initialize data member format_.
+	(Input_file::format): New method definition.
+	(Input_file::format_):: New data member.
+
+2010-02-24  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_output_data_got): New class.
+	(ARM_TCB_SIZE): New constant
+	(Target_arm): Use Arm_output_data_got instead of Output_data_got.
+	(Arm_output_section::fix_exidx_coverage): Add a parameter for layout.
+	If user uses a script with a SECTIONS clause, issue only a warning
+	for a misplaced EXIDX input section.  Otherwise, issue an error.
+ 	(Arm_relobj::do_gc_process_relocs): Exit early if we are not doing
+	garbage collection.
+	(Target_arm::got_mode_index_entry): Handle static linking.
+	(Target_arm::Scan::local): Ditto.
+	(Target_arm::Scan::global): Ditto.
+	(Target_arm::Relocate::relocate_tls): Handle static linking.  Fix
+	all incorrectly implemented relocations.
+	(Target_arm::fix_exidx_coverage): Pass layout to 
+	Arm_output_section::fix_exidx_coverage.
+	* layout.cc (Layout::section_name_mapping): Remove trailing dots
+	from ".ARM.exidx." and ".ARM.extab.".
+
+2010-02-23  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
+
+	* arm.cc (Target_arm::do_finalize_sections): Create attribute
+	section if it does not already exist.
+	* attributes.cc	(Attributes_section_data::Attributes_section_data):
+	Don't crash if size is zero.
+
+2010-02-23  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
+	    Ian Lance Taylor  <iant@google.com>
+
+	* gold.cc (queue_middle_tasks): If no input files were opened,
+	exit.
+	* workqueue.h (Task_function::Task_function): Assert that there is
+	a blocker.
+
+2010-02-22  Doug Kwan  <dougkwan@google.com>
+
+	* gold-threads.h (Once::~Once): Explicitly define virtual destructor.
+	* icf.cc (get_section_contents): Cast snprintf arguments to long long
+	types to avoid warnings due to different uint64_t implementations
+	on different hosts.
+
+2010-02-21  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_relocate_functions::arm_branch_common): Fix bug in
+	handling of the maximum backward branch offset.
+     	(Arm_relocate_functions::thumb_branch_common): Ditto.
+	* testsuite/Makefile.am (check_SCRIPTS): Add arm_branch_in_range.sh.
+	(check_DATA): Add arm_bl_in_range.stdout, arm_bl_out_of_range.stdout
+	thumb_bl_in_range.stdout, thumb_bl_out_of_range.stdout, 
+	thumb2_bl_in_range.stdout and thumb2_bl_out_of_range.stdout.
+	(arm_bl_in_range.stdout, arm_bl_in_range, arm_bl_in_range.o,
+	arm_bl_out_of_range.stdout, arm_bl_out_of_range,
+	arm_bl_out_of_range.o, thumb_bl_in_range.stdout, thumb_bl_in_range,
+	thumb_bl_in_range.o, thumb_bl_out_of_range.stdout,
+	thumb_bl_out_of_range thumb_bl_out_of_range.o,
+	thumb2_bl_in_range.stdout, thumb2_bl_in_range, thumb2_bl_in_range.o
+	thumb2_bl_out_of_range.stdout, thumb2_bl_out_of_range,
+	thumb2_bl_out_of_range.o): New rules.
+	(MOSTLYCLEANFILES): Add arm_bl_in_range, arm_bl_out_of_range,
+	thumb_bl_in_range, thumb_bl_out_of_range, thumb2_bl_in_range and
+	thumb2_bl_out_of_range
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/arm_bl_in_range.s: New file.
+	* testsuite/arm_bl_out_of_range.s: Ditto.
+	* testsuite/arm_branch_in_range.sh: Ditto.
+	* testsuite/arm_branch_range.t: Ditto.
+	* testsuite/thumb2_branch_range.t: Ditto.
+	* testsuite/thumb_bl_in_range.s: Ditto.
+	* testsuite/thumb_bl_out_of_range.s: Ditto.
+	* testsuite/thumb_branch_range.t: Ditto.
+
+2010-02-20  Sriraman Tallam  <tmsriram@google.com>
+
+	* gc.h (gc_process_relocs): Change vectors to point to the new list.
+	Add reloc offset information.
+	* icf.cc (get_section_contents): Change iterators to point to the new
+	vectors. Add reloc offset information to the contents.
+	* icf.h (Icf::Sections_reachable_info): New typedef.
+	(Icf::Sections_reachable_list): New typedef.
+	(Icf::Offset_info): New typedef.
+	(Icf::Reloc_info): New struct typedef.
+	(Icf::Reloc_info_list): New typedef.
+	(Icf::symbol_reloc_list): Delete method.
+	(Icf::addend_reloc_list): Delete method.
+	(Icf::section_reloc_list): Delete method.
+	(Icf::reloc_info_list): New method.
+	(Icf::reloc_info_list_): New member.
+
 2010-02-19  Doug Kwan  <dougkwan@google.com>
 
 	* arm-reloc.def: Mark R_ARM_TLS_GD32, R_ARM_TLS_LDM32,

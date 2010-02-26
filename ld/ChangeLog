@@ -1,3 +1,37 @@
+2010-02-25  Alan Modra  <amodra@gmail.com>
+
+	PR ld/11304
+	* ldlang.c (init_os): Remove isec param.  Don't check for
+	bfd_section already set or call bfd_init_private_section_data
+	here.
+	(exp_init_os): Update init_os call.
+	(lang_add_section): Tidy.  Really don't set SEC_LINK_ONCE
+	flags.  Call bfd_init_private_section_data here.
+	(map_input_to_output_sections): Tidy.  Update init_os calls.
+	Use os->sectype to select sec flags for lang_data_statement.
+
+2010-02-23  Alan Modra  <amodra@gmail.com>
+
+	PR ld/11304
+	* ldlang.c: Revert last patch.
+
+2010-02-23  Nick Clifton  <nickc@redhat.com>
+
+	* po/bg.po: Updated Bulgarian translation.
+
+2010-02-22  Alan Modra  <amodra@gmail.com>
+
+	PR ld/11304
+	* ldlang.c (exp_init_os): Delete forward declaration.
+	(init_os): Don't check for bfd_section already created and don't
+	init addr_tree and load_base expressions here.
+	(map_input_to_output_sections): Only map input to output sections
+	and set constraints here, and as an exception, create output
+	sections which have their address set.  Move all the other code to..
+	(create_other_output_sections): ..here.  New function.  Handle init
+	of addr_tree and load_base here too.
+	(lang_process): Call create_other_output_sections.
+
 2010-02-19  Alan Modra  <amodra@gmail.com>
 
 	* Makefile.am (eelf32_i960.c): Depend on ELF_GEN_DEPS, not ELF_DEPS.
