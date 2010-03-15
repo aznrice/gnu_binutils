@@ -1,3 +1,27 @@
+2010-03-13  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	* config/tc-v850.c (v850_insert_operand): Handle out-of-range
+	assembler constants on 64-bit hosts.
+
+2010-03-10  Mike Frysinger  <michael.frysinger@analog.com>
+
+	* bfin-defs.h, bfin-lex.l, bfin-parse.y, tc-bfin.c, tc-bfin.h:
+	Strip trailing whitespace.
+
+2010-03-10  Mike Frysinger  <michael.frysinger@analog.com>
+
+	* doc/c-bfin.texi (-mcpu): Add bf504 and bf506.
+	* config/tc-bfin.c (bfin_cpu_type): Add BFIN_CPU_BF504 and
+	BFIN_CPU_BF506.
+	(bfin_cpus[]): Add 0.0 for bf504 and bf506.
+
+2010-03-10  Jie Zhang  <jie@codesourcery.com>
+
+	* doc/as.texinfo: Add Blackfin options.
+	* doc/c-bfin.texi: Document -mfdpic, -mno-fdpic and -mnopic.
+	* config/tc-bfin.c (md_show_usage): Show usage for all
+	Blackfin specific options.
+
 2010-03-09  Alan Modra  <amodra@gmail.com>
 
 	PR gas/11356
