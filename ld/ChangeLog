@@ -1,3 +1,20 @@
+2010-03-18  Doug Semler  <dougsemler@gmail.com>
+
+	* pe-dll.c (make_one): Make text section readonly.
+	(make_one): Add *ABS* symbol @feat.00 with value 1 to tag
+	the jump stub on X86 as /SAFESEH compatible for
+	native toolchains.
+
+2010-03-17  Alan Modra  <amodra@gmail.com>
+
+	* ldlang.c (lang_size_sections_1): Remove "s" param.  Set "s" from
+	*prev instead.  Update all callers.
+
+2010-03-15  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* ldlang.c (lang_insert_orphan): Place loadable orphans in the same
+	region and phdrs as their placement section.
+
 2010-03-15  Alan Modra  <amodra@gmail.com>
 
 	* emultempl/ppc64elf.em (move_input_section, sort_toc_sections): New.

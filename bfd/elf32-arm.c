@@ -1721,6 +1721,7 @@ static const struct elf32_arm_reloc_map elf32_arm_reloc_map[] =
     {BFD_RELOC_ARM_RELATIVE,         R_ARM_RELATIVE},
     {BFD_RELOC_ARM_GOTOFF,           R_ARM_GOTOFF32},
     {BFD_RELOC_ARM_GOTPC,            R_ARM_GOTPC},
+    {BFD_RELOC_ARM_GOT_PREL,         R_ARM_GOT_PREL},
     {BFD_RELOC_ARM_GOT32,            R_ARM_GOT32},
     {BFD_RELOC_ARM_PLT32,            R_ARM_PLT32},
     {BFD_RELOC_ARM_TARGET1,	     R_ARM_TARGET1},
@@ -4080,7 +4081,7 @@ cortex_a8_erratum_scan (bfd *input_bfd,
 		  && last_was_32bit
 		  && ! last_was_branch)
                 {
-                  bfd_signed_vma offset;
+                  bfd_signed_vma offset = 0;
                   bfd_boolean force_target_arm = FALSE;
 		  bfd_boolean force_target_thumb = FALSE;
                   bfd_vma target;
