@@ -4254,10 +4254,11 @@ elf64_x86_64_add_symbol_hook (bfd *abfd,
 	}
       *secp = lcomm;
       *valp = sym->st_size;
-      break;
+      return TRUE;
     }
 
-  if (ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC)
+  if ((abfd->flags & DYNAMIC) == 0
+      && ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC)
     elf_tdata (info->output_bfd)->has_ifunc_symbols = TRUE;
 
   return TRUE;
@@ -4506,6 +4507,29 @@ static const struct bfd_elf_special_section
 
 #undef  elf64_bed
 #define elf64_bed elf64_x86_64_fbsd_bed
+
+#include "elf64-target.h"
+
+/* Solaris 2 support.  */
+
+#undef  TARGET_LITTLE_SYM
+#define TARGET_LITTLE_SYM		    bfd_elf64_x86_64_sol2_vec
+#undef  TARGET_LITTLE_NAME
+#define TARGET_LITTLE_NAME		    "elf64-x86-64-sol2"
+
+/* Restore default: we cannot use ELFOSABI_SOLARIS, otherwise ELFOSABI_NONE
+   objects won't be recognized.  */
+#undef ELF_OSABI
+
+#undef  elf64_bed
+#define elf64_bed			    elf64_x86_64_sol2_bed
+
+/* The Solaris 2 ABI requires a plt symbol on all platforms.
+
+   Cf. Linker and Libraries Guide, Ch. 2, Link-Editor, Generating the Output
+   File, p.63.  */
+#undef elf_backend_want_plt_sym
+#define elf_backend_want_plt_sym	    1
 
 #include "elf64-target.h"
 

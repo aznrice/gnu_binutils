@@ -170,14 +170,28 @@ icf_keep_unique_test.stdout: icf_keep_unique_test
 	$(TEST_NM) -C icf_keep_unique_test > icf_keep_unique_test.stdout
 
 check_SCRIPTS += icf_safe_test.sh
-check_DATA += icf_safe_test.stdout
+check_DATA += icf_safe_test_1.stdout icf_safe_test_2.stdout
 MOSTLYCLEANFILES += icf_safe_test
-icf_safe_test.o: icf_safe_test.cc 
+icf_safe_test.o: icf_safe_test.cc
 	$(CXXCOMPILE) -O0 -c -ffunction-sections -g -o $@ $<
 icf_safe_test: icf_safe_test.o gcctestdir/ld
 	$(CXXLINK) -Bgcctestdir/ -Wl,--icf=safe icf_safe_test.o
-icf_safe_test.stdout: icf_safe_test
-	$(TEST_NM) icf_safe_test > icf_safe_test.stdout
+icf_safe_test_1.stdout: icf_safe_test
+	$(TEST_NM) icf_safe_test > icf_safe_test_1.stdout
+icf_safe_test_2.stdout: icf_safe_test
+	$(TEST_READELF) -h icf_safe_test > icf_safe_test_2.stdout
+
+check_SCRIPTS += icf_safe_so_test.sh
+check_DATA += icf_safe_so_test_1.stdout icf_safe_so_test_2.stdout
+MOSTLYCLEANFILES += icf_safe_so_test
+icf_safe_so_test.o: icf_safe_so_test.cc
+	$(CXXCOMPILE) -O0 -c -ffunction-sections -fPIC -g -o $@ $<
+icf_safe_so_test: icf_safe_so_test.o gcctestdir/ld
+	$(CXXLINK) -Bgcctestdir/ -Wl,--icf=safe icf_safe_so_test.o -fPIC -shared
+icf_safe_so_test_1.stdout: icf_safe_so_test
+	$(TEST_NM) icf_safe_so_test > icf_safe_so_test_1.stdout
+icf_safe_so_test_2.stdout: icf_safe_so_test
+	$(TEST_READELF) -h icf_safe_so_test > icf_safe_so_test_2.stdout
 
 check_PROGRAMS += basic_test
 check_PROGRAMS += basic_static_test
@@ -1271,8 +1285,14 @@ local_labels_test: local_labels_test.o
 
 check_PROGRAMS += discard_locals_test
 check_SCRIPTS += discard_locals_test.sh
-check_DATA += discard_locals_test.syms
-MOSTLYCLEANFILES += discard_locals_test.syms
+check_DATA += discard_locals_test.syms \
+	discard_locals_relocatable_test1.syms \
+	discard_locals_relocatable_test2.syms
+MOSTLYCLEANFILES += discard_locals_test.syms \
+	discard_locals_relocatable_test1.syms \
+	discard_locals_relocatable_test2.syms \
+	discard_locals_relocatable_test1.out \
+	discard_locals_relocatable_test2.out
 discard_locals_test_SOURCES = discard_locals_test.c
 discard_locals_test_LDFLAGS = -Bgcctestdir/ -Wl,--discard-locals
 discard_locals_test.syms: discard_locals_test
@@ -1280,6 +1300,18 @@ discard_locals_test.syms: discard_locals_test
 # '-Wa,-L' is required to preserve the local label used for testing.
 discard_locals_test.o: discard_locals_test.c
 	$(COMPILE) -c -Wa,-L -o $@ $<
+
+discard_locals_relocatable_test1.syms: discard_locals_relocatable_test1.out
+	$(TEST_READELF) -sW $< >$@ 2>/dev/null
+discard_locals_relocatable_test.o: discard_locals_relocatable_test.c
+	$(COMPILE) -c -Wa,-L -fPIC -o $@ $<
+discard_locals_relocatable_test1.out: discard_locals_relocatable_test.o ../ld-new
+	../ld-new --discard-locals -relocatable -o $@ $<
+
+discard_locals_relocatable_test2.syms: discard_locals_relocatable_test2.out
+	$(TEST_READELF) -sW $< >$@ 2>/dev/null
+discard_locals_relocatable_test2.out: discard_locals_relocatable_test.o ../ld-new
+	../ld-new --discard-all -relocatable -o $@ $<
 
 if MCMODEL_MEDIUM
 check_PROGRAMS += large
@@ -1435,3 +1467,151 @@ MOSTLYCLEANFILES += split_x86_64_1 split_x86_64_2 split_x86_64_3 \
 	split_x86_64_4 split_x86_64_r
 
 endif DEFAULT_TARGET_X86_64
+
+if DEFAULT_TARGET_ARM
+
+check_SCRIPTS += arm_abs_global.sh
+check_DATA += arm_abs_global.stdout
+arm_abs_lib.o: arm_abs_lib.s
+	$(TEST_AS) -march=armv7-a -o $@ $<
+libarm_abs.so: arm_abs_lib.o ../ld-new
+	../ld-new -shared -o $@ arm_abs_lib.o
+arm_abs_global.o: arm_abs_global.s
+	$(TEST_AS) -march=armv7-a -o $@ $<
+arm_abs_global: arm_abs_global.o libarm_abs.so ../ld-new
+	../ld-new -o $@ arm_abs_global.o -L. -larm_abs
+arm_abs_global.stdout: arm_abs_global
+	$(TEST_READELF) -r $< > $@
+
+MOSTLYCLEANFILES += arm_abs_global
+
+check_SCRIPTS += arm_branch_in_range.sh
+check_DATA += arm_bl_in_range.stdout arm_bl_out_of_range.stdout \
+	thumb_bl_in_range.stdout thumb_bl_out_of_range.stdout \
+	thumb2_bl_in_range.stdout thumb2_bl_out_of_range.stdout \
+	thumb_blx_in_range.stdout thumb_blx_out_of_range.stdout \
+	thumb2_blx_in_range.stdout thumb2_blx_out_of_range.stdout
+
+arm_bl_in_range.stdout: arm_bl_in_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+arm_bl_in_range: arm_bl_in_range.o ../ld-new
+	../ld-new -T $(srcdir)/arm_branch_range.t -o $@ $<
+
+arm_bl_in_range.o: arm_bl_in_range.s
+	$(TEST_AS) -o $@ $<
+
+arm_bl_out_of_range.stdout: arm_bl_out_of_range
+	$(TEST_OBJDUMP) -S $< > $@
+
+arm_bl_out_of_range: arm_bl_out_of_range.o ../ld-new
+	../ld-new -T $(srcdir)/arm_branch_range.t -o $@ $<
+
+arm_bl_out_of_range.o: arm_bl_out_of_range.s
+	$(TEST_AS) -o $@ $<
+
+thumb_bl_in_range.stdout: thumb_bl_in_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+thumb_bl_in_range: thumb_bl_in_range.o ../ld-new
+	../ld-new -T $(srcdir)/thumb_branch_range.t -o $@ $<
+
+thumb_bl_in_range.o: thumb_bl_in_range.s
+	$(TEST_AS) -o $@ -march=armv5te $<
+
+thumb_bl_out_of_range.stdout: thumb_bl_out_of_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+thumb_bl_out_of_range: thumb_bl_out_of_range.o ../ld-new
+	../ld-new -T $(srcdir)/thumb_branch_range.t -o $@ $<
+
+thumb_bl_out_of_range.o: thumb_bl_out_of_range.s
+	$(TEST_AS) -o $@ -march=armv5te $<
+
+thumb2_bl_in_range.stdout: thumb2_bl_in_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+thumb2_bl_in_range: thumb2_bl_in_range.o ../ld-new
+	../ld-new -T $(srcdir)/thumb2_branch_range.t -o $@ $<
+
+thumb2_bl_in_range.o: thumb_bl_in_range.s
+	$(TEST_AS) -o $@ -march=armv7-a $<
+
+thumb2_bl_out_of_range.stdout: thumb2_bl_out_of_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+thumb2_bl_out_of_range: thumb2_bl_out_of_range.o ../ld-new
+	../ld-new -T $(srcdir)/thumb2_branch_range.t -o $@ $<
+
+thumb2_bl_out_of_range.o: thumb_bl_out_of_range.s
+	$(TEST_AS) -o $@ -march=armv7-a $<
+
+thumb_blx_in_range.stdout: thumb_blx_in_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+thumb_blx_in_range: thumb_blx_in_range.o ../ld-new
+	../ld-new -T $(srcdir)/thumb_branch_range.t -o $@ $<
+
+thumb_blx_in_range.o: thumb_blx_in_range.s
+	$(TEST_AS) -o $@ -march=armv5te $<
+
+thumb_blx_out_of_range.stdout: thumb_blx_out_of_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+thumb_blx_out_of_range: thumb_blx_out_of_range.o ../ld-new
+	../ld-new -T $(srcdir)/thumb_branch_range.t -o $@ $<
+
+thumb_blx_out_of_range.o: thumb_blx_out_of_range.s
+	$(TEST_AS) -o $@ -march=armv5te $<
+
+thumb2_blx_in_range.stdout: thumb2_blx_in_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+thumb2_blx_in_range: thumb2_blx_in_range.o ../ld-new
+	../ld-new -T $(srcdir)/thumb2_branch_range.t -o $@ $<
+
+thumb2_blx_in_range.o: thumb_blx_in_range.s
+	$(TEST_AS) -o $@ -march=armv7-a $<
+
+thumb2_blx_out_of_range.stdout: thumb2_blx_out_of_range
+	$(TEST_OBJDUMP) -D $< > $@
+
+thumb2_blx_out_of_range: thumb2_blx_out_of_range.o ../ld-new
+	../ld-new -T $(srcdir)/thumb2_branch_range.t -o $@ $<
+
+thumb2_blx_out_of_range.o: thumb_blx_out_of_range.s
+	$(TEST_AS) -o $@ -march=armv7-a $<
+
+MOSTLYCLEANFILES += arm_bl_in_range arm_bl_out_of_range thumb_bl_in_range \
+	thumb_bl_out_of_range thumb2_bl_in_range thumb2_bl_out_of_range \
+	thumb_blx_in_range thumb_blx_out_of_range thumb2_blx_in_range \
+	thumb2_blx_out_of_range
+
+check_SCRIPTS += arm_fix_v4bx.sh
+check_DATA += arm_fix_v4bx.stdout arm_fix_v4bx_interworking.stdout \
+	arm_no_fix_v4bx.stdout
+
+arm_fix_v4bx.stdout: arm_fix_v4bx
+	$(TEST_OBJDUMP) -D -j.text $< > $@
+
+arm_fix_v4bx: arm_fix_v4bx.o ../ld-new
+	../ld-new --fix-v4bx -o $@ $<
+
+arm_fix_v4bx.o: arm_fix_v4bx.s
+	$(TEST_AS) -o $@ $<
+
+arm_fix_v4bx_interworking.stdout: arm_fix_v4bx_interworking
+	$(TEST_OBJDUMP) -D -j.text $< > $@
+
+arm_fix_v4bx_interworking: arm_fix_v4bx.o ../ld-new
+	../ld-new --fix-v4bx-interworking -o $@ $<
+
+arm_no_fix_v4bx.stdout: arm_no_fix_v4bx
+	$(TEST_OBJDUMP) -D -j.text $< > $@
+
+arm_no_fix_v4bx: arm_fix_v4bx.o ../ld-new
+	../ld-new -o $@ $<
+
+MOSTLYCLEANFILES += arm_fix_v4bx arm_fix_v4bx_interworking arm_no_fix_v4bx
+
+endif DEFAULT_TARGET_ARM

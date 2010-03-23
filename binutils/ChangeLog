@@ -1,3 +1,64 @@
+2010-03-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* readelf.c (decode_arm_unwind): Increase buf size to 9 byte.
+
+2010-03-17  Alan Modra  <amodra@gmail.com>
+
+	* readelf.c (dump_arm_unwind): Warning fix.
+
+2010-03-16  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* MAINTAINERS: Update my email address.  List Tristan Gingold
+	as the release branch maintainer.
+
+2010-03-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* readelf.c (get_ver_flags): Handle VER_FLG_INFO.
+
+2010-03-02  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* NEWS: Document .ARM.exidx / .ARM.extab support.
+
+	* dwarf.c (read_leb128): Make non-static.
+	* dwarf.h (read_leb128): Declare.
+	* readelf.c (REMOVE_ARCH_BITS): Define.
+	(find_section_by_address): New.
+	(read_uleb128): Move higher.  Use read_leb128 from dwarf.c.
+	(find_symbol_for_address): Handle the Thumb bit for ARM, by
+	using REMOVE_ARCH_BITS.
+	(struct arm_section, struct arm_unw_aux_info, arm_print_vma_and_name)
+	(arm_free_section, arm_section_get_word, decode_arm_unwind)
+	(dump_arm_unwind, arm_process_unwind): New.
+	(process_unwind): Handle ARM.
+
+2010-02-26  Jie Zhang  <jie@codesourcery.com>
+
+	* MAINTAINERS: Update my email address.
+
+2010-02-23  Peter Breitenlohner  <peb@mppmu.mpg.de>
+
+	PR binutils/11298
+	* doc/binutils.texi (windmc): Fix synopsis and description of
+	ASCII options.
+
+2010-02-19  Alan Modra  <amodra@gmail.com>
+
+	* readelf.c (get_group_flags): Return empty string when flags zero.
+	Add space in other returned values.
+	(process_section_groups): Adjust format string.
+
+2010-02-18  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* readelf.c (arm_attr_tag_Advanced_SIMD_arch): Add description of
+	newly permitted attribute values.
+	(arm_attr_tag_Virtualization_use): Likewise.
+	(arm_attr_tag_DIV_use): Add description of new attribute.
+	(arm_attr_tag_MPextension_use_legacy): Likewise.
+
+2010-02-15  Nick Clifton  <nickc@redhat.com>
+
+	* po/vi.po: Updated Vietnamese translation.
+
 2010-02-09  Michael Holzheu  <holzheu@de.ibm.com>
 
 	* readelf.c (get_note_type): Handle NT_S390_TIMER, NT_S390_TODCMP,

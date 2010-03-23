@@ -1,3 +1,60 @@
+2010-03-23  Joseph Myers  <joseph@codesourcery.com>
+
+	* dis-buf.c (buffer_read_memory): Give error for reading just
+	before the start of memory.
+
+2010-03-22  Sebastian Pop  <sebastian.pop@amd.com>
+	    Quentin Neill <quentin.neill@amd.com>
+
+	* i386-dis.c (OP_LWP_I): Removed.
+	(reg_table): Do not use OP_LWP_I, use Iq.
+	(OP_LWPCB_E): Remove use of names16.
+	(OP_LWP_E): Same.
+	* i386-opc.tbl: Removed 16bit LWP insns.  32bit LWP insns
+	should not set the Vex.length bit.
+	* i386-tbl.h: Regenerated.
+
+2010-02-25  Edmar Wienskoski  <edmar@freescale.com>
+
+	* ppc-dis.c (ppc_opts): Add PPC_OPCODE_E500MC for "e500mc64".
+
+2010-02-24  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/6773
+	* arm-dis.c (arm_opcodes): Replace <prefix>addsubx with
+	<prefix>asx.  Replace <prefix>subaddx with <prefix>sax.
+	(thumb32_opcodes): Likewise.
+
+2010-02-15  Nick Clifton  <nickc@redhat.com>
+
+	* po/vi.po: Updated Vietnamese translation.
+
+2010-02-12  Doug Evans  <dje@sebabeach.org>
+
+	* lm32-opinst.c: Regenerate.
+
+2010-02-11  Doug Evans  <dje@sebabeach.org>
+
+	* cgen-dis.in (print_normal): Delete CGEN_PRINT_NORMAL.
+	(print_address): Delete CGEN_PRINT_ADDRESS.
+	* fr30-dis.c, * frv-dis.c, * ip2k-dis.c, * iq2000-dis.c,
+	* lm32-dis.c, * m32c-dis.c, * m32r-desc.c, * m32r-desc.h,
+	* m32r-dis.c, * mep-dis.c, * mt-dis.c, * openrisc-dis.c,
+	* xc16x-dis.c, * xstormy16-dis.c: Regenerate.
+
+	* fr30-desc.c, * fr30-desc.h, * fr30-opc.c,
+	* frv-desc.c, * frv-desc.h, * frv-opc.c,
+	* ip2k-desc.c, * ip2k-desc.h, * ip2k-opc.c,
+	* iq2000-desc.c, * iq2000-desc.h, * iq2000-opc.c,
+	* lm32-desc.c, * lm32-desc.h, * lm32-opc.c, * lm32-opinst.c,
+	* m32c-desc.c, * m32c-desc.h, * m32c-opc.c,
+	* m32r-desc.c, * m32r-desc.h, * m32r-opc.c, * m32r-opinst.c,
+	* mep-desc.c, * mep-desc.h, * mep-opc.c,
+	* mt-desc.c, * mt-desc.h, * mt-opc.c,
+	* openrisc-desc.c, * openrisc-desc.h, * openrisc-opc.c,
+	* xc16x-desc.c, * xc16x-desc.h, * xc16x-opc.c,
+	* xstormy16-desc.c, * xstormy16-desc.h, * xstormy16-opc.c: Regenerate.
+
 2010-02-11  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* i386-dis.c: Update copyright.

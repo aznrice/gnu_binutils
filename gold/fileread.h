@@ -1,6 +1,6 @@
 // fileread.h -- read files for gold   -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -170,7 +170,7 @@ class File_read
   // interface, and it would be nice to have something more automatic.
   void
   clear_uncached_views()
-  { this->clear_views(false); }
+  { this->clear_views(CLEAR_VIEWS_ARCHIVE); }
 
   // A struct used to do a multiple read.
   struct Read_multiple_entry
@@ -214,20 +214,30 @@ class File_read
   get_mtime();
 
  private:
+  // Control for what views to clear.
+  enum Clear_views_mode
+  {
+    // Clear uncached views not used by an archive.
+    CLEAR_VIEWS_NORMAL,
+    // Clear all uncached views (including in an archive).
+    CLEAR_VIEWS_ARCHIVE,
+    // Clear all views (i.e., we're destroying the file).
+    CLEAR_VIEWS_ALL
+  };
+
   // This class may not be copied.
   File_read(const File_read&);
   File_read& operator=(const File_read&);
 
-  // Total bytes mapped into memory during the link.  This variable
-  // may not be accurate when running multi-threaded.
+  // Total bytes mapped into memory during the link if --stats.
   static unsigned long long total_mapped_bytes;
 
-  // Current number of bytes mapped into memory during the link.  This
-  // variable may not be accurate when running multi-threaded.
+  // Current number of bytes mapped into memory during the link if
+  // --stats.
   static unsigned long long current_mapped_bytes;
 
-  // High water mark of bytes mapped into memory during the link.
-  // This variable may not be accurate when running multi-threaded.
+  // High water mark of bytes mapped into memory during the link if
+  // --stats.
   static unsigned long long maximum_mapped_bytes;
 
   // A view into the file.
@@ -304,6 +314,12 @@ class File_read
     accessed() const
     { return this->accessed_; }
 
+    // Returns TRUE if this view contains permanent data -- e.g., data that
+    // was supplied by the owner of the File object.
+    bool
+    is_permanent_view() const
+    { return this->data_ownership_ == DATA_NOT_OWNED; }
+
    private:
     View(const View&);
     View& operator=(const View&);
@@ -367,7 +383,7 @@ class File_read
 
   // Clear the file views.
   void
-  clear_views(bool);
+  clear_views(Clear_views_mode);
 
   // The size of a file page for buffering data.
   static const off_t page_size = 8192;
@@ -465,9 +481,16 @@ class File_view
 class Input_file
 {
  public:
+  enum Format
+  {
+    FORMAT_NONE,
+    FORMAT_ELF,
+    FORMAT_BINARY
+  };
+
   Input_file(const Input_file_argument* input_argument)
     : input_argument_(input_argument), found_name_(), file_(),
-      is_in_sysroot_(false)
+      is_in_sysroot_(false), format_(FORMAT_NONE)
   { }
 
   // Create an input file with the contents already provided.  This is
@@ -537,6 +560,11 @@ class Input_file
   bool
   just_symbols() const;
 
+  // Return the format of the unconverted input file.
+  Format
+  format() const
+  { return this->format_; }
+
  private:
   Input_file(const Input_file&);
   Input_file& operator=(const Input_file&);
@@ -556,6 +584,8 @@ class Input_file
   File_read file_;
   // Whether we found the file in a directory in the system root.
   bool is_in_sysroot_;
+  // Format of unconverted input file.
+  Format format_;
 };
 
 } // end namespace gold

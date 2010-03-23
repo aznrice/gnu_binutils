@@ -1,3 +1,230 @@
+2010-03-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (lex_got): Use STRING_COMMA_LEN on gotrel.
+
+2010-03-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (i386_error): Replace oprand_size_mismatch
+	with operand_size_mismatch.
+	(operand_size_match): Updated.
+	(match_template): Likewise.
+
+2010-03-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (i386_error): New.
+	(_i386_insn): Replace err_msg with error.
+	(operand_size_match): Set error instead of err_msg on failure.
+	(operand_type_match): Likewise.
+	(operand_type_register_match): Likewise.
+	(VEX_check_operands): Likewise.
+	(match_template): Likewise.  Use error instead of err_msg with
+	as_bad.
+
+2010-03-19  Jie Zhang  <jie@codesourcery.com>
+
+	* config/tc-arm.c (make_mapping_symbol): Hanle the case
+	that two mapping symbols have the same value.
+
+2010-03-18  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* doc/c-arm.texi (.setfp): Correct example.
+
+2010-03-18  Wei Guozhi  <carrot@google.com>
+
+	PR gas/11323
+	* config/tc-arm.c (reloc_names): New relocation names.
+	(md_apply_fix): New case for BFD_RELOC_ARM_GOT_PREL.
+	(tc_gen_reloc): New case for BFD_RELOC_ARM_GOT_PREL.
+	* doc/c-arm.texi (ARM-Relocations): Document the new relocation.
+
+2010-03-15  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* dw2gencfi.c (output_cie): Consider emitting the S augmentation in all
+	cases, and not only for .eh_frame.
+
+	* dw2gencfi.c (output_cie): Make it more explicit which code paths
+	belong to .eh_frame only.
+
+2010-03-13  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	* config/tc-v850.c (v850_insert_operand): Handle out-of-range
+	assembler constants on 64-bit hosts.
+
+2010-03-10  Mike Frysinger  <michael.frysinger@analog.com>
+
+	* bfin-defs.h, bfin-lex.l, bfin-parse.y, tc-bfin.c, tc-bfin.h:
+	Strip trailing whitespace.
+
+2010-03-10  Mike Frysinger  <michael.frysinger@analog.com>
+
+	* doc/c-bfin.texi (-mcpu): Add bf504 and bf506.
+	* config/tc-bfin.c (bfin_cpu_type): Add BFIN_CPU_BF504 and
+	BFIN_CPU_BF506.
+	(bfin_cpus[]): Add 0.0 for bf504 and bf506.
+
+2010-03-10  Jie Zhang  <jie@codesourcery.com>
+
+	* doc/as.texinfo: Add Blackfin options.
+	* doc/c-bfin.texi: Document -mfdpic, -mno-fdpic and -mnopic.
+	* config/tc-bfin.c (md_show_usage): Show usage for all
+	Blackfin specific options.
+
+2010-03-09  Alan Modra  <amodra@gmail.com>
+
+	PR gas/11356
+	* listing.c (listing_newline): Correct backslash quote logic.
+
+2010-03-08  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config/tc-i386.h [TE_SOLARIS] (ELF_TARGET_FORMAT): Define.
+	(ELF_TARGET_FORMAT64): Define.
+
+2010-03-05  Paul Brook  <paul@codesourcery.com>
+
+	* config/tc-arm.c (arm_cpu_option_table): Add cortex-m4.
+
+2010-03-02  Andrew Stubbs  <ams@codesourcery.com>
+
+	* config/tc-sh.c (get_specific): Move overflow checking code to avoid
+	reading uninitialized data.
+
+2010-03-01  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-score7.c (s7_frag_check): Add ATTRIBUTE_UNUSED.
+
+2010-02-26  Doug Evans  <dje@sebabeach.org>
+
+	* configure.tgt: Fix mep cpu case.
+
+2010-02-26  Jie Zhang  <jie@codesourcery.com>
+
+	* config/tc-arm.c (do_t_strexd): Remove
+	operand[1] != operand[2] contraint.
+
+2010-02-26  Jie Zhang  <jie@codesourcery.com>
+
+	* config/tc-arm.c (neon_select_shape): No need to match
+	the remaining operands in the shape when one operand does
+	not match.
+
+2010-02-26  Jie Zhang  <jie@codesourcery.com>
+
+	* config/tc-arm.c (do_neon_ld_st_interleave): Reject bad
+	alignment.
+
+2010-02-25  Doug Evans  <dje@sebabeach.org>
+
+	* cgen.c: Whitespace fixes.
+	(weak_operand_overflow_check): Formatting fix.
+
+2010-02-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (match_template): Update error messages.
+
+2010-02-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (_i386_insn): Add err_msg.
+	(operand_size_match): Set err_msg on failure.
+	(operand_type_match): Likewise.
+	(operand_type_register_match): Likewise.
+	(VEX_check_operands): Likewise.
+	(match_template): Likewise.  Use i.err_msg with as_bad.
+
+2010-02-25  Wu Zhangjin <wuzhangjin@gmail.com>
+
+	* config/tc-mips.c (mips_fix_loongson2f, mips_fix_loongson2f_nop,
+	mips_fix_loongson2f_jump): New variables.
+	(md_longopts): Add New options -mfix-loongson2f-nop/jump,
+	-mno-fix-loongson2f-nop/jump.
+	(md_parse_option): Initialize variables via above options.
+	(options): New enums for the above options.
+	(md_begin): Initialize nop_insn from LOONGSON2F_NOP_INSN.
+	(fix_loongson2f, fix_loongson2f_nop, fix_loongson2f_jump):
+	New functions.
+	(append_insn): call fix_loongson2f().
+	(mips_handle_align): Replace the implicit nops.
+	* config/tc-mips.h (MAX_MEM_FOR_RS_ALIGN_CODE): Modified
+	for the new mips_handle_align().
+	* doc/c-mips.texi: Document the new options.
+
+2010-02-23  Daniel Gutson  <dgutson@codesourcery.com>
+
+	* config/tc-arm.c (do_rd_rm_rn): Added warning
+	for obsolete insns.
+
+2010-02-23  Andrew Zabolotny  <anpaza@mail.ru>
+
+	PR binutils/11297
+	* config/tc-avr.c (md_apply_fix): Handle BFD_RELOC_8.
+	(avr_cons_fix_new): Handle fixups of a single byte.
+
+2010-02-22  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	PR 9861
+	* config/tc-arm.c (CPU_DEFAULT): Do not define based upon build
+	compiler's predefines.
+
+2010-02-19  Alan Modra  <amodra@gmail.com>
+
+	* configure.tgt: Whiltespace.  Sort moxie entry.
+
+2010-02-18  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* config/tc-arm.c (arm_convert_symbolic_attribute): Add Tag_DIV_use.
+	* doc/c-arm.texi: Likewise.
+
+2010-02-12  Daniel Gutson <dgutson@codesourcery.com>
+
+	* config/tc-arm.c (asm_opcode): operands type
+	change.
+	(BAD_PC_ADDRESSING): New macro message.
+	(BAD_PC_WRITEBACK): Likewise.
+	(MIX_ARM_THUMB_OPERANDS): New macro.
+	(operand_parse_code): Added enum values.
+	(parse_operands): Added thumb/arm distinction,
+	plus new enum values handling.
+	(encode_arm_addr_mode_2): Validations enhanced.
+	(encode_arm_addr_mode_3): Likewise.
+	(do_rm_rd_rn): Likewise.
+	(encode_thumb32_addr_mode): Likewise.
+	(do_t_ldrex): Likewise.
+	(do_t_ldst): Likewise.
+	(do_t_strex): Likewise.
+	(md_assemble): Call parse_operands with
+	a new parameter.
+	(OPS_1): New macro.
+	(OPS_2): Likewise.
+	(OPS_3): Likewise.
+	(OPS_4): Likewise.
+	(OPS_5): Likewise.
+	(OPS_6): Likewise.
+	(insns): Updated insns operands.
+
+2010-02-12  Tristan Gingold  <gingold@adacore.com>
+	    Douglas B Rupp  <rupp@gnat.com>
+
+	* config/tc-ia64.c (enum reloc_func): Add FUNC_SLOTCOUNT_RELOC.
+	(DUMMY_RELOC_IA64_SLOTCOUNT): Added.
+	(pseudo_func): Add an entry for slotcount.
+	(md_begin): Initialize slotcount pseudo symbol.
+	(ia64_parse_name): Handle @slotcount parameter.
+	(ia64_gen_real_reloc_type): Handle slotcount.
+	(md_apply_fix): Ditto.
+	* doc/c-ia64.texi (IA-64-Relocs): Document @slotcount.
+
+2010-02-11  Sterling Augustine  <sterling@jaw.hq.tensilica.com>
+
+	* config/tc-xtensa.c (istack_init): Don't call memset.
+
+2010-02-11  Sterling Augustine  <sterling@tensilica.com>
+
+	* config/tc-xtensa.c (cache_literal_section): Handle prefixes as
+	well as suffixes.
+
+2010-02-11  Sterling Augustine  <sterling@tensilica.com>
+
+	* config/tc-xtensa.c (xtensa_find_unaligned_loops): Rewrite.
+
 2010-02-11  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* config/tc-i386.c (build_modrm_byte): Reformat.

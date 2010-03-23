@@ -452,7 +452,8 @@ The following relocations are supported:
 @code{TLSGD},
 @code{TLSLDM},
 @code{TLSLDO},
-@code{GOTTPOFF}
+@code{GOTTPOFF},
+@code{GOT_PREL}
 and
 @code{TPOFF}.
 
@@ -587,9 +588,10 @@ The @var{tag} is either an attribute number, or one of the following:
 @code{Tag_ABI_optimization_goals}, @code{Tag_ABI_FP_optimization_goals},
 @code{Tag_compatibility}, @code{Tag_CPU_unaligned_access},
 @code{Tag_VFP_HP_extension}, @code{Tag_ABI_FP_16bit_format},
+@code{Tag_MPextension_use}, @code{Tag_DIV_use},
 @code{Tag_nodefaults}, @code{Tag_also_compatible_with},
 @code{Tag_conformance}, @code{Tag_T2EE_use},
-@code{Tag_Virtualization_use}, @code{Tag_MPextension_use}
+@code{Tag_Virtualization_use}
 
 The @var{value} is either a @code{number}, @code{"string"}, or
 @code{number, "string"} depending on the tag.
@@ -768,7 +770,7 @@ or
 Make all unwinder annotations relative to a frame pointer.  Without this
 the unwinder will use offsets from the stack pointer.
 
-The syntax of this directive is the same as the @code{sub} or @code{mov}
+The syntax of this directive is the same as the @code{add} or @code{mov}
 instruction used to set the frame pointer.  @var{spreg} must be either
 @code{sp} or mentioned in a previous @code{.movsp} directive.
 
@@ -777,7 +779,7 @@ instruction used to set the frame pointer.  @var{spreg} must be either
 mov ip, sp
 @dots{}
 .setfp fp, ip, #4
-sub fp, ip, #4
+add fp, ip, #4
 @end smallexample
 
 @cindex @code{.secrel32} directive, ARM

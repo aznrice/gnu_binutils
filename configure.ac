@@ -1,6 +1,6 @@
 #   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-#   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation,
-#   Inc.
+#   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+#   Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 m4_include(config/acx.m4)
 m4_include(config/override.m4)
 m4_include(config/proginstall.m4)
+m4_include(config/elf.m4)
 m4_include([libtool.m4])
 m4_include([ltoptions.m4])
 m4_include([ltsugar.m4])
@@ -497,6 +498,7 @@ case "${target}" in
     case "${target}" in
       i*86-*-*) ;;
       alpha*-*-*) ;;
+      x86_64-*-*) ;;
       *)
 	noconfigdirs="$noconfigdirs ${libgcj}"
 	;;
@@ -937,6 +939,9 @@ case "${target}" in
     noconfigdirs="$noconfigdirs ${libgcj}"
     ;;
   sparc-*-solaris* | sparc64-*-solaris* | sparcv9-*-solaris*)
+    ;;
+  tic6x-*-*)
+    noconfigdirs="$noconfigdirs gdb sim ${libgcj}"
     ;;
   v810-*-*)
     noconfigdirs="$noconfigdirs bfd binutils gas gcc gdb ld target-libstdc++-v3 opcodes target-libgloss ${libgcj}"
@@ -1475,21 +1480,6 @@ AC_ARG_WITH(stage1-libs,
 [stage1_libs=$with_host_libstdcxx])
 AC_SUBST(stage1_libs)
 
-# Linker flags to use for stage2 and later builds.
-AC_ARG_WITH(boot-ldflags,
-[  --with-boot-ldflags=FLAGS Linker flags for stage2 and later],
-[if test "$withval" = "no" -o "$withval" = "yes"; then
-   poststage1_ldflags=
- else
-   poststage1_ldflags=$withval
- fi],
-[if test "$ENABLE_BUILD_WITH_CXX" = "yes"; then
-   poststage1_ldflags=-static-libstdc++
- else
-   poststage1_ldflags=
- fi])
-AC_SUBST(poststage1_ldflags)
-
 # Libraries to use for stage2 and later builds.  This defaults to the
 # argument passed to --with-host-libstdcxx.
 AC_ARG_WITH(boot-libs,
@@ -1501,6 +1491,23 @@ AC_ARG_WITH(boot-libs,
  fi],
 [poststage1_libs=$with_host_libstdcxx])
 AC_SUBST(poststage1_libs)
+
+# Linker flags to use for stage2 and later builds.
+AC_ARG_WITH(boot-ldflags,
+[  --with-boot-ldflags=FLAGS Linker flags for stage2 and later],
+[if test "$withval" = "no" -o "$withval" = "yes"; then
+   poststage1_ldflags=
+ else
+   poststage1_ldflags=$withval
+ fi],
+[poststage1_ldflags=
+ # With --enable-build-with-cxx, default to linking libstdc++ and
+ # libgcc statically.  But if the user explicitly specified the
+ # libraries to use, trust that they are doing what they want.
+ if test "$ENABLE_BUILD_WITH_CXX" = "yes" -a "$poststage1_libs" = ""; then
+   poststage1_ldflags="-static-libstdc++ -static-libgcc"
+ fi])
+AC_SUBST(poststage1_ldflags)
 
 # Check for PPL
 ppl_major_version=0
@@ -1605,9 +1612,9 @@ ENABLE_CLOOG_CHECK=yes)
 if test "x$with_cloog" != "xno" -a "${ENABLE_CLOOG_CHECK}" = "yes"; then
   saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $clooginc $gmpinc $pplinc"
-  AC_MSG_CHECKING([for correct version of CLooG])
+  AC_MSG_CHECKING([for version 0.15.5 (or later revision) of CLooG])
   AC_TRY_COMPILE([#include "cloog/cloog.h"],[
-  #if CLOOG_VERSION_MAJOR != 0 || CLOOG_VERSION_MINOR != 15
+  #if CLOOG_VERSION_MAJOR != 0 || CLOOG_VERSION_MINOR != 15 || CLOOG_VERSION_REVISION < 5
   choke me
   #endif
   ], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no]); clooglibs= ; clooginc= ])
@@ -1623,6 +1630,16 @@ AC_ARG_ENABLE(lto,
 [  --enable-lto            enable link time optimization support],
 enable_lto=$enableval,
 enable_lto=yes; default_enable_lto=yes)
+
+ACX_ELF_TARGET_IFELSE([],
+if test x"$default_enable_lto" = x"yes" ; then
+  enable_lto=no
+else
+  if test x"$enable_lto" = x"yes"; then
+    AC_MSG_ERROR([LTO support requires an ELF target.])
+  fi
+fi
+default_enable_lto=no)
 
 if test x"$enable_lto" = x"yes" ; then
   # Make sure that libelf.h and gelf.h are available.
@@ -2391,8 +2408,8 @@ case "${target}" in
     extra_arflags_for_target=" -X32_64"
     extra_nmflags_for_target=" -B -X32_64"
     ;;
-  *-*-darwin*)
-    # ranlib from Darwin requires the -c flag to look at common symbols.
+  *-*-darwin[[3-9]]*)
+    # ranlib before Darwin10 requires the -c flag to look at common symbols.
     extra_ranlibflags_for_target=" -c"
     ;;
   mips*-*-pe | sh*-*-pe | *arm-wince-pe)
@@ -3191,8 +3208,8 @@ NCN_STRICT_CHECK_TOOLS(DLLTOOL, dlltool)
 NCN_STRICT_CHECK_TOOLS(LD, ld)
 NCN_STRICT_CHECK_TOOLS(LIPO, lipo)
 NCN_STRICT_CHECK_TOOLS(NM, nm)
-NCN_STRICT_CHECK_TOOLS(RANLIB, ranlib, :)
-NCN_STRICT_CHECK_TOOLS(STRIP, strip, :)
+NCN_STRICT_CHECK_TOOLS(RANLIB, ranlib, true)
+NCN_STRICT_CHECK_TOOLS(STRIP, strip, true)
 NCN_STRICT_CHECK_TOOLS(WINDRES, windres)
 NCN_STRICT_CHECK_TOOLS(WINDMC, windmc)
 NCN_STRICT_CHECK_TOOLS(OBJCOPY, objcopy)
@@ -3228,7 +3245,7 @@ ACX_CHECK_INSTALLED_TARGET_TOOL(LD_FOR_TARGET, ld)
 ACX_CHECK_INSTALLED_TARGET_TOOL(LIPO_FOR_TARGET, lipo)
 ACX_CHECK_INSTALLED_TARGET_TOOL(NM_FOR_TARGET, nm)
 ACX_CHECK_INSTALLED_TARGET_TOOL(OBJDUMP_FOR_TARGET, objdump)
-ACX_CHECK_INSTALLED_TARGET_TOOL(RANLIB_FOR_TARGET, ranlib, :)
+ACX_CHECK_INSTALLED_TARGET_TOOL(RANLIB_FOR_TARGET, ranlib)
 ACX_CHECK_INSTALLED_TARGET_TOOL(STRIP_FOR_TARGET, strip)
 ACX_CHECK_INSTALLED_TARGET_TOOL(WINDRES_FOR_TARGET, windres)
 ACX_CHECK_INSTALLED_TARGET_TOOL(WINDMC_FOR_TARGET, windmc)

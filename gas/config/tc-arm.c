@@ -1,6 +1,6 @@
 /* tc-arm.c -- Assemble for the ARM
    Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008, 2009
+   2004, 2005, 2006, 2007, 2008, 2009, 2010
    Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 	Modified by David Taylor (dtaylor@armltd.co.uk)
@@ -97,13 +97,12 @@ enum arm_float_abi
 
 /* Types of processor to assemble for.	*/
 #ifndef CPU_DEFAULT
-#if defined __XSCALE__
-#define CPU_DEFAULT	ARM_ARCH_XSCALE
-#else
-#if defined __thumb__
-#define CPU_DEFAULT	ARM_ARCH_V5T
-#endif
-#endif
+/* The code that was here used to select a default CPU depending on compiler
+   pre-defines which were only present when doing native builds, thus 
+   changing gas' default behaviour depending upon the build host.
+
+   If you have a target that requires a default CPU option then the you
+   should define CPU_DEFAULT here.  */
 #endif
 
 #ifndef FPU_DEFAULT
@@ -559,7 +558,7 @@ struct asm_opcode
   const char * template_name;
 
   /* Parameters to instruction.	 */
-  unsigned char operands[8];
+  unsigned int operands[8];
 
   /* Conditional tag - see opcode_lookup.  */
   unsigned int tag : 4;
@@ -705,6 +704,10 @@ struct asm_opcode
 #define BAD_IT_COND	_("incorrect condition in IT block")
 #define BAD_IT_IT 	_("IT falling in the range of a previous IT block")
 #define MISSING_FNSTART	_("missing .fnstart before unwinding directive")
+#define BAD_PC_ADDRESSING \
+	_("cannot use register index with PC-relative addressing")
+#define BAD_PC_WRITEBACK \
+	_("cannot use writeback with PC-relative addressing")
 
 static struct hash_control * arm_ops_hsh;
 static struct hash_control * arm_cond_hsh;
@@ -2497,7 +2500,15 @@ make_mapping_symbol (enum mstate state, valueT value, fragS *frag)
       frag->tc_frag_data.first_map = symbolP;
     }
   if (frag->tc_frag_data.last_map != NULL)
-    know (S_GET_VALUE (frag->tc_frag_data.last_map) < S_GET_VALUE (symbolP));
+    {
+      know (S_GET_VALUE (frag->tc_frag_data.last_map) <= S_GET_VALUE (symbolP));
+      /* If .fill or other data filling directive generates zero sized data,
+	 the mapping symbol for the following code will have the same value
+	 as the one generated for the data filling directive.  In this case,
+	 we replace the old symbol with the new one at the same address.  */
+      if (S_GET_VALUE (frag->tc_frag_data.last_map) == S_GET_VALUE (symbolP))
+	symbol_remove (frag->tc_frag_data.last_map, &symbol_rootP, &symbol_lastP);
+    }
   frag->tc_frag_data.last_map = symbolP;
 }
 
@@ -5729,6 +5740,11 @@ parse_neon_mov (char **str, int *which_operand)
   return FAIL;
 }
 
+/* Use this macro when the operand constraints are different
+   for ARM and THUMB (e.g. ldrd).  */
+#define MIX_ARM_THUMB_OPERANDS(arm_operand, thumb_operand) \
+	((arm_operand) | ((thumb_operand) << 16))
+
 /* Matcher codes for parse_operands.  */
 enum operand_parse_code
 {
@@ -5736,6 +5752,7 @@ enum operand_parse_code
 
   OP_RR,	/* ARM register */
   OP_RRnpc,	/* ARM register, not r15 */
+  OP_RRnpcsp,	/* ARM register, neither r15 nor r13 (a.k.a. 'BadReg') */
   OP_RRnpcb,	/* ARM register, not r15, in square brackets */
   OP_RRw,	/* ARM register, not r15, optional trailing ! */
   OP_RCP,	/* Coprocessor number */
@@ -5835,6 +5852,7 @@ enum operand_parse_code
 
   OP_oRR,	 /* ARM register */
   OP_oRRnpc,	 /* ARM register, not the PC */
+  OP_oRRnpcsp,	 /* ARM register, neither the PC nor the SP (a.k.a. BadReg) */
   OP_oRRw,	 /* ARM register, not r15, optional trailing ! */
   OP_oRND,       /* Optional Neon double precision register */
   OP_oRNQ,       /* Optional Neon quad precision register */
@@ -5846,6 +5864,11 @@ enum operand_parse_code
   OP_oROR,	 /* ROR 0/8/16/24 */
   OP_oBARRIER,	 /* Option argument for a barrier instruction.  */
 
+  /* Some pre-defined mixed (ARM/THUMB) operands.  */
+  OP_RR_npcsp		= MIX_ARM_THUMB_OPERANDS (OP_RR, OP_RRnpcsp),
+  OP_RRnpc_npcsp	= MIX_ARM_THUMB_OPERANDS (OP_RRnpc, OP_RRnpcsp),
+  OP_oRRnpc_npcsp	= MIX_ARM_THUMB_OPERANDS (OP_oRRnpc, OP_oRRnpcsp),
+
   OP_FIRST_OPTIONAL = OP_oI7b
 };
 
@@ -5854,14 +5877,15 @@ enum operand_parse_code
    structure.  Returns SUCCESS or FAIL depending on whether the
    specified grammar matched.  */
 static int
-parse_operands (char *str, const unsigned char *pattern)
+parse_operands (char *str, const unsigned int *pattern, bfd_boolean thumb)
 {
-  unsigned const char *upat = pattern;
+  unsigned const int *upat = pattern;
   char *backtrack_pos = 0;
   const char *backtrack_error = 0;
   int i, val, backtrack_index = 0;
   enum arm_reg_type rtype;
   parse_operand_result result;
+  unsigned int op_parse_code;
 
 #define po_char_or_fail(chr)			\
   do						\
@@ -5952,7 +5976,12 @@ parse_operands (char *str, const unsigned char *pattern)
 
   for (i = 0; upat[i] != OP_stop; i++)
     {
-      if (upat[i] >= OP_FIRST_OPTIONAL)
+      op_parse_code = upat[i];
+      if (op_parse_code >= 1<<16)
+	op_parse_code = thumb ? (op_parse_code >> 16)
+				: (op_parse_code & ((1<<16)-1));
+
+      if (op_parse_code >= OP_FIRST_OPTIONAL)
 	{
 	  /* Remember where we are in case we need to backtrack.  */
 	  gas_assert (!backtrack_pos);
@@ -5964,11 +5993,13 @@ parse_operands (char *str, const unsigned char *pattern)
       if (i > 0 && (i > 1 || inst.operands[0].present))
 	po_char_or_fail (',');
 
-      switch (upat[i])
+      switch (op_parse_code)
 	{
 	  /* Registers */
 	case OP_oRRnpc:
+	case OP_oRRnpcsp:
 	case OP_RRnpc:
+	case OP_RRnpcsp:
 	case OP_oRR:
 	case OP_RR:    po_reg_or_fail (REG_TYPE_RN);	  break;
 	case OP_RCP:   po_reg_or_fail (REG_TYPE_CP);	  break;
@@ -6371,13 +6402,13 @@ parse_operands (char *str, const unsigned char *pattern)
 	  break;
 
 	default:
-	  as_fatal (_("unhandled operand code %d"), upat[i]);
+	  as_fatal (_("unhandled operand code %d"), op_parse_code);
 	}
 
       /* Various value-based sanity checks and shared operations.  We
 	 do not signal immediate failures for the register constraints;
 	 this allows a syntax error to take precedence.	 */
-      switch (upat[i])
+      switch (op_parse_code)
 	{
 	case OP_oRRnpc:
 	case OP_RRnpc:
@@ -6387,6 +6418,17 @@ parse_operands (char *str, const unsigned char *pattern)
 	case OP_RRnpc_I0:
 	  if (inst.operands[i].isreg && inst.operands[i].reg == REG_PC)
 	    inst.error = BAD_PC;
+	  break;
+
+	case OP_oRRnpcsp:
+	case OP_RRnpcsp:
+	  if (inst.operands[i].isreg)
+	    {
+	      if (inst.operands[i].reg == REG_PC)
+		inst.error = BAD_PC;
+	      else if (inst.operands[i].reg == REG_SP)
+		inst.error = BAD_SP;
+	    }
 	  break;
 
 	case OP_CPSF:
@@ -6674,10 +6716,15 @@ encode_arm_addr_mode_common (int i, bfd_boolean is_t)
 static void
 encode_arm_addr_mode_2 (int i, bfd_boolean is_t)
 {
+  const bfd_boolean is_pc = (inst.operands[i].reg == REG_PC);
+
   encode_arm_addr_mode_common (i, is_t);
 
   if (inst.operands[i].immisreg)
     {
+      constraint ((inst.operands[i].imm == REG_PC
+		   || (is_pc && inst.operands[i].writeback)),
+		  BAD_PC_ADDRESSING);
       inst.instruction |= INST_IMMEDIATE;  /* yes, this is backwards */
       inst.instruction |= inst.operands[i].imm;
       if (!inst.operands[i].negative)
@@ -6695,6 +6742,16 @@ encode_arm_addr_mode_2 (int i, bfd_boolean is_t)
     }
   else /* immediate offset in inst.reloc */
     {
+      if (is_pc && !inst.reloc.pc_rel)
+	{
+	  const bfd_boolean is_load = ((inst.instruction & LOAD_BIT) != 0);
+	  /* BAD_PC_ADDRESSING Condition =
+	       is_load => is_t
+	     which becomes !is_load || is_t.  */
+	  constraint ((!is_load || is_t),
+		      BAD_PC_ADDRESSING);
+	}
+
       if (inst.reloc.type == BFD_RELOC_UNUSED)
 	inst.reloc.type = BFD_RELOC_ARM_OFFSET_IMM;
     }
@@ -6718,12 +6775,18 @@ encode_arm_addr_mode_3 (int i, bfd_boolean is_t)
 
   if (inst.operands[i].immisreg)
     {
+      constraint ((inst.operands[i].imm == REG_PC
+		   || inst.operands[i].reg == REG_PC),
+		  BAD_PC_ADDRESSING);
       inst.instruction |= inst.operands[i].imm;
       if (!inst.operands[i].negative)
 	inst.instruction |= INDEX_UP;
     }
   else /* immediate offset in inst.reloc */
     {
+      constraint ((inst.operands[i].reg == REG_PC && !inst.reloc.pc_rel
+		   && inst.operands[i].writeback),
+		  BAD_PC_WRITEBACK);
       inst.instruction |= HWOFFSET_IMM;
       if (inst.reloc.type == BFD_RELOC_UNUSED)
 	inst.reloc.type = BFD_RELOC_ARM_OFFSET_IMM8;
@@ -6915,8 +6978,16 @@ do_rd_rm_rn (void)
   unsigned Rn = inst.operands[2].reg;
   /* Enforce restrictions on SWP instruction.  */
   if ((inst.instruction & 0x0fbfffff) == 0x01000090)
-    constraint (Rn == inst.operands[0].reg || Rn == inst.operands[1].reg,
-		_("Rn must not overlap other operands"));
+    {
+      constraint (Rn == inst.operands[0].reg || Rn == inst.operands[1].reg,
+		  _("Rn must not overlap other operands"));
+
+      /* SWP{b} is deprecated for ARMv6* and ARMv7.  */
+      if (warn_on_deprecated
+	  && ARM_CPU_HAS_FEATURE (selected_cpu, arm_ext_v6))
+	as_warn (_("swp{b} use is deprecated for this architecture"));
+
+    }
   inst.instruction |= inst.operands[0].reg << 12;
   inst.instruction |= inst.operands[1].reg;
   inst.instruction |= Rn << 16;
@@ -6933,6 +7004,11 @@ do_rd_rn_rm (void)
 static void
 do_rm_rd_rn (void)
 {
+  constraint ((inst.operands[2].reg == REG_PC), BAD_PC);
+  constraint (((inst.reloc.exp.X_op != O_constant
+		&& inst.reloc.exp.X_op != O_illegal)
+	       || inst.reloc.exp.X_add_number != 0),
+	      BAD_ADDR_MODE);
   inst.instruction |= inst.operands[0].reg;
   inst.instruction |= inst.operands[1].reg << 12;
   inst.instruction |= inst.operands[2].reg << 16;
@@ -7422,6 +7498,8 @@ do_ldrex (void)
   constraint (inst.reloc.exp.X_op != O_constant
 	      || inst.reloc.exp.X_add_number != 0,
 	      _("offset must be zero in ARM encoding"));
+
+  constraint ((inst.operands[1].reg == REG_PC), BAD_PC);
 
   inst.instruction |= inst.operands[0].reg << 12;
   inst.instruction |= inst.operands[1].reg << 16;
@@ -8672,12 +8750,13 @@ encode_thumb32_shifted_operand (int i)
    Thumb32 format load or store instruction.  Reject forms that cannot
    be used with such instructions.  If is_t is true, reject forms that
    cannot be used with a T instruction; if is_d is true, reject forms
-   that cannot be used with a D instruction.  */
+   that cannot be used with a D instruction.  If it is a store insn,
+   reject PC in Rn.  */
 
 static void
 encode_thumb32_addr_mode (int i, bfd_boolean is_t, bfd_boolean is_d)
 {
-  bfd_boolean is_pc = (inst.operands[i].reg == REG_PC);
+  const bfd_boolean is_pc = (inst.operands[i].reg == REG_PC);
 
   constraint (!inst.operands[i].isreg,
 	      _("Instruction does not support =N addresses"));
@@ -8685,7 +8764,7 @@ encode_thumb32_addr_mode (int i, bfd_boolean is_t, bfd_boolean is_d)
   inst.instruction |= inst.operands[i].reg << 16;
   if (inst.operands[i].immisreg)
     {
-      constraint (is_pc, _("cannot use register index with PC-relative addressing"));
+      constraint (is_pc, BAD_PC_ADDRESSING);
       constraint (is_t || is_d, _("cannot use register index with this instruction"));
       constraint (inst.operands[i].negative,
 		  _("Thumb does not support negative register indexing"));
@@ -8710,10 +8789,11 @@ encode_thumb32_addr_mode (int i, bfd_boolean is_t, bfd_boolean is_d)
     }
   else if (inst.operands[i].preind)
     {
-      constraint (is_pc && inst.operands[i].writeback,
-		  _("cannot use writeback with PC-relative addressing"));
+      constraint (is_pc && inst.operands[i].writeback, BAD_PC_WRITEBACK);
       constraint (is_t && inst.operands[i].writeback,
 		  _("cannot use writeback with this instruction"));
+      constraint (is_pc && ((inst.instruction & THUMB2_LOAD_BIT) == 0)
+		  && !inst.reloc.pc_rel, BAD_PC_ADDRESSING);
 
       if (is_d)
 	{
@@ -9830,6 +9910,8 @@ do_t_ldrex (void)
 	      || inst.operands[1].negative,
 	      BAD_ADDR_MODE);
 
+  constraint ((inst.operands[1].reg == REG_PC), BAD_PC);
+
   inst.instruction |= inst.operands[0].reg << 12;
   inst.instruction |= inst.operands[1].reg << 16;
   inst.reloc.type = BFD_RELOC_ARM_T32_OFFSET_U8;
@@ -9889,6 +9971,8 @@ do_t_ldst (void)
 	      /* [Rn, Rik] */
 	      if (Rn <= 7 && inst.operands[1].imm <= 7)
 		goto op16;
+	      else if (opcode != T_MNEM_ldr && opcode != T_MNEM_str)
+		reject_bad_reg (inst.operands[1].imm);
 	    }
 	  else if ((Rn <= 7 && opcode != T_MNEM_ldrsh
 		    && opcode != T_MNEM_ldrsb)
@@ -9928,6 +10012,12 @@ do_t_ldst (void)
 	    }
 	}
       /* Definitely a 32-bit variant.  */
+
+      /* Do some validations regarding addressing modes.  */
+      if (inst.operands[1].immisreg && opcode != T_MNEM_ldr
+	  && opcode != T_MNEM_str)
+	reject_bad_reg (inst.operands[1].imm);
+
       inst.instruction = THUMB_OP32 (opcode);
       inst.instruction |= inst.operands[0].reg << 12;
       encode_thumb32_addr_mode (1, /*is_t=*/FALSE, /*is_d=*/FALSE);
@@ -11177,6 +11267,8 @@ do_t_strex (void)
 	      || inst.operands[2].negative,
 	      BAD_ADDR_MODE);
 
+  constraint (inst.operands[2].reg == REG_PC, BAD_PC);
+
   inst.instruction |= inst.operands[0].reg << 8;
   inst.instruction |= inst.operands[1].reg << 12;
   inst.instruction |= inst.operands[2].reg << 16;
@@ -11191,8 +11283,7 @@ do_t_strexd (void)
 
   constraint (inst.operands[0].reg == inst.operands[1].reg
 	      || inst.operands[0].reg == inst.operands[2].reg
-	      || inst.operands[0].reg == inst.operands[3].reg
-	      || inst.operands[1].reg == inst.operands[2].reg,
+	      || inst.operands[0].reg == inst.operands[3].reg,
 	      BAD_OVERLAP);
 
   inst.instruction |= inst.operands[0].reg;
@@ -11706,6 +11797,8 @@ neon_select_shape (enum neon_shape shape, ...)
             case SE_L:
               break;
             }
+	  if (!matches)
+	    break;
         }
       if (matches)
         break;
@@ -14578,12 +14671,13 @@ do_neon_ld_st_interleave (void)
       {
       case 64: alignbits = 1; break;
       case 128:
-        if (NEON_REGLIST_LENGTH (inst.operands[0].imm) == 3)
+        if (NEON_REGLIST_LENGTH (inst.operands[0].imm) != 2
+	    && NEON_REGLIST_LENGTH (inst.operands[0].imm) != 4)
           goto bad_alignment;
         alignbits = 2;
         break;
       case 256:
-        if (NEON_REGLIST_LENGTH (inst.operands[0].imm) == 3)
+        if (NEON_REGLIST_LENGTH (inst.operands[0].imm) != 4)
           goto bad_alignment;
         alignbits = 3;
         break;
@@ -15653,7 +15747,7 @@ md_assemble (char *str)
 
       inst.instruction = opcode->tvalue;
 
-      if (!parse_operands (p, opcode->operands))
+      if (!parse_operands (p, opcode->operands, /*thumb=*/TRUE))
         {
           /* Prepare the it_insn_type for those encodings that don't set
              it.  */
@@ -15726,7 +15820,7 @@ md_assemble (char *str)
       else
 	inst.instruction |= inst.cond << 28;
       inst.size = INSN_SIZE;
-      if (!parse_operands (p, opcode->operands))
+      if (!parse_operands (p, opcode->operands, /*thumb=*/FALSE))
         {
           it_fsm_pre_encode ();
           opcode->aencode ();
@@ -16105,7 +16199,8 @@ static struct reloc_entry reloc_names[] =
   { "tlsldm",  BFD_RELOC_ARM_TLS_LDM32}, { "TLSLDM",  BFD_RELOC_ARM_TLS_LDM32},
   { "tlsldo",  BFD_RELOC_ARM_TLS_LDO32}, { "TLSLDO",  BFD_RELOC_ARM_TLS_LDO32},
   { "gottpoff",BFD_RELOC_ARM_TLS_IE32},  { "GOTTPOFF",BFD_RELOC_ARM_TLS_IE32},
-  { "tpoff",   BFD_RELOC_ARM_TLS_LE32},  { "TPOFF",   BFD_RELOC_ARM_TLS_LE32}
+  { "tpoff",   BFD_RELOC_ARM_TLS_LE32},  { "TPOFF",   BFD_RELOC_ARM_TLS_LE32},
+  { "got_prel", BFD_RELOC_ARM_GOT_PREL}, { "GOT_PREL", BFD_RELOC_ARM_GOT_PREL}
 };
 #endif
 
@@ -16149,6 +16244,18 @@ static struct asm_barrier_opt barrier_opt_names[] =
 #define OPS4(a,b,c,d)	  { OP_##a,OP_##b,OP_##c,OP_##d, }
 #define OPS5(a,b,c,d,e)	  { OP_##a,OP_##b,OP_##c,OP_##d,OP_##e, }
 #define OPS6(a,b,c,d,e,f) { OP_##a,OP_##b,OP_##c,OP_##d,OP_##e,OP_##f, }
+
+/* These macros are similar to the OPSn, but do not prepend the OP_ prefix.
+   This is useful when mixing operands for ARM and THUMB, i.e. using the
+   MIX_ARM_THUMB_OPERANDS macro.
+   In order to use these macros, prefix the number of operands with _
+   e.g. _3.  */
+#define OPS_1(a)	   { a, }
+#define OPS_2(a,b)	   { a,b, }
+#define OPS_3(a,b,c)	   { a,b,c, }
+#define OPS_4(a,b,c,d)	   { a,b,c,d, }
+#define OPS_5(a,b,c,d,e)   { a,b,c,d,e, }
+#define OPS_6(a,b,c,d,e,f) { a,b,c,d,e,f, }
 
 /* These macros abstract out the exact format of the mnemonic table and
    save some repeated characters.  */
@@ -16370,9 +16477,11 @@ static const struct asm_opcode insns[] =
  tC3("mvns",	1f00000, _mvns,	   2, (RR, SH),      mov,  t_mvn_tst),
 
  tCE("ldr",	4100000, _ldr,	   2, (RR, ADDRGLDR),ldst, t_ldst),
- tC3("ldrb",	4500000, _ldrb,	   2, (RR, ADDRGLDR),ldst, t_ldst),
- tCE("str",	4000000, _str,	   2, (RR, ADDRGLDR),ldst, t_ldst),
- tC3("strb",	4400000, _strb,	   2, (RR, ADDRGLDR),ldst, t_ldst),
+ tC3("ldrb",	4500000, _ldrb,	   2, (RRnpc_npcsp, ADDRGLDR),ldst, t_ldst),
+ tCE("str",	4000000, _str,	   _2, (MIX_ARM_THUMB_OPERANDS (OP_RR,
+								OP_RRnpc),
+					OP_ADDRGLDR),ldst, t_ldst),
+ tC3("strb",	4400000, _strb,	   2, (RRnpc_npcsp, ADDRGLDR),ldst, t_ldst),
 
  tCE("stm",	8800000, _stmia,    2, (RRw, REGLST), ldmstm, t_ldmstm),
  tC3("stmia",	8800000, _stmia,    2, (RRw, REGLST), ldmstm, t_ldmstm),
@@ -16422,10 +16531,10 @@ static const struct asm_opcode insns[] =
  TC3w("teqs",	1300000, ea900f00, 2, (RR, SH),      cmp,  t_mvn_tst),
   CL("teqp",	130f000,           2, (RR, SH),      cmp),
 
- TC3("ldrt",	4300000, f8500e00, 2, (RR, ADDR),    ldstt, t_ldstt),
- TC3("ldrbt",	4700000, f8100e00, 2, (RR, ADDR),    ldstt, t_ldstt),
- TC3("strt",	4200000, f8400e00, 2, (RR, ADDR),    ldstt, t_ldstt),
- TC3("strbt",	4600000, f8000e00, 2, (RR, ADDR),    ldstt, t_ldstt),
+ TC3("ldrt",	4300000, f8500e00, 2, (RRnpc_npcsp, ADDR),ldstt, t_ldstt),
+ TC3("ldrbt",	4700000, f8100e00, 2, (RRnpc_npcsp, ADDR),ldstt, t_ldstt),
+ TC3("strt",	4200000, f8400e00, 2, (RR_npcsp, ADDR),   ldstt, t_ldstt),
+ TC3("strbt",	4600000, f8000e00, 2, (RRnpc_npcsp, ADDR),ldstt, t_ldstt),
 
  TC3("stmdb",	9000000, e9000000, 2, (RRw, REGLST), ldmstm, t_ldmstm),
  TC3("stmfd",     9000000, e9000000, 2, (RRw, REGLST), ldmstm, t_ldmstm),
@@ -16502,12 +16611,12 @@ static const struct asm_opcode insns[] =
 #undef  THUMB_VARIANT
 #define THUMB_VARIANT  & arm_ext_v4t
 
- tC3("ldrh",	01000b0, _ldrh,     2, (RR, ADDRGLDRS), ldstv4, t_ldst),
- tC3("strh",	00000b0, _strh,     2, (RR, ADDRGLDRS), ldstv4, t_ldst),
- tC3("ldrsh",	01000f0, _ldrsh,    2, (RR, ADDRGLDRS), ldstv4, t_ldst),
- tC3("ldrsb",	01000d0, _ldrsb,    2, (RR, ADDRGLDRS), ldstv4, t_ldst),
- tCM("ld","sh",	01000f0, _ldrsh,    2, (RR, ADDRGLDRS), ldstv4, t_ldst),
- tCM("ld","sb",	01000d0, _ldrsb,    2, (RR, ADDRGLDRS), ldstv4, t_ldst),
+ tC3("ldrh",	01000b0, _ldrh,     2, (RRnpc_npcsp, ADDRGLDRS), ldstv4, t_ldst),
+ tC3("strh",	00000b0, _strh,     2, (RRnpc_npcsp, ADDRGLDRS), ldstv4, t_ldst),
+ tC3("ldrsh",	01000f0, _ldrsh,    2, (RRnpc_npcsp, ADDRGLDRS), ldstv4, t_ldst),
+ tC3("ldrsb",	01000d0, _ldrsb,    2, (RRnpc_npcsp, ADDRGLDRS), ldstv4, t_ldst),
+ tCM("ld","sh",	01000f0, _ldrsh,    2, (RRnpc_npcsp, ADDRGLDRS), ldstv4, t_ldst),
+ tCM("ld","sb",	01000d0, _ldrsb,    2, (RRnpc_npcsp, ADDRGLDRS), ldstv4, t_ldst),
 
 #undef  ARM_VARIANT
 #define ARM_VARIANT  & arm_ext_v4t_5
@@ -16576,8 +16685,10 @@ static const struct asm_opcode insns[] =
 #define THUMB_VARIANT &arm_ext_v6t2
 
  TUF("pld",	450f000, f810f000, 1, (ADDR),		     pld,  t_pld),
- TC3("ldrd",	00000d0, e8500000, 3, (RRnpc, oRRnpc, ADDRGLDRS), ldrd, t_ldstd),
- TC3("strd",	00000f0, e8400000, 3, (RRnpc, oRRnpc, ADDRGLDRS), ldrd, t_ldstd),
+ TC3("ldrd",	00000d0, e8500000, 3, (RRnpc_npcsp, oRRnpc_npcsp, ADDRGLDRS),
+     ldrd, t_ldstd),
+ TC3("strd",	00000f0, e8400000, 3, (RRnpc_npcsp, oRRnpc_npcsp,
+				       ADDRGLDRS), ldrd, t_ldstd),
 
  TCE("mcrr",	c400000, ec400000, 5, (RCP, I15b, RRnpc, RRnpc, RCN), co_reg2c, co_reg2c),
  TCE("mrrc",	c500000, ec500000, 5, (RCP, I15b, RRnpc, RRnpc, RCN), co_reg2c, co_reg2c),
@@ -16606,8 +16717,9 @@ static const struct asm_opcode insns[] =
 #undef  THUMB_VARIANT
 #define THUMB_VARIANT  & arm_ext_v6t2
 
- TCE("ldrex",	1900f9f, e8500f00, 2, (RRnpc, ADDR),		  ldrex, t_ldrex),
- TCE("strex",	1800f90, e8400000, 3, (RRnpc, RRnpc, ADDR),	   strex,  t_strex),
+ TCE("ldrex",	1900f9f, e8500f00, 2, (RRnpc_npcsp, ADDR),	  ldrex, t_ldrex),
+ TCE("strex",	1800f90, e8400000, 3, (RRnpc_npcsp, RRnpc_npcsp, ADDR),
+				      strex,  t_strex),
  TUF("mcrr2",	c400000, fc400000, 5, (RCP, I15b, RRnpc, RRnpc, RCN), co_reg2c, co_reg2c),
  TUF("mrrc2",	c500000, fc500000, 5, (RCP, I15b, RRnpc, RRnpc, RCN), co_reg2c, co_reg2c),
 
@@ -16741,17 +16853,21 @@ static const struct asm_opcode insns[] =
 
 #undef  THUMB_VARIANT
 #define THUMB_VARIANT  & arm_ext_v6_notm
-
- TCE("ldrexd",	1b00f9f, e8d0007f, 3, (RRnpc, oRRnpc, RRnpcb),        ldrexd, t_ldrexd),
- TCE("strexd",	1a00f90, e8c00070, 4, (RRnpc, RRnpc, oRRnpc, RRnpcb), strexd, t_strexd),
+ TCE("ldrexd",	1b00f9f, e8d0007f, 3, (RRnpc_npcsp, oRRnpc_npcsp, RRnpcb),
+				      ldrexd, t_ldrexd),
+ TCE("strexd",	1a00f90, e8c00070, 4, (RRnpc_npcsp, RRnpc_npcsp, oRRnpc_npcsp,
+				       RRnpcb), strexd, t_strexd),
 
 #undef  THUMB_VARIANT
 #define THUMB_VARIANT  & arm_ext_v6t2
-
- TCE("ldrexb",	1d00f9f, e8d00f4f, 2, (RRnpc, RRnpcb),	              rd_rn,  rd_rn),
- TCE("ldrexh",	1f00f9f, e8d00f5f, 2, (RRnpc, RRnpcb),	              rd_rn,  rd_rn),
- TCE("strexb",	1c00f90, e8c00f40, 3, (RRnpc, RRnpc, ADDR),           strex,  rm_rd_rn),
- TCE("strexh",	1e00f90, e8c00f50, 3, (RRnpc, RRnpc, ADDR),           strex,  rm_rd_rn),
+ TCE("ldrexb",	1d00f9f, e8d00f4f, 2, (RRnpc_npcsp,RRnpcb),
+     rd_rn,  rd_rn),
+ TCE("ldrexh",	1f00f9f, e8d00f5f, 2, (RRnpc_npcsp, RRnpcb),
+     rd_rn,  rd_rn),
+ TCE("strexb",	1c00f90, e8c00f40, 3, (RRnpc_npcsp, RRnpc_npcsp, ADDR),
+     strex, rm_rd_rn),
+ TCE("strexh",	1e00f90, e8c00f50, 3, (RRnpc_npcsp, RRnpc_npcsp, ADDR),
+     strex, rm_rd_rn), 
  TUF("clrex",	57ff01f, f3bf8f2f, 0, (),			      noargs, noargs),
 
 #undef  ARM_VARIANT
@@ -16772,10 +16888,10 @@ static const struct asm_opcode insns[] =
  TCE("movt",	3400000, f2c00000, 2, (RRnpc, HALF),		    mov16, t_mov16),
  TCE("rbit",	6ff0f30, fa90f0a0, 2, (RR, RR),			    rd_rm, t_rbit),
 
- TC3("ldrht",	03000b0, f8300e00, 2, (RR, ADDR), ldsttv4, t_ldstt),
- TC3("ldrsht",	03000f0, f9300e00, 2, (RR, ADDR), ldsttv4, t_ldstt),
- TC3("ldrsbt",	03000d0, f9100e00, 2, (RR, ADDR), ldsttv4, t_ldstt),
- TC3("strht",	02000b0, f8200e00, 2, (RR, ADDR), ldsttv4, t_ldstt),
+ TC3("ldrht",	03000b0, f8300e00, 2, (RRnpc_npcsp, ADDR), ldsttv4, t_ldstt),
+ TC3("ldrsht",	03000f0, f9300e00, 2, (RRnpc_npcsp, ADDR), ldsttv4, t_ldstt),
+ TC3("ldrsbt",	03000d0, f9100e00, 2, (RRnpc_npcsp, ADDR), ldsttv4, t_ldstt),
+ TC3("strht",	02000b0, f8200e00, 2, (RRnpc_npcsp, ADDR), ldsttv4, t_ldstt),
 
   UT("cbnz",      b900,    2, (RR, EXP), t_cbz),
   UT("cbz",       b100,    2, (RR, EXP), t_cbz),
@@ -20370,7 +20486,12 @@ md_apply_fix (fixS *	fixP,
       if (fixP->fx_done || !seg->use_rela_p)
 	md_number_to_chars (buf, 0, 4);
       break;
-      
+
+    case BFD_RELOC_ARM_GOT_PREL:
+      if (fixP->fx_done || !seg->use_rela_p)
+        md_number_to_chars (buf, value, 4);
+      break;
+
     case BFD_RELOC_ARM_TARGET2:
       /* TARGET2 is not partial-inplace, so we need to write the
          addend here for REL targets, because it won't be written out
@@ -20955,6 +21076,7 @@ tc_gen_reloc (asection *section, fixS *fixp)
 #ifdef OBJ_ELF
     case BFD_RELOC_ARM_GOT32:
     case BFD_RELOC_ARM_GOTOFF:
+    case BFD_RELOC_ARM_GOT_PREL:
     case BFD_RELOC_ARM_PLT32:
     case BFD_RELOC_ARM_TARGET1:
     case BFD_RELOC_ARM_ROSEGREL32:
@@ -22072,6 +22194,7 @@ static const struct arm_cpu_option_table arm_cpus[] =
                                                           NULL},
   {"cortex-r4",		ARM_ARCH_V7R,	 FPU_NONE,	  NULL},
   {"cortex-r4f",	ARM_ARCH_V7R,	 FPU_ARCH_VFP_V3D16,	  NULL},
+  {"cortex-m4",		ARM_ARCH_V7EM,	 FPU_NONE,	  NULL},
   {"cortex-m3",		ARM_ARCH_V7M,	 FPU_NONE,	  NULL},
   {"cortex-m1",		ARM_ARCH_V6M,	 FPU_NONE,	  NULL},
   {"cortex-m0",		ARM_ARCH_V6M,	 FPU_NONE,	  NULL},
@@ -22945,12 +23068,14 @@ arm_convert_symbolic_attribute (const char *name)
       T (Tag_CPU_unaligned_access),
       T (Tag_VFP_HP_extension),
       T (Tag_ABI_FP_16bit_format),
+      T (Tag_MPextension_use),
+      T (Tag_DIV_use),
       T (Tag_nodefaults),
       T (Tag_also_compatible_with),
       T (Tag_conformance),
       T (Tag_T2EE_use),
       T (Tag_Virtualization_use),
-      T (Tag_MPextension_use)
+      /* We deliberately do not include Tag_MPextension_use_legacy.  */
 #undef T
     };
   unsigned int i;

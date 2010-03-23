@@ -1,6 +1,6 @@
 // fileread.cc -- read files for gold
 
-// Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -38,6 +38,7 @@
 #include "target.h"
 #include "binary.h"
 #include "descriptors.h"
+#include "gold-threads.h"
 #include "fileread.h"
 
 #ifndef HAVE_READV
@@ -95,6 +96,10 @@ File_read::View::is_locked()
 
 // Class File_read.
 
+// A lock for the File_read static variables.
+static Lock* file_counts_lock = NULL;
+static Initialize_lock file_counts_initialize_lock(&file_counts_lock);
+
 // The File_read static variables.
 unsigned long long File_read::total_mapped_bytes;
 unsigned long long File_read::current_mapped_bytes;
@@ -110,9 +115,7 @@ File_read::~File_read()
       this->is_descriptor_opened_ = false;
     }
   this->name_.clear();
-  this->clear_views(true);
-  if (this->whole_file_view_)
-    delete this->whole_file_view_;
+  this->clear_views(CLEAR_VIEWS_ALL);
 }
 
 // Open the file.
@@ -139,23 +142,6 @@ File_read::open(const Task* task, const std::string& name)
       this->size_ = s.st_size;
       gold_debug(DEBUG_FILES, "Attempt to open %s succeeded",
                  this->name_.c_str());
-
-      // Options may not yet be ready e.g. when reading a version
-      // script.  We then default to --no-keep-files-mapped.
-      if (parameters->options_valid()
-	  && parameters->options().keep_files_mapped())
-        {
-          const unsigned char* contents = static_cast<const unsigned char*>(
-              ::mmap(NULL, this->size_, PROT_READ, MAP_PRIVATE,
-                     this->descriptor_, 0));
-          if (contents == MAP_FAILED)
-            gold_fatal(_("%s: mmap failed: %s"), this->filename().c_str(),
-                       strerror(errno));
-          this->whole_file_view_ = new View(0, this->size_, contents, 0, false,
-                                            View::DATA_MMAPPED);
-          this->mapped_bytes_ += this->size_;
-        }
-
       this->token_.add_writer(task);
     }
 
@@ -175,6 +161,7 @@ File_read::open(const Task* task, const std::string& name,
   this->name_ = name;
   this->whole_file_view_ = new View(0, size, contents, 0, false,
                                     View::DATA_NOT_OWNED);
+  this->add_view(this->whole_file_view_);
   this->size_ = size;
   this->token_.add_writer(task);
   return true;
@@ -204,18 +191,24 @@ File_read::release()
 {
   gold_assert(this->is_locked());
 
-  File_read::total_mapped_bytes += this->mapped_bytes_;
-  File_read::current_mapped_bytes += this->mapped_bytes_;
+  if (!parameters->options_valid() || parameters->options().stats())
+    {
+      file_counts_initialize_lock.initialize();
+      Hold_optional_lock hl(file_counts_lock);
+      File_read::total_mapped_bytes += this->mapped_bytes_;
+      File_read::current_mapped_bytes += this->mapped_bytes_;
+      if (File_read::current_mapped_bytes > File_read::maximum_mapped_bytes)
+	File_read::maximum_mapped_bytes = File_read::current_mapped_bytes;
+    }
+
   this->mapped_bytes_ = 0;
-  if (File_read::current_mapped_bytes > File_read::maximum_mapped_bytes)
-    File_read::maximum_mapped_bytes = File_read::current_mapped_bytes;
 
   // Only clear views if there is only one attached object.  Otherwise
   // we waste time trying to clear cached archive views.  Similarly
   // for releasing the descriptor.
   if (this->object_count_ <= 1)
     {
-      this->clear_views(false);
+      this->clear_views(CLEAR_VIEWS_NORMAL);
       if (this->is_descriptor_opened_)
 	{
 	  release_descriptor(this->descriptor_, false);
@@ -417,7 +410,7 @@ File_read::make_view(off_t start, section_size_type size,
     }
 
   File_read::View* v;
-  if (this->whole_file_view_ != NULL || byteshift != 0)
+  if (byteshift != 0)
     {
       unsigned char* p = new unsigned char[psize + byteshift];
       memset(p, 0, byteshift);
@@ -472,6 +465,15 @@ File_read::find_or_make_view(off_t offset, off_t start,
       if (byteshift != 0)
 	byteshift = (target_size / 8) - byteshift;
     }
+
+  // If --map-whole-files is set, make sure we have a
+  // whole file view.  Options may not yet be ready, e.g.,
+  // when reading a version script.  We then default to
+  // --no-keep-files-mapped.
+  if (this->whole_file_view_ == NULL
+      && parameters->options_valid()
+      && parameters->options().map_whole_files())
+    this->whole_file_view_ = this->make_view(0, this->size_, 0, cache);
 
   // Try to find a View with the required BYTESHIFT.
   File_read::View* vshifted;
@@ -680,25 +682,31 @@ File_read::clear_view_cache_marks()
 // the next object.
 
 void
-File_read::clear_views(bool destroying)
+File_read::clear_views(Clear_views_mode mode)
 {
+  bool keep_files_mapped = (parameters->options_valid()
+			    && parameters->options().keep_files_mapped());
   Views::iterator p = this->views_.begin();
   while (p != this->views_.end())
     {
       bool should_delete;
-      if (p->second->is_locked())
+      if (p->second->is_locked() || p->second->is_permanent_view())
 	should_delete = false;
-      else if (destroying)
+      else if (mode == CLEAR_VIEWS_ALL)
 	should_delete = true;
-      else if (p->second->should_cache())
+      else if (p->second->should_cache() && keep_files_mapped)
 	should_delete = false;
-      else if (this->object_count_ > 1 && p->second->accessed())
+      else if (this->object_count_ > 1
+      	       && p->second->accessed()
+      	       && mode != CLEAR_VIEWS_ARCHIVE)
 	should_delete = false;
       else
 	should_delete = true;
 
       if (should_delete)
 	{
+	  if (p->second == this->whole_file_view_)
+	    this->whole_file_view_ = NULL;
 	  delete p->second;
 
 	  // map::erase invalidates only the iterator to the deleted
@@ -709,7 +717,6 @@ File_read::clear_views(bool destroying)
 	}
       else
 	{
-	  gold_assert(!destroying);
 	  p->second->clear_accessed();
 	  ++p;
 	}
@@ -725,7 +732,7 @@ File_read::clear_views(bool destroying)
 	}
       else
 	{
-	  gold_assert(!destroying);
+	  gold_assert(mode != CLEAR_VIEWS_ALL);
 	  ++q;
 	}
     }
@@ -927,17 +934,22 @@ Input_file::open(const Dirsearch& dirpath, const Task* task, int *pindex)
     this->input_argument_->options().format_enum();
   bool ok;
   if (format == General_options::OBJECT_FORMAT_ELF)
-    ok = this->file_.open(task, name);
+    {
+      ok = this->file_.open(task, name);
+      this->format_ = FORMAT_ELF;
+    }
   else
     {
       gold_assert(format == General_options::OBJECT_FORMAT_BINARY);
       ok = this->open_binary(task, name);
+      this->format_ = FORMAT_BINARY;
     }
 
   if (!ok)
     {
       gold_error(_("cannot open %s: %s"),
 		 name.c_str(), strerror(errno));
+      this->format_ = FORMAT_NONE;
       return false;
     }
 
