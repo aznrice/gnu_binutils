@@ -1,3 +1,14 @@
+2010-03-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	IVB EAS 0.90
+	* i386-dis.c (PREFIX_VEX_3A1A): Renamed to ...
+	(PREFIX_VEX_3A1D): This.
+	(prefix_table): Likewise.
+	(vex_table): Likewise.
+
+	* i386-opc.tbl: Change vcvtps2ph encoding to VEX_3A1D.
+	* i386-tbl.h: Regenerated.
+
 2010-01-24  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* i386-dis.c (prefix_table): Replace { "(bad)", { XX } } with

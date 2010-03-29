@@ -1,3 +1,11 @@
+2010-03-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	IVB EAS 0.90
+	* gas/i386/f16c-intel.d: Update vcvtps2ph encoding.
+	* gas/i386/f16c.d: Likewise.
+	* gas/i386/x86-64-f16c-intel.d: Likewise.
+	* gas/i386/x86-64-f16c.d: Likewise.
+
 2009-11-18  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* gas/i386/cvt16.d: Revert the last change.

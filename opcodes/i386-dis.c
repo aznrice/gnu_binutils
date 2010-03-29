@@ -1031,7 +1031,7 @@ enum
   PREFIX_VEX_3A17,
   PREFIX_VEX_3A18,
   PREFIX_VEX_3A19,
-  PREFIX_VEX_3A1A,
+  PREFIX_VEX_3A1D,
   PREFIX_VEX_3A20,
   PREFIX_VEX_3A21,
   PREFIX_VEX_3A22,
@@ -5080,7 +5080,7 @@ static const struct dis386 prefix_table[][4] = {
     { VEX_LEN_TABLE (VEX_LEN_3A19_P_2) },
   },
 
-  /* PREFIX_VEX_3A1A */
+  /* PREFIX_VEX_3A1D */
   {
     { Bad_Opcode },
     { Bad_Opcode },
@@ -7869,10 +7869,10 @@ static const struct dis386 vex_table[][256] = {
     /* 18 */
     { PREFIX_TABLE (PREFIX_VEX_3A18) },
     { PREFIX_TABLE (PREFIX_VEX_3A19) },
-    { PREFIX_TABLE (PREFIX_VEX_3A1A) },
     { Bad_Opcode },
     { Bad_Opcode },
     { Bad_Opcode },
+    { PREFIX_TABLE (PREFIX_VEX_3A1D) },
     { Bad_Opcode },
     { Bad_Opcode },
     /* 20 */
