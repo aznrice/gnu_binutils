@@ -940,6 +940,9 @@ case "${target}" in
     ;;
   sparc-*-solaris* | sparc64-*-solaris* | sparcv9-*-solaris*)
     ;;
+  tic6x-*-*)
+    noconfigdirs="$noconfigdirs gdb sim ${libgcj}"
+    ;;
   v810-*-*)
     noconfigdirs="$noconfigdirs bfd binutils gas gcc gdb ld target-libstdc++-v3 opcodes target-libgloss ${libgcj}"
     ;;
@@ -2405,8 +2408,8 @@ case "${target}" in
     extra_arflags_for_target=" -X32_64"
     extra_nmflags_for_target=" -B -X32_64"
     ;;
-  *-*-darwin*)
-    # ranlib from Darwin requires the -c flag to look at common symbols.
+  *-*-darwin[[3-9]]*)
+    # ranlib before Darwin10 requires the -c flag to look at common symbols.
     extra_ranlibflags_for_target=" -c"
     ;;
   mips*-*-pe | sh*-*-pe | *arm-wince-pe)
@@ -2879,6 +2882,9 @@ do
       skip_next=$separate_arg
       continue
       ;;
+    --enable-multilib | --disable-multilib)
+      continue
+      ;;
     -*)
       # An option.  Add it.
       case $ac_arg in
@@ -2947,10 +2953,12 @@ if test x${is_cross_compiler} = xyes ; then
   target_configargs="--with-cross-host=${host_noncanonical} ${target_configargs}"
 fi
 
-# Default to --enable-multilib.
-if test x${enable_multilib} = x ; then
+# Pass --enable-multilib to target dirs; default to --enable-multilib.
+case $enable_multilib in
+'' | yes)
   target_configargs="--enable-multilib ${target_configargs}"
-fi
+  ;;
+esac
 
 # Pass --with-newlib if appropriate.  Note that target_configdirs has
 # changed from the earlier setting of with_newlib.
