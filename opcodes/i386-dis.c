@@ -741,6 +741,10 @@ enum
   PREFIX_0F7D,
   PREFIX_0F7E,
   PREFIX_0F7F,
+  PREFIX_0FAE_REG_0,
+  PREFIX_0FAE_REG_1,
+  PREFIX_0FAE_REG_2,
+  PREFIX_0FAE_REG_3,
   PREFIX_0FB8,
   PREFIX_0FBD,
   PREFIX_0FC2,
@@ -936,6 +940,7 @@ enum
   PREFIX_VEX_380D,
   PREFIX_VEX_380E,
   PREFIX_VEX_380F,
+  PREFIX_VEX_3813,
   PREFIX_VEX_3817,
   PREFIX_VEX_3818,
   PREFIX_VEX_3819,
@@ -1026,6 +1031,7 @@ enum
   PREFIX_VEX_3A17,
   PREFIX_VEX_3A18,
   PREFIX_VEX_3A19,
+  PREFIX_VEX_3A1D,
   PREFIX_VEX_3A20,
   PREFIX_VEX_3A21,
   PREFIX_VEX_3A22,
@@ -3026,6 +3032,30 @@ static const struct dis386 prefix_table[][4] = {
     { "movdqa",	{ EXxS, XM } },
   },
 
+  /* PREFIX_0FAE_REG_0 */
+  {
+    { Bad_Opcode },
+    { "rdfsbase", { Ev } },
+  },
+
+  /* PREFIX_0FAE_REG_1 */
+  {
+    { Bad_Opcode },
+    { "rdgsbase", { Ev } },
+  },
+
+  /* PREFIX_0FAE_REG_2 */
+  {
+    { Bad_Opcode },
+    { "wrfsbase", { Ev } },
+  },
+
+  /* PREFIX_0FAE_REG_3 */
+  {
+    { Bad_Opcode },
+    { "wrgsbase", { Ev } },
+  },
+
   /* PREFIX_0FB8 */
   {
     { Bad_Opcode },
@@ -4412,6 +4442,13 @@ static const struct dis386 prefix_table[][4] = {
     { VEX_W_TABLE (VEX_W_380F_P_2) },
   },
 
+  /* PREFIX_VEX_3813 */
+  {
+    { Bad_Opcode },
+    { Bad_Opcode },
+    { "vcvtph2ps", { XM, EXxmmq } },
+  },
+
   /* PREFIX_VEX_3817 */
   {
     { Bad_Opcode },
@@ -5041,6 +5078,13 @@ static const struct dis386 prefix_table[][4] = {
     { Bad_Opcode },
     { Bad_Opcode },
     { VEX_LEN_TABLE (VEX_LEN_3A19_P_2) },
+  },
+
+  /* PREFIX_VEX_3A1D */
+  {
+    { Bad_Opcode },
+    { Bad_Opcode },
+    { "vcvtps2ph", { EXxmmq, XM, Ib } },
   },
 
   /* PREFIX_VEX_3A20 */
@@ -7526,7 +7570,7 @@ static const struct dis386 vex_table[][256] = {
     { Bad_Opcode },
     { Bad_Opcode },
     { Bad_Opcode },
-    { Bad_Opcode },
+    { PREFIX_TABLE (PREFIX_VEX_3813) },
     { Bad_Opcode },
     { Bad_Opcode },
     { Bad_Opcode },
@@ -7828,7 +7872,7 @@ static const struct dis386 vex_table[][256] = {
     { Bad_Opcode },
     { Bad_Opcode },
     { Bad_Opcode },
-    { Bad_Opcode },
+    { PREFIX_TABLE (PREFIX_VEX_3A1D) },
     { Bad_Opcode },
     { Bad_Opcode },
     /* 20 */
@@ -10348,18 +10392,22 @@ static const struct dis386 mod_table[][2] = {
   {
     /* MOD_0FAE_REG_0 */
     { "fxsave",		{ FXSAVE } },
+    { PREFIX_TABLE (PREFIX_0FAE_REG_0) },
   },
   {
     /* MOD_0FAE_REG_1 */
     { "fxrstor",	{ FXSAVE } },
+    { PREFIX_TABLE (PREFIX_0FAE_REG_1) },
   },
   {
     /* MOD_0FAE_REG_2 */
     { "ldmxcsr",	{ Md } },
+    { PREFIX_TABLE (PREFIX_0FAE_REG_2) },
   },
   {
     /* MOD_0FAE_REG_3 */
     { "stmxcsr",	{ Md } },
+    { PREFIX_TABLE (PREFIX_0FAE_REG_3) },
   },
   {
     /* MOD_0FAE_REG_4 */
@@ -10395,6 +10443,7 @@ static const struct dis386 mod_table[][2] = {
   {
     /* MOD_0FC7_REG_6 */
     { PREFIX_TABLE (PREFIX_0FC7_REG_6) },
+    { "rdrnd",		{ Ev } },
   },
   {
     /* MOD_0FC7_REG_7 */
