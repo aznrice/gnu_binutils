@@ -1,4 +1,44 @@
+2010-04-06  David S. Miller  <davem@davemloft.net>
+
+	* ld-elfvers/vers.exp: Pass -Av9a to assembler on sparc-*-*
+
+2010-04-05  Kai Tietz  <kai.tietz@onevision.com>
+
+	* ld-pe/orphan_nu.d: New test for --no-leading-underscore.
+	* ld-pe/orphana_nu.s: New file.
+	* ld-pe/pe.exp: Add orphan_nu test.
+
+2010-04-01  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* ld-powerpc/apuinfo-nul.rd: New.
+	* ld-powerpc/apuinfo-nul1.s: New.
+	* ld-powerpc/powerpc.exp: Add it.
+
+2010-03-31  Kai TIetz  <kai.tietz@onevision.com>
+
+	* ld-pe//pe-compile.exp (run_basefile_test): Trim result of wc
+	before string compare.
+
+2010-03-31  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* ld-arm/script-type.sym: Fix test.
+
+2010-03-31  Kai TIetz  <kai.tietz@onevision.com>
+
+	* ld-pe/basefile1.s: New.
+	* ld-pe/pe-compile.exp: Add base-file test.
+
 2010-03-31  Hans-Peter Nilsson  <hp@axis.com>
+
+	PR ld/11458
+	* ld-cris/pcrelcp-1.d, ld-cris/pcrelcp-1.s: New test.
+
+	* lib/ld-lib.exp (run_dump_test): When checking linker message and
+	return code, when success with no message is expected, don't
+	continue if we have an abnormal exit with a message.  Check output
+	of inspection program and fail if it had output or an abnormal
+	exit code.  Include "warning" and "error" among the directives
+	where multiples are allowed and append to previous values.
 
 	* ld-cris/cris.exp (loop over $srcdir/$subdir/*dso-*.d): Apply
 	"file rootname", not "file tail", before applying runtest_file_p.

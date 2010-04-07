@@ -1,3 +1,82 @@
+2010-04-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/11434
+	* elf-bfd.h (SYMBOLIC_BIND): Don't bind unique symbol locally.
+
+2010-04-06  Tristan Gingold  <gingold@adacore.com>
+
+	* vms-lib.c (_bfd_vms_lib_write_archive_contents): Fix idd flags.
+
+2010-04-05  Jakub Jelinek  <jakub@redhat.com>
+
+	* elf-eh-frame.c (_bfd_elf_parse_eh_frame): Handle CIE version 4
+	provided that it has the expected address size and zero segment
+	length.
+
+	* dwarf2.c (struct line_head): Add maximum_ops_per_insn field.
+	(struct line_info): Add op_index field, change end_sequence type to
+	unsigned char.
+	(new_line_sorts_after): For the same address compare op_index.
+	(add_line_info): Add op_index argument, store it into the structure.
+	(decode_line_info): Complain about unknown versions of .debug_line.
+	Initialize maximum_ops_per_insn.  Add op_index state register and
+	track it.
+
+2010-04-01  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* elf32-ppc.c (apuinfo_set): New static var.
+	(ppc_elf_begin_write_processing): Set it here, always create an
+	APUinfo section if there were any in the inputs.
+	(ppc_elf_write_section): Check apuinfo_set.
+	(ppc_elf_final_write_processing): Likewise.
+
+2010-04-01  Tristan Gingold  <gingold@adacore.com>
+
+	* vms.h: Include time.h. Add prototypes for vms_get_module_name,
+	vms_time_to_time_t and vms_rawtime_to_time_t.
+	* vms.c (vms_alpha_vec): Add archives support.
+	* vms-misc.c: Include safe-ctype.h
+	(vms_get_module_name): New function.
+	(vms_time_to_time_t, vms_rawtime_to_time_t): Ditto.
+	* vms-hdr.c (_bfd_vms_write_hdr): Put module name creation to the
+	vms_get_module_name function.  Use this function.
+	* targets.c: Declare vms_lib_txt_vec.  Add it to _bfd_target_vector.
+	* libbfd-in.h: Add prototype for _bfd_append_relative_path.
+	Add prototypes for vms-lib.c
+	* libbfd.h: Regenerate.
+	* configure.in (TDEFINES): Add an entry for vms_lib_txt_vec.  Add
+	vms-lib.lo to vms_alpha_vec.
+	* config.bfd (targ_cpu): Add targ_selvecs for alpha*-*-*vms*.
+	* configure: Regenerate.
+	* bfd.c: Add selective_search field.
+	* bfd-in2.h: Regenerate.
+	* archive.c (append_relative_path): Rename to
+	_bfd_append_relative_path and make it public.
+	(_bfd_get_elt_at_filepos): Adjust for above renaming.
+	* Makefile.am (BFD32_BACKENDS): Add vms-lib.lo
+	(BFD32_BACKENDS_CFILES): Add vms-lib.c
+	* Makefile.in: Regenerate.
+
+2010-04-01  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf2.c (read_attribute_value): Handle CU version 4
+	for DW_FORM_ref_addr, handle DW_FORM_sec_offset, DW_FORM_exprloc
+	and DW_FORM_flag_present.  For unknown form value return NULL.
+	(scan_unit_for_symbols): For DW_AT_location handle DW_FORM_exprloc
+	like DW_FORM_block.
+	(parse_comp_unit): Allow CU version 4.
+
+2010-04-01  Hans-Peter Nilsson  <hp@axis.com>
+
+	* elf32-cris.c (cris_elf_relocate_section): Correct first argument
+	to _bfd_elf_get_dynamic_reloc_section.
+	(elf_cris_discard_excess_dso_dynamics): Ditto.
+
+2010-03-31  Kai Tietz  <kai.tietz@onevision.com>
+
+	* coff-i386.c (in_reloc_p): Check also for R_SECREL32.
+	* coff-x86_64.c (in_reloc_p): Check also for R_AMD64_SECREL.
+
 2010-03-31  Alan Modra  <amodra@gmail.com>
 
 	* elf64-ppc.c (ppc64_elf_relocate_section): Nop out optimized
