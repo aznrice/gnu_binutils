@@ -1,3 +1,82 @@
+2010-04-08  Doug Kwan  <dougkwan@google.com>
+
+	* merge.cc (Output_merge_data::set_final_data_size): Handle empty
+	Output_merge_data.
+	* output.cc (Output_section::add_merge_input_section): Simplify
+	code and return status of Output_merge_base::add_input_section.
+	Update merge section map only if Output_merge_base::add_input_section 
+	returns true.
+
+2010-04-07  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_relobj::scan_section_for_cortex_a8_erratum): Warn
+	if section is marked as containing instructions but has no mapping
+	symbols.
+	(Arm_relobj::do_count_local_symbols): Call adjust_sym_shndx to get
+	correct section index.
+	(Arm_relobj::find_linked_text_section): Ditto.
+
+2010-04-07  Cary Coutant  <ccoutant@google.com>
+
+	* archive.cc (include_member): Destroy Read_symbols_data object before
+	releasing file.
+	* object.cc (Read_symbols_data::~Read_symbols_data) New destructor.
+	* object.h (Read_symbols_data::Read_symbols_data) New constructor.
+	(Read_symbols_data::~Read_symbols_data) New destructor.
+	(Section_relocs::Section_relocs) New constructor.
+	(Section_relocs::~Section_relocs) New destructor.
+	(Read_relocs_data::Read_relocs_data) New constructor.
+	(Read_relocs_data::~Read_relocs_data) New destructor.
+	* testsuite/binary_unittest.cc (Sized_binary_test): Set sd member
+	pointers to NULL after deleting.
+
+2010-04-07  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc: Replace "endianity" with "endianness" in comments.
+	(Arm_exidx_cantunwind): Ditto.
+	(Arm_relobj::Arm_relobj): Initialize merge_flags_and_attribures.
+	(Arm_relobj::merge_flags_and_attributes): New method.
+	(Arm_relobj::merge_flags_and_attributes_): New data member.
+	(Arm_exidx_cantunwind::do_fixed_endian_write): Fix formatting.
+	(Arm_relobj::scan_sections_for_stubs): Ditto.
+	(Arm_relobj::do_read_symbols): Check to see if we really want to
+	merge processor-specific flags and attributes.  Exit early if
+	an object is empty except for section names and the undefined symbol.
+	(Target_arm::do_finalize_sections): Move check for ELF format to
+	Arm_relobj::do_read_symbols.  Merge processor specific flags and
+	attributes from a regular object only when we have determined that
+	it is aapropriate.  Do not create an .ARM.attributes section in
+	output if there is no regular input object.
+	(Target_arm::merge_processor_specific_flags): Check
+	--warn-mismatch before printing any error.
+	(Target_arm::merge_object_attributes): Ditto.
+	* gold.cc (queue_middle_tasks): Handle the case in which there is
+	no regular object in input.
+	* options.cc (General_options::parse_EB): New method.
+	(General_options::parse_EL): Same.
+	(General_options::General_options): Initialize endianness_.
+	* options.h (-EB, -EL, -no-pipeline-knowledge, -p, --warn-mismatch):
+	New options.
+	(General_options::Endianness): New enum.
+	(General_options::endianness): New method.
+	(General_options::endianness_): New data member.
+	* parameters.cc (Parameters::set_options): Check target endianness.
+	(Parameters::set_target_once): Ditto.
+	(Parameters::check_target_endianness): New method.
+	(parameters_force_valid_target): If either -EL or -EB is specified,
+	use it to define endianness of default target.
+	* parameters.h (Parameters::check_target_endianness): New method
+	declaration.
+	* target.h (class Target): Change "endianity" to "endianness"
+	in comments.
+
+2010-04-07  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* configure.ac (AM_INIT_AUTOMAKE): Add option no-dist.
+	* configure: Regenerate.
+	* Makefile.in: Regenerate.
+	* testsuite/Makefile.in: Regenerate.
+
 2010-04-06  Cary Coutant  <ccoutant@google.com>
 
 	gcc PR lto/42757
