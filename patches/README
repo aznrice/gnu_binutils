@@ -23,7 +23,7 @@ patches="
 	binutils-signed-4.patch
 	binutils-weakdef-2.patch
 	bfd-64k-2.patch
-	binutils-sec64k-6.patch
+	binutils-sec64k-7.patch
 	ld-needed-4.patch
 	binutils-group-10.patch
 	binutils-gold-8.patch

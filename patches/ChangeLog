@@ -1,5 +1,11 @@
 2010-04-09  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-sec64k-7.patch: New file. Replace ...
+	* binutils-sec64k-6.patch: This.  Removed.
+	* README: Likewise.
+
+2010-04-09  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-error-9.patch: New file. Replace ...
 	* binutils-error-8.patch: This. Removed.
 	* README: Likewise.
