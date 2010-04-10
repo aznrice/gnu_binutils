@@ -1,5 +1,9 @@
 2010-04-09  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-gold-8.patch: Updated to properly install gold/ld.
+
+2010-04-09  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-sec64k-7.patch: New file. Replace ...
 	* binutils-sec64k-6.patch: This.  Removed.
 	* README: Likewise.

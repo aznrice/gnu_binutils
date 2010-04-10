@@ -63,7 +63,7 @@ index 93f66b6..d1d8b32 100644
  
  configure-stage1-gold: maybe-configure-stage1-intl
 diff --git a/configure b/configure
-index c2c406e..df1a005 100755
+index c2c406e..a63d75c 100755
 --- a/configure
 +++ b/configure
 @@ -1483,7 +1483,7 @@ Optional Features:
@@ -71,7 +71,7 @@ index c2c406e..df1a005 100755
    --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
    --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
 -  --enable-gold           use gold instead of ld
-+  --enable-gold[=ARG]     build gold [ARG={both}[[/{gold,ld}]]]
++  --enable-gold[=ARG]     build gold [ARG={both}[/{gold,ld}]]
    --enable-libada         build libada directory
    --enable-libssp         build libssp directory
    --enable-build-with-cxx build with C++ compiler instead of C compiler
@@ -166,7 +166,7 @@ index c2c406e..df1a005 100755
  
  case "${host}" in
 diff --git a/configure.ac b/configure.ac
-index 72407f8..e113e5a 100644
+index 72407f8..d737183 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -174,7 +174,7 @@ host_libs="intl mmalloc libiberty opcodes bfd readline tcl tk itcl libgui zlib l
@@ -190,7 +190,7 @@ index 72407f8..e113e5a 100644
  
  AC_ARG_ENABLE(gold,
 -[  --enable-gold           use gold instead of ld],
-+[  --enable-gold[[=ARG]]     build gold [[ARG={both}[[/{gold,ld}]]]]],
++[[  --enable-gold[=ARG]     build gold [ARG={both}[/{gold,ld}]]]],
  ENABLE_GOLD=$enableval,
  ENABLE_GOLD=no)
 -if test "${ENABLE_GOLD}" = "yes"; then
@@ -259,86 +259,93 @@ index 72407f8..e113e5a 100644
  
  case "${host}" in
 diff --git a/gold/Makefile.am b/gold/Makefile.am
-index e0665e0..068a091 100644
+index e0665e0..1f2618d 100644
 --- a/gold/Makefile.am
 +++ b/gold/Makefile.am
-@@ -178,12 +178,21 @@ check: libgold.a
+@@ -178,12 +178,23 @@ check: libgold.a
  
  install-exec-local: ld-new$(EXEEXT)
  	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(tooldir)/bin
 -	n=`echo ld | sed '$(transform)'`; \
-+	n=`echo ld.gold | sed '$(transform)'`; \
++	n=`echo $(installed_linker) | sed '$(transform)'`; \
  	$(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${n}$(EXEEXT); \
  	if test "$(bindir)" != "$(tooldir)/bin"; then \
 -	  rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 -	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
 -	    || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
-+	  rm -f $(DESTDIR)$(tooldir)/bin/ld.gold$(EXEEXT); \
-+	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld.gold$(EXEEXT) >/dev/null 2>/dev/null \
-+	    || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld.gold$(EXEEXT); \
-+	fi
++	  rm -f $(DESTDIR)$(tooldir)/bin/$${n}$(EXEEXT); \
++	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$${n}$(EXEEXT) >/dev/null 2>/dev/null \
++	  || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$${n}$(EXEEXT); \
++	fi; \
 +	if test "x$(install_as_default)" = "xyes"; then \
-+	  n=`echo ld | sed '$(transform)'`; \
-+	  $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${n}$(EXEEXT); \
++	  ld=`echo ld | sed '$(transform)'`; \
++	  rm -f $(DESTDIR)$(bindir)/$${ld}$(EXEEXT); \
++	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(bindir)/$${ld}$(EXEEXT) >/dev/null 2>/dev/null \
++	  || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${ld}$(EXEEXT); \
 +	  if test "$(bindir)" != "$(tooldir)/bin"; then \
-+	    rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
-+	    ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
-+	      || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
++	    rm -f $(DESTDIR)$(tooldir)/bin/$${ld}$(EXEEXT); \
++	    ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$${ld}$(EXEEXT) >/dev/null 2>/dev/null \
++	    || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$${ld}$(EXEEXT); \
 +	  fi; \
  	fi
  
  # We want install to imply install-info as per GNU standards, despite
 diff --git a/gold/Makefile.in b/gold/Makefile.in
-index 6e736f1..600cf05 100644
+index 6e736f1..4f58e62 100644
 --- a/gold/Makefile.in
 +++ b/gold/Makefile.in
-@@ -258,6 +258,7 @@ host_vendor = @host_vendor@
+@@ -258,7 +258,9 @@ host_vendor = @host_vendor@
  htmldir = @htmldir@
  includedir = @includedir@
  infodir = @infodir@
 +install_as_default = @install_as_default@
  install_sh = @install_sh@
++installed_linker = @installed_linker@
  libdir = @libdir@
  libexecdir = @libexecdir@
-@@ -1002,12 +1003,21 @@ check: libgold.a
+ localedir = @localedir@
+@@ -1002,12 +1004,23 @@ check: libgold.a
  
  install-exec-local: ld-new$(EXEEXT)
  	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(tooldir)/bin
 -	n=`echo ld | sed '$(transform)'`; \
-+	n=`echo ld.gold | sed '$(transform)'`; \
++	n=`echo $(installed_linker) | sed '$(transform)'`; \
  	$(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${n}$(EXEEXT); \
  	if test "$(bindir)" != "$(tooldir)/bin"; then \
 -	  rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 -	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
 -	    || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
-+	  rm -f $(DESTDIR)$(tooldir)/bin/ld.gold$(EXEEXT); \
-+	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld.gold$(EXEEXT) >/dev/null 2>/dev/null \
-+	    || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld.gold$(EXEEXT); \
-+	fi
++	  rm -f $(DESTDIR)$(tooldir)/bin/$${n}$(EXEEXT); \
++	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$${n}$(EXEEXT) >/dev/null 2>/dev/null \
++	  || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$${n}$(EXEEXT); \
++	fi; \
 +	if test "x$(install_as_default)" = "xyes"; then \
-+	  n=`echo ld | sed '$(transform)'`; \
-+	  $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${n}$(EXEEXT); \
++	  ld=`echo ld | sed '$(transform)'`; \
++	  rm -f $(DESTDIR)$(bindir)/$${ld}$(EXEEXT); \
++	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(bindir)/$${ld}$(EXEEXT) >/dev/null 2>/dev/null \
++	  || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${ld}$(EXEEXT); \
 +	  if test "$(bindir)" != "$(tooldir)/bin"; then \
-+	    rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
-+	    ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
-+	      || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
++	    rm -f $(DESTDIR)$(tooldir)/bin/$${ld}$(EXEEXT); \
++	    ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$${ld}$(EXEEXT) >/dev/null 2>/dev/null \
++	    || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$${ld}$(EXEEXT); \
 +	  fi; \
  	fi
  
  # We want install to imply install-info as per GNU standards, despite
 diff --git a/gold/configure b/gold/configure
-index 20df0df..3cc2fa7 100755
+index 20df0df..eb8f01e 100755
 --- a/gold/configure
 +++ b/gold/configure
-@@ -682,6 +682,7 @@ PLUGINS_FALSE
+@@ -682,6 +682,8 @@ PLUGINS_FALSE
  PLUGINS_TRUE
  THREADS_FALSE
  THREADS_TRUE
++installed_linker
 +install_as_default
  am__untar
  am__tar
  AMTAR
-@@ -759,6 +760,7 @@ ac_subst_files=''
+@@ -759,6 +761,7 @@ ac_subst_files=''
  ac_user_opts='
  enable_option_checking
  with_sysroot
@@ -346,34 +353,42 @@ index 20df0df..3cc2fa7 100755
  enable_threads
  enable_plugins
  enable_targets
-@@ -1403,6 +1405,7 @@ Optional Features:
+@@ -1403,6 +1406,7 @@ Optional Features:
    --disable-option-checking  ignore unrecognized --enable/--with options
    --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
    --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-+  --enable-gold[=ARG]     build gold [ARG={both}[[/{gold,ld}]]]
++  --enable-gold[=ARG]     build gold [ARG={both}[/{gold,ld}]]
    --enable-threads        multi-threaded linking
    --enable-plugins        linker plugins
    --enable-targets        alternative target configurations
-@@ -3227,6 +3230,25 @@ cat >>confdefs.h <<_ACEOF
+@@ -3227,6 +3231,33 @@ cat >>confdefs.h <<_ACEOF
  _ACEOF
  
  
 +# Check whether --enable-gold was given.
 +if test "${enable_gold+set}" = set; then :
 +  enableval=$enable_gold; case "${enableval}" in
-+ yes|both/gold)
++ yes)
++   install_as_default=gold
++   installed_linker=ld
++   ;;
++ both/gold)
 +   install_as_default=yes
++   installed_linker=ld.gold
 +   ;;
 + both|both/ld)
 +   install_as_default=no
++   installed_linker=ld.gold
 +   ;;
 + *)
 +   as_fn_error "invalid --enable-gold argument" "$LINENO" 5
 +   ;;
 + esac
 +else
-+  install_as_default=no
++  install_as_default=gold
++ installed_linker=ld
 +fi
++
 +
 +
 +
@@ -381,36 +396,45 @@ index 20df0df..3cc2fa7 100755
  if test "${enable_threads+set}" = set; then :
    enableval=$enable_threads; case "${enableval}" in
 diff --git a/gold/configure.ac b/gold/configure.ac
-index 72db25d..d3f4689 100644
+index 72db25d..67d1796 100644
 --- a/gold/configure.ac
 +++ b/gold/configure.ac
-@@ -38,6 +38,24 @@ AC_DEFINE_UNQUOTED(TARGET_SYSTEM_ROOT, "$sysroot",
+@@ -38,6 +38,33 @@ AC_DEFINE_UNQUOTED(TARGET_SYSTEM_ROOT, "$sysroot",
  AC_DEFINE_UNQUOTED(TARGET_SYSTEM_ROOT_RELOCATABLE, $sysroot_relocatable,
    [Whether the system root can be relocated])
  
 +dnl "install_as_default" is true if the linker to be installed as the
 +dnl default linker, ld.
++dnl "installed_linker" is the installed gold linker name.
 +AC_ARG_ENABLE(gold,
-+[  --enable-gold[[=ARG]]     build gold [[ARG={both}[[/{gold,ld}]]]]],
++[[  --enable-gold[=ARG]     build gold [ARG={both}[/{gold,ld}]]]],
 +[case "${enableval}" in 
-+ yes|both/gold)
++ yes)
++   install_as_default=gold
++   installed_linker=ld
++   ;;
++ both/gold)
 +   install_as_default=yes
++   installed_linker=ld.gold
 +   ;;
 + both|both/ld)
 +   install_as_default=no
++   installed_linker=ld.gold
 +   ;;
 + *)
 +   AC_MSG_ERROR([invalid --enable-gold argument])
 +   ;;
 + esac],
-+[install_as_default=no])
++[install_as_default=gold
++ installed_linker=ld])
 +AC_SUBST(install_as_default)
++AC_SUBST(installed_linker)
 +
  dnl For now threads are a configure time option.
  AC_ARG_ENABLE([threads],
  [  --enable-threads        multi-threaded linking],
 diff --git a/ld/Makefile.am b/ld/Makefile.am
-index 010fb55..a6eacf0 100644
+index 010fb55..e9a34af 100644
 --- a/ld/Makefile.am
 +++ b/ld/Makefile.am
 @@ -95,7 +95,7 @@ CXX_FOR_TARGET = ` \
@@ -418,39 +442,43 @@ index 010fb55..a6eacf0 100644
    fi`
  
 -transform = s/^ld-new$$/ld/;@program_transform_name@
-+transform = s/^ld-new$$/ld.bfd/;@program_transform_name@
++transform = s/^ld-new$$/$(installed_linker)/;@program_transform_name@
  bin_PROGRAMS = ld-new
  info_TEXINFOS = ld.texinfo
  ld_TEXINFOS = configdoc.texi
-@@ -1992,11 +1992,21 @@ CLEANFILES = dep.sed DEP DEPA DEP1 DEP2 spu_ovl.s spu_ovl.o spu_icache.s spu_ica
+@@ -1990,13 +1990,24 @@ CLEANFILES = dep.sed DEP DEPA DEP1 DEP2 spu_ovl.s spu_ovl.o spu_icache.s spu_ica
  
- install-exec-local: ld-new$(EXEEXT)
+ .PHONY: install-exec-local install-data-local
+ 
+-install-exec-local: ld-new$(EXEEXT)
++install-exec-local: ld-new$(EXEEXT) install-binPROGRAMS
  	$(mkinstalldirs) $(DESTDIR)$(tooldir)/bin
 -	n=`echo ld | sed '$(transform)'`; \
 -	if [ "$(bindir)/$$n$(EXEEXT)" != "$(tooldir)/bin/ld$(EXEEXT)" ]; then \
 -	  rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 -	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
 -	  || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
-+	n=`echo ld.bfd | sed '$(transform)'`; \
-+	if [ "$(bindir)/$$n$(EXEEXT)" != "$(tooldir)/bin/ld.bfd$(EXEEXT)" ]; then \
-+	  rm -f $(DESTDIR)$(tooldir)/bin/ld.bfd$(EXEEXT); \
-+	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld.bfd$(EXEEXT) >/dev/null 2>/dev/null \
-+	  || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld.bfd$(EXEEXT); \
-+	fi
-+	if [ "x$(install_as_default)" != "xno" ]; then \
-+	  n=`echo ld | sed '$(transform)'`; \
-+	  if [ "$(bindir)/$$n$(EXEEXT)" != "$(tooldir)/bin/ld$(EXEEXT)" ]; then \
-+	    rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
-+	    ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
-+	    || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$$n$(EXEEXT); \
-+	    ln $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) $(DESTDIR)$(bindir)/$$n$(EXEEXT) >/dev/null 2>/dev/null \
-+	    || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
-+	  fi ; \
++	n=`echo $(installed_linker) | sed '$(transform)'`; \
++	if test "$(bindir)/$$n$(EXEEXT)" != "$(tooldir)/bin/$$n$(EXEEXT)"; then \
++	  rm -f $(DESTDIR)$(tooldir)/bin/$$n$(EXEEXT); \
++	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$$n$(EXEEXT) >/dev/null 2>/dev/null \
++	  || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$$n$(EXEEXT); \
++	fi; \
++	if test "x$(install_as_default)" = "xyes"; then \
++	  ld=`echo ld | sed '$(transform)'`; \
++	  rm -f $(DESTDIR)$(bindir)/$$ld$(EXEEXT); \
++	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(bindir)/$$ld$(EXEEXT) >/dev/null 2>/dev/null \
++	  || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$$ld$(EXEEXT); \
++	  if test "$(bindir)/$$ld$(EXEEXT)" != "$(tooldir)/bin/$$ld$(EXEEXT)"; then \
++	    rm -f $(DESTDIR)$(tooldir)/bin/$$ld$(EXEEXT); \
++	    ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$$ld$(EXEEXT) >/dev/null 2>/dev/null \
++	    || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$$ld$(EXEEXT); \
++	  fi; \
  	fi
  
  install-data-local:
 diff --git a/ld/Makefile.in b/ld/Makefile.in
-index 5bbb899..61f20a1 100644
+index 5bbb899..9e3fc27 100644
 --- a/ld/Makefile.in
 +++ b/ld/Makefile.in
 @@ -155,7 +155,7 @@ CTAGS = ctags
@@ -458,58 +486,65 @@ index 5bbb899..61f20a1 100644
  RUNTESTDEFAULTFLAGS = --tool $$tool --srcdir $$srcdir
  DIST_SUBDIRS = $(SUBDIRS)
 -transform = s/^ld-new$$/ld/;@program_transform_name@
-+transform = s/^ld-new$$/ld.bfd/;@program_transform_name@
++transform = s/^ld-new$$/$(installed_linker)/;@program_transform_name@
  ACLOCAL = @ACLOCAL@
  AMTAR = @AMTAR@
  AR = @AR@
-@@ -295,6 +295,7 @@ host_vendor = @host_vendor@
+@@ -295,7 +295,9 @@ host_vendor = @host_vendor@
  htmldir = @htmldir@
  includedir = @includedir@
  infodir = @infodir@
 +install_as_default = @install_as_default@
  install_sh = @install_sh@
++installed_linker = @installed_linker@
  libdir = @libdir@
  libexecdir = @libexecdir@
-@@ -3316,11 +3317,21 @@ mostlyclean-local:
+ localedir = @localedir@
+@@ -3314,13 +3316,24 @@ mostlyclean-local:
  
- install-exec-local: ld-new$(EXEEXT)
+ .PHONY: install-exec-local install-data-local
+ 
+-install-exec-local: ld-new$(EXEEXT)
++install-exec-local: ld-new$(EXEEXT) install-binPROGRAMS
  	$(mkinstalldirs) $(DESTDIR)$(tooldir)/bin
 -	n=`echo ld | sed '$(transform)'`; \
 -	if [ "$(bindir)/$$n$(EXEEXT)" != "$(tooldir)/bin/ld$(EXEEXT)" ]; then \
 -	  rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 -	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
 -	  || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
-+	n=`echo ld.bfd | sed '$(transform)'`; \
-+	if [ "$(bindir)/$$n$(EXEEXT)" != "$(tooldir)/bin/ld.bfd$(EXEEXT)" ]; then \
-+	  rm -f $(DESTDIR)$(tooldir)/bin/ld.bfd$(EXEEXT); \
-+	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld.bfd$(EXEEXT) >/dev/null 2>/dev/null \
-+	  || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld.bfd$(EXEEXT); \
-+	fi
-+	if [ "x$(install_as_default)" != "xno" ]; then \
-+	  n=`echo ld | sed '$(transform)'`; \
-+	  if [ "$(bindir)/$$n$(EXEEXT)" != "$(tooldir)/bin/ld$(EXEEXT)" ]; then \
-+	    rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
-+	    ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
-+	    || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$$n$(EXEEXT); \
-+	    ln $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) $(DESTDIR)$(bindir)/$$n$(EXEEXT) >/dev/null 2>/dev/null \
-+	    || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
-+	  fi ; \
++	n=`echo $(installed_linker) | sed '$(transform)'`; \
++	if test "$(bindir)/$$n$(EXEEXT)" != "$(tooldir)/bin/$$n$(EXEEXT)"; then \
++	  rm -f $(DESTDIR)$(tooldir)/bin/$$n$(EXEEXT); \
++	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$$n$(EXEEXT) >/dev/null 2>/dev/null \
++	  || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$$n$(EXEEXT); \
++	fi; \
++	if test "x$(install_as_default)" = "xyes"; then \
++	  ld=`echo ld | sed '$(transform)'`; \
++	  rm -f $(DESTDIR)$(bindir)/$$ld$(EXEEXT); \
++	  ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(bindir)/$$ld$(EXEEXT) >/dev/null 2>/dev/null \
++	  || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$$ld$(EXEEXT); \
++	  if test "$(bindir)/$$ld$(EXEEXT)" != "$(tooldir)/bin/$$ld$(EXEEXT)"; then \
++	    rm -f $(DESTDIR)$(tooldir)/bin/$$ld$(EXEEXT); \
++	    ln $(DESTDIR)$(bindir)/$$n$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$$ld$(EXEEXT) >/dev/null 2>/dev/null \
++	    || $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$$ld$(EXEEXT); \
++	  fi; \
  	fi
  
  install-data-local:
 diff --git a/ld/configure b/ld/configure
-index 1fa0395..b41c8fe 100755
+index 1fa0395..ed3da98 100755
 --- a/ld/configure
 +++ b/ld/configure
-@@ -657,6 +657,7 @@ WARN_CFLAGS
+@@ -657,6 +657,8 @@ WARN_CFLAGS
  EGREP
  GREP
  CPP
++installed_linker
 +install_as_default
  TARGET_SYSTEM_ROOT_DEFINE
  TARGET_SYSTEM_ROOT
  use_sysroot
-@@ -761,6 +762,7 @@ with_lib_path
+@@ -761,6 +763,7 @@ with_lib_path
  enable_targets
  enable_64_bit_bfd
  with_sysroot
@@ -517,15 +552,15 @@ index 1fa0395..b41c8fe 100755
  enable_got
  enable_werror
  enable_build_warnings
-@@ -1409,6 +1411,7 @@ Optional Features:
+@@ -1409,6 +1412,7 @@ Optional Features:
  			  (and sometimes confusing) to the casual installer
    --enable-targets        alternative target configurations
    --enable-64-bit-bfd     64-bit support (on hosts with narrower word sizes)
-+  --enable-gold[=ARG]     build gold [ARG={both}[[/{gold,ld}]]]
++  --enable-gold[=ARG]     build gold [ARG={both}[/{gold,ld}]]
    --enable-got=<type>     GOT handling scheme (target, single, negative,
                            multigot)
    --enable-werror         treat compile warnings as errors
-@@ -4164,6 +4167,25 @@ fi
+@@ -4164,6 +4168,29 @@ fi
  
  
  
@@ -534,66 +569,75 @@ index 1fa0395..b41c8fe 100755
 +  enableval=$enable_gold; case "${enableval}" in
 + yes|both/gold)
 +   install_as_default=no
++   installed_linker=ld.bfd
 +   ;;
 + both|both/ld)
 +   install_as_default=yes
++   installed_linker=ld.bfd
 +   ;;
 + *)
 +   as_fn_error "invalid --enable-gold argument" "$LINENO" 5
 +   ;;
 + esac
 +else
-+  install_as_default=yes
++  install_as_default=ld
++ installed_linker=ld
 +fi
++
 +
 +
 +
  # Check whether --enable-got was given.
  if test "${enable_got+set}" = set; then :
    enableval=$enable_got; case "${enableval}" in
-@@ -11587,7 +11609,7 @@ else
+@@ -11587,7 +11614,7 @@ else
    lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<_LT_EOF
 -#line 11590 "configure"
-+#line 11612 "configure"
++#line 11617 "configure"
  #include "confdefs.h"
  
  #if HAVE_DLFCN_H
-@@ -11693,7 +11715,7 @@ else
+@@ -11693,7 +11720,7 @@ else
    lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<_LT_EOF
 -#line 11696 "configure"
-+#line 11718 "configure"
++#line 11723 "configure"
  #include "confdefs.h"
  
  #if HAVE_DLFCN_H
 diff --git a/ld/configure.in b/ld/configure.in
-index 2abfba4..2a6504d 100644
+index 2abfba4..90baeca 100644
 --- a/ld/configure.in
 +++ b/ld/configure.in
-@@ -69,6 +69,24 @@ AC_SUBST(use_sysroot)
+@@ -69,6 +69,29 @@ AC_SUBST(use_sysroot)
  AC_SUBST(TARGET_SYSTEM_ROOT)
  AC_SUBST(TARGET_SYSTEM_ROOT_DEFINE)
  
 +dnl Use --enable-gold to decide if this linker should be the default.
 +dnl "install_as_default" is set to false if gold is the default linker.
++dnl "installed_linker" is the installed BFD linker name.
 +AC_ARG_ENABLE(gold,
-+[  --enable-gold[[=ARG]]     build gold [[ARG={both}[[/{gold,ld}]]]]],
++[[  --enable-gold[=ARG]     build gold [ARG={both}[/{gold,ld}]]]],
 +[case "${enableval}" in 
 + yes|both/gold)
 +   install_as_default=no
++   installed_linker=ld.bfd
 +   ;;
 + both|both/ld)
 +   install_as_default=yes
++   installed_linker=ld.bfd
 +   ;;
 + *)
 +   AC_MSG_ERROR([invalid --enable-gold argument])
 +   ;;
 + esac],
-+[install_as_default=yes])
++[install_as_default=ld
++ installed_linker=ld])
 +AC_SUBST(install_as_default)
++AC_SUBST(installed_linker)
 +
  AC_ARG_ENABLE([got],
  AS_HELP_STRING([--enable-got=<type>],
