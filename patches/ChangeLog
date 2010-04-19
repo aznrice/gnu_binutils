@@ -1,3 +1,10 @@
+2010-04-19  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-gold-9.patch: New file.  Properly install gold/ld
+	in $(tooldir)/bin.  Replace ...
+	* binutils-gold-8.patch: This.  Removed.
+	* README: Likewise.
+
 2010-04-09  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-gold-8.patch: Updated to properly install gold/ld.
