@@ -19,7 +19,7 @@ patches="
 	binutils-indirect-3.patch
 	binutils-shr-94.patch
 	ld-env-11.patch
-	binutils-error-9.patch
+	binutils-error-10.patch
 	binutils-signed-4.patch
 	binutils-weakdef-2.patch
 	bfd-64k-2.patch

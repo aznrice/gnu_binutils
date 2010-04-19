@@ -1,5 +1,11 @@
 2010-04-19  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-error-10.patch: New file. Replace ...
+	* binutils-error-9.patch: This. Removed.
+	* README: Likewise.
+
+2010-04-19  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-gold-9.patch: New file.  Properly install gold/ld
 	in $(tooldir)/bin.  Replace ...
 	* binutils-gold-8.patch: This.  Removed.
