@@ -4935,21 +4935,17 @@ template<bool big_endian>
 void
 Arm_input_section<big_endian>::set_final_data_size()
 {
-  // If this owns a stub table, finalize its data size as well.
+  off_t off = convert_types<off_t, uint64_t>(this->original_size_);
+
   if (this->is_stub_table_owner())
     {
-      uint64_t address = this->address();
-
       // The stub table comes after the original section contents.
-      address += this->original_size_;
-      address = align_address(address, this->stub_table_->addralign());
-      off_t offset = this->offset() + (address - this->address());
-      this->stub_table_->set_address_and_file_offset(address, offset);
-      address += this->stub_table_->data_size();
-      gold_assert(address == this->address() + this->current_data_size());
+      off = align_address(off, this->stub_table_->addralign());
+      this->stub_table_->set_address_and_file_offset(this->address() + off,
+						     this->offset() + off);
+      off += this->stub_table_->data_size();
     }
-
-  this->set_data_size(this->current_data_size());
+  this->set_data_size(off);
 }
 
 // Reset address and file offset.
@@ -5700,8 +5696,10 @@ Arm_output_section<big_endian>::fix_exidx_coverage(
 	  unsigned int text_shndx = exidx_input_section->link();
 	  gold_assert(symtab->is_section_folded(p->relobj(), text_shndx));
 
-	  // Remove this from link.
+	  // Remove this from link.  We also need to recount the
+	  // local symbols.
 	  p->relobj()->set_output_section(p->shndx(), NULL);
+	  arm_relobj->set_output_local_symbol_count_needs_update();
 	}
     }
     
