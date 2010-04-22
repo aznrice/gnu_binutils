@@ -1,3 +1,20 @@
+2010-04-21  Joseph Myers  <joseph@codesourcery.com>
+
+	* gas/tic6x/insns-c674x.s, gas/tic6x/insns-c674x.d: Also test
+	"b .S2 b3".
+
+2010-04-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11509
+	* gas/i386/equ.s: Add tests for ".equ symbol, reg + NUM".
+	* gas/i386/equ.d: Updated.
+
+2010-04-20  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/11507
+	* gas/macros/altmacro.s: New test.
+	* gas/macros/altmacro.d: Expected output.
+
 2010-04-16  Nick Clifton  <nickc@redhat.com>
 
 	PR gas/11395
