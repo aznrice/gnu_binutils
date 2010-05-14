@@ -1,3 +1,8 @@
+2010-05-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-exclude-1a.patch: New.
+	* README: Apply it.
+
 2010-04-27  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-gold-9.patch: Removed.

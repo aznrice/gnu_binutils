@@ -1,0 +1,473 @@
+bfd/
+
+2010-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11600
+	* elf.c (_bfd_elf_make_section_from_shdr): Handle SHF_EXCLUDE
+	(elf_fake_sections): Likewise.
+
+	* elf32-i370.c (i370_elf_section_from_shdr): Don't handle
+	SHF_EXCLUDE here.
+	* elf32-ppc.c (ppc_elf_fake_sections): Likewise.
+
+binutils/
+
+2010-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11600
+	* readelf.c (get_elf_section_flags): Treat SHF_EXCLUDE as a
+	generic flag.
+
+gas/
+
+2010-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11600
+	* obj-elf.c (obj_elf_change_section): Handle SHF_EXCLUDE.
+	(obj_elf_parse_section_letters): Likewise.
+	(obj_elf_section_word): Likewise.
+
+	* config/tc-ppc.c (ppc_section_letter): Removed.
+	(ppc_section_word): Likewise.
+	* config/tc-ppc.h (ppc_section_letter): Likewise.
+	(ppc_section_word): Likewise.
+	(md_elf_section_letter): Likewise.
+	(md_elf_section_word): Likewise.
+
+	* doc/as.texinfo: Document `e' and `#exclude'.
+
+gas/testsuite/
+
+2010-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11600
+	* gas/elf/elf.exp: Run section8.
+
+	* gas/elf/section8.d: New.
+	* gas/elf/section8.s: Likewise.
+
+
+include/elf/
+
+2010-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11600
+	* common.h (SHF_EXCLUDE): New.
+
+	* i370.h (SHF_EXCLUDE): Removed.
+	* or32.h (SHF_EXCLUDE): Likewise.
+	* ppc.h (SHF_EXCLUDE): Likewise.
+	* sparc.h (SHF_EXCLUDE): Likewise.
+
+ld/testsuite/
+
+2010-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11600
+	* ld-elf/exclude3.s: New.
+	* ld-elf/exclude3a.d: Likewise.
+	* ld-elf/exclude3b.d: Likewise.
+	* ld-elf/exclude3c.d: Likewise.
+
+diff --git a/bfd/elf.c b/bfd/elf.c
+index a5a24c5..0fa75d2 100644
+--- a/bfd/elf.c
++++ b/bfd/elf.c
+@@ -876,6 +876,8 @@ _bfd_elf_make_section_from_shdr (bfd *abfd,
+       return FALSE;
+   if ((hdr->sh_flags & SHF_TLS) != 0)
+     flags |= SEC_THREAD_LOCAL;
++  if ((hdr->sh_flags & SHF_EXCLUDE) != 0)
++    flags |= SEC_EXCLUDE;
+ 
+   if ((flags & SEC_ALLOC) == 0)
+     {
+@@ -2627,6 +2629,8 @@ elf_fake_sections (bfd *abfd, asection *asect, void *failedptrarg)
+ 	    }
+ 	}
+     }
++  if ((asect->flags & (SEC_GROUP | SEC_EXCLUDE)) == SEC_EXCLUDE)
++    this_hdr->sh_flags |= SHF_EXCLUDE;
+ 
+   /* Check for processor-specific section types.  */
+   sh_type = this_hdr->sh_type;
+diff --git a/bfd/elf32-i370.c b/bfd/elf32-i370.c
+index c419edd..ff0208e 100644
+--- a/bfd/elf32-i370.c
++++ b/bfd/elf32-i370.c
+@@ -375,9 +375,6 @@ i370_elf_section_from_shdr (bfd *abfd,
+ 
+   newsect = hdr->bfd_section;
+   flags = bfd_get_section_flags (abfd, newsect);
+-  if (hdr->sh_flags & SHF_EXCLUDE)
+-    flags |= SEC_EXCLUDE;
+-
+   if (hdr->sh_type == SHT_ORDERED)
+     flags |= SEC_SORT_ENTRIES;
+ 
+diff --git a/bfd/elf32-ppc.c b/bfd/elf32-ppc.c
+index 28274c4..1580599 100644
+--- a/bfd/elf32-ppc.c
++++ b/bfd/elf32-ppc.c
+@@ -1994,9 +1994,6 @@ ppc_elf_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
+ 		       Elf_Internal_Shdr *shdr,
+ 		       asection *asect)
+ {
+-  if ((asect->flags & (SEC_GROUP | SEC_EXCLUDE)) == SEC_EXCLUDE)
+-    shdr->sh_flags |= SHF_EXCLUDE;
+-
+   if ((asect->flags & SEC_SORT_ENTRIES) != 0)
+     shdr->sh_type = SHT_ORDERED;
+ 
+diff --git a/binutils/readelf.c b/binutils/readelf.c
+index 53699b2..bcb24c2 100644
+--- a/binutils/readelf.c
++++ b/binutils/readelf.c
+@@ -4152,8 +4152,9 @@ get_elf_section_flags (bfd_vma sh_flags)
+       /* 15 */ { STRING_COMMA_LEN ("VMS_VECTOR") },
+       /* 16 */ { STRING_COMMA_LEN ("VMS_ALLOC_64BIT") },
+       /* 17 */ { STRING_COMMA_LEN ("VMS_PROTECTED") },
+-      /* SPARC specific.  */
++      /* Generic.  */
+       /* 18 */ { STRING_COMMA_LEN ("EXCLUDE") },
++      /* SPARC specific.  */
+       /* 19 */ { STRING_COMMA_LEN ("ORDERED") }
+     };
+ 
+@@ -4185,6 +4186,7 @@ get_elf_section_flags (bfd_vma sh_flags)
+ 	    case SHF_OS_NONCONFORMING:	sindex = 7; break;
+ 	    case SHF_GROUP:		sindex = 8; break;
+ 	    case SHF_TLS:		sindex = 9; break;
++	    case SHF_EXCLUDE:		sindex = 18; break;
+ 
+ 	    default:
+ 	      sindex = -1;
+@@ -4218,9 +4220,7 @@ get_elf_section_flags (bfd_vma sh_flags)
+ 		case EM_SPARC32PLUS:
+ 		case EM_SPARCV9:
+ 		case EM_SPARC:
+-		  if (flag == SHF_EXCLUDE)
+-		    sindex = 18;
+-		  else if (flag == SHF_ORDERED)
++		  if (flag == SHF_ORDERED)
+ 		    sindex = 19;
+ 		  break;
+ 		default:
+@@ -4263,6 +4263,7 @@ get_elf_section_flags (bfd_vma sh_flags)
+ 	    case SHF_OS_NONCONFORMING:	*p = 'O'; break;
+ 	    case SHF_GROUP:		*p = 'G'; break;
+ 	    case SHF_TLS:		*p = 'T'; break;
++	    case SHF_EXCLUDE:		*p = 'E'; break;
+ 
+ 	    default:
+ 	      if ((elf_header.e_machine == EM_X86_64
+diff --git a/gas/config/obj-elf.c b/gas/config/obj-elf.c
+index 4bd4514..3ffe6e9 100644
+--- a/gas/config/obj-elf.c
++++ b/gas/config/obj-elf.c
+@@ -673,6 +673,7 @@ obj_elf_change_section (const char *name,
+ 	   | ((attr & SHF_EXECINSTR) ? SEC_CODE : 0)
+ 	   | ((attr & SHF_MERGE) ? SEC_MERGE : 0)
+ 	   | ((attr & SHF_STRINGS) ? SEC_STRINGS : 0)
++	   | ((attr & SHF_EXCLUDE) ? SEC_EXCLUDE: 0)
+ 	   | ((attr & SHF_TLS) ? SEC_THREAD_LOCAL : 0));
+ #ifdef md_elf_section_flags
+   flags = md_elf_section_flags (flags, attr, type);
+@@ -745,6 +746,9 @@ obj_elf_parse_section_letters (char *str, size_t len)
+ 	case 'a':
+ 	  attr |= SHF_ALLOC;
+ 	  break;
++	case 'e':
++	  attr |= SHF_EXCLUDE;
++	  break;
+ 	case 'w':
+ 	  attr |= SHF_WRITE;
+ 	  break;
+@@ -777,7 +781,7 @@ obj_elf_parse_section_letters (char *str, size_t len)
+ 	    }
+ 	default:
+ 	  {
+-	    char *bad_msg = _("unrecognized .section attribute: want a,w,x,M,S,G,T");
++	    char *bad_msg = _("unrecognized .section attribute: want a,e,w,x,M,S,G,T");
+ #ifdef md_elf_section_letter
+ 	    bfd_vma md_attr = md_elf_section_letter (*str, &bad_msg);
+ 	    if (md_attr > 0)
+@@ -834,6 +838,8 @@ obj_elf_section_word (char *str, size_t len, int *type)
+     return SHF_ALLOC;
+   if (len == 9 && strncmp (str, "execinstr", 9) == 0)
+     return SHF_EXECINSTR;
++  if (len == 7 && strncmp (str, "exclude", 7) == 0)
++    return SHF_EXCLUDE;
+   if (len == 3 && strncmp (str, "tls", 3) == 0)
+     return SHF_TLS;
+ 
+diff --git a/gas/config/tc-ppc.c b/gas/config/tc-ppc.c
+index 5b5be0a..4f604a1 100644
+--- a/gas/config/tc-ppc.c
++++ b/gas/config/tc-ppc.c
+@@ -3089,26 +3089,7 @@ ppc_macro (char *str, const struct powerpc_macro *macro)
+ }
+ 
+ #ifdef OBJ_ELF
+-/* For ELF, add support for SHF_EXCLUDE and SHT_ORDERED.  */
+-
+-bfd_vma
+-ppc_section_letter (int letter, char **ptr_msg)
+-{
+-  if (letter == 'e')
+-    return SHF_EXCLUDE;
+-
+-  *ptr_msg = _("Bad .section directive: want a,e,w,x,M,S,G,T in string");
+-  return -1;
+-}
+-
+-bfd_vma
+-ppc_section_word (char *str, size_t len)
+-{
+-  if (len == 7 && strncmp (str, "exclude", 7) == 0)
+-    return SHF_EXCLUDE;
+-
+-  return -1;
+-}
++/* For ELF, add support for SHT_ORDERED.  */
+ 
+ int
+ ppc_section_type (char *str, size_t len)
+@@ -3125,9 +3106,6 @@ ppc_section_flags (flagword flags, bfd_vma attr, int type)
+   if (type == SHT_ORDERED)
+     flags |= SEC_ALLOC | SEC_LOAD | SEC_SORT_ENTRIES;
+ 
+-  if (attr & SHF_EXCLUDE)
+-    flags |= SEC_EXCLUDE;
+-
+   return flags;
+ }
+ #endif /* OBJ_ELF */
+diff --git a/gas/config/tc-ppc.h b/gas/config/tc-ppc.h
+index be474bd..08f0aee 100644
+--- a/gas/config/tc-ppc.h
++++ b/gas/config/tc-ppc.h
+@@ -206,15 +206,11 @@ extern const char       ppc_symbol_chars[];
+ 
+ #ifdef OBJ_ELF
+ 
+-/* Support for SHF_EXCLUDE and SHT_ORDERED */
+-extern bfd_vma ppc_section_letter (int, char **);
++/* Support for SHT_ORDERED */
+ extern int ppc_section_type (char *, size_t);
+-extern bfd_vma ppc_section_word (char *, size_t);
+ extern int ppc_section_flags (flagword, bfd_vma, int);
+ 
+-#define md_elf_section_letter(LETTER, PTR_MSG)	ppc_section_letter (LETTER, PTR_MSG)
+ #define md_elf_section_type(STR, LEN)		ppc_section_type (STR, LEN)
+-#define md_elf_section_word(STR, LEN)		ppc_section_word (STR, LEN)
+ #define md_elf_section_flags(FLAGS, ATTR, TYPE)	ppc_section_flags (FLAGS, ATTR, TYPE)
+ 
+ #define tc_comment_chars ppc_comment_chars
+diff --git a/gas/doc/as.texinfo b/gas/doc/as.texinfo
+index 531c157..2febd58 100644
+--- a/gas/doc/as.texinfo
++++ b/gas/doc/as.texinfo
+@@ -5874,6 +5874,8 @@ combination of the following characters:
+ @table @code
+ @item a
+ section is allocatable
++@item e
++section is excluded from executable and shared object.
+ @item w
+ section is writable
+ @item x
+@@ -5971,6 +5973,8 @@ section is allocatable
+ section is writable
+ @item #execinstr
+ section is executable
++@item #exclude
++section is excluded from executable and shared object.
+ @item #tls
+ section is used for thread local storage
+ @end table
+diff --git a/gas/testsuite/gas/elf/elf.exp b/gas/testsuite/gas/elf/elf.exp
+index 05b5a4b..7c191ad 100644
+--- a/gas/testsuite/gas/elf/elf.exp
++++ b/gas/testsuite/gas/elf/elf.exp
+@@ -157,6 +157,7 @@ if { ([istarget "*-*-*elf*"]		
+ 
+     run_dump_test "section6" 
+     run_dump_test "section7" 
++    run_dump_test "section8" 
+     run_dump_test "dwarf2-1" 
+     run_dump_test "dwarf2-2" 
+     run_dump_test "dwarf2-3" 
+diff --git a/gas/testsuite/gas/elf/section8.d b/gas/testsuite/gas/elf/section8.d
+new file mode 100644
+index 0000000..0400745
+--- /dev/null
++++ b/gas/testsuite/gas/elf/section8.d
+@@ -0,0 +1,6 @@
++#readelf: -S --wide
++#name: section flags
++
++#...
++[ 	]*\[.*\][ 	]+\.foo1[ 	]+PROGBITS.*[ 	]+E[   ]+.*
++#pass
+diff --git a/gas/testsuite/gas/elf/section8.s b/gas/testsuite/gas/elf/section8.s
+new file mode 100644
+index 0000000..96cb7a8
+--- /dev/null
++++ b/gas/testsuite/gas/elf/section8.s
+@@ -0,0 +1,2 @@
++	.section .foo1,"e", %progbits
++	.byte 0,0,0,0
+diff --git a/include/elf/common.h b/include/elf/common.h
+index b2a6c73..76fdccf 100644
+--- a/include/elf/common.h
++++ b/include/elf/common.h
+@@ -502,6 +502,15 @@
+ #define SHF_MASKOS	0x0FF00000	/* New value, Oct 4, 1999 Draft */
+ #define SHF_MASKPROC	0xF0000000	/* Processor-specific semantics */
+ 
++/* This is used to be implememnted as a processor specific section flag.
++   We just make it generic.  */
++#define SHF_EXCLUDE	0x80000000	/* Link editor is to exclude
++					   this section from executable
++					   and shared object that it
++					   builds when those objects
++					   are not to be furhter
++					   relocated.  */
++
+ /* Values of note segment descriptor types for core files.  */
+ 
+ #define NT_PRSTATUS	1		/* Contains copy of prstatus struct */
+diff --git a/include/elf/i370.h b/include/elf/i370.h
+index 6229aab..7b451ff 100644
+--- a/include/elf/i370.h
++++ b/include/elf/i370.h
+@@ -36,14 +36,6 @@
+ 
+ #define	EF_I370_RELOCATABLE	0x00010000	/* i370 -mrelocatable flag */
+ #define	EF_I370_RELOCATABLE_LIB	0x00008000	/* i370 -mrelocatable-lib flag */
+-/* Processor specific section flags, sh_flags field */
+-
+-#define SHF_EXCLUDE		0x80000000	/* Link editor is to exclude \
+-						   this section from executable \
+-						   and shared objects that it \
+-						   builds when those objects \
+-						   are not to be furhter \
+-						   relocated.  */
+ 
+ /* i370 relocations
+    Note that there is really just one relocation that we currently
+diff --git a/include/elf/or32.h b/include/elf/or32.h
+index 256696b..9f1c2f3 100644
+--- a/include/elf/or32.h
++++ b/include/elf/or32.h
+@@ -53,11 +53,4 @@ END_RELOC_NUMBERS (R_OR32_max)
+ 						   specified in the associated \
+ 						   symbol table entry.  */
+ 
+-/* Processor specific section flags, sh_flags field */
+-#define SHF_EXCLUDE		0x80000000	/* Link editor is to exclude \
+-						   this section from executable \
+-						   and shared objects that it \
+-						   builds when those objects \
+-						   are not to be furhter \
+-						   relocated.  */
+ #endif /* _ELF_OR1K_H */
+diff --git a/include/elf/ppc.h b/include/elf/ppc.h
+index 230870d..688cb9b 100644
+--- a/include/elf/ppc.h
++++ b/include/elf/ppc.h
+@@ -174,15 +174,6 @@ END_RELOC_NUMBERS (R_PPC_max)
+ 						   specified in the associated \
+ 						   symbol table entry.  */
+ 
+-/* Processor specific section flags, sh_flags field.  */
+-
+-#define SHF_EXCLUDE		0x80000000	/* Link editor is to exclude \
+-						   this section from executable \
+-						   and shared objects that it \
+-						   builds when those objects \
+-						   are not to be furhter \
+-						   relocated.  */
+-
+ /* Object attribute tags.  */
+ enum
+ {
+diff --git a/include/elf/sparc.h b/include/elf/sparc.h
+index 762f3b5..4247151 100644
+--- a/include/elf/sparc.h
++++ b/include/elf/sparc.h
+@@ -51,7 +51,6 @@
+ 
+ /* Section flags.  */
+ 
+-#define SHF_EXCLUDE		0x80000000	/* exclude from linking */
+ #define SHF_ORDERED		0x40000000	/* treat sh_link,sh_info specially */
+ 
+ /* Symbol types.  */
+diff --git a/ld/testsuite/ld-elf/exclude3.s b/ld/testsuite/ld-elf/exclude3.s
+new file mode 100644
+index 0000000..475088f
+--- /dev/null
++++ b/ld/testsuite/ld-elf/exclude3.s
+@@ -0,0 +1,16 @@
++	.text
++	.type start,"function"
++	.global start
++start:
++	.type _start,"function"
++	.global _start
++_start:
++	.type __start,"function"
++	.global __start
++__start:
++	.type main,"function"
++	.global main
++main:
++	.long 0
++	.section .foo1,"e", %progbits
++	.byte 0,0,0,0
+diff --git a/ld/testsuite/ld-elf/exclude3a.d b/ld/testsuite/ld-elf/exclude3a.d
+new file mode 100644
+index 0000000..7343e45
+--- /dev/null
++++ b/ld/testsuite/ld-elf/exclude3a.d
+@@ -0,0 +1,10 @@
++#source: exclude3.s
++#ld:
++#readelf: -S --wide
++#target: x86_64-*-* i?86-*-* ia64-*-*
++
++#...
++[ 	]*\[.*\][ 	]+NULL.*
++[ 	]*\[.*\][ 	]+\.text[ 	]+PROGBITS.*
++[ 	]*\[.*\][ 	]+.*STRTAB.*
++#pass
+diff --git a/ld/testsuite/ld-elf/exclude3b.d b/ld/testsuite/ld-elf/exclude3b.d
+new file mode 100644
+index 0000000..f640449
+--- /dev/null
++++ b/ld/testsuite/ld-elf/exclude3b.d
+@@ -0,0 +1,9 @@
++#source: exclude3.s
++#ld: --shared
++#readelf: -S --wide
++#target: x86_64-*-* i?86-*-* ia64-*-*
++
++#...
++[ 	]*\[.*\][ 	]+\.got.*[ 	]+PROGBITS.*
++[ 	]*\[.*\][ 	]+.*STRTAB.*
++#pass
+diff --git a/ld/testsuite/ld-elf/exclude3c.d b/ld/testsuite/ld-elf/exclude3c.d
+new file mode 100644
+index 0000000..57311c8
+--- /dev/null
++++ b/ld/testsuite/ld-elf/exclude3c.d
+@@ -0,0 +1,7 @@
++#source: exclude3.s
++#ld: -r
++#readelf: -S --wide
++
++#...
++[ 	]*\[.*\][ 	]+\.foo1[ 	]+PROGBITS.*[ 	]+E[   ]+.*
++#pass

@@ -27,6 +27,7 @@ patches="
 	ld-needed-4.patch
 	binutils-group-10.patch
 	binutils-pr11137-1.patch
+	binutils-exclude-1a.patch
 "
 
 if [ -n "$clean" ]
