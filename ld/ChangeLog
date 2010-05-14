@@ -1,3 +1,18 @@
+2010-05-14  Alan Modra  <amodra@gmail.com>
+
+	PR ld/11583
+	* ldexp.c (exp_fold_tree_1): If assignment source expression is
+	invalid, make the destination symbol undefined.
+
+2010-05-11  Kai Tietz  <kai.tietz@onevision.com>
+
+	* emultempl/pe.em (gld_${EMULATION_NAME}_before_parse):
+	Initialize pe(p)_leading_underscore variable.
+	(set_pe_name): Likewise.
+	* emultempl/pep.em: Likewise.
+	Additional change default to non-underscore for
+	pep_leading_underscore equal to -1.
+
 2010-05-07  Tristan Gingold  <gingold@adacore.com>
 
 	* Makefile.in: Regenerate with automake 1.11.1.
