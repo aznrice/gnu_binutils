@@ -1,5 +1,11 @@
 2010-05-21  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-group-11.patch: New file. Replace ...
+	* binutils-group-10.patch: This.  Removed.
+	* README: Likewise.
+
+2010-05-21  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-exclude-1a.patch: Removed.
 	* README: Likewise.
 

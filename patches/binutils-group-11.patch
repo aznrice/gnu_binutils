@@ -27,6 +27,10 @@ gas/testsuite/
 	 * gas/i386/debug1.d: Likewise.
 	 * gas/i386/debug1.s: Likewise.
 
+	* gas/elf/elf.exp: Run dwarf2-1, dwarf2-2 and dwarf2-3.
+
+	* gas/i386/i386.exp: Run debug1 for both 32bit and 64bit.
+
 diff --git a/binutils/testsuite/binutils-all/objdump.W b/binutils/testsuite/binutils-all/objdump.W
 index aa1bd2c..5f65063 100644
 --- a/binutils/testsuite/binutils-all/objdump.W
@@ -69,7 +73,7 @@ index aa1bd2c..5f65063 100644
  
    Number TAG
 diff --git a/gas/dwarf2dbg.c b/gas/dwarf2dbg.c
-index 42d7267..ba479ee 100644
+index 4061c72..85c1f30 100644
 --- a/gas/dwarf2dbg.c
 +++ b/gas/dwarf2dbg.c
 @@ -1718,11 +1718,12 @@ dwarf2_init (void)
@@ -1017,13 +1021,13 @@ index 0000000..8c4b1e8
 +.LASF1:
 +	.string	"char"
 diff --git a/gas/testsuite/gas/elf/elf.exp b/gas/testsuite/gas/elf/elf.exp
-index e65d2cf..91d03e6 100644
+index 7c191ad..7e0c88c 100644
 --- a/gas/testsuite/gas/elf/elf.exp
 +++ b/gas/testsuite/gas/elf/elf.exp
-@@ -149,4 +149,7 @@ if { ([istarget "*-*-*elf*"]
- 
+@@ -158,4 +158,7 @@ if { ([istarget "*-*-*elf*"]
      run_dump_test "section6" 
      run_dump_test "section7" 
+     run_dump_test "section8" 
 +    run_dump_test "dwarf2-1" 
 +    run_dump_test "dwarf2-2" 
 +    run_dump_test "dwarf2-3" 
@@ -1092,10 +1096,10 @@ index 0000000..da623af
 +	nop
 +	nop
 diff --git a/gas/testsuite/gas/i386/i386.exp b/gas/testsuite/gas/i386/i386.exp
-index 9d5e957..7c5a69d 100644
+index ead1447..025ced2 100644
 --- a/gas/testsuite/gas/i386/i386.exp
 +++ b/gas/testsuite/gas/i386/i386.exp
-@@ -193,6 +193,7 @@ if [expr ([istarget "i*86-*-*"] ||  [istarget "x86_64-*-*"]) && [gas_32_check]]
+@@ -205,6 +205,7 @@ if [expr ([istarget "i*86-*-*"] ||  [istarget "x86_64-*-*"]) && [gas_32_check]]
  	run_dump_test "ifunc"
  	run_list_test "l1om-inval" "-march=l1om --32"
  	run_dump_test "localpic"
@@ -1103,7 +1107,7 @@ index 9d5e957..7c5a69d 100644
      }
  
      # This is a PE specific test.
-@@ -349,6 +350,7 @@ if [expr ([istarget "i*86-*-*"] || [istarget "x86_64-*-*"]) && [gas_64_check]] t
+@@ -382,6 +383,7 @@ if [expr ([istarget "i*86-*-*"] || [istarget "x86_64-*-*"]) && [gas_64_check]] t
  	run_dump_test "x86-64-ifunc"
  	run_dump_test "l1om"
  	run_dump_test "x86-64-localpic"
@@ -1111,8 +1115,3 @@ index 9d5e957..7c5a69d 100644
      }
  
      set ASFLAGS "$old_ASFLAGS"
-
-	* gas/elf/elf.exp: Run dwarf2-1, dwarf2-2 and dwarf2-3.
-
-	* gas/i386/i386.exp: Run debug1 for both 32bit and 64bit.
-
