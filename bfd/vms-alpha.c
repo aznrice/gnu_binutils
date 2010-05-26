@@ -21,15 +21,16 @@
    MA 02110-1301, USA.  */
 
 /* TODO:
-   o  DMT
+   o  overlayed sections
    o  PIC
    o  Generation of shared image
-   o  Generation of GST in image
    o  Relocation optimizations
    o  EISD for the stack
    o  Vectors isect
    o  64 bits sections
    o  Entry point
+   o  LIB$INITIALIZE
+   o  protected sections (for messages)
    ...
 */
 
@@ -167,11 +168,11 @@ struct vms_symbol_entry
   unsigned short flags;
 
   /* Section and offset/value of the symbol.  */
-  unsigned int section;
   unsigned int value;
+  asection *section;
 
   /* Section and offset/value for the entry point (only for subprg).  */
-  unsigned int code_section;
+  asection *code_section;
   unsigned int code_value;
 
   /* Symbol vector offset.  */
@@ -271,8 +272,11 @@ struct vms_private_data_struct
 
   struct hdr_struct hdr_data;		/* data from HDR/EMH record  */
   struct eom_struct eom_data;		/* data from EOM/EEOM record  */
-  unsigned int section_count;		/* # of sections in following array  */
-  asection **sections;			/* array of GSD/EGSD sections  */
+
+  /* Array of GSD sections to get the correspond BFD one.  */
+  unsigned int section_max; 		/* Size of the sections array.  */
+  unsigned int section_count;		/* Number of GSD sections.  */
+  asection **sections;
 
   /* Array of raw symbols.  */
   struct vms_symbol_entry **syms;
@@ -1040,23 +1044,12 @@ vms_esecflag_by_name (struct sec_flags_struct *section_flags,
   return section_flags[i].vflags_always;
 }
 
-/* Input routines.  */
+/* Add SYM to the symbol table of ABFD.
+   Return FALSE in case of error.  */
 
-static struct vms_symbol_entry *
-add_symbol (bfd *abfd, const unsigned char *ascic)
+static bfd_boolean
+add_symbol_entry (bfd *abfd, struct vms_symbol_entry *sym)
 {
-  struct vms_symbol_entry *entry;
-  int len;
-
-  len = *ascic++;
-  entry = (struct vms_symbol_entry *)bfd_zalloc (abfd, sizeof (*entry) + len);
-  if (entry == NULL)
-    return NULL;
-  entry->namelen = len;
-  memcpy (entry->name, ascic, len);
-  entry->name[len] = 0;
-  entry->owner = abfd;
-
   if (PRIV (gsd_sym_count) >= PRIV (max_sym_count))
     {
       if (PRIV (max_sym_count) == 0)
@@ -1073,17 +1066,40 @@ add_symbol (bfd *abfd, const unsigned char *ascic)
              (PRIV (max_sym_count) * sizeof (struct vms_symbol_entry *)));
         }
       if (PRIV (syms) == NULL)
-        return NULL;
+        return FALSE;
     }
 
-  PRIV (syms)[PRIV (gsd_sym_count)++] = entry;
+  PRIV (syms)[PRIV (gsd_sym_count)++] = sym;
+  return TRUE;
+}
+
+/* Create a symbol whose name is ASCIC and add it to ABFD.
+   Return NULL in case of error.  */
+
+static struct vms_symbol_entry *
+add_symbol (bfd *abfd, const unsigned char *ascic)
+{
+  struct vms_symbol_entry *entry;
+  int len;
+
+  len = *ascic++;
+  entry = (struct vms_symbol_entry *)bfd_zalloc (abfd, sizeof (*entry) + len);
+  if (entry == NULL)
+    return NULL;
+  entry->namelen = len;
+  memcpy (entry->name, ascic, len);
+  entry->name[len] = 0;
+  entry->owner = abfd;
+
+  if (!add_symbol_entry (abfd, entry))
+    return NULL;
   return entry;
 }
 
 /* Read and process EGSD.  Return FALSE on failure.  */
 
 static bfd_boolean
-_bfd_vms_slurp_egsd (bfd * abfd)
+_bfd_vms_slurp_egsd (bfd *abfd)
 {
   int gsd_type, gsd_size;
   asection *section;
@@ -1116,10 +1132,12 @@ _bfd_vms_slurp_egsd (bfd * abfd)
 	  {
 	    /* Program section definition.  */
             struct vms_egps *egps = (struct vms_egps *)vms_rec;
+
 	    name = _bfd_vms_save_counted_string (&egps->namlng);
 	    section = bfd_make_section (abfd, name);
 	    if (!section)
 	      return FALSE;
+
 	    old_flags = bfd_getl16 (egps->flags);
             vms_section_data (section)->flags = old_flags;
             vms_section_data (section)->no_flags = 0;
@@ -1141,6 +1159,23 @@ _bfd_vms_slurp_egsd (bfd * abfd)
 	    section->vma = (bfd_vma)base_addr;
 	    base_addr += section->size;
 	    section->filepos = (unsigned int)-1;
+
+            /* Append it to the section array.  */
+            if (PRIV (section_count) >= PRIV (section_max))
+              {
+                if (PRIV (section_max) == 0)
+                  PRIV (section_max) = 16;
+                else
+                  PRIV (section_max) *= 2;
+                PRIV (sections) = bfd_realloc_or_free
+                  (PRIV (sections), PRIV (section_max) * sizeof (asection *));
+                if (PRIV (sections) == NULL)
+                  return FALSE;
+              }
+
+            PRIV (sections)[PRIV (section_count)] = section;
+            PRIV (section_count)++;
+
 #if VMS_DEBUG
 	    vms_debug (4, "EGSD P-section %d (%s, flags %04x) ",
 		       section->index, name, old_flags);
@@ -1183,14 +1218,15 @@ _bfd_vms_slurp_egsd (bfd * abfd)
                 struct vms_esdf *esdf = (struct vms_esdf *)vms_rec;
 
 		entry->value = bfd_getl64 (esdf->value);
-		entry->section = bfd_getl32 (esdf->psindx);
+		entry->section = PRIV (sections)[bfd_getl32 (esdf->psindx)];
 
                 if (old_flags & EGSY__V_NORM)
                   {
                     PRIV (norm_sym_count)++;
 
                     entry->code_value = bfd_getl64 (esdf->code_address);
-                    entry->code_section = bfd_getl32 (esdf->ca_psindx);
+                    entry->code_section =
+                      PRIV (sections)[bfd_getl32 (esdf->ca_psindx)];
                   }
               }
 	  }
@@ -1219,7 +1255,11 @@ _bfd_vms_slurp_egsd (bfd * abfd)
 
             entry->symbol_vector = bfd_getl32 (egst->value);
 
-            entry->section = bfd_getl32 (egst->psindx);
+            if (old_flags & EGSY__V_REL)
+              entry->section = PRIV (sections)[bfd_getl32 (egst->psindx)];
+            else
+              entry->section = bfd_abs_section_ptr;
+
             entry->value = bfd_getl64 (egst->lp_2);
 
             if (old_flags & EGSY__V_NORM)
@@ -1227,7 +1267,7 @@ _bfd_vms_slurp_egsd (bfd * abfd)
                 PRIV (norm_sym_count)++;
 
                 entry->code_value = bfd_getl64 (egst->lp_1);
-                entry->code_section = 0;
+                entry->code_section = bfd_abs_section_ptr;
               }
           }
 	  break;
@@ -1592,7 +1632,8 @@ alpha_vms_sym_to_ctxt (struct alpha_vms_link_hash_entry *h)
         return RELC_SHR_BASE + PRIV2 (h->sym->owner, shr_index);
       else
         {
-          /* Can this happen ?  I'd like to see an example.  */
+          /* Can this happen (non-relocatable symg) ?  I'd like to see
+             an example.  */
           abort ();
         }
     }
@@ -1607,16 +1648,9 @@ alpha_vms_sym_to_ctxt (struct alpha_vms_link_hash_entry *h)
 }
 
 static bfd_vma
-alpha_vms_get_sym_value (unsigned int sect, bfd_vma addr,
-                         struct alpha_vms_link_hash_entry *h)
+alpha_vms_get_sym_value (asection *sect, bfd_vma addr)
 {
-  asection *s;
-
-  BFD_ASSERT (h && (h->root.type == bfd_link_hash_defined
-                    || h->root.type == bfd_link_hash_defweak));
-
-  s = PRIV2 (h->root.u.def.section->owner, sections)[sect];
-  return s->output_section->vma + s->output_offset + addr;
+  return sect->output_section->vma + sect->output_offset + addr;
 }
 
 static bfd_vma
@@ -1823,7 +1857,7 @@ _bfd_vms_slurp_etir (bfd *abfd, struct bfd_link_info *info)
               else
                 {
                   op1 = alpha_vms_get_sym_value (h->sym->section,
-                                                 h->sym->value, h);
+                                                 h->sym->value);
                   alpha_vms_add_qw_reloc (info);
                 }
             }
@@ -1847,7 +1881,7 @@ _bfd_vms_slurp_etir (bfd *abfd, struct bfd_link_info *info)
                   else
                     {
                       op1 = alpha_vms_get_sym_value (h->sym->code_section,
-                                                     h->sym->code_value, h);
+                                                     h->sym->code_value);
                       alpha_vms_add_qw_reloc (info);
                     }
                 }
@@ -1957,9 +1991,9 @@ _bfd_vms_slurp_etir (bfd *abfd, struct bfd_link_info *info)
               else
                 {
                   op1 = alpha_vms_get_sym_value (h->sym->code_section,
-                                                 h->sym->code_value, h);
+                                                 h->sym->code_value);
                   op2 = alpha_vms_get_sym_value (h->sym->section,
-                                                h->sym->value, h);
+                                                h->sym->value);
                 }
             }
           else
@@ -2902,6 +2936,8 @@ alpha_vms_write_exec (bfd *abfd)
   struct vms_internal_eisd_map *eisd;
   asection *dst;
   asection *dmt;
+  file_ptr gst_filepos = 0;
+  unsigned int lnkflags = 0;
 
   /* Build the EIHD.  */
   PRIV (file_pos) = EIHD__C_LENGTH;
@@ -2930,7 +2966,6 @@ alpha_vms_write_exec (bfd *abfd)
 
   bfd_putl32 ((sizeof (eihd) + VMS_BLOCK_SIZE - 1) / VMS_BLOCK_SIZE,
               eihd.hdrblkcnt);
-  bfd_putl32 (0, eihd.lnkflags);
   bfd_putl32 (0, eihd.ident);
   bfd_putl32 (0, eihd.sysver);
 
@@ -3075,6 +3110,7 @@ alpha_vms_write_exec (bfd *abfd)
       PRIV (file_pos) += sec->size;
     }
 
+  /* Update EIHS.  */
   if (eihs != NULL && dst != NULL)
     {
       bfd_putl32 ((dst->filepos / VMS_BLOCK_SIZE) + 1, eihs->dstvbn);
@@ -3082,8 +3118,16 @@ alpha_vms_write_exec (bfd *abfd)
 
       if (dmt != NULL)
         {
+          lnkflags |= EIHD__M_DBGDMT;
           bfd_putl32 ((dmt->filepos / VMS_BLOCK_SIZE) + 1, eihs->dmtvbn);
           bfd_putl32 (dmt->size, eihs->dmtsize);
+        }
+      if (PRIV (gsd_sym_count) != 0)
+        {
+          alpha_vms_file_position_block (abfd);
+          gst_filepos = PRIV (file_pos);
+          bfd_putl32 ((gst_filepos / VMS_BLOCK_SIZE) + 1, eihs->gstvbn);
+          bfd_putl32 ((PRIV (gsd_sym_count) + 4) / 5 + 4, eihs->gstsize);
         }
     }
 
@@ -3094,6 +3138,7 @@ alpha_vms_write_exec (bfd *abfd)
       (eisd, (struct vms_eisd *)((char *)&eihd + eisd->file_pos));
 
   /* Write first block.  */
+  bfd_putl32 (lnkflags, eihd.lnkflags);
   if (bfd_bwrite (&eihd, sizeof (eihd), abfd) != sizeof (eihd))
     return FALSE;
 
@@ -3145,6 +3190,68 @@ alpha_vms_write_exec (bfd *abfd)
         }
     }
 
+  /* Write GST.  */
+  if (gst_filepos != 0)
+    {
+      struct vms_rec_wr *recwr = &PRIV (recwr);
+      unsigned int i;
+
+      _bfd_vms_write_emh (abfd);
+      _bfd_vms_write_lmn (abfd, "GNU LD");
+
+      /* PSC for the absolute section.  */
+      _bfd_vms_output_begin (recwr, EOBJ__C_EGSD);
+      _bfd_vms_output_long (recwr, 0);
+      _bfd_vms_output_begin_subrec (recwr, EGSD__C_PSC);
+      _bfd_vms_output_short (recwr, 0);
+      _bfd_vms_output_short (recwr, EGPS__V_PIC | EGPS__V_LIB | EGPS__V_RD);
+      _bfd_vms_output_long (recwr, 0);
+      _bfd_vms_output_counted (recwr, ".$$ABS$$.");
+      _bfd_vms_output_end_subrec (recwr);
+      _bfd_vms_output_end (abfd, recwr);
+
+      for (i = 0; i < PRIV (gsd_sym_count); i++)
+        {
+          struct vms_symbol_entry *sym = PRIV (syms)[i];
+          char *hash;
+          bfd_vma val;
+          bfd_vma ep;
+
+          if ((i % 5) == 0)
+            {
+              _bfd_vms_output_alignment (recwr, 8);
+              _bfd_vms_output_begin (recwr, EOBJ__C_EGSD);
+              _bfd_vms_output_long (recwr, 0);
+            }
+          _bfd_vms_output_begin_subrec (recwr, EGSD__C_SYMG);
+          _bfd_vms_output_short (recwr, 0); /* Data type, alignment.  */
+          _bfd_vms_output_short (recwr, sym->flags);
+
+          if (sym->code_section)
+            ep = alpha_vms_get_sym_value (sym->code_section, sym->code_value);
+          else
+            {
+              BFD_ASSERT (sym->code_value == 0);
+              ep = 0;
+            }
+          val = alpha_vms_get_sym_value (sym->section, sym->value);
+          _bfd_vms_output_quad
+            (recwr, sym->typ == EGSD__C_SYMG ? sym->symbol_vector : val);
+	  _bfd_vms_output_quad (recwr, ep);
+	  _bfd_vms_output_quad (recwr, val);
+	  _bfd_vms_output_long (recwr, 0);
+          hash = _bfd_vms_length_hash_symbol (abfd, sym->name, EOBJ__C_SYMSIZ);
+          _bfd_vms_output_counted (recwr, hash);
+          _bfd_vms_output_end_subrec (recwr);
+          if ((i % 5) == 4)
+            _bfd_vms_output_end (abfd, recwr);
+        }
+      if ((i % 5) != 0)
+        _bfd_vms_output_end (abfd, recwr);
+
+      if (!_bfd_vms_write_eeom (abfd))
+        return FALSE;
+    }
   return TRUE;
 }
 
@@ -3210,10 +3317,11 @@ _bfd_vms_write_egsd (bfd *abfd)
 	}
 
       /* Don't know if this is necessary for the linker but for now it keeps
-	 vms_slurp_gsd happy  */
+	 vms_slurp_gsd happy.  */
       sname = (char *)section->name;
       if (*sname == '.')
 	{
+          /* Remove leading dot.  */
 	  sname++;
 	  if ((*sname == 't') && (strcmp (sname, "text") == 0))
 	    sname = EVAX_CODE_NAME;
@@ -3359,7 +3467,6 @@ done:
       _bfd_vms_output_counted (recwr, hash);
 
       _bfd_vms_output_end_subrec (recwr);
-
     }
 
   _bfd_vms_output_alignment (recwr, 8);
@@ -4609,7 +4716,7 @@ alpha_vms_convert_symbol (bfd *abfd, struct vms_symbol_entry *e, asymbol *sym)
           if (e->flags & EGSY__V_NORM)
             flags |= BSF_FUNCTION;
           value = e->value;
-          sec = PRIV (sections)[e->section];
+          sec = e->section;
         }
       else
         {
@@ -4635,35 +4742,9 @@ alpha_vms_convert_symbol (bfd *abfd, struct vms_symbol_entry *e, asymbol *sym)
       if (e->flags & EGSY__V_NORM)
         flags |= BSF_FUNCTION;
 
-      value = e->symbol_vector;
-
-      /* Adding this offset is necessary in order for GDB to
-         read the DWARF-2 debug info from shared libraries.  */
-      if ((abfd->flags & DYNAMIC) && strstr (name, "$DWARF2.DEBUG") != 0)
-        value += PRIV (symvva);
-
+      value = e->value;
+      /* sec = e->section; */
       sec = bfd_abs_section_ptr;
-#if 0
-      /* Find containing section.  */
-      {
-        bfd_vma sbase = 0;
-        asection *s;
-
-        for (s = abfd->sections; s; s = s->next)
-          {
-            if (value >= s->vma
-                && s->vma > sbase
-                && !(s->flags & SEC_COFF_SHARED_LIBRARY)
-                && (s->size > 0 || !(e->flags & EGSY__V_REL)))
-              {
-                sbase = s->vma;
-                sec = s;
-              }
-          }
-        value -= sbase;
-      }
-#endif
-
       break;
 
     default:
@@ -5470,43 +5551,18 @@ alpha_vms_get_synthetic_symtab (bfd *abfd,
       switch (e->typ)
         {
         case EGSD__C_SYM:
-          if ((e->flags & EGSY__V_DEF) && (e->flags & EGSY__V_NORM))
-            {
-              value = e->code_value;
-              sec = PRIV (sections)[e->code_section];
-            }
-          else
-            continue;
-          break;
-
         case EGSD__C_SYMG:
           if ((e->flags & EGSY__V_DEF) && (e->flags & EGSY__V_NORM))
             {
-              bfd_vma sbase = 0;
-              asection *s;
-
               value = e->code_value;
-
-              /* Find containing section.  */
-              for (s = abfd->sections; s; s = s->next)
-                {
-                  if (value >= s->vma
-                      && s->vma > sbase
-                      && !(s->flags & SEC_COFF_SHARED_LIBRARY)
-                      && (s->size > 0 || !(e->flags & EGSY__V_REL)))
-                    {
-                      sbase = s->vma;
-                      sec = s;
-                    }
-                }
-              value -= sbase;
+              sec = e->code_section;
             }
           else
             continue;
           break;
 
         default:
-          abort ();
+          continue;
         }
 
       l = strlen (name);
@@ -8440,6 +8496,80 @@ alpha_vms_build_fixups (struct bfd_link_info *info)
   return TRUE;
 }
 
+/* Called by bfd_link_hash_traverse to fill the symbol table.
+   Return FALSE in case of failure.  */
+
+static bfd_boolean
+alpha_vms_link_output_symbol (struct bfd_link_hash_entry *hc, void *infov)
+{
+  struct bfd_link_info *info = (struct bfd_link_info *)infov;
+  struct alpha_vms_link_hash_entry *h = (struct alpha_vms_link_hash_entry *)hc;
+  struct vms_symbol_entry *sym;
+
+  switch (h->root.type)
+    {
+    case bfd_link_hash_new:
+    case bfd_link_hash_undefined:
+      abort ();
+    case bfd_link_hash_undefweak:
+      return TRUE;
+    case bfd_link_hash_defined:
+    case bfd_link_hash_defweak:
+      {
+        asection *sec = h->root.u.def.section;
+
+        /* FIXME: this is certainly a symbol from a dynamic library.  */
+        if (bfd_is_abs_section (sec))
+          return TRUE;
+
+        if (sec->owner->flags & DYNAMIC)
+          return TRUE;
+      }
+      break;
+    case bfd_link_hash_common:
+      break;
+    case bfd_link_hash_indirect:
+    case bfd_link_hash_warning:
+      return TRUE;
+    }
+
+  /* Do not write not kept symbols.  */
+  if (info->strip == strip_some
+      && bfd_hash_lookup (info->keep_hash, h->root.root.string,
+                          FALSE, FALSE) != NULL)
+    return TRUE;
+
+  if (h->sym == NULL)
+    {
+      /* This symbol doesn't come from a VMS object.  So we suppose it is
+         a data.  */
+      int len = strlen (h->root.root.string);
+
+      sym = (struct vms_symbol_entry *)bfd_zalloc (info->output_bfd,
+                                                   sizeof (*sym) + len);
+      if (sym == NULL)
+        abort ();
+      sym->namelen = len;
+      memcpy (sym->name, h->root.root.string, len);
+      sym->name[len] = 0;
+      sym->owner = info->output_bfd;
+
+      sym->typ = EGSD__C_SYMG;
+      sym->data_type = 0;
+      sym->flags = EGSY__V_DEF | EGSY__V_REL;
+      sym->symbol_vector = h->root.u.def.value;
+      sym->section = h->root.u.def.section;
+      sym->value = h->root.u.def.value;
+    }
+  else
+    sym = h->sym;
+
+  if (!add_symbol_entry (info->output_bfd, sym))
+    return FALSE;
+
+  return TRUE;
+}
+
 static bfd_boolean
 alpha_vms_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 {
@@ -8493,6 +8623,11 @@ alpha_vms_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 	}
     }
 #endif
+
+  /* Generate the symbol table.  */
+  BFD_ASSERT (PRIV (syms) == NULL);
+  if (info->strip != strip_all)
+    bfd_link_hash_traverse (info->hash, alpha_vms_link_output_symbol, info);
 
   /* Find the entry point.  */
   if (bfd_get_start_address (abfd) == 0)
@@ -8566,11 +8701,13 @@ alpha_vms_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
   alpha_vms_link_hash (info)->base_addr = base_addr;
 
   /* Create the DMT section, if necessary.  */
-  dst = PRIV (dst_section);
+  BFD_ASSERT (PRIV (dst_section) == NULL);
+  dst = bfd_get_section_by_name (abfd, "$DST$");
   if (dst != NULL && dst->size == 0)
     dst = NULL;
   if (dst != NULL)
     {
+      PRIV (dst_section) = dst;
       dmt = bfd_make_section_anyway_with_flags
         (info->output_bfd, "$DMT$",
          SEC_DEBUGGING | SEC_HAS_CONTENTS | SEC_LINKER_CREATED);
@@ -8810,7 +8947,7 @@ vms_close_and_cleanup (bfd * abfd)
 	 format.  */
       if (bfd_cache_close (abfd) != TRUE)
 	return FALSE;
-      if (vms_convert_to_var_unix_filename (abfd->filename) != TRUE)
+      if (_bfd_vms_convert_to_var_unix_filename (abfd->filename) != TRUE)
 	return FALSE;
     }
 #endif
@@ -8825,27 +8962,10 @@ vms_new_section_hook (bfd * abfd, asection *section)
 {
   bfd_size_type amt;
 
-  /* Count hasn't been incremented yet.  */
-  unsigned int section_count = abfd->section_count + 1;
-
-  vms_debug2 ((1, "vms_new_section_hook (%p, [%d]%s), count %d\n",
-               abfd, section->index, section->name, section_count));
+  vms_debug2 ((1, "vms_new_section_hook (%p, [%d]%s)\n",
+               abfd, section->index, section->name));
 
   bfd_set_section_alignment (abfd, section, 0);
-
-  if (section_count > PRIV (section_count))
-    {
-      amt = section_count;
-      amt *= sizeof (asection *);
-      PRIV (sections) = bfd_realloc_or_free (PRIV (sections), amt);
-      if (PRIV (sections) == NULL)
-	return FALSE;
-      PRIV (section_count) = section_count;
-    }
-
-  vms_debug2 ((6, "section_count: %d\n", PRIV (section_count)));
-
-  PRIV (sections)[section->index] = section;
 
   vms_debug2 ((7, "%d: %s\n", section->index, section->name));
 
@@ -8853,9 +8973,6 @@ vms_new_section_hook (bfd * abfd, asection *section)
   section->used_by_bfd = (PTR) bfd_zalloc (abfd, amt);
   if (section->used_by_bfd == NULL)
     return FALSE;
-
-  if (strcmp (bfd_get_section_name (abfd, section), "$DST$") == 0)
-    PRIV (dst_section) = section;
 
   /* Create the section symbol.  */
   return _bfd_generic_new_section_hook (abfd, section);
@@ -8924,7 +9041,7 @@ vms_get_symbol_info (bfd * abfd ATTRIBUTE_UNUSED,
   if (ret == NULL)
     return;
 
-  if (sec == 0)
+  if (sec == NULL)
     ret->type = 'U';
   else if (bfd_is_com_section (sec))
     ret->type = 'C';
