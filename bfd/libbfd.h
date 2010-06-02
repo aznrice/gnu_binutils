@@ -381,7 +381,7 @@ extern symindex _bfd_vms_lib_find_symbol (bfd *, const char *);
 extern bfd *_bfd_vms_lib_get_imagelib_file (bfd *);
 extern const bfd_target *_bfd_vms_lib_alpha_archive_p (bfd *abfd);
 extern const bfd_target *_bfd_vms_lib_ia64_archive_p (bfd *abfd);
-extern bfd_boolean _bfd_vms_lib_mkarchive (bfd *abfd);
+extern bfd_boolean _bfd_vms_lib_alpha_mkarchive (bfd *abfd);
 
 /* Routines to use for BFD_JUMP_TABLE_SYMBOLS where there is no symbol
    support.  Use BFD_JUMP_TABLE_SYMBOLS (_bfd_nosymbols).  */
@@ -2242,12 +2242,12 @@ bfd_boolean bfd_generic_merge_sections
    (bfd *, struct bfd_link_info *);
 
 bfd_byte *bfd_generic_get_relocated_section_contents
-   (bfd *abfd,
-    struct bfd_link_info *link_info,
-    struct bfd_link_order *link_order,
-    bfd_byte *data,
-    bfd_boolean relocatable,
-    asymbol **symbols);
+   (bfd *,
+    struct bfd_link_info *,
+    struct bfd_link_order *,
+    bfd_byte *,
+    bfd_boolean,
+    asymbol **);
 
 /* Extracted from archures.c.  */
 extern const bfd_arch_info_type bfd_default_arch_struct;
