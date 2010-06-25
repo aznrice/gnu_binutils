@@ -2109,6 +2109,23 @@ class Target_arm : public Sized_target<32, big_endian>
       fix_cortex_a8_(false), cortex_a8_relocs_info_()
   { }
 
+  // Virtual function which is set to return true by a target if
+  // it can use relocation types to determine if a function's
+  // pointer is taken.
+  virtual bool
+  can_check_for_function_pointers() const
+  { return true; }
+
+  // Whether a section called SECTION_NAME may have function pointers to
+  // sections not eligible for safe ICF folding.
+  virtual bool
+  section_may_have_icf_unsafe_pointers(const char* section_name) const
+  {
+    return (!is_prefix_of(".ARM.exidx", section_name)
+	    && !is_prefix_of(".ARM.extab", section_name)
+	    && Target::section_may_have_icf_unsafe_pointers(section_name));
+  }
+  
   // Whether we can use BLX.
   bool
   may_use_blx() const
@@ -2474,8 +2491,7 @@ class Target_arm : public Sized_target<32, big_endian>
   	          			Output_section* ,
 	          			const elfcpp::Rel<32, big_endian>& ,
 					unsigned int ,
- 	          			const elfcpp::Sym<32, big_endian>&)
-    { return false; }
+ 	          			const elfcpp::Sym<32, big_endian>&);
 
     inline bool
     global_reloc_may_be_function_pointer(Symbol_table* , Layout* , Target_arm* ,
@@ -2483,8 +2499,7 @@ class Target_arm : public Sized_target<32, big_endian>
 	           			 unsigned int ,
 	           			 Output_section* ,
 	           			 const elfcpp::Rel<32, big_endian>& ,
-					 unsigned int , Symbol*)
-    { return false; }
+					 unsigned int , Symbol*);
 
    private:
     static void
@@ -2514,6 +2529,9 @@ class Target_arm : public Sized_target<32, big_endian>
 		  || sym->is_undefined()
 		  || sym->is_preemptible()));
     }
+
+    inline bool
+    possible_function_pointer_reloc(unsigned int r_type);
 
     // Whether we have issued an error about a non-PIC compilation.
     bool issued_non_pic_error_;
@@ -7688,6 +7706,72 @@ Target_arm<big_endian>::Scan::unsupported_reloc_global(
 	     object->name().c_str(), r_type, gsym->demangled_name().c_str());
 }
 
+template<bool big_endian>
+inline bool
+Target_arm<big_endian>::Scan::possible_function_pointer_reloc(
+    unsigned int r_type)
+{
+  switch (r_type)
+    {
+    case elfcpp::R_ARM_PC24:
+    case elfcpp::R_ARM_THM_CALL:
+    case elfcpp::R_ARM_PLT32:
+    case elfcpp::R_ARM_CALL:
+    case elfcpp::R_ARM_JUMP24:
+    case elfcpp::R_ARM_THM_JUMP24:
+    case elfcpp::R_ARM_SBREL31:
+    case elfcpp::R_ARM_PREL31:
+    case elfcpp::R_ARM_THM_JUMP19:
+    case elfcpp::R_ARM_THM_JUMP6:
+    case elfcpp::R_ARM_THM_JUMP11:
+    case elfcpp::R_ARM_THM_JUMP8:
+      // All the relocations above are branches except SBREL31 and PREL31.
+      return false;
+
+    default:
+      // Be conservative and assume this is a function pointer.
+      return true;
+    }
+}
+
+template<bool big_endian>
+inline bool
+Target_arm<big_endian>::Scan::local_reloc_may_be_function_pointer(
+  Symbol_table*,
+  Layout*,
+  Target_arm<big_endian>* target,
+  Sized_relobj<32, big_endian>*,
+  unsigned int,
+  Output_section*,
+  const elfcpp::Rel<32, big_endian>&,
+  unsigned int r_type,
+  const elfcpp::Sym<32, big_endian>&)
+{
+  r_type = target->get_real_reloc_type(r_type);
+  return possible_function_pointer_reloc(r_type);
+}
+
+template<bool big_endian>
+inline bool
+Target_arm<big_endian>::Scan::global_reloc_may_be_function_pointer(
+  Symbol_table*,
+  Layout*,
+  Target_arm<big_endian>* target,
+  Sized_relobj<32, big_endian>*,
+  unsigned int,
+  Output_section*,
+  const elfcpp::Rel<32, big_endian>&,
+  unsigned int r_type,
+  Symbol* gsym)
+{
+  // GOT is not a function.
+  if (strcmp(gsym->name(), "_GLOBAL_OFFSET_TABLE_") == 0)
+    return false;
+
+  r_type = target->get_real_reloc_type(r_type);
+  return possible_function_pointer_reloc(r_type);
+}
+
 // Scan a relocation for a global symbol.
 
 template<bool big_endian>
@@ -8101,6 +8185,7 @@ Target_arm<big_endian>::do_finalize_sections(
     const Input_objects* input_objects,
     Symbol_table* symtab)
 {
+  bool merged_any_attributes = false;
   // Merge processor-specific flags.
   for (Input_objects::Relobj_iterator p = input_objects->relobj_begin();
        p != input_objects->relobj_end();
@@ -8115,6 +8200,7 @@ Target_arm<big_endian>::do_finalize_sections(
 	      arm_relobj->processor_specific_flags());
 	  this->merge_object_attributes(arm_relobj->name().c_str(),
 					arm_relobj->attributes_section_data());
+	  merged_any_attributes = true;
 	}
     } 
 
@@ -8129,6 +8215,7 @@ Target_arm<big_endian>::do_finalize_sections(
 	  arm_dynobj->processor_specific_flags());
       this->merge_object_attributes(arm_dynobj->name().c_str(),
 				    arm_dynobj->attributes_section_data());
+      merged_any_attributes = true;
     }
 
   // Create an empty uninitialized attribute section if we still don't have it
@@ -8210,9 +8297,9 @@ Target_arm<big_endian>::do_finalize_sections(
 	}
     }
 
-  // Create an .ARM.attributes section unless we have no regular input
-  // object.  In that case the output will be empty.
-  if (input_objects->number_of_relobjs() != 0)
+  // Create an .ARM.attributes section if we have merged any attributes
+  // from inputs.
+  if (merged_any_attributes)
     {
       Output_attributes_section_data* attributes_section =
       new Output_attributes_section_data(*this->attributes_section_data_);
@@ -9394,7 +9481,8 @@ Target_arm<big_endian>::are_eabi_versions_compatible(
 {
   // v4 and v5 are the same spec before and after it was released,
   // so allow mixing them.
-  if ((v1 == elfcpp::EF_ARM_EABI_VER4 && v2 == elfcpp::EF_ARM_EABI_VER5)
+  if ((v1 == elfcpp::EF_ARM_EABI_UNKNOWN || v2 == elfcpp::EF_ARM_EABI_UNKNOWN)
+      || (v1 == elfcpp::EF_ARM_EABI_VER4 && v2 == elfcpp::EF_ARM_EABI_VER5)
       || (v1 == elfcpp::EF_ARM_EABI_VER5 && v2 == elfcpp::EF_ARM_EABI_VER4))
     return true;
 
