@@ -4844,7 +4844,7 @@ ppc64_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 {
   struct ppc_link_hash_table *htab;
   Elf_Internal_Shdr *symtab_hdr;
-  struct elf_link_hash_entry **sym_hashes, **sym_hashes_end;
+  struct elf_link_hash_entry **sym_hashes;
   const Elf_Internal_Rela *rel;
   const Elf_Internal_Rela *rel_end;
   asection *sreloc;
@@ -4874,12 +4874,7 @@ ppc64_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
   dottga = elf_link_hash_lookup (&htab->elf, ".__tls_get_addr",
 				 FALSE, FALSE, TRUE);
   symtab_hdr = &elf_symtab_hdr (abfd);
-
   sym_hashes = elf_sym_hashes (abfd);
-  sym_hashes_end = (sym_hashes
-		    + symtab_hdr->sh_size / sizeof (Elf64_External_Sym)
-		    - symtab_hdr->sh_info);
-
   sreloc = NULL;
   opd_sym_map = NULL;
   if (strcmp (sec->name, ".opd") == 0)
@@ -6694,6 +6689,7 @@ get_tls_mask (unsigned char **tls_maskp,
 
   if ((*tls_maskp != NULL && **tls_maskp != 0)
       || sec == NULL
+      || ppc64_elf_section_data (sec) == NULL
       || ppc64_elf_section_data (sec)->sec_type != sec_toc)
     return 1;
 
@@ -6926,7 +6922,6 @@ ppc64_elf_edit_opd (struct bfd_link_info *info, bfd_boolean non_overlapping)
       Elf_Internal_Rela *relstart, *rel, *relend;
       Elf_Internal_Shdr *symtab_hdr;
       Elf_Internal_Sym *local_syms;
-      struct elf_link_hash_entry **sym_hashes;
       bfd_vma offset;
       struct _opd_sec_data *opd;
       bfd_boolean need_edit, add_aux_fields;
@@ -6951,7 +6946,6 @@ ppc64_elf_edit_opd (struct bfd_link_info *info, bfd_boolean non_overlapping)
 
       local_syms = NULL;
       symtab_hdr = &elf_symtab_hdr (ibfd);
-      sym_hashes = elf_sym_hashes (ibfd);
 
       /* Read the relocations.  */
       relstart = _bfd_elf_link_read_relocs (ibfd, sec, NULL, NULL,
@@ -7912,7 +7906,6 @@ ppc64_elf_edit_toc (struct bfd_link_info *info)
       asection *toc, *sec;
       Elf_Internal_Shdr *symtab_hdr;
       Elf_Internal_Sym *local_syms;
-      struct elf_link_hash_entry **sym_hashes;
       Elf_Internal_Rela *relstart, *rel;
       unsigned long *skip, *drop;
       unsigned char *used;
@@ -7930,7 +7923,6 @@ ppc64_elf_edit_toc (struct bfd_link_info *info)
 
       local_syms = NULL;
       symtab_hdr = &elf_symtab_hdr (ibfd);
-      sym_hashes = elf_sym_hashes (ibfd);
 
       /* Look at sections dropped from the final link.  */
       skip = NULL;
@@ -8047,13 +8039,21 @@ ppc64_elf_edit_toc (struct bfd_link_info *info)
 			      r_symndx, ibfd))
 		goto error_ret;
 
-	      if (!SYMBOL_REFERENCES_LOCAL (info, h))
+	      if (!SYMBOL_CALLS_LOCAL (info, h))
 		continue;
 
 	      if (h != NULL)
-		val = h->root.u.def.value;
+		{
+		  if (h->type == STT_GNU_IFUNC)
+		    continue;
+		  val = h->root.u.def.value;
+		}
 	      else
-		val = sym->st_value;
+		{
+		  if (ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC)
+		    continue;
+		  val = sym->st_value;
+		}
 	      val += rel->r_addend;
 	      val += sym_sec->output_section->vma + sym_sec->output_offset;
 
@@ -10675,7 +10675,8 @@ group_sections (struct ppc_link_hash_table *htab,
 
 	  curr = tail;
 	  total = tail->size;
-	  big_sec = total > (ppc64_elf_section_data (tail)->has_14bit_branch
+	  big_sec = total > (ppc64_elf_section_data (tail) != NULL
+			     && ppc64_elf_section_data (tail)->has_14bit_branch
 			     ? stub14_group_size : stub_group_size);
 	  if (big_sec && !suppress_size_errors)
 	    (*_bfd_error_handler) (_("%B section %A exceeds stub group size"),
@@ -10684,7 +10685,8 @@ group_sections (struct ppc_link_hash_table *htab,
 
 	  while ((prev = PREV_SEC (curr)) != NULL
 		 && ((total += curr->output_offset - prev->output_offset)
-		     < (ppc64_elf_section_data (prev)->has_14bit_branch
+		     < (ppc64_elf_section_data (prev) != NULL
+			&& ppc64_elf_section_data (prev)->has_14bit_branch
 			? stub14_group_size : stub_group_size))
 		 && htab->stub_group[prev->id].toc_off == curr_toc)
 	    curr = prev;
@@ -10717,7 +10719,8 @@ group_sections (struct ppc_link_hash_table *htab,
 	      total = 0;
 	      while (prev != NULL
 		     && ((total += tail->output_offset - prev->output_offset)
-			 < (ppc64_elf_section_data (prev)->has_14bit_branch
+			 < (ppc64_elf_section_data (prev) != NULL
+			    && ppc64_elf_section_data (prev)->has_14bit_branch
 			    ? stub14_group_size : stub_group_size))
 		     && htab->stub_group[prev->id].toc_off == curr_toc)
 		{
@@ -12372,7 +12375,7 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 		    if (!WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, info->shared,
 							  &h->elf)
 			|| (info->shared
-			    && SYMBOL_REFERENCES_LOCAL (info, &h->elf)))
+			    && SYMBOL_CALLS_LOCAL (info, &h->elf)))
 		      /* This is actually a static link, or it is a
 			 -Bsymbolic link and the symbol is defined
 			 locally, or the symbol was forced to be local
@@ -12749,7 +12752,7 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 
 	      if (skip)
 		memset (&outrel, 0, sizeof outrel);
-	      else if (!SYMBOL_REFERENCES_LOCAL (info, &h->elf)
+	      else if (!SYMBOL_CALLS_LOCAL (info, &h->elf)
 		       && !is_opd
 		       && r_type != R_PPC64_TOC)
 		outrel.r_info = ELF64_R_INFO (h->elf.dynindx, r_type);

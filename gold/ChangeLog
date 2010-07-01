@@ -1,3 +1,22 @@
+2010-06-29  Doug Kwan  <dougkwan@google.com>
+
+	* arm-reloc-property.cc (Arm_reloc_property::Arm_reloc_property):
+	Initialize USE_SYMBOL_.
+	* arm-reloc-property.h (Arm_reloc_property::uses_symbol): New method
+	definition.
+	(Arm_reloc_property::uses_symbol_): New data member declaration.
+	* arm.cc (Target_arm::Relocate::relocate): Exit early if relocation
+	uses symbol value and symbol is undefined but not weakly undefined.
+
+2010-06-28  Rafael Espindola  <espindola@google.com>
+
+	* plugin.cc (Plugin::load): Use dlerror.
+
+2010-06-26  Jeffrey Yaskin  <jyasskin@google.com>
+
+	* symtab.cc (detect_odr_violations): When reporting an ODR
+	violation, report an object where the symbol is defined.
+
 2010-06-25  Doug Kwan  <dougkwan@google.com>
 
 	* arm.cc (Target_arm::can_check_for_functions_pointers): Return true.
