@@ -1,3 +1,65 @@
+2010-07-13  Rafael Espindola  <espindola@google.com>
+
+	* fileread.cc (try_extra_search_path, find_file): Move to Input_file.
+	* fileread.h (Input_file): Add try_extra_search_path and find_file.
+
+2010-07-13  Philip Herron  <herron.philip@googlemail.com>
+	    Ian Lance Taylor  <iant@google.com>
+
+	* output.h (Output_section_lookup_maps::add_merge_section):
+	Correct check of whether value was inserted.
+	(Output_section_lookup_maps::add_merge_input_section): Likewise.
+	(Output_section_lookup_maps::add_relaxed_input_section):
+	Likewise.
+	* arm.cc (Target_arm::got_section): Remove used local os.
+	* i386.cc (Target_i386::got_section): Likewise.
+	* x86_64.cc (Target_x86_64::got_section): Likewise.
+	* sparc.cc (Target_sparc::got_section): Likewise.
+	(Target_sparc::relocate): Remove unused local have_got_offset.
+	* powerpc.cc (Target_powerpc::relocate): Likewise.
+
+2010-07-13  Ian Lance Taylor  <iant@google.com>
+
+	* compressed_output.cc (zlib_decompress): Fix signature in
+	!HAVE_ZLIB_H case.
+
+	* archive.cc (Archive::include_member): Unlock an external member
+	of a thin archive.  Don't bother to delete an object we know is
+	NULL.
+
+2010-07-12  Cary Coutant  <ccoutant@google.com>
+
+	* compressed_output.cc (zlib_decompress): New function.
+	(get_uncompressed_size): New function.
+	(decompress_input_section): New function.
+	* compressed_output.h (get_uncompressed_size): New function.
+	(decompress_input_section): New function.
+	* dwarf_reader.cc (Sized_dwarf_line_info::Sized_dwarf_line_info)
+	Handle compressed debug sections.
+	* layout.cc (is_compressed_debug_section): New function.
+	(Layout::output_section_name): Map compressed section names to
+	canonical names.
+	* layout.h (is_compressed_debug_section): New function.
+	(is_debug_info_section): Recognize compressed debug sections.
+	* merge.cc: Include compressed_output.h.
+	(Output_merge_data::do_add_input_section): Handle compressed
+	debug sections.
+	(Output_merge_string::do_add_input_section): Handle compressed
+	debug sections.
+	* object.cc: Include compressed_output.h.
+	(Sized_relobj::Sized_relobj): Initialize new data members.
+	(build_compressed_section_map): New function.
+	(Sized_relobj::do_read_symbols): Handle compressed debug sections.
+	* object.h (Object::section_is_compressed): New method.
+	(Object::do_section_is_compressed): New method.
+	(Sized_relobj::Compressed_section_map): New type.
+	(Sized_relobj::do_section_is_compressed): New method.
+	(Sized_relobj::compressed_sections_): New data member.
+	* output.cc (Output_section::add_input_section): Handle compressed
+	debug sections.
+	* reloc.cc: Include compressed_output.h.
+	(Sized_relobj::write_sections): Handle compressed debug sections.
+
 2010-07-08  Cary Coutant  <ccoutant@google.com>
 
 	* resolve.cc (Symbol_table::resolve): Remember whether undef was
