@@ -1,0 +1,2949 @@
+bfd/
+
+2010-07-22  H.J. Lu  <hongjiu.lu@intel.com>
+	    Cary Coutant  <ccoutant@google.com>
+
+	* archive.c (bfd_openr_next_archived_file): Copy BFD_COMPRESS
+	and BFD_DECOMPRESS.
+
+	* bfd.c (BFD_COMPRESS): New.
+	(BFD_DECOMPRESS): Likewise.
+	(BFD_FLAGS_SAVED): Likewise.
+	(bfd_preserve_save): Replace BFD_IN_MEMORY with BFD_FLAGS_SAVED.
+
+	* compress.c (bfd_uncompress_section_contents): Removed.
+	(get_uncompressed_size): New.
+	(decompress_contents): Likewise.
+	(bfd_compress_section_contents): Likewise.
+	(bfd_get_full_section_contents): Likewise.
+	(bfd_is_section_compressed): Likewise.
+	(bfd_init_section_decompress_status): Likewise.
+	(bfd_init_section_compress_status): Likewise.
+
+	* dwarf2.c (dwarf_debug_sections): New.
+	(dwarf_debug_section_enum): Likewise.
+	(read_section): Remove section_name and compressed_section_name.
+	Add dwarf_debug_section_enum.  Try compressed debug section.
+	(read_indirect_string): Updated.
+	(read_abbrevs): Likewise.
+	(decode_line_info): Likewise.
+	(read_debug_ranges): Likewise.
+	(find_line): Updated.
+
+	* ecoff.c (bfd_debug_section): Add compress_status and
+	compressed_size.
+
+	* elf.c (_bfd_elf_make_section_from_shdr): Call
+	bfd_is_section_compressed to check if a DWARF debug section is
+	compressed.  Call bfd_init_section_compress_status or
+	bfd_init_section_decompress_status if needed.
+
+	* elflink.c (elf_link_input_bfd): Replace bfd_get_section_contents
+	with bfd_get_full_section_contents.
+	* merge.c (_bfd_add_merge_section): Likewise.
+	* reloc.c (bfd_generic_get_relocated_section_contents): Likewise.
+	* simple.c (bfd_simple_get_relocated_section_contents): Likewise.
+
+	* elfxx-target.h (TARGET_BIG_SYM): Allow BFD_COMPRESS and
+	BFD_DECOMPRESS.
+	(TARGET_LITTLE_SYM): Likewise.
+
+	* libbfd-in.h (dwarf_debug_section): New.
+	(dwarf_debug_sections): Likewise.
+
+	* libbfd.c (_bfd_generic_get_section_contents): Issue an error
+	when getting contents on compressed/decompressed section.
+
+	* section.c (COMPRESS_SECTION_NONE): New.
+	(COMPRESS_SECTION_DONE): Likewise.
+	(DECOMPRESS_SECTION_SIZED): Likewise.
+	(BFD_FAKE_SECTION): Add compress_status and compressed_size.
+	(bfd_malloc_and_get_section): Replace bfd_get_section_contents
+	with bfd_get_full_section_contents.
+
+	* bfd-in2.h: Regenerated.
+	* libbfd.h: Likewise.
+
+binutils/
+
+2010-07-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* addr2line.c (process_file): Set BFD_DECOMPRESS.
+
+	* objcopy.c (do_debug_sections): New.
+	(OPTION_COMPRESS_DEBUG_SECTIONS): New.
+	(OPTION_DECOMPRESS_DEBUG_SECTIONS): Likewise.
+	(copy_options): Add OPTION_COMPRESS_DEBUG_SECTIONS and
+	OPTION_DECOMPRESS_DEBUG_SECTIONS.
+	(copy_usage): Add --compress-debug-sections and
+	--decompress-debug-sections.
+	(copy_file): Set BFD_COMPRESS or BFD_DECOMPRESS.
+	(copy_section): Replace bfd_get_section_contents with
+	bfd_get_full_section_contents.
+	(copy_main): Handle OPTION_COMPRESS_DEBUG_SECTIONS and
+	OPTION_DECOMPRESS_DEBUG_SECTIONS.  Check do_debug_sections to
+	rename DWARF debug sections.
+
+	* objdump.c (load_specific_debug_section): Replace
+	bfd_get_section_contents with bfd_get_full_section_contents. 
+	Remove bfd_uncompress_section_contents.
+	(dump_section): Replace bfd_get_section_contents with
+	bfd_get_full_section_contents.
+	(display_file): Set BFD_DECOMPRESS if needed.
+
+	* readelf.c (uncompress_section_contents): Set buffer to NULL
+	to indiate decompression failure.
+	(load_specific_debug_section): Always call
+	uncompress_section_contents.
+
+	* doc/binutils.texi: Document --compress-debug-sections and
+	--decompress-debug-sections.
+
+binutils/testsuite/
+
+2010-07-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* binutils-all/compress.exp: New.
+	* binutils-all/dw2-1.S: Likewise.
+	* binutils-all/dw2-2.S: Likewise.
+	* binutils-all/libdw2-compressed.out: Likewise.
+	* binutils-all/libdw2.out: Likewise.
+
+gas/
+
+2010-07-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* write.c (compress_debug): Optimize section flags check.
+
+gas/testsuite/
+
+2010-07-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf/dwarf2-1.s: Replace .zdebug_abbrev section with
+	.debug_abbrev section.
+	* elf/dwarf2-2.3: Likewise.
+
+	* elf/dwarf2-1.d: Pass --compress-debug-sections to assembler.
+	Updated.
+	* elf/dwarf2-2.d: Likewise.
+
+ld/
+
+2010-07-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ldfile.c (ldfile_try_open_bfd): Set BFD_DECOMPRESS after
+	bfd_openr returns.
+	* emultempl/elf32.em (gld${EMULATION_NAME}_try_needed): Likewise.
+
+	* scripttempl/elf.sc: Include compressed DWARF debug sections.
+
+ld/testsuite/
+
+2010-07-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/compress.exp: New.
+	* ld-elf/compress1.d: Likewise.
+	* ld-elf/compress1.s: Likewise.
+
+diff --git a/bfd/archive.c b/bfd/archive.c
+index 1b3f692..ed40141 100644
+--- a/bfd/archive.c
++++ b/bfd/archive.c
+@@ -697,6 +697,8 @@ DESCRIPTION
+ bfd *
+ bfd_openr_next_archived_file (bfd *archive, bfd *last_file)
+ {
++  bfd *abfd;
++
+   if ((bfd_get_format (archive) != bfd_archive)
+       || (archive->direction == write_direction))
+     {
+@@ -704,8 +706,14 @@ bfd_openr_next_archived_file (bfd *archive, bfd *last_file)
+       return NULL;
+     }
+ 
+-  return BFD_SEND (archive,
++  abfd = BFD_SEND (archive,
+ 		   openr_next_archived_file, (archive, last_file));
++
++  /* Copy BFD_COMPRESS and BFD_DECOMPRESS flags.  */
++  if (abfd)
++    abfd->flags |= archive->flags & (BFD_COMPRESS | BFD_DECOMPRESS);
++
++  return abfd;
+ }
+ 
+ bfd *
+diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
+index f97c67f..7785e68 100644
+--- a/bfd/bfd-in2.h
++++ b/bfd/bfd-in2.h
+@@ -1348,6 +1348,12 @@ typedef struct bfd_section
+   /* Mark flag used by some linker backends for garbage collection.  */
+   unsigned int gc_mark : 1;
+ 
++  /* Section compression status.  */
++  unsigned int compress_status : 2;
++#define COMPRESS_SECTION_NONE    0
++#define COMPRESS_SECTION_DONE    1
++#define DECOMPRESS_SECTION_SIZED 2
++
+   /* The following flags are used by the ELF linker. */
+ 
+   /* Mark sections which have been allocated to segments.  */
+@@ -1404,6 +1410,9 @@ typedef struct bfd_section
+      section size calculated on a previous linker relaxation pass.  */
+   bfd_size_type rawsize;
+ 
++  /* The compressed size of the section in octets.  */
++  bfd_size_type compressed_size;
++
+   /* Relaxation table. */
+   struct relax_table *relax;
+ 
+@@ -1637,17 +1646,17 @@ extern asection bfd_ind_section;
+   /* name, id,  index, next, prev, flags, user_set_vma,            */  \
+   { NAME,  IDX, 0,     NULL, NULL, FLAGS, 0,                           \
+                                                                        \
+-  /* linker_mark, linker_has_input, gc_mark, segment_mark,         */  \
++  /* linker_mark, linker_has_input, gc_mark, decompress_status,    */  \
+      0,           0,                1,       0,                        \
+                                                                        \
+-  /* sec_info_type, use_rela_p,                                    */  \
+-     0,             0,                                                 \
++  /* segment_mark, sec_info_type, use_rela_p,                      */  \
++     0,            0,             0,                                   \
+                                                                        \
+   /* sec_flg0, sec_flg1, sec_flg2, sec_flg3, sec_flg4, sec_flg5,   */  \
+      0,        0,        0,        0,        0,        0,              \
+                                                                        \
+-  /* vma, lma, size, rawsize, relax, relax_count,                  */  \
+-     0,   0,   0,    0,       0,     0,                                \
++  /* vma, lma, size, rawsize, compressed_size, relax, relax_count, */  \
++     0,   0,   0,    0,       0,               0,     0,               \
+                                                                        \
+   /* output_offset, output_section,              alignment_power,  */  \
+      0,             (struct bfd_section *) &SEC, 0,                    \
+@@ -4988,6 +4997,16 @@ struct bfd
+      will be consistent from run to run.  */
+ #define BFD_DETERMINISTIC_OUTPUT 0x4000
+ 
++  /* Compress sections in this BFD.  */
++#define BFD_COMPRESS 0x8000
++
++  /* Decompress sections in this BFD.  */
++#define BFD_DECOMPRESS 0x10000
++
++  /* Flags bits to be saved in bfd_preserve_save.  */
++#define BFD_FLAGS_SAVED \
++  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS)
++
+   /* Currently my_archive is tested before adding origin to
+      anything. I believe that this can become always an add of
+      origin, with origin set to 0 for non archive files.  */
+@@ -5815,8 +5834,21 @@ bfd_byte *bfd_simple_get_relocated_section_contents
+    (bfd *abfd, asection *sec, bfd_byte *outbuf, asymbol **symbol_table);
+ 
+ /* Extracted from compress.c.  */
+-bfd_boolean bfd_uncompress_section_contents
+-   (bfd_byte **buffer, bfd_size_type *size);
++bfd_boolean bfd_compress_section_contents
++   (bfd *abfd, asection *section, bfd_byte *uncompressed_buffer,
++    bfd_size_type uncompressed_size);
++
++bfd_boolean bfd_get_full_section_contents
++   (bfd *abfd, asection *section, bfd_byte **ptr);
++
++bfd_boolean bfd_is_section_compressed
++   (bfd *abfd, asection *section);
++
++bfd_boolean bfd_init_section_decompress_status
++   (bfd *abfd, asection *section);
++
++bfd_boolean bfd_init_section_compress_status
++   (bfd *abfd, asection *section);
+ 
+ #ifdef __cplusplus
+ }
+diff --git a/bfd/bfd.c b/bfd/bfd.c
+index 771989b..3b29603 100644
+--- a/bfd/bfd.c
++++ b/bfd/bfd.c
+@@ -151,6 +151,16 @@ CODE_FRAGMENT
+ .     will be consistent from run to run.  *}
+ .#define BFD_DETERMINISTIC_OUTPUT 0x4000
+ .
++.  {* Compress sections in this BFD.  *}
++.#define BFD_COMPRESS 0x8000
++.
++.  {* Decompress sections in this BFD.  *}
++.#define BFD_DECOMPRESS 0x10000
++.
++.  {* Flags bits to be saved in bfd_preserve_save.  *}
++.#define BFD_FLAGS_SAVED \
++.  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS)
++.
+ .  {* Currently my_archive is tested before adding origin to
+ .     anything. I believe that this can become always an add of
+ .     origin, with origin set to 0 for non archive files.  *}
+@@ -1628,7 +1638,7 @@ bfd_preserve_save (bfd *abfd, struct bfd_preserve *preserve)
+ 
+   abfd->tdata.any = NULL;
+   abfd->arch_info = &bfd_default_arch_struct;
+-  abfd->flags &= BFD_IN_MEMORY;
++  abfd->flags &= BFD_FLAGS_SAVED;
+   abfd->sections = NULL;
+   abfd->section_last = NULL;
+   abfd->section_count = 0;
+diff --git a/bfd/compress.c b/bfd/compress.c
+index fe1b0fd..171de77 100644
+--- a/bfd/compress.c
++++ b/bfd/compress.c
+@@ -27,49 +27,309 @@
+ #include <zlib.h>
+ #endif
+ 
++#ifdef HAVE_ZLIB_H
++static bfd_boolean
++decompress_contents (bfd_byte *compressed_buffer,
++		     bfd_size_type compressed_size,
++		     bfd_byte *uncompressed_buffer,
++		     bfd_size_type uncompressed_size)
++{
++  z_stream strm;
++  int rc;
++
++  /* It is possible the section consists of several compressed
++     buffers concatenated together, so we uncompress in a loop.  */
++  strm.zalloc = NULL;
++  strm.zfree = NULL;
++  strm.opaque = NULL;
++  strm.avail_in = compressed_size - 12;
++  strm.next_in = (Bytef*) compressed_buffer + 12;
++  strm.avail_out = uncompressed_size;
++
++  rc = inflateInit (&strm);
++  while (strm.avail_in > 0)
++    {
++      if (rc != Z_OK)
++	return FALSE;
++      strm.next_out = ((Bytef*) uncompressed_buffer
++                       + (uncompressed_size - strm.avail_out));
++      rc = inflate (&strm, Z_FINISH);
++      if (rc != Z_STREAM_END)
++	return FALSE;
++      rc = inflateReset (&strm);
++    }
++  rc = inflateEnd (&strm);
++  return rc != Z_OK || strm.avail_out != 0 ? FALSE: TRUE;
++}
++#endif
++
+ /*
+ FUNCTION
+-	bfd_uncompress_section_contents
++	bfd_compress_section_contents
+ 
+ SYNOPSIS
+-	bfd_boolean bfd_uncompress_section_contents
+-	  (bfd_byte **buffer, bfd_size_type *size);
++	bfd_boolean bfd_compress_section_contents
++	  (bfd *abfd, asection *section, bfd_byte *uncompressed_buffer,
++	   bfd_size_type uncompressed_size);
+ 
+ DESCRIPTION
+ 
+-	Uncompresses a section that was compressed using zlib, in place.  At
+-	the call to this function, *@var{buffer} and *@var{size} should point
+-	to the section contents to be uncompressed.  At the end of the
+-	function, *@var{buffer} and *@var{size} will point to the uncompressed
+-	contents.  This function assumes *BUFFER was allocated using
+-	bfd_malloc() or equivalent.  If the section is not a valid compressed
+-	section, or zlib is not installed on this machine, the input is
+-	unmodified.
+-
+-        Returns @code{FALSE} if unable to uncompress successfully; in that case
+-        the input is unmodified.  Otherwise, returns @code{TRUE}.
++	Compress data of the size specified in @var{uncompressed_size}
++	and pointed to by @var{uncompressed_buffer} using zlib and store
++	as the contents field.  This function assumes the contents
++	field was allocated using bfd_malloc() or equivalent.  If zlib
++	is not installed on this machine, the input is unmodified.
++
++	Return @code{TRUE} if the full section contents is compressed 
++	successfully.
+ */
+ 
+ bfd_boolean
+-bfd_uncompress_section_contents (bfd_byte **buffer ATTRIBUTE_UNUSED,
+-				 bfd_size_type *size ATTRIBUTE_UNUSED)
++bfd_compress_section_contents (bfd *abfd ATTRIBUTE_UNUSED,
++			       sec_ptr sec ATTRIBUTE_UNUSED,
++			       bfd_byte *uncompressed_buffer ATTRIBUTE_UNUSED,
++			       bfd_size_type uncompressed_size ATTRIBUTE_UNUSED)
+ {
+ #ifndef HAVE_ZLIB_H
++  bfd_set_error (bfd_error_invalid_operation);
+   return FALSE;
+ #else
+-  bfd_size_type compressed_size = *size;
+-  bfd_byte *compressed_buffer = *buffer;
++  bfd_size_type compressed_size;
++  bfd_byte *compressed_buffer;
++
++  compressed_size = compressBound (uncompressed_size) + 12;
++  compressed_buffer = (bfd_byte *) bfd_malloc (compressed_size);
++
++  if (compress ((Bytef*) compressed_buffer + 12,
++		&compressed_size,
++		(const Bytef*) uncompressed_buffer,
++		uncompressed_size) != Z_OK)
++    {
++      free (compressed_buffer);
++      bfd_set_error (bfd_error_bad_value);
++      return FALSE;
++    }
++
++  /* Write the zlib header.  In this case, it should be "ZLIB" followed
++     by the uncompressed section size, 8 bytes in big-endian order.  */
++  memcpy (compressed_buffer, "ZLIB", 4);
++  compressed_buffer[11] = uncompressed_size; uncompressed_size >>= 8;
++  compressed_buffer[10] = uncompressed_size; uncompressed_size >>= 8;
++  compressed_buffer[9] = uncompressed_size; uncompressed_size >>= 8;
++  compressed_buffer[8] = uncompressed_size; uncompressed_size >>= 8;
++  compressed_buffer[7] = uncompressed_size; uncompressed_size >>= 8;
++  compressed_buffer[6] = uncompressed_size; uncompressed_size >>= 8;
++  compressed_buffer[5] = uncompressed_size; uncompressed_size >>= 8;
++  compressed_buffer[4] = uncompressed_size;
++  compressed_size += 12;
++
++  /* Free the uncompressed contents if we compress in place.  */
++  if (uncompressed_buffer == sec->contents)
++    free (uncompressed_buffer);
++
++  sec->contents = compressed_buffer;
++  sec->size = compressed_size;
++  sec->compress_status = COMPRESS_SECTION_DONE;
++
++  return TRUE;
++#endif  /* HAVE_ZLIB_H */
++}
++
++/*
++FUNCTION
++	bfd_get_full_section_contents
++
++SYNOPSIS
++	bfd_boolean bfd_get_full_section_contents
++	  (bfd *abfd, asection *section, bfd_byte **ptr);
++
++DESCRIPTION
++	Read all data from @var{section} in BFD @var{abfd}, decompress
++	if needed, and store in @var{*ptr}.  If @var{*ptr} is NULL,
++	return @var{*ptr} with memory malloc'd by this function.  
++
++	Return @code{TRUE} if the full section contents is retrieved
++	successfully.
++*/
++
++bfd_boolean
++bfd_get_full_section_contents (bfd *abfd, sec_ptr sec, bfd_byte **ptr)
++{
++  bfd_size_type sz = sec->rawsize ? sec->rawsize : sec->size;
++  bfd_byte *p = *ptr;
++  bfd_boolean need_free, ret;
++#ifdef HAVE_ZLIB_H
++  bfd_size_type compressed_size;
+   bfd_size_type uncompressed_size;
++  bfd_size_type rawsize;
++  bfd_byte *compressed_buffer;
+   bfd_byte *uncompressed_buffer;
+-  z_stream strm;
+-  int rc;
+-  bfd_size_type header_size = 12;
++#endif
++
++  if (sz == 0)
++    return TRUE;
++
++  switch (sec->compress_status)
++    {
++    case COMPRESS_SECTION_NONE:
++      if (p == NULL)
++	{
++	  p = (bfd_byte *) bfd_malloc (sz);
++	  if (p == NULL)
++	    return FALSE;
++	  need_free = TRUE;
++	  *ptr = p;
++	}
++      else
++	need_free = FALSE;
++      ret = bfd_get_section_contents (abfd, sec, p, 0, sz);
++      if (!ret && need_free)
++	free (p);
++      return ret;
++
++    case COMPRESS_SECTION_DONE:
++      if (p)
++	memcpy (p, sec->contents, sz);
++      else
++	*ptr = sec->contents;
++      return TRUE;
++
++    case DECOMPRESS_SECTION_SIZED:
++      break;
++
++    default:
++      abort ();
++    }
++
++#ifndef HAVE_ZLIB_H
++  bfd_set_error (bfd_error_invalid_operation);
++  return FALSE;
++#else
++  /* Read in the full compressed section contents.  */
++  uncompressed_size = sec->size;
++  compressed_size = sec->compressed_size;
++  compressed_buffer = (bfd_byte *) bfd_malloc (compressed_size);
++  rawsize = sec->rawsize;
++  /* Clear rawsize, set size to compressed size and set compress_status
++     to COMPRESS_SECTION_NONE.  If the compressed size is bigger than
++     the uncompressed size, bfd_get_section_contents will fail.  */
++  sec->rawsize = 0;
++  sec->size = compressed_size;
++  sec->compress_status = COMPRESS_SECTION_NONE;
++  ret = bfd_get_section_contents (abfd, sec, compressed_buffer,
++				  0, compressed_size);
++  /* Restore rawsize and size.  */
++  sec->rawsize = rawsize;
++  sec->size = uncompressed_size;
++  if (!ret)
++    {
++fail_compressed:
++      sec->compress_status = DECOMPRESS_SECTION_SIZED;
++      free (compressed_buffer);
++      return ret;
++    }
++
++  /* Decompress to caller buffer directly if it is provided. */
++  if (p)
++    uncompressed_buffer = p;
++  else
++    {
++      uncompressed_buffer = (bfd_byte *) bfd_malloc (uncompressed_size);
++      if (uncompressed_buffer == NULL)
++	goto fail_compressed;
++    }
++
++  if (!decompress_contents (compressed_buffer, compressed_size,
++			    uncompressed_buffer, uncompressed_size))
++    {
++      sec->compress_status = DECOMPRESS_SECTION_SIZED;
++      free (compressed_buffer);
++      if (p == NULL)
++	free (uncompressed_buffer);
++      bfd_set_error (bfd_error_bad_value);
++      return FALSE;
++    }
++
++  free (compressed_buffer);
++  if (p == NULL)
++    *ptr = uncompressed_buffer;
++
++  sec->contents = uncompressed_buffer;
++  sec->compress_status = COMPRESS_SECTION_DONE;
++
++  return TRUE;
++#endif
++}
++
++/*
++FUNCTION
++	bfd_is_section_compressed
++
++SYNOPSIS
++	bfd_boolean bfd_is_section_compressed
++	  (bfd *abfd, asection *section);
++
++DESCRIPTION
++	Return @code{TRUE} if @var{section} is compressed.
++*/
++
++bfd_boolean
++bfd_is_section_compressed (bfd *abfd, sec_ptr sec)
++{
++  bfd_byte compressed_buffer [12];
++
++  /* Read the zlib header.  In this case, it should be "ZLIB" followed
++     by the uncompressed section size, 8 bytes in big-endian order.  */
++  return (bfd_get_section_contents (abfd, sec, compressed_buffer, 0, 12)
++	  && CONST_STRNEQ ((char*) compressed_buffer, "ZLIB"));
++}
++
++/*
++FUNCTION
++	bfd_init_section_decompress_status
++
++SYNOPSIS
++	bfd_boolean bfd_init_section_decompress_status
++	  (bfd *abfd, asection *section);
++
++DESCRIPTION
++	Record compressed section size, update section size with
++	decompressed size and set compress_status to
++	DECOMPRESS_SECTION_SIZED.
++
++	Return @code{FALSE} if the section is not a valid compressed
++	section or zlib is not installed on this machine.  Otherwise,
++	return @code{TRUE}.
++*/
++
++bfd_boolean
++bfd_init_section_decompress_status (bfd *abfd ATTRIBUTE_UNUSED,
++				    sec_ptr sec ATTRIBUTE_UNUSED)
++{
++#ifndef HAVE_ZLIB_H
++  bfd_set_error (bfd_error_invalid_operation);
++  return FALSE;
++#else
++  bfd_byte compressed_buffer [12];
++  bfd_size_type uncompressed_size;
++
++  if (sec->rawsize != 0
++      || sec->contents != NULL
++      || sec->compress_status != COMPRESS_SECTION_NONE
++      || !bfd_get_section_contents (abfd, sec, compressed_buffer, 0, 12))
++    {
++      bfd_set_error (bfd_error_invalid_operation);
++      return FALSE;
++    }
+ 
+   /* Read the zlib header.  In this case, it should be "ZLIB" followed
+      by the uncompressed section size, 8 bytes in big-endian order.  */
+-  if (compressed_size < header_size
+-      || ! CONST_STRNEQ ((char*) compressed_buffer, "ZLIB"))
+-    return FALSE;
++  if (! CONST_STRNEQ ((char*) compressed_buffer, "ZLIB"))
++    {
++      bfd_set_error (bfd_error_wrong_format);
++      return FALSE;
++    }
++
+   uncompressed_size = compressed_buffer[4]; uncompressed_size <<= 8;
+   uncompressed_size += compressed_buffer[5]; uncompressed_size <<= 8;
+   uncompressed_size += compressed_buffer[6]; uncompressed_size <<= 8;
+@@ -79,42 +339,66 @@ bfd_uncompress_section_contents (bfd_byte **buffer ATTRIBUTE_UNUSED,
+   uncompressed_size += compressed_buffer[10]; uncompressed_size <<= 8;
+   uncompressed_size += compressed_buffer[11];
+ 
+-  /* It is possible the section consists of several compressed
+-     buffers concatenated together, so we uncompress in a loop.  */
+-  strm.zalloc = NULL;
+-  strm.zfree = NULL;
+-  strm.opaque = NULL;
+-  strm.avail_in = compressed_size - header_size;
+-  strm.next_in = (Bytef*) compressed_buffer + header_size;
+-  strm.avail_out = uncompressed_size;
+-  uncompressed_buffer = (bfd_byte *) bfd_malloc (uncompressed_size);
+-  if (! uncompressed_buffer)
+-    return FALSE;
++  sec->compressed_size = sec->size;
++  sec->size = uncompressed_size;
++  sec->compress_status = DECOMPRESS_SECTION_SIZED;
+ 
+-  rc = inflateInit (&strm);
+-  while (strm.avail_in > 0)
++  return TRUE;
++#endif
++}
++
++/*
++FUNCTION
++	bfd_init_section_compress_status
++
++SYNOPSIS
++	bfd_boolean bfd_init_section_compress_status
++	  (bfd *abfd, asection *section);
++
++DESCRIPTION
++	If open for read, compress section, update section size with
++	compressed size and set compress_status to COMPRESS_SECTION_DONE.
++
++	Return @code{FALSE} if the section is not a valid compressed
++	section or zlib is not installed on this machine.  Otherwise,
++	return @code{TRUE}.
++*/
++
++bfd_boolean
++bfd_init_section_compress_status (bfd *abfd ATTRIBUTE_UNUSED,
++				  sec_ptr sec ATTRIBUTE_UNUSED)
++{
++#ifndef HAVE_ZLIB_H
++  bfd_set_error (bfd_error_invalid_operation);
++  return FALSE;
++#else
++  bfd_size_type uncompressed_size;
++  bfd_byte *uncompressed_buffer;
++  bfd_boolean ret;
++
++  /* Error if not opened for read.  */
++  if (abfd->direction != read_direction
++      || sec->size == 0
++      || sec->rawsize != 0
++      || sec->contents != NULL
++      || sec->compress_status != COMPRESS_SECTION_NONE)
+     {
+-      if (rc != Z_OK)
+-        goto fail;
+-      strm.next_out = ((Bytef*) uncompressed_buffer
+-                       + (uncompressed_size - strm.avail_out));
+-      rc = inflate (&strm, Z_FINISH);
+-      if (rc != Z_STREAM_END)
+-        goto fail;
+-      rc = inflateReset (&strm);
++      bfd_set_error (bfd_error_invalid_operation);
++      return FALSE;
+     }
+-  rc = inflateEnd (&strm);
+-  if (rc != Z_OK
+-      || strm.avail_out != 0)
+-    goto fail;
+ 
+-  free (compressed_buffer);
+-  *buffer = uncompressed_buffer;
+-  *size = uncompressed_size;
+-  return TRUE;
++  /* Read in the full section contents and compress it.  */
++  uncompressed_size = sec->size;
++  uncompressed_buffer = (bfd_byte *) bfd_malloc (uncompressed_size);
++  if (!bfd_get_section_contents (abfd, sec, uncompressed_buffer,
++				 0, uncompressed_size))
++    ret = FALSE;
++  else
++    ret = bfd_compress_section_contents (abfd, sec,
++					 uncompressed_buffer,
++					 uncompressed_size);
+ 
+- fail:
+   free (uncompressed_buffer);
+-  return FALSE;
+-#endif  /* HAVE_ZLIB_H */
++  return ret;
++#endif
+ }
+diff --git a/bfd/dwarf2.c b/bfd/dwarf2.c
+index 1285833..e5d0103 100644
+--- a/bfd/dwarf2.c
++++ b/bfd/dwarf2.c
+@@ -275,6 +275,60 @@ struct attr_abbrev
+   enum dwarf_form form;
+ };
+ 
++/* Map of uncompressed DWARF debug section name to compressed one.  It
++   is terminated by NULL uncompressed_name.  */
++
++struct dwarf_debug_section dwarf_debug_sections[] =
++{
++  { ".debug_abbrev",		".zdebug_abbrev" },
++  { ".debug_aranges",		".zdebug_aranges" },
++  { ".debug_frame",		".zdebug_frame" },
++  { ".debug_info",		".zdebug_info" },
++  { ".debug_line",		".zdebug_line" },
++  { ".debug_loc",		".zdebug_loc" },
++  { ".debug_macinfo",		".zdebug_macinfo" },
++  { ".debug_pubnames",		".zdebug_pubnames" },
++  { ".debug_pubtypes",		".zdebug_pubtypes" },
++  { ".debug_ranges",		".zdebug_ranges" },
++  { ".debug_static_func",	".zdebug_static_func" },
++  { ".debug_static_vars",	".zdebug_static_vars" },
++  { ".debug_str",		".zdebug_str", },
++  { ".debug_types",		".zdebug_types" },
++  /* GNU DWARF 1 extensions */
++  { ".debug_sfnames",		".zdebug_sfnames" },
++  { ".debug_srcinfo",		".zebug_srcinfo" },
++  /* SGI/MIPS DWARF 2 extensions */
++  { ".debug_funcnames",		".zdebug_funcnames" },
++  { ".debug_typenames",		".zdebug_typenames" },
++  { ".debug_varnames",		".zdebug_varnames" },
++  { ".debug_weaknames",		".zdebug_weaknames" },
++  { NULL,			NULL },
++};
++
++enum dwarf_debug_section_enum
++{
++  debug_abbrev = 0,
++  debug_aranges,
++  debug_frame,
++  debug_info,
++  debug_line,
++  debug_loc,
++  debug_macinfo,
++  debug_pubnames,
++  debug_pubtypes,
++  debug_ranges,
++  debug_static_func,
++  debug_static_vars,
++  debug_str,
++  debug_types,
++  debug_sfnames,
++  debug_srcinfo,
++  debug_funcnames,
++  debug_typenames,
++  debug_varnames,
++  debug_weaknames
++};
++
+ #ifndef ABBREV_HASH_SIZE
+ #define ABBREV_HASH_SIZE 121
+ #endif
+@@ -413,24 +467,23 @@ lookup_info_hash_table (struct info_hash_table *hash_table, const char *key)
+ 
+ static bfd_boolean
+ read_section (bfd *           abfd,
+-	      const char *    section_name,
+-	      const char *    compressed_section_name,
++	      enum dwarf_debug_section_enum sec,
+ 	      asymbol **      syms,
+ 	      bfd_uint64_t    offset,
+ 	      bfd_byte **     section_buffer,
+ 	      bfd_size_type * section_size)
+ {
+   asection *msec;
+-  bfd_boolean section_is_compressed = FALSE;
++  const char *section_name = dwarf_debug_sections[sec].uncompressed_name;
+ 
+   /* read_section is a noop if the section has already been read.  */
+   if (!*section_buffer)
+     {
+       msec = bfd_get_section_by_name (abfd, section_name);
+-      if (! msec && compressed_section_name)
++      if (! msec)
+ 	{
+-	  msec = bfd_get_section_by_name (abfd, compressed_section_name);
+-	  section_is_compressed = TRUE;
++	  section_name = dwarf_debug_sections[sec].compressed_name;
++	  msec = bfd_get_section_by_name (abfd, section_name);
+ 	}
+       if (! msec)
+ 	{
+@@ -456,16 +509,6 @@ read_section (bfd *           abfd,
+ 					  0, *section_size))
+ 	    return FALSE;
+ 	}
+-
+-      if (section_is_compressed)
+-	{
+-	  if (! bfd_uncompress_section_contents (section_buffer, section_size))
+-	    {
+-	      (*_bfd_error_handler) (_("Dwarf Error: unable to decompress %s section."), compressed_section_name);
+-	      bfd_set_error (bfd_error_bad_value);
+-	      return FALSE;
+-	    }
+-	}
+     }
+ 
+   /* It is possible to get a bad value for the offset into the section
+@@ -561,8 +604,7 @@ read_indirect_string (struct comp_unit * unit,
+ 
+   *bytes_read_ptr = unit->offset_size;
+ 
+-  if (! read_section (unit->abfd, ".debug_str", ".zdebug_str",
+-		      stash->syms, offset,
++  if (! read_section (unit->abfd, debug_str, stash->syms, offset,
+ 		      &stash->dwarf_str_buffer, &stash->dwarf_str_size))
+     return NULL;
+ 
+@@ -644,8 +686,7 @@ read_abbrevs (bfd *abfd, bfd_uint64_t offset, struct dwarf2_debug *stash)
+   unsigned int abbrev_form, hash_number;
+   bfd_size_type amt;
+ 
+-  if (! read_section (abfd, ".debug_abbrev", ".zdebug_abbrev",
+-		      stash->syms, offset,
++  if (! read_section (abfd, debug_abbrev, stash->syms, offset,
+ 		      &stash->dwarf_abbrev_buffer, &stash->dwarf_abbrev_size))
+     return NULL;
+ 
+@@ -1353,8 +1394,7 @@ decode_line_info (struct comp_unit *unit, struct dwarf2_debug *stash)
+   unsigned char op_code, extended_op, adj_opcode;
+   bfd_size_type amt;
+ 
+-  if (! read_section (abfd, ".debug_line", ".zdebug_line",
+-		      stash->syms, unit->line_offset,
++  if (! read_section (abfd, debug_line, stash->syms, unit->line_offset,
+ 		      &stash->dwarf_line_buffer, &stash->dwarf_line_size))
+     return NULL;
+ 
+@@ -1769,8 +1809,7 @@ static bfd_boolean
+ read_debug_ranges (struct comp_unit *unit)
+ {
+   struct dwarf2_debug *stash = unit->stash;
+-  return read_section (unit->abfd, ".debug_ranges", ".zdebug_ranges",
+-		       stash->syms, 0,
++  return read_section (unit->abfd, debug_ranges, stash->syms, 0,
+ 		       &stash->dwarf_ranges_buffer, &stash->dwarf_ranges_size);
+ }
+ 
+@@ -3192,86 +3231,37 @@ find_line (bfd *abfd,
+ 	{
+ 	  /* Case 1: only one info section.  */
+ 	  total_size = msec->size;
+-	  if (! read_section (debug_bfd, ".debug_info", ".zdebug_info",
+-			      symbols, 0,
++	  if (! read_section (debug_bfd, debug_info, symbols, 0,
+ 			      &stash->info_ptr_memory, &total_size))
+ 	    goto done;
+ 	}
+       else
+ 	{
+-	  int all_uncompressed = 1;
++	  /* Case 2: multiple sections.  */
+ 	  for (total_size = 0; msec; msec = find_debug_info (debug_bfd, msec))
+-	    {
+-	      total_size += msec->size;
+-	      if (strcmp (msec->name, DWARF2_COMPRESSED_DEBUG_INFO) == 0)
+-		all_uncompressed = 0;
+-	    }
+-	  if (all_uncompressed)
+-	    {
+-	      /* Case 2: multiple sections, but none is compressed.  */
+-	      stash->info_ptr_memory = (bfd_byte *) bfd_malloc (total_size);
+-	      if (stash->info_ptr_memory == NULL)
+-		goto done;
+-
+-	      total_size = 0;
+-	      for (msec = find_debug_info (debug_bfd, NULL);
+-		   msec;
+-		   msec = find_debug_info (debug_bfd, msec))
+-		{
+-		  bfd_size_type size;
+-
+-		  size = msec->size;
+-		  if (size == 0)
+-		    continue;
++	    total_size += msec->size;
+ 
+-		  if (!(bfd_simple_get_relocated_section_contents
+-			(debug_bfd, msec, stash->info_ptr_memory + total_size,
+-			 symbols)))
+-		    goto done;
++	  stash->info_ptr_memory = (bfd_byte *) bfd_malloc (total_size);
++	  if (stash->info_ptr_memory == NULL)
++	    goto done;
+ 
+-		  total_size += size;
+-		}
+-	    }
+-	  else
++	  total_size = 0;
++	  for (msec = find_debug_info (debug_bfd, NULL);
++	       msec;
++	       msec = find_debug_info (debug_bfd, msec))
+ 	    {
+-	      /* Case 3: multiple sections, some or all compressed.  */
+-	      stash->info_ptr_memory = NULL;
+-	      total_size = 0;
+-	      for (msec = find_debug_info (debug_bfd, NULL);
+-		   msec;
+-		   msec = find_debug_info (debug_bfd, msec))
+-		{
+-		  bfd_size_type size = msec->size;
+-		  bfd_byte *buffer, *tmp;
++	      bfd_size_type size;
+ 
+-		  if (size == 0)
+-		    continue;
++	      size = msec->size;
++	      if (size == 0)
++		continue;
+ 
+-		  buffer = (bfd_simple_get_relocated_section_contents
+-			    (debug_bfd, msec, NULL, symbols));
+-		  if (! buffer)
+-		    goto done;
++	      if (!(bfd_simple_get_relocated_section_contents
++		    (debug_bfd, msec, stash->info_ptr_memory + total_size,
++		     symbols)))
++		goto done;
+ 
+-		  if (strcmp (msec->name, DWARF2_COMPRESSED_DEBUG_INFO) == 0)
+-		    {
+-		      if (! bfd_uncompress_section_contents (&buffer, &size))
+-			{
+-			  free (buffer);
+-			  goto done;
+-			}
+-		    }
+-		  tmp = (bfd_byte *) bfd_realloc (stash->info_ptr_memory,
+-						  total_size + size);
+-		  if (tmp == NULL)
+-		    {
+-		      free (buffer);
+-		      goto done;
+-		    }
+-		  stash->info_ptr_memory = tmp;
+-		  memcpy (stash->info_ptr_memory + total_size, buffer, size);
+-		  free (buffer);
+-		  total_size += size;
+-		}
++	      total_size += size;
+ 	    }
+ 	}
+ 
+diff --git a/bfd/ecoff.c b/bfd/ecoff.c
+index af9d7d6..5827881 100644
+--- a/bfd/ecoff.c
++++ b/bfd/ecoff.c
+@@ -55,14 +55,14 @@ static asection bfd_debug_section =
+ {
+   /* name,      id,  index, next, prev, flags, user_set_vma,       */
+      "*DEBUG*", 0,   0,     NULL, NULL, 0,     0,
+-  /* linker_mark, linker_has_input, gc_mark, segment_mark,         */
++  /* linker_mark, linker_has_input, gc_mark, compress_status,      */
+      0,           0,                1,       0,
+-  /* sec_info_type, use_rela_p,                                    */
+-     0,             0,
++  /* segment_mark, sec_info_type, use_rela_p,                      */
++     0,            0,             0,
+   /* sec_flg0, sec_flg1, sec_flg2, sec_flg3, sec_flg4, sec_flg5,   */
+      0,        0,        0,        0,        0,        0,
+-  /* vma, lma, size, rawsize, relax, relax_count,                  */
+-     0,   0,   0,    0,       0,     0,
++  /* vma, lma, size, rawsize, compressed_size, relax, relax_count, */
++     0,   0,   0,    0,       0,               0,     0,
+   /* output_offset, output_section, alignment_power,               */
+      0,             NULL,           0,
+   /* relocation, orelocation, reloc_count, filepos, rel_filepos,   */
+diff --git a/bfd/elf.c b/bfd/elf.c
+index e7651ba..fb49fb2 100644
+--- a/bfd/elf.c
++++ b/bfd/elf.c
+@@ -1008,6 +1008,52 @@ _bfd_elf_make_section_from_shdr (bfd *abfd,
+ 	}
+     }
+ 
++  /* Compress/decompress DWARF debug sections with names: .debug_* and
++     .zdebug_*, after the section flags is set.  */
++  if ((flags & SEC_DEBUGGING)
++      && ((name[1] == 'd' && name[6] == '_')
++	  || (name[1] == 'z' && name[7] == '_')))
++    {
++      enum { nothing, compress, decompress } action = nothing;
++
++      if (bfd_is_section_compressed (abfd, newsect))
++	{
++	  /* Compressed section.  Check if we should decompress.  */
++	  if ((abfd->flags & BFD_DECOMPRESS))
++	    action = decompress;
++	}
++      else
++	{
++	  /* Normal section.  Check if we should compress.  */
++	  if ((abfd->flags & BFD_COMPRESS))
++	    action = compress;
++	}
++
++      switch (action)
++	{
++	case nothing:
++	  break;
++	case compress:
++	  if (!bfd_init_section_compress_status (abfd, newsect))
++	    {
++	      (*_bfd_error_handler)
++		(_("%B: unable to initialize commpress status for section %s"),
++		 abfd, name);
++	      return FALSE;
++	    }
++	  break;
++	case decompress:
++	  if (!bfd_init_section_decompress_status (abfd, newsect))
++	    {
++	      (*_bfd_error_handler)
++		(_("%B: unable to initialize decommpress status for section %s"),
++		 abfd, name);
++	      return FALSE;
++	    }
++	  break;
++	}
++    }
++
+   return TRUE;
+ }
+ 
+diff --git a/bfd/elflink.c b/bfd/elflink.c
+index f445912..7eccf5f 100644
+--- a/bfd/elflink.c
++++ b/bfd/elflink.c
+@@ -9349,10 +9349,8 @@ elf_link_input_bfd (struct elf_final_link_info *finfo, bfd *input_bfd)
+ 	contents = elf_section_data (o)->this_hdr.contents;
+       else
+ 	{
+-	  bfd_size_type amt = o->rawsize ? o->rawsize : o->size;
+-
+ 	  contents = finfo->contents;
+-	  if (! bfd_get_section_contents (input_bfd, o, contents, 0, amt))
++	  if (! bfd_get_full_section_contents (input_bfd, o, &contents))
+ 	    return FALSE;
+ 	}
+ 
+diff --git a/bfd/elfxx-target.h b/bfd/elfxx-target.h
+index ebce6a8..e0285be 100644
+--- a/bfd/elfxx-target.h
++++ b/bfd/elfxx-target.h
+@@ -776,7 +776,7 @@ const bfd_target TARGET_BIG_SYM =
+ 
+   /* object_flags: mask of all file flags */
+   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
+-   | DYNAMIC | WP_TEXT | D_PAGED),
++   | DYNAMIC | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS),
+ 
+   /* section_flags: mask of all section flags */
+   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY
+@@ -872,7 +872,7 @@ const bfd_target TARGET_LITTLE_SYM =
+ 
+   /* object_flags: mask of all file flags */
+   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
+-   | DYNAMIC | WP_TEXT | D_PAGED),
++   | DYNAMIC | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS),
+ 
+   /* section_flags: mask of all section flags */
+   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY
+diff --git a/bfd/libbfd-in.h b/bfd/libbfd-in.h
+index 87a73b4..3153601 100644
+--- a/bfd/libbfd-in.h
++++ b/bfd/libbfd-in.h
+@@ -810,3 +810,13 @@ extern void bfd_section_already_linked_table_traverse
+ extern bfd_vma read_unsigned_leb128 (bfd *, bfd_byte *, unsigned int *);
+ extern bfd_signed_vma read_signed_leb128 (bfd *, bfd_byte *, unsigned int *);
+ 
++struct dwarf_debug_section
++{
++  const char *uncompressed_name;
++  const char *compressed_name;
++};
++
++/* Map of uncompressed DWARF debug section name to compressed one.  It
++   is terminated by NULL uncompressed_name.  */
++
++extern struct dwarf_debug_section dwarf_debug_sections[];
+diff --git a/bfd/libbfd.c b/bfd/libbfd.c
+index b378622..a843f12 100644
+--- a/bfd/libbfd.c
++++ b/bfd/libbfd.c
+@@ -847,6 +847,15 @@ _bfd_generic_get_section_contents (bfd *abfd,
+   if (count == 0)
+     return TRUE;
+ 
++  if (section->compress_status != COMPRESS_SECTION_NONE)
++    {
++      (*_bfd_error_handler)
++	(_("%B: unable to get decompressed section %A"),
++	 abfd, section);
++      bfd_set_error (bfd_error_invalid_operation);
++      return FALSE;
++    }
++
+   sz = section->rawsize ? section->rawsize : section->size;
+   if (offset + count < count
+       || offset + count > sz)
+diff --git a/bfd/libbfd.h b/bfd/libbfd.h
+index 3da79d9..775ae27 100644
+--- a/bfd/libbfd.h
++++ b/bfd/libbfd.h
+@@ -815,6 +815,16 @@ extern void bfd_section_already_linked_table_traverse
+ extern bfd_vma read_unsigned_leb128 (bfd *, bfd_byte *, unsigned int *);
+ extern bfd_signed_vma read_signed_leb128 (bfd *, bfd_byte *, unsigned int *);
+ 
++struct dwarf_debug_section
++{
++  const char *uncompressed_name;
++  const char *compressed_name;
++};
++
++/* Map of uncompressed DWARF debug section name to compressed one.  It
++   is terminated by NULL uncompressed_name.  */
++
++extern struct dwarf_debug_section dwarf_debug_sections[];
+ /* Extracted from init.c.  */
+ /* Extracted from libbfd.c.  */
+ bfd_boolean bfd_write_bigendian_4byte_int (bfd *, unsigned int);
+diff --git a/bfd/merge.c b/bfd/merge.c
+index 7aa088f..aef3cf3 100644
+--- a/bfd/merge.c
++++ b/bfd/merge.c
+@@ -348,6 +348,7 @@ _bfd_add_merge_section (bfd *abfd, void **psinfo, asection *sec,
+   struct sec_merge_sec_info *secinfo;
+   unsigned int align;
+   bfd_size_type amt;
++  bfd_byte *contents;
+ 
+   if ((abfd->flags & DYNAMIC) != 0
+       || (sec->flags & SEC_MERGE) == 0)
+@@ -432,8 +433,8 @@ _bfd_add_merge_section (bfd *abfd, void **psinfo, asection *sec,
+   sec->rawsize = sec->size;
+   if (sec->flags & SEC_STRINGS)
+     memset (secinfo->contents + sec->size, 0, sec->entsize);
+-  if (! bfd_get_section_contents (sec->owner, sec, secinfo->contents,
+-				  0, sec->size))
++  contents = secinfo->contents;
++  if (! bfd_get_full_section_contents (sec->owner, sec, &contents))
+     goto error_return;
+ 
+   return TRUE;
+diff --git a/bfd/reloc.c b/bfd/reloc.c
+index 7d16869..8a3432c 100644
+--- a/bfd/reloc.c
++++ b/bfd/reloc.c
+@@ -5623,15 +5623,13 @@ bfd_generic_get_relocated_section_contents (bfd *abfd,
+   long reloc_size;
+   arelent **reloc_vector;
+   long reloc_count;
+-  bfd_size_type sz;
+ 
+   reloc_size = bfd_get_reloc_upper_bound (input_bfd, input_section);
+   if (reloc_size < 0)
+     return NULL;
+ 
+   /* Read in the section.  */
+-  sz = input_section->rawsize ? input_section->rawsize : input_section->size;
+-  if (!bfd_get_section_contents (input_bfd, input_section, data, 0, sz))
++  if (!bfd_get_full_section_contents (input_bfd, input_section, &data))
+     return NULL;
+ 
+   if (reloc_size == 0)
+diff --git a/bfd/section.c b/bfd/section.c
+index 6e13fdb..51c2196 100644
+--- a/bfd/section.c
++++ b/bfd/section.c
+@@ -364,6 +364,12 @@ CODE_FRAGMENT
+ .  {* Mark flag used by some linker backends for garbage collection.  *}
+ .  unsigned int gc_mark : 1;
+ .
++.  {* Section compression status.  *}
++.  unsigned int compress_status : 2;
++.#define COMPRESS_SECTION_NONE    0
++.#define COMPRESS_SECTION_DONE    1
++.#define DECOMPRESS_SECTION_SIZED 2
++.
+ .  {* The following flags are used by the ELF linker. *}
+ .
+ .  {* Mark sections which have been allocated to segments.  *}
+@@ -420,6 +426,9 @@ CODE_FRAGMENT
+ .     section size calculated on a previous linker relaxation pass.  *}
+ .  bfd_size_type rawsize;
+ .
++.  {* The compressed size of the section in octets.  *}
++.  bfd_size_type compressed_size;
++.
+ .  {* Relaxation table. *}
+ .  struct relax_table *relax;
+ .
+@@ -653,17 +662,17 @@ CODE_FRAGMENT
+ .  {* name, id,  index, next, prev, flags, user_set_vma,            *}	\
+ .  { NAME,  IDX, 0,     NULL, NULL, FLAGS, 0,				\
+ .									\
+-.  {* linker_mark, linker_has_input, gc_mark, segment_mark,         *}	\
++.  {* linker_mark, linker_has_input, gc_mark, decompress_status,    *}	\
+ .     0,           0,                1,       0,			\
+ .									\
+-.  {* sec_info_type, use_rela_p,                                    *}	\
+-.     0,             0,							\
++.  {* segment_mark, sec_info_type, use_rela_p,                      *}	\
++.     0,            0,             0,					\
+ .									\
+ .  {* sec_flg0, sec_flg1, sec_flg2, sec_flg3, sec_flg4, sec_flg5,   *}	\
+ .     0,        0,        0,        0,        0,        0,		\
+ .									\
+-.  {* vma, lma, size, rawsize, relax, relax_count,                  *}	\
+-.     0,   0,   0,    0,       0,     0,				\
++.  {* vma, lma, size, rawsize, compressed_size, relax, relax_count, *}	\
++.     0,   0,   0,    0,       0,               0,     0,		\
+ .									\
+ .  {* output_offset, output_section,              alignment_power,  *}	\
+ .     0,             (struct bfd_section *) &SEC, 0,			\
+@@ -1480,20 +1489,8 @@ DESCRIPTION
+ bfd_boolean
+ bfd_malloc_and_get_section (bfd *abfd, sec_ptr sec, bfd_byte **buf)
+ {
+-  bfd_size_type sz = sec->rawsize ? sec->rawsize : sec->size;
+-  bfd_byte *p = NULL;
+-
+-  *buf = p;
+-  if (sz == 0)
+-    return TRUE;
+-
+-  p = (bfd_byte *)
+-      bfd_malloc (sec->rawsize > sec->size ? sec->rawsize : sec->size);
+-  if (p == NULL)
+-    return FALSE;
+-  *buf = p;
+-
+-  return bfd_get_section_contents (abfd, sec, p, 0, sz);
++  *buf = NULL;
++  return bfd_get_full_section_contents (abfd, sec, buf);
+ }
+ /*
+ FUNCTION
+diff --git a/bfd/simple.c b/bfd/simple.c
+index 9a8397f..03d1a15 100644
+--- a/bfd/simple.c
++++ b/bfd/simple.c
+@@ -167,17 +167,9 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
+   if ((abfd->flags & (HAS_RELOC | EXEC_P | DYNAMIC)) != HAS_RELOC
+       || ! (sec->flags & SEC_RELOC))
+     {
+-      bfd_size_type amt = sec->rawsize > sec->size ? sec->rawsize : sec->size;
+-      bfd_size_type size = sec->rawsize ? sec->rawsize : sec->size;
+-
+-      if (outbuf == NULL)
+-	contents = (bfd_byte *) bfd_malloc (amt);
+-      else
+-	contents = outbuf;
+-
+-      if (contents)
+-	bfd_get_section_contents (abfd, sec, contents, 0, size);
+-
++      contents = outbuf;
++      if (!bfd_get_full_section_contents (abfd, sec, &contents))
++	return NULL;
+       return contents;
+     }
+ 
+diff --git a/binutils/addr2line.c b/binutils/addr2line.c
+index b49c43a..10c6cde 100644
+--- a/binutils/addr2line.c
++++ b/binutils/addr2line.c
+@@ -313,6 +313,9 @@ process_file (const char *file_name, const char *section_name,
+   if (abfd == NULL)
+     bfd_fatal (file_name);
+ 
++  /* Decompress sections.  */
++  abfd->flags |= BFD_DECOMPRESS;
++
+   if (bfd_check_format (abfd, bfd_archive))
+     fatal (_("%s: cannot get addresses from archive"), file_name);
+ 
+diff --git a/binutils/doc/binutils.texi b/binutils/doc/binutils.texi
+index 9f374f8..88d6907 100644
+--- a/binutils/doc/binutils.texi
++++ b/binutils/doc/binutils.texi
+@@ -1066,6 +1066,8 @@ objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
+         [@option{--section-alignment=}@var{num}]
+         [@option{--stack=}@var{size}]
+         [@option{--subsystem=}@var{which}:@var{major}.@var{minor}]
++        [@option{--compress-debug-sections}]
++        [@option{--decompress-debug-sections}]
+         [@option{-v}|@option{--verbose}]
+         [@option{-V}|@option{--version}]
+         [@option{--help}] [@option{--info}]
+@@ -1649,6 +1651,12 @@ This option is used to build a @file{.sym} file for a VxWorks kernel.
+ It can also be a useful way of reducing the size of a @option{--just-symbols}
+ linker input file.
+ 
++@item --compress-debug-sections
++Compress DWARF debug sections using zlib.
++
++@item --decompress-debug-sections
++Decompress DWARF debug sections using zlib.
++
+ @item -V
+ @itemx --version
+ Show the version number of @command{objcopy}.
+diff --git a/binutils/objcopy.c b/binutils/objcopy.c
+index 87a23ef..4f98e2a 100644
+--- a/binutils/objcopy.c
++++ b/binutils/objcopy.c
+@@ -193,6 +193,14 @@ static const char * gnu_debuglink_filename = NULL;
+ /* Whether to convert debugging information.  */
+ static bfd_boolean convert_debugging = FALSE;
+ 
++/* Whether to compress/decompress DWARF debug sections.  */
++static enum
++{
++  nothing,
++  compress,
++  decompress
++} do_debug_sections = nothing;
++
+ /* Whether to change the leading character in symbol names.  */
+ static bfd_boolean change_leading_char = FALSE;
+ 
+@@ -258,7 +266,9 @@ enum command_line_switch
+     OPTION_CHANGE_SECTION_LMA,
+     OPTION_CHANGE_SECTION_VMA,
+     OPTION_CHANGE_WARNINGS,
++    OPTION_COMPRESS_DEBUG_SECTIONS,
+     OPTION_DEBUGGING,
++    OPTION_DECOMPRESS_DEBUG_SECTIONS,
+     OPTION_GAP_FILL,
+     OPTION_NO_CHANGE_WARNINGS,
+     OPTION_PAD_TO,
+@@ -355,7 +365,9 @@ static struct option copy_options[] =
+   {"change-section-vma", required_argument, 0, OPTION_CHANGE_SECTION_VMA},
+   {"change-start", required_argument, 0, OPTION_CHANGE_START},
+   {"change-warnings", no_argument, 0, OPTION_CHANGE_WARNINGS},
++  {"compress-debug-sections", no_argument, 0, OPTION_COMPRESS_DEBUG_SECTIONS},
+   {"debugging", no_argument, 0, OPTION_DEBUGGING},
++  {"decompress-debug-sections", no_argument, 0, OPTION_DECOMPRESS_DEBUG_SECTIONS},
+   {"discard-all", no_argument, 0, 'x'},
+   {"discard-locals", no_argument, 0, 'X'},
+   {"extract-symbol", no_argument, 0, OPTION_EXTRACT_SYMBOL},
+@@ -547,6 +559,8 @@ copy_usage (FILE *stream, int exit_status)
+                                    <commit>\n\
+      --subsystem <name>[:<version>]\n\
+                                    Set PE subsystem to <name> [& <version>]\n\
++     --compress-debug-sections     Compress DWARF debug sections using zlib\n\
++     --decompress-debug-sections   Decompress DWARF debug sections using zlib\n\
+   -v --verbose                     List all object files modified\n\
+   @<file>                          Read options from <file>\n\
+   -V --version                     Display this program's version number\n\
+@@ -2189,6 +2203,18 @@ copy_file (const char *input_filename, const char *output_filename,
+       return;
+     }
+ 
++  switch (do_debug_sections)
++    {
++    case compress:
++      ibfd->flags |= BFD_COMPRESS;
++      break;
++    case decompress:
++      ibfd->flags |= BFD_DECOMPRESS;
++      break;
++    default:
++      break;
++    }
++
+   if (bfd_check_format (ibfd, bfd_archive))
+     {
+       bfd_boolean force_output_target;
+@@ -2633,9 +2659,9 @@ copy_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
+   if (bfd_get_section_flags (ibfd, isection) & SEC_HAS_CONTENTS
+       && bfd_get_section_flags (obfd, osection) & SEC_HAS_CONTENTS)
+     {
+-      void *memhunk = xmalloc (size);
++      bfd_byte *memhunk = NULL;
+ 
+-      if (!bfd_get_section_contents (ibfd, isection, memhunk, 0, size))
++      if (!bfd_get_full_section_contents (ibfd, isection, &memhunk))
+ 	{
+ 	  status = 1;
+ 	  bfd_nonfatal_message (NULL, ibfd, isection, NULL);
+@@ -3164,6 +3190,7 @@ copy_main (int argc, char *argv[])
+   struct section_list *p;
+   struct stat statbuf;
+   const bfd_arch_info_type *input_arch = NULL;
++  struct dwarf_debug_section *d;
+ 
+   while ((c = getopt_long (argc, argv, "b:B:i:I:j:K:N:s:O:d:F:L:G:R:SpgxXHhVvW:w",
+ 			   copy_options, (int *) 0)) != EOF)
+@@ -3445,10 +3472,18 @@ copy_main (int argc, char *argv[])
+ 	  change_leading_char = TRUE;
+ 	  break;
+ 
++	case OPTION_COMPRESS_DEBUG_SECTIONS:
++	  do_debug_sections = compress;
++	  break;
++
+ 	case OPTION_DEBUGGING:
+ 	  convert_debugging = TRUE;
+ 	  break;
+ 
++	case OPTION_DECOMPRESS_DEBUG_SECTIONS:
++	  do_debug_sections = decompress;
++	  break;
++
+ 	case OPTION_GAP_FILL:
+ 	  {
+ 	    bfd_vma gap_fill_vma;
+@@ -3854,6 +3889,22 @@ copy_main (int argc, char *argv[])
+     fatal (_("warning: could not create temporary file whilst copying '%s', (error: %s)"),
+ 	   input_filename, strerror (errno));
+ 
++  switch (do_debug_sections)
++    {
++    case compress:
++      for (d = dwarf_debug_sections; d->uncompressed_name; d++)
++	add_section_rename (d->uncompressed_name, d->compressed_name,
++			    (flagword) -1);
++      break;
++    case decompress:
++      for (d = dwarf_debug_sections; d->uncompressed_name; d++)
++	add_section_rename (d->compressed_name, d->uncompressed_name,
++			    (flagword) -1);
++      break;
++    default:
++      break;
++    }
++
+   copy_file (input_filename, tmpname, input_target, output_target, input_arch);
+   if (status == 0)
+     {
+diff --git a/binutils/objdump.c b/binutils/objdump.c
+index f94dee9..61f049e 100644
+--- a/binutils/objdump.c
++++ b/binutils/objdump.c
+@@ -2193,20 +2193,15 @@ load_specific_debug_section (enum dwarf_section_display_enum debug,
+   struct dwarf_section *section = &debug_displays [debug].section;
+   bfd *abfd = (bfd *) file;
+   bfd_boolean ret;
+-  int section_is_compressed;
+ 
+   /* If it is already loaded, do nothing.  */
+   if (section->start != NULL)
+     return 1;
+ 
+-  section_is_compressed = section->name == section->compressed_name;
+-
+   section->address = 0;
+   section->size = bfd_get_section_size (sec);
+-  section->start = (unsigned char *) xmalloc (section->size);
+-
+-  ret = bfd_get_section_contents (abfd, sec, section->start, 0,
+-				  section->size);
++  section->start = NULL;
++  ret = bfd_get_full_section_contents (abfd, sec, &section->start);
+ 
+   if (! ret)
+     {
+@@ -2216,18 +2211,6 @@ load_specific_debug_section (enum dwarf_section_display_enum debug,
+       return 0;
+     }
+ 
+-  if (section_is_compressed)
+-    {
+-      bfd_size_type size = section->size;
+-      if (! bfd_uncompress_section_contents (&section->start, &size))
+-        {
+-          free_debug_section (debug);
+-          printf (_("\nCan't uncompress section '%s'.\n"), section->name);
+-          return 0;
+-        }
+-      section->size = size;
+-    }
+-
+   if (is_relocatable && debug_displays [debug].relocate)
+     {
+       /* We want to relocate the data we've already read (and
+@@ -2645,9 +2628,11 @@ dump_section (bfd *abfd, asection *section, void *dummy ATTRIBUTE_UNUSED)
+ 	    (unsigned long) (section->filepos + start_offset));
+   printf ("\n");
+ 
+-  data = (bfd_byte *) xmalloc (datasize);
+-
+-  bfd_get_section_contents (abfd, section, data, 0, datasize);
++  if (!bfd_get_full_section_contents (abfd, section, &data))
++    {
++      non_fatal (_("Reading section failed"));
++      return;
++    }
+ 
+   width = 4;
+ 
+@@ -3191,6 +3176,10 @@ display_file (char *filename, char *target)
+       return;
+     }
+ 
++  /* Decompress sections unless dumping the section contents.  */
++  if (!dump_section_contents)
++    file->flags |= BFD_DECOMPRESS;
++
+   /* If the file is an archive, process all of its elements.  */
+   if (bfd_check_format (file, bfd_archive))
+     {
+diff --git a/binutils/readelf.c b/binutils/readelf.c
+index fd81d2d..6614eda 100644
+--- a/binutils/readelf.c
++++ b/binutils/readelf.c
+@@ -9875,8 +9875,7 @@ dump_section_as_bytes (Elf_Internal_Shdr * section,
+   putchar ('\n');
+ }
+ 
+-/* Uncompresses a section that was compressed using zlib, in place.
+-   This is a copy of bfd_uncompress_section_contents, in bfd/compress.c  */
++/* Uncompresses a section that was compressed using zlib, in place.  */
+ 
+ static int
+ uncompress_section_contents (unsigned char **buffer ATTRIBUTE_UNUSED,
+@@ -9942,6 +9941,8 @@ uncompress_section_contents (unsigned char **buffer ATTRIBUTE_UNUSED,
+ 
+  fail:
+   free (uncompressed_buffer);
++  /* Indicate decompression failure.  */
++  *buffer = NULL;
+   return 0;
+ #endif  /* HAVE_ZLIB_H */
+ }
+@@ -9952,30 +9953,23 @@ load_specific_debug_section (enum dwarf_section_display_enum debug,
+ {
+   struct dwarf_section * section = &debug_displays [debug].section;
+   char buf [64];
+-  int section_is_compressed;
+ 
+   /* If it is already loaded, do nothing.  */
+   if (section->start != NULL)
+     return 1;
+ 
+-  section_is_compressed = section->name == section->compressed_name;
+-
+   snprintf (buf, sizeof (buf), _("%s section data"), section->name);
+   section->address = sec->sh_addr;
+   section->size = sec->sh_size;
+   section->start = (unsigned char *) get_data (NULL, (FILE *) file,
+                                                sec->sh_offset, 1,
+                                                sec->sh_size, buf);
++  if (uncompress_section_contents (&section->start, &section->size))
++    sec->sh_size = section->size;
++
+   if (section->start == NULL)
+     return 0;
+ 
+-  if (section_is_compressed)
+-    {
+-      if (! uncompress_section_contents (&section->start, &section->size))
+-        return 0;
+-      sec->sh_size = section->size;
+-    }
+-
+   if (debug_displays [debug].relocate)
+     apply_relocations ((FILE *) file, sec, section->start);
+ 
+diff --git a/binutils/testsuite/binutils-all/compress.exp b/binutils/testsuite/binutils-all/compress.exp
+new file mode 100644
+index 0000000..fdf71fb
+--- /dev/null
++++ b/binutils/testsuite/binutils-all/compress.exp
+@@ -0,0 +1,135 @@
++#   Copyright 2010
++#   Free Software Foundation, Inc.
++
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 3 of the License, or
++# (at your option) any later version.
++# 
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++# 
++# You should have received a copy of the GNU General Public License
++# along with this program; if not, write to the Free Software
++# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
++
++# Test compressed .debug section.
++
++if { [is_remote host] || ![is_elf_format] } then {
++    return
++}
++
++set testfile tmpdir/dw2-1.o
++set compressedfile tmpdir/dw2-1-compressed.o
++set copyfile tmpdir/dw2-copy
++set compressedfile2 tmpdir/dw2-2-compressed.o
++set libfile tmpdir/libdw2.a
++set compressedcopyfile tmpdir/dw2-copy-compressed
++
++if { ![binutils_assemble $srcdir/$subdir/dw2-1.S $testfile] } then {
++    fail "compressed debug sections"
++    return
++}
++
++if { ![binutils_assemble_flags $srcdir/$subdir/dw2-1.S $compressedfile --compress-debug-sections] } then {
++    unsupported "compressed debug sections"
++    return
++}
++
++if { ![binutils_assemble_flags $srcdir/$subdir/dw2-2.S $compressedfile2 --compress-debug-sections] } then {
++    unsupported "compressed debug sections"
++    return
++}
++
++remote_file host delete $libfile
++set got [binutils_run $AR "rc $libfile $compressedfile $compressedfile2"]
++if ![string match "" $got] then {
++    fail "compressed debug sections"
++    return
++}
++
++set testname "objcopy compress debug sections"
++set got [binutils_run $OBJCOPY "--compress-debug-sections $testfile ${copyfile}.o"]
++if ![string match "" $got] then {
++    fail "objcopy ($testname)"
++} else {
++    send_log "cmp $compressedfile ${copyfile}.o\n"
++    verbose "cmp $compressedfile ${copyfile}.o"
++    set src1 ${compressedfile}
++    set src2 ${copyfile}.o
++    set status [remote_exec build cmp "${src1} ${src2}"]
++    set exec_output [lindex $status 1]
++    set exec_output [prune_warnings $exec_output]
++
++    if [string match "" $exec_output] then {
++	pass "objcopy ($testname)"
++    } else {
++	send_log "$exec_output\n"
++	verbose "$exec_output" 1
++	fail "objcopy ($testname)"
++    }
++}
++
++set testname "objcopy decompress compressed debug sections"
++set got [binutils_run $OBJCOPY "--decompress-debug-sections $compressedfile ${copyfile}.o"]
++if ![string match "" $got] then {
++    fail "objcopy ($testname)"
++} else {
++    send_log "cmp $testfile ${copyfile}.o\n"
++    verbose "cmp $testfile ${copyfile}.o"
++    set src1 ${testfile}
++    set src2 ${copyfile}.o
++    set status [remote_exec build cmp "${src1} ${src2}"]
++    set exec_output [lindex $status 1]
++    set exec_output [prune_warnings $exec_output]
++
++    if [string match "" $exec_output] then {
++	pass "objcopy ($testname)"
++    } else {
++	send_log "$exec_output\n"
++	verbose "$exec_output" 1
++	fail "objcopy ($testname)"
++    }
++}
++
++set testname "objcopy decompress debug sections in archive"
++set got [binutils_run $OBJCOPY "--decompress-debug-sections $libfile ${copyfile}.a"]
++if ![string match "" $got] then {
++    fail "objcopy ($testname)"
++} else {
++    set got [remote_exec host "$READELF -S --wide ${copyfile}.a" "" "/dev/null" "tmpdir/libdw2.out"]
++
++    if { [lindex $got 0] != 0 || ![string match "" [lindex $got 1]] } then {
++	fail "$testname (reason: unexpected output)"
++	send_log $got
++	send_log "\n"
++    }
++
++    if { [regexp_diff tmpdir/libdw2.out $srcdir/$subdir/libdw2.out] } then {
++	fail "$testname"
++    } else {
++	pass "$testname"
++    }
++}
++
++set testname "objcopy compress debug sections in archive"
++set got [binutils_run $OBJCOPY "--compress-debug-sections ${copyfile}.a ${compressedcopyfile}.a"]
++if ![string match "" $got] then {
++    fail "objcopy ($testname)"
++} else {
++    set got [remote_exec host "$OBJDUMP -s -j .zdebug_line ${compressedcopyfile}.a" "" "/dev/null" "tmpdir/libdw2-compressed.out"]
++
++    if { [lindex $got 0] != 0 || ![string match "" [lindex $got 1]] } then {
++	fail "$testname (reason: unexpected output)"
++	send_log $got
++	send_log "\n"
++    }
++
++    if { [regexp_diff tmpdir/libdw2-compressed.out $srcdir/$subdir/libdw2-compressed.out] } then {
++	fail "$testname"
++    } else {
++	pass "$testname"
++    }
++}
+diff --git a/binutils/testsuite/binutils-all/dw2-1.S b/binutils/testsuite/binutils-all/dw2-1.S
+new file mode 100644
+index 0000000..ab12be6
+--- /dev/null
++++ b/binutils/testsuite/binutils-all/dw2-1.S
+@@ -0,0 +1,198 @@
++/* This testcase is derived from a similar test in GDB.
++
++   Copyright 2008, 2009, 2010 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 3 of the License, or
++   (at your option) any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
++
++/* Dummy function to provide debug information for.  */
++
++	.text
++	.globl _start
++_start:
++	.int 0
++.Lbegin_text1:
++	.globl func_cu1
++	.type func_cu1, %function
++func_cu1:
++.Lbegin_func_cu1:
++	.int 0
++.Lend_func_cu1:
++	.size func_cu1, .-func_cu1
++.Lend_text1:
++
++/* Debug information */
++
++	.section .debug_info
++.Lcu1_begin:
++	/* CU header */
++	.4byte	.Lcu1_end - .Lcu1_start		/* Length of Compilation Unit */
++.Lcu1_start:
++	.2byte	2				/* DWARF Version */
++	.4byte	.Labbrev1_begin			/* Offset into abbrev section */
++	.byte	4				/* Pointer size */
++
++	/* CU die */
++	.uleb128 1				/* Abbrev: DW_TAG_compile_unit */
++	.4byte	.Lline1_begin			/* DW_AT_stmt_list */
++	.4byte	.Lend_text1			/* DW_AT_high_pc */
++	.4byte	.Lbegin_text1			/* DW_AT_low_pc */
++	.ascii	"file1.txt\0"			/* DW_AT_name */
++	.ascii	"GNU C 3.3.3\0"			/* DW_AT_producer */
++	.byte	1				/* DW_AT_language (C) */
++
++	/* func_cu1 */
++	.uleb128	2			/* Abbrev: DW_TAG_subprogram */
++	.byte		1			/* DW_AT_external */
++	.byte		1			/* DW_AT_decl_file */
++	.byte		2			/* DW_AT_decl_line */
++	.ascii		"func_cu1\0"		/* DW_AT_name */
++	.4byte		.Ltype_int-.Lcu1_begin	/* DW_AT_type */
++	.4byte		.Lbegin_func_cu1	/* DW_AT_low_pc */
++	.4byte		.Lend_func_cu1		/* DW_AT_high_pc */
++	.byte		1			/* DW_AT_frame_base: length */
++	.byte		0x55			/* DW_AT_frame_base: DW_OP_reg5 */
++
++.Ltype_int:
++	.uleb128	3			/* Abbrev: DW_TAG_base_type */
++	.ascii		"int\0"			/* DW_AT_name */
++	.byte		4			/* DW_AT_byte_size */
++	.byte		5			/* DW_AT_encoding */
++
++	.byte		0			/* End of children of CU */
++
++.Lcu1_end:
++
++/* Line table */
++	.section .debug_line
++.Lline1_begin:
++	.4byte		.Lline1_end - .Lline1_start	/* Initial length */
++.Lline1_start:
++	.2byte		2			/* Version */
++	.4byte		.Lline1_lines - .Lline1_hdr	/* header_length */
++.Lline1_hdr:
++	.byte		1			/* Minimum insn length */
++	.byte		1			/* default_is_stmt */
++	.byte		1			/* line_base */
++ 	.byte		1			/* line_range */
++	.byte		0x10			/* opcode_base */
++
++	/* Standard lengths */
++	.byte		0
++	.byte		1
++	.byte		1
++	.byte		1
++	.byte		1
++	.byte		0
++	.byte		0
++	.byte		0
++	.byte		1
++	.byte		0
++	.byte		0
++	.byte		1
++	.byte		0
++	.byte		0
++	.byte		0
++
++	/* Include directories */
++	.byte		0
++
++	/* File names */
++	.ascii		"file1.txt\0"
++	.uleb128	0
++	.uleb128	0
++	.uleb128	0
++
++	.byte		0
++
++.Lline1_lines:
++	.byte		0	/* DW_LNE_set_address */
++	.uleb128	5
++	.byte		2
++	.4byte		.Lbegin_func_cu1
++
++	.byte		3	/* DW_LNS_advance_line */
++	.sleb128	3	/* ... to 4 */
++
++	.byte		1	/* DW_LNS_copy */
++
++	.byte		1	/* DW_LNS_copy (second time as an end-of-prologue marker) */
++
++	.byte		0	/* DW_LNE_set_address */
++	.uleb128	5
++	.byte		2
++	.4byte		.Lend_func_cu1
++
++	.byte		0	/* DW_LNE_end_of_sequence */
++	.uleb128	1
++	.byte		1
++
++.Lline1_end:
++
++/* Abbrev table */
++	.section .debug_abbrev
++.Labbrev1_begin:
++	.uleb128	1			/* Abbrev code */
++	.uleb128	0x11			/* DW_TAG_compile_unit */
++	.byte		1			/* has_children */
++	.uleb128	0x10			/* DW_AT_stmt_list */
++	.uleb128	0x6			/* DW_FORM_data4 */
++	.uleb128	0x12			/* DW_AT_high_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x11			/* DW_AT_low_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x25			/* DW_AT_producer */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x13			/* DW_AT_language */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.uleb128	2			/* Abbrev code */
++	.uleb128	0x2e			/* DW_TAG_subprogram */
++	.byte		0			/* has_children */
++	.uleb128	0x3f			/* DW_AT_external */
++	.uleb128	0xc			/* DW_FORM_flag */
++	.uleb128	0x3a			/* DW_AT_decl_file */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3b			/* DW_AT_decl_line */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x49			/* DW_AT_type */
++	.uleb128	0x13			/* DW_FORM_ref4 */
++	.uleb128	0x11			/* DW_AT_low_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x12			/* DW_AT_high_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x40			/* DW_AT_frame_base */
++	.uleb128	0xa			/* DW_FORM_block1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.uleb128	3			/* Abbrev code */
++	.uleb128	0x24			/* DW_TAG_base_type */
++	.byte		0			/* has_children */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0xb			/* DW_AT_byte_size */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3e			/* DW_AT_encoding */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
+diff --git a/binutils/testsuite/binutils-all/dw2-2.S b/binutils/testsuite/binutils-all/dw2-2.S
+new file mode 100644
+index 0000000..43b5355
+--- /dev/null
++++ b/binutils/testsuite/binutils-all/dw2-2.S
+@@ -0,0 +1,195 @@
++/* This testcase is derived from a similar test in GDB.
++
++   Copyright 2008, 2009, 2010 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 3 of the License, or
++   (at your option) any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
++
++/* Dummy function to provide debug information for.  */
++
++	.text
++.Lbegin_text1:
++	.globl func_cu2
++	.type func_cu2, %function
++func_cu2:
++.Lbegin_func_cu2:
++	.int 0
++.Lend_func_cu2:
++	.size func_cu2, .-func_cu2
++.Lend_text1:
++
++/* Debug information */
++
++	.section .debug_info
++.Lcu1_begin:
++	/* CU header */
++	.4byte	.Lcu1_end - .Lcu1_start		/* Length of Compilation Unit */
++.Lcu1_start:
++	.2byte	2				/* DWARF Version */
++	.4byte	.Labbrev1_begin			/* Offset into abbrev section */
++	.byte	4				/* Pointer size */
++
++	/* CU die */
++	.uleb128 1				/* Abbrev: DW_TAG_compile_unit */
++	.4byte	.Lline1_begin			/* DW_AT_stmt_list */
++	.4byte	.Lend_text1			/* DW_AT_high_pc */
++	.4byte	.Lbegin_text1			/* DW_AT_low_pc */
++	.ascii	"file1.txt\0"			/* DW_AT_name */
++	.ascii	"GNU C 3.3.3\0"			/* DW_AT_producer */
++	.byte	1				/* DW_AT_language (C) */
++
++	/* func_cu2 */
++	.uleb128	2			/* Abbrev: DW_TAG_subprogram */
++	.byte		1			/* DW_AT_external */
++	.byte		1			/* DW_AT_decl_file */
++	.byte		2			/* DW_AT_decl_line */
++	.ascii		"func_cu2\0"		/* DW_AT_name */
++	.4byte		.Ltype_int-.Lcu1_begin	/* DW_AT_type */
++	.4byte		.Lbegin_func_cu2	/* DW_AT_low_pc */
++	.4byte		.Lend_func_cu2		/* DW_AT_high_pc */
++	.byte		1			/* DW_AT_frame_base: length */
++	.byte		0x55			/* DW_AT_frame_base: DW_OP_reg5 */
++
++.Ltype_int:
++	.uleb128	3			/* Abbrev: DW_TAG_base_type */
++	.ascii		"int\0"			/* DW_AT_name */
++	.byte		4			/* DW_AT_byte_size */
++	.byte		5			/* DW_AT_encoding */
++
++	.byte		0			/* End of children of CU */
++
++.Lcu1_end:
++
++/* Line table */
++	.section .debug_line
++.Lline1_begin:
++	.4byte		.Lline1_end - .Lline1_start	/* Initial length */
++.Lline1_start:
++	.2byte		2			/* Version */
++	.4byte		.Lline1_lines - .Lline1_hdr	/* header_length */
++.Lline1_hdr:
++	.byte		1			/* Minimum insn length */
++	.byte		1			/* default_is_stmt */
++	.byte		1			/* line_base */
++ 	.byte		1			/* line_range */
++	.byte		0x10			/* opcode_base */
++
++	/* Standard lengths */
++	.byte		0
++	.byte		1
++	.byte		1
++	.byte		1
++	.byte		1
++	.byte		0
++	.byte		0
++	.byte		0
++	.byte		1
++	.byte		0
++	.byte		0
++	.byte		1
++	.byte		0
++	.byte		0
++	.byte		0
++
++	/* Include directories */
++	.byte		0
++
++	/* File names */
++	.ascii		"file1.txt\0"
++	.uleb128	0
++	.uleb128	0
++	.uleb128	0
++
++	.byte		0
++
++.Lline1_lines:
++	.byte		0	/* DW_LNE_set_address */
++	.uleb128	5
++	.byte		2
++	.4byte		.Lbegin_func_cu2
++
++	.byte		3	/* DW_LNS_advance_line */
++	.sleb128	3	/* ... to 4 */
++
++	.byte		1	/* DW_LNS_copy */
++
++	.byte		1	/* DW_LNS_copy (second time as an end-of-prologue marker) */
++
++	.byte		0	/* DW_LNE_set_address */
++	.uleb128	5
++	.byte		2
++	.4byte		.Lend_func_cu2
++
++	.byte		0	/* DW_LNE_end_of_sequence */
++	.uleb128	1
++	.byte		1
++
++.Lline1_end:
++
++/* Abbrev table */
++	.section .debug_abbrev
++.Labbrev1_begin:
++	.uleb128	1			/* Abbrev code */
++	.uleb128	0x11			/* DW_TAG_compile_unit */
++	.byte		1			/* has_children */
++	.uleb128	0x10			/* DW_AT_stmt_list */
++	.uleb128	0x6			/* DW_FORM_data4 */
++	.uleb128	0x12			/* DW_AT_high_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x11			/* DW_AT_low_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x25			/* DW_AT_producer */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x13			/* DW_AT_language */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.uleb128	2			/* Abbrev code */
++	.uleb128	0x2e			/* DW_TAG_subprogram */
++	.byte		0			/* has_children */
++	.uleb128	0x3f			/* DW_AT_external */
++	.uleb128	0xc			/* DW_FORM_flag */
++	.uleb128	0x3a			/* DW_AT_decl_file */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3b			/* DW_AT_decl_line */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x49			/* DW_AT_type */
++	.uleb128	0x13			/* DW_FORM_ref4 */
++	.uleb128	0x11			/* DW_AT_low_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x12			/* DW_AT_high_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x40			/* DW_AT_frame_base */
++	.uleb128	0xa			/* DW_FORM_block1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.uleb128	3			/* Abbrev code */
++	.uleb128	0x24			/* DW_TAG_base_type */
++	.byte		0			/* has_children */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0xb			/* DW_AT_byte_size */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3e			/* DW_AT_encoding */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
+diff --git a/binutils/testsuite/binutils-all/libdw2-compressed.out b/binutils/testsuite/binutils-all/libdw2-compressed.out
+new file mode 100644
+index 0000000..6c1f7f5
+--- /dev/null
++++ b/binutils/testsuite/binutils-all/libdw2-compressed.out
+@@ -0,0 +1,5 @@
++#...
++ .* ZLIB.*
++#...
++ .* ZLIB.*
++#pass
+diff --git a/binutils/testsuite/binutils-all/libdw2.out b/binutils/testsuite/binutils-all/libdw2.out
+new file mode 100644
+index 0000000..899e6f8
+--- /dev/null
++++ b/binutils/testsuite/binutils-all/libdw2.out
+@@ -0,0 +1,13 @@
++#...
++  \[[ 0-9]+\] \.debug_info[ 	]+PROGBITS[ 	0-9a-z]+ [^Z]*
++#...
++  \[[ 0-9]+\] \.debug_line[ 	]+PROGBITS[ 	0-9a-z]+ [^Z]*
++#...
++  \[[ 0-9]+\] \.debug_abbrev[ 	]+PROGBITS[ 	0-9a-z]+ [^Z]*
++#...
++  \[[ 0-9]+\] \.debug_info[ 	]+PROGBITS[ 	0-9a-z]+ [^Z]*
++#...
++  \[[ 0-9]+\] \.debug_line[ 	]+PROGBITS[ 	0-9a-z]+ [^Z]*
++#...
++  \[[ 0-9]+\] \.debug_abbrev[ 	]+PROGBITS[ 	0-9a-z]+ [^Z]*
++#pass
+diff --git a/gas/testsuite/gas/elf/dwarf2-1.d b/gas/testsuite/gas/elf/dwarf2-1.d
+index f09d230..b77f906 100644
+--- a/gas/testsuite/gas/elf/dwarf2-1.d
++++ b/gas/testsuite/gas/elf/dwarf2-1.d
+@@ -1,8 +1,9 @@
++#as:  --compress-debug-sections
+ #readelf: -w
+ #name: DWARF2 1
+ #not-target: ia64-*-*
+ 
+-Contents of the .debug_info section:
++Contents of the .[z]?debug_info section:
+ 
+   Compilation Unit @ offset 0x0:
+    Length:        0x4e \(32-bit\)
+@@ -30,7 +31,7 @@ Contents of the .debug_info section:
+     <4f>   DW_AT_byte_size   : 4	
+     <50>   DW_AT_encoding    : 5	\(signed\)
+ 
+-Raw dump of debug contents of section .debug_line:
++Raw dump of debug contents of section .[z]?debug_line:
+ 
+   Offset:                      0x0
+   Length:                      62
+@@ -74,7 +75,7 @@ Raw dump of debug contents of section .debug_line:
+   Extended opcode 1: End of Sequence
+ 
+ 
+-Contents of the .zdebug_abbrev section:
++Contents of the .[z]?debug_abbrev section:
+ 
+   Number TAG
+    1      DW_TAG_compile_unit    \[has children\]
+diff --git a/gas/testsuite/gas/elf/dwarf2-1.s b/gas/testsuite/gas/elf/dwarf2-1.s
+index 0310079..887fdd6 100644
+--- a/gas/testsuite/gas/elf/dwarf2-1.s
++++ b/gas/testsuite/gas/elf/dwarf2-1.s
+@@ -15,10 +15,6 @@
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+ 
+-/* This tests that gdb can read compressed sections.  The contents
+-   are a basic assembly file, but the .debug_abbrev section has been
+-   comrpessed using zlib.  */
+-
+ /* Dummy function to provide debug information for.  */
+ 
+ 	.file "dwarf2-1.c"
+@@ -144,76 +140,60 @@ func_cu1:
+ 
+ .Lline1_end:
+ 
+-/* Abbrev table -- compressed */
+-	.section .zdebug_abbrev
++/* Abbrev table */
++	.section .debug_abbrev
+ .Labbrev1_begin:
+-	.ascii		"ZLIB"
+-	.4byte		0
+-	.2byte		0
+-	.byte		0
+-	.byte		51
+-	.byte		0x78
+-	.byte		0x5e
+-	.byte		0x63
+-	.byte		0x14
+-	.byte		0x64
+-	.byte		0x14
+-	.byte		0x60
+-	.byte		0x13
+-	.byte		0x62
+-	.byte		0x14
+-	.byte		0x64
+-	.byte		0x64
+-	.byte		0xe6
+-	.byte		0x50
+-	.byte		0xe5
+-	.byte		0x10
+-	.byte		0xe6
+-	.byte		0x66
+-	.byte		0x60
+-	.byte		0x60
+-	.byte		0xd2
+-	.byte		0x63
+-	.byte		0xb0
+-	.byte		0xe7
+-	.byte		0xb1
+-	.byte		0xe2
+-	.byte		0xb6
+-	.byte		0xe6
+-	.byte		0x66
+-	.byte		0xe6
+-	.byte		0xf0
+-	.byte		0x14
+-	.byte		0x16
+-	.byte		0x64
+-	.byte		0x14
+-	.byte		0x62
+-	.byte		0x74
+-	.byte		0xe0
+-	.byte		0x02
+-	.byte		0x00
+-	.byte		0x25
+-	.byte		0x78
+-	.byte		0x02
+-	.byte		0x81
+-	.byte		0x78
+-	.byte		0x9c
+-	.byte		0x63
+-	.byte		0x60
+-	.byte		0x60
+-	.byte		0x56
+-	.byte		0x61
+-	.byte		0x60
+-	.byte		0xe6
+-	.byte		0xe0
+-	.byte		0xe6
+-	.byte		0xb6
+-	.byte		0xe3
+-	.byte		0x66
+-	.byte		0x00
+-	.byte		0x02
+-	.byte		0x00
+-	.byte		0x04
+-	.byte		0x9c
+-	.byte		0x00
+-	.byte		0x92
++	.uleb128	1			/* Abbrev code */
++	.uleb128	0x11			/* DW_TAG_compile_unit */
++	.byte		1			/* has_children */
++	.uleb128	0x10			/* DW_AT_stmt_list */
++	.uleb128	0x6			/* DW_FORM_data4 */
++	.uleb128	0x12			/* DW_AT_high_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x11			/* DW_AT_low_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x25			/* DW_AT_producer */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x13			/* DW_AT_language */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.uleb128	2			/* Abbrev code */
++	.uleb128	0x2e			/* DW_TAG_subprogram */
++	.byte		0			/* has_children */
++	.uleb128	0x3f			/* DW_AT_external */
++	.uleb128	0xc			/* DW_FORM_flag */
++	.uleb128	0x3a			/* DW_AT_decl_file */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3b			/* DW_AT_decl_line */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x49			/* DW_AT_type */
++	.uleb128	0x13			/* DW_FORM_ref4 */
++	.uleb128	0x11			/* DW_AT_low_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x12			/* DW_AT_high_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x40			/* DW_AT_frame_base */
++	.uleb128	0xa			/* DW_FORM_block1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.uleb128	3			/* Abbrev code */
++	.uleb128	0x24			/* DW_TAG_base_type */
++	.byte		0			/* has_children */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0xb			/* DW_AT_byte_size */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3e			/* DW_AT_encoding */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
+diff --git a/gas/testsuite/gas/elf/dwarf2-2.d b/gas/testsuite/gas/elf/dwarf2-2.d
+index de87004..7439286 100644
+--- a/gas/testsuite/gas/elf/dwarf2-2.d
++++ b/gas/testsuite/gas/elf/dwarf2-2.d
+@@ -1,8 +1,9 @@
++#as:  --compress-debug-sections
+ #readelf: -w
+ #name: DWARF2 2
+ #not-target: ia64-*-*
+ 
+-Contents of the .debug_info section:
++Contents of the .[z]?debug_info section:
+ 
+   Compilation Unit @ offset 0x0:
+    Length:        0x4e \(32-bit\)
+@@ -30,7 +31,7 @@ Contents of the .debug_info section:
+     <4f>   DW_AT_byte_size   : 4	
+     <50>   DW_AT_encoding    : 5	\(signed\)
+ 
+-Raw dump of debug contents of section .debug_line:
++Raw dump of debug contents of section .[z]?debug_line:
+ 
+   Offset:                      0x0
+   Length:                      62
+@@ -74,7 +75,7 @@ Raw dump of debug contents of section .debug_line:
+   Extended opcode 1: End of Sequence
+ 
+ 
+-Contents of the .zdebug_abbrev section:
++Contents of the .[z]?debug_abbrev section:
+ 
+   Number TAG
+    1      DW_TAG_compile_unit    \[has children\]
+diff --git a/gas/testsuite/gas/elf/dwarf2-2.s b/gas/testsuite/gas/elf/dwarf2-2.s
+index 389918c..38f62b8 100644
+--- a/gas/testsuite/gas/elf/dwarf2-2.s
++++ b/gas/testsuite/gas/elf/dwarf2-2.s
+@@ -15,10 +15,6 @@
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+ 
+-/* This tests that gdb can read compressed sections.  The contents
+-   are a basic assembly file, but the .debug_abbrev section has been
+-   comrpessed using zlib.  */
+-
+ /* Dummy function to provide debug information for.  */
+ 
+ 	.file "dwarf2-2.c"
+@@ -144,76 +140,60 @@ func_cu1:
+ 
+ .Lline1_end:
+ 
+-/* Abbrev table -- compressed */
+-	.section .zdebug_abbrev,"G",%progbits,foo,comdat
++/* Abbrev table */
++	.section .debug_abbrev,"G",%progbits,foo,comdat
+ .Labbrev1_begin:
+-	.ascii		"ZLIB"
+-	.4byte		0
+-	.2byte		0
+-	.byte		0
+-	.byte		51
+-	.byte		0x78
+-	.byte		0x5e
+-	.byte		0x63
+-	.byte		0x14
+-	.byte		0x64
+-	.byte		0x14
+-	.byte		0x60
+-	.byte		0x13
+-	.byte		0x62
+-	.byte		0x14
+-	.byte		0x64
+-	.byte		0x64
+-	.byte		0xe6
+-	.byte		0x50
+-	.byte		0xe5
+-	.byte		0x10
+-	.byte		0xe6
+-	.byte		0x66
+-	.byte		0x60
+-	.byte		0x60
+-	.byte		0xd2
+-	.byte		0x63
+-	.byte		0xb0
+-	.byte		0xe7
+-	.byte		0xb1
+-	.byte		0xe2
+-	.byte		0xb6
+-	.byte		0xe6
+-	.byte		0x66
+-	.byte		0xe6
+-	.byte		0xf0
+-	.byte		0x14
+-	.byte		0x16
+-	.byte		0x64
+-	.byte		0x14
+-	.byte		0x62
+-	.byte		0x74
+-	.byte		0xe0
+-	.byte		0x02
+-	.byte		0x00
+-	.byte		0x25
+-	.byte		0x78
+-	.byte		0x02
+-	.byte		0x81
+-	.byte		0x78
+-	.byte		0x9c
+-	.byte		0x63
+-	.byte		0x60
+-	.byte		0x60
+-	.byte		0x56
+-	.byte		0x61
+-	.byte		0x60
+-	.byte		0xe6
+-	.byte		0xe0
+-	.byte		0xe6
+-	.byte		0xb6
+-	.byte		0xe3
+-	.byte		0x66
+-	.byte		0x00
+-	.byte		0x02
+-	.byte		0x00
+-	.byte		0x04
+-	.byte		0x9c
+-	.byte		0x00
+-	.byte		0x92
++	.uleb128	1			/* Abbrev code */
++	.uleb128	0x11			/* DW_TAG_compile_unit */
++	.byte		1			/* has_children */
++	.uleb128	0x10			/* DW_AT_stmt_list */
++	.uleb128	0x6			/* DW_FORM_data4 */
++	.uleb128	0x12			/* DW_AT_high_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x11			/* DW_AT_low_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x25			/* DW_AT_producer */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x13			/* DW_AT_language */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.uleb128	2			/* Abbrev code */
++	.uleb128	0x2e			/* DW_TAG_subprogram */
++	.byte		0			/* has_children */
++	.uleb128	0x3f			/* DW_AT_external */
++	.uleb128	0xc			/* DW_FORM_flag */
++	.uleb128	0x3a			/* DW_AT_decl_file */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3b			/* DW_AT_decl_line */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x49			/* DW_AT_type */
++	.uleb128	0x13			/* DW_FORM_ref4 */
++	.uleb128	0x11			/* DW_AT_low_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x12			/* DW_AT_high_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x40			/* DW_AT_frame_base */
++	.uleb128	0xa			/* DW_FORM_block1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.uleb128	3			/* Abbrev code */
++	.uleb128	0x24			/* DW_TAG_base_type */
++	.byte		0			/* has_children */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0xb			/* DW_AT_byte_size */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3e			/* DW_AT_encoding */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
+diff --git a/gas/write.c b/gas/write.c
+index 71ac635..2c70d45 100644
+--- a/gas/write.c
++++ b/gas/write.c
+@@ -1350,10 +1350,10 @@ compress_debug (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
+   char *header;
+   struct z_stream_s *strm;
+   int x;
++  flagword flags = bfd_get_section_flags (abfd, sec);
+ 
+   if (seginfo == NULL
+-      || !(bfd_get_section_flags (abfd, sec) & SEC_HAS_CONTENTS)
+-      || (bfd_get_section_flags (abfd, sec) & SEC_ALLOC))
++      || (flags & (SEC_ALLOC | SEC_HAS_CONTENTS)) == SEC_ALLOC)
+     return;
+ 
+   section_name = bfd_get_section_name (stdoutput, sec);
+diff --git a/ld/emultempl/elf32.em b/ld/emultempl/elf32.em
+index 73839d6..839511e 100644
+--- a/ld/emultempl/elf32.em
++++ b/ld/emultempl/elf32.em
+@@ -317,6 +317,10 @@ gld${EMULATION_NAME}_try_needed (struct dt_needed *needed,
+   abfd = bfd_openr (name, bfd_get_target (link_info.output_bfd));
+   if (abfd == NULL)
+     return FALSE;
++
++  /* Linker needs to decompress sections.  */
++  abfd->flags |= BFD_DECOMPRESS;
++
+   if (! bfd_check_format (abfd, bfd_object))
+     {
+       bfd_close (abfd);
+diff --git a/ld/ldfile.c b/ld/ldfile.c
+index 4661897..8dd37a6 100644
+--- a/ld/ldfile.c
++++ b/ld/ldfile.c
+@@ -146,6 +146,9 @@ ldfile_try_open_bfd (const char *attempt,
+       return FALSE;
+     }
+ 
++  /* Linker needs to decompress sections.  */
++  entry->the_bfd->flags |= BFD_DECOMPRESS;
++
+   /* If we are searching for this file, see if the architecture is
+      compatible with the output file.  If it isn't, keep searching.
+      If we can't open the file as an object file, stop the search
+diff --git a/ld/scripttempl/elf.sc b/ld/scripttempl/elf.sc
+index 62120fc..ac05306 100644
+--- a/ld/scripttempl/elf.sc
++++ b/ld/scripttempl/elf.sc
+@@ -572,31 +572,31 @@ cat <<EOF
+   .line           0 : { *(.line) }
+ 
+   /* GNU DWARF 1 extensions */
+-  .debug_srcinfo  0 : { *(.debug_srcinfo) }
+-  .debug_sfnames  0 : { *(.debug_sfnames) }
++  .debug_srcinfo  0 : { *(.debug_srcinfo .zdebug_srcinfo) }
++  .debug_sfnames  0 : { *(.debug_sfnames .zdebug_sfnames) }
+ 
+   /* DWARF 1.1 and DWARF 2 */
+-  .debug_aranges  0 : { *(.debug_aranges) }
+-  .debug_pubnames 0 : { *(.debug_pubnames) }
++  .debug_aranges  0 : { *(.debug_aranges .zdebug_aranges) }
++  .debug_pubnames 0 : { *(.debug_pubnames .zdebug_pubnames) }
+ 
+   /* DWARF 2 */
+-  .debug_info     0 : { *(.debug_info${RELOCATING+ .gnu.linkonce.wi.*}) }
+-  .debug_abbrev   0 : { *(.debug_abbrev) }
+-  .debug_line     0 : { *(.debug_line) }
+-  .debug_frame    0 : { *(.debug_frame) }
+-  .debug_str      0 : { *(.debug_str) }
+-  .debug_loc      0 : { *(.debug_loc) }
+-  .debug_macinfo  0 : { *(.debug_macinfo) }
++  .debug_info     0 : { *(.debug_info${RELOCATING+ .gnu.linkonce.wi.*} .zdebug_info) }
++  .debug_abbrev   0 : { *(.debug_abbrev .zdebug_abbrev) }
++  .debug_line     0 : { *(.debug_line .zdebug_line) }
++  .debug_frame    0 : { *(.debug_frame .zdebug_frame) }
++  .debug_str      0 : { *(.debug_str .zdebug_str) }
++  .debug_loc      0 : { *(.debug_loc .zdebug_loc) }
++  .debug_macinfo  0 : { *(.debug_macinfo .zdebug_macinfo) }
+ 
+   /* SGI/MIPS DWARF 2 extensions */
+-  .debug_weaknames 0 : { *(.debug_weaknames) }
+-  .debug_funcnames 0 : { *(.debug_funcnames) }
+-  .debug_typenames 0 : { *(.debug_typenames) }
+-  .debug_varnames  0 : { *(.debug_varnames) }
++  .debug_weaknames 0 : { *(.debug_weaknames .zdebug_weaknames) }
++  .debug_funcnames 0 : { *(.debug_funcnames .zdebug_funcnames) }
++  .debug_typenames 0 : { *(.debug_typenames .zdebug_typenames) }
++  .debug_varnames  0 : { *(.debug_varnames .zdebug_varnames) }
+ 
+   /* DWARF 3 */
+-  .debug_pubtypes 0 : { *(.debug_pubtypes) }
+-  .debug_ranges   0 : { *(.debug_ranges) }
++  .debug_pubtypes 0 : { *(.debug_pubtypes .zdebug_pubtypes) }
++  .debug_ranges   0 : { *(.debug_ranges .zdebug_ranges) }
+ 
+   ${TINY_DATA_SECTION}
+   ${TINY_BSS_SECTION}
+diff --git a/ld/testsuite/ld-elf/compress.exp b/ld/testsuite/ld-elf/compress.exp
+new file mode 100644
+index 0000000..1e13394
+--- /dev/null
++++ b/ld/testsuite/ld-elf/compress.exp
+@@ -0,0 +1,59 @@
++# Expect script for ELF compressed debug section tests.
++#   Copyright 2010 Free Software Foundation, Inc.
++#
++# This file is part of the GNU Binutils.
++#
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program; if not, write to the Free Software
++# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
++# MA 02110-1301, USA.
++#
++
++# Exclude non-ELF targets.
++
++if ![is_elf_format] {
++    return
++}
++
++# The following tests require running the executable generated by ld.
++if ![isnative] {
++    return
++}
++
++# Check if compiler works
++if { [which $CC] == 0 } {
++    return
++}
++
++global as
++if { ![ld_assemble $as "--compress-debug-sections $srcdir/$subdir/empty.s" tmpdir/empty.o ] } {
++    unsupported "linker compressed debug sections"
++}
++
++set build_tests {
++  {"Build libfoo.so with compressed debug sections"
++   "-shared" "-fPIC -g -Wa,--compress-debug-sections"
++   {foo.c} {} "libfoo.so"}
++  {"Build libbar.so with compressed debug sections"
++   "-shared" "-fPIC -g -Wa,--compress-debug-sections"
++   {begin.c end.c} {} "libbar.so"}
++}
++
++set run_tests {
++    {"Run normal with libfoo.so with compressed debug sections"
++     "tmpdir/begin.o tmpdir/libfoo.so tmpdir/end.o" "-Wa,--compress-debug-sections"
++     {main.c} "normal" "normal.out"}
++}
++
++run_cc_link_tests $build_tests
++run_ld_link_exec_tests [] $run_tests
+diff --git a/ld/testsuite/ld-elf/compress1.d b/ld/testsuite/ld-elf/compress1.d
+new file mode 100644
+index 0000000..fca4351
+--- /dev/null
++++ b/ld/testsuite/ld-elf/compress1.d
+@@ -0,0 +1,9 @@
++#as: --compress-debug-sections
++#ld: -e func_cu2
++#readelf: -S --wide
++#
++
++#failif
++#...
++  \[[ 0-9]+\] \.zdebug_.*[ 	]+PROGBITS[ 	0-9a-z]+ .*
++#...
+diff --git a/ld/testsuite/ld-elf/compress1.s b/ld/testsuite/ld-elf/compress1.s
+new file mode 100644
+index 0000000..8ef0a15
+--- /dev/null
++++ b/ld/testsuite/ld-elf/compress1.s
+@@ -0,0 +1,216 @@
++/* This testcase is derived from a similar test in GDB.
++
++   Copyright 2008, 2009, 2010 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 3 of the License, or
++   (at your option) any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
++
++/* Dummy function to provide debug information for.  */
++
++	.text
++.Lbegin_text1:
++	.globl func_cu2
++	.type func_cu2, %function
++func_cu2:
++.Lbegin_func_cu2:
++	.int 0
++.Lend_func_cu2:
++	.size func_cu2, .-func_cu2
++.Lend_text1:
++
++/* Debug information */
++
++	.section .debug_info
++.Lcu1_begin:
++	/* CU header */
++	.4byte	.Lcu1_end - .Lcu1_start		/* Length of Compilation Unit */
++.Lcu1_start:
++	.2byte	2				/* DWARF Version */
++	.4byte	.Labbrev1_begin			/* Offset into abbrev section */
++	.byte	4				/* Pointer size */
++
++	/* CU die */
++	.uleb128 1				/* Abbrev: DW_TAG_compile_unit */
++	.4byte	.Lline1_begin			/* DW_AT_stmt_list */
++	.4byte	.Lend_text1			/* DW_AT_high_pc */
++	.4byte	.Lbegin_text1			/* DW_AT_low_pc */
++	.ascii	"file1.txt\0"			/* DW_AT_name */
++	.ascii	"GNU C 3.3.3\0"			/* DW_AT_producer */
++	.byte	1				/* DW_AT_language (C) */
++
++	/* func_cu2 */
++	.uleb128	2			/* Abbrev: DW_TAG_subprogram */
++	.byte		1			/* DW_AT_external */
++	.byte		1			/* DW_AT_decl_file */
++	.byte		2			/* DW_AT_decl_line */
++	.ascii		"func_cu2\0"		/* DW_AT_name */
++	.4byte		.Ltype_int-.Lcu1_begin	/* DW_AT_type */
++	.4byte		.Lbegin_func_cu2	/* DW_AT_low_pc */
++	.4byte		.Lend_func_cu2		/* DW_AT_high_pc */
++	.byte		1			/* DW_AT_frame_base: length */
++	.byte		0x55			/* DW_AT_frame_base: DW_OP_reg5 */
++
++.Ltype_int:
++	.uleb128	3			/* Abbrev: DW_TAG_base_type */
++	.ascii		"int\0"			/* DW_AT_name */
++	.byte		4			/* DW_AT_byte_size */
++	.byte		5			/* DW_AT_encoding */
++
++	.byte		0			/* End of children of CU */
++
++.Lcu1_end:
++
++/* Line table */
++	.section .debug_line
++.Lline1_begin:
++	.4byte		.Lline1_end - .Lline1_start	/* Initial length */
++.Lline1_start:
++	.2byte		2			/* Version */
++	.4byte		.Lline1_lines - .Lline1_hdr	/* header_length */
++.Lline1_hdr:
++	.byte		1			/* Minimum insn length */
++	.byte		1			/* default_is_stmt */
++	.byte		1			/* line_base */
++ 	.byte		1			/* line_range */
++	.byte		0x10			/* opcode_base */
++
++	/* Standard lengths */
++	.byte		0
++	.byte		1
++	.byte		1
++	.byte		1
++	.byte		1
++	.byte		0
++	.byte		0
++	.byte		0
++	.byte		1
++	.byte		0
++	.byte		0
++	.byte		1
++	.byte		0
++	.byte		0
++	.byte		0
++
++	/* Include directories */
++	.byte		0
++
++	/* File names */
++	.ascii		"file1.txt\0"
++	.uleb128	0
++	.uleb128	0
++	.uleb128	0
++
++	.byte		0
++
++.Lline1_lines:
++	.byte		0	/* DW_LNE_set_address */
++	.uleb128	5
++	.byte		2
++	.4byte		.Lbegin_func_cu2
++
++	.byte		3	/* DW_LNS_advance_line */
++	.sleb128	3	/* ... to 4 */
++
++	.byte		1	/* DW_LNS_copy */
++
++	.byte		1	/* DW_LNS_copy (second time as an end-of-prologue marker) */
++
++	.byte		0	/* DW_LNE_set_address */
++	.uleb128	5
++	.byte		2
++	.4byte		.Lend_func_cu2
++
++	.byte		0	/* DW_LNE_end_of_sequence */
++	.uleb128	1
++	.byte		1
++
++.Lline1_end:
++
++/* Abbrev table */
++	.section .debug_abbrev
++.Labbrev1_begin:
++	.uleb128	1			/* Abbrev code */
++	.uleb128	0x11			/* DW_TAG_compile_unit */
++	.byte		1			/* has_children */
++	.uleb128	0x10			/* DW_AT_stmt_list */
++	.uleb128	0x6			/* DW_FORM_data4 */
++	.uleb128	0x12			/* DW_AT_high_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x11			/* DW_AT_low_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x25			/* DW_AT_producer */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x13			/* DW_AT_language */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.uleb128	2			/* Abbrev code */
++	.uleb128	0x2e			/* DW_TAG_subprogram */
++	.byte		0			/* has_children */
++	.uleb128	0x3f			/* DW_AT_external */
++	.uleb128	0xc			/* DW_FORM_flag */
++	.uleb128	0x3a			/* DW_AT_decl_file */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3b			/* DW_AT_decl_line */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0x49			/* DW_AT_type */
++	.uleb128	0x13			/* DW_FORM_ref4 */
++	.uleb128	0x11			/* DW_AT_low_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x12			/* DW_AT_high_pc */
++	.uleb128	0x1			/* DW_FORM_addr */
++	.uleb128	0x40			/* DW_AT_frame_base */
++	.uleb128	0xa			/* DW_FORM_block1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.uleb128	3			/* Abbrev code */
++	.uleb128	0x24			/* DW_TAG_base_type */
++	.byte		0			/* has_children */
++	.uleb128	0x3			/* DW_AT_name */
++	.uleb128	0x8			/* DW_FORM_string */
++	.uleb128	0xb			/* DW_AT_byte_size */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.uleb128	0x3e			/* DW_AT_encoding */
++	.uleb128	0xb			/* DW_FORM_data1 */
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.byte		0x0			/* Terminator */
++	.byte		0x0			/* Terminator */
++
++	.section	.debug_pubnames,"",%progbits
++	.4byte	0x19
++	.2byte	0x2
++	.4byte	.Lcu1_begin
++	.4byte	0x43
++	.4byte	0x25
++	.string	"func_cu2"
++	.4byte	0x0
++	.section	.debug_aranges,"",%progbits
++	.4byte	0x1c
++	.2byte	0x2
++	.4byte	.Lcu1_begin
++	.byte	0x4
++	.byte	0x0
++	.2byte	0x0
++	.2byte	0x0
++	.4byte	.Lbegin_text1
++	.4byte	.Lbegin_text1-.Lend_text1
++	.4byte	0x0
++	.4byte	0x0
