@@ -1,3 +1,66 @@
+2010-07-23  Naveen.H.S  <naveen.S@kpitcummins.com>
+	    Ina Pandit  <ina.pandit@kpitcummins.com>
+
+	* gas/v850/split-lo16.d: Update the "ld" instructions with a space
+	for second operand.
+	* gas/v850/v850e1.d: Likewise.
+
+2010-07-22  Alan Modra  <amodra@gmail.com>
+
+	* gas/arm/mapdir.s: Don't specify attr/type for .fini_array.
+	* gas/elf/dwarf2-3.s: Don't specify attr for .init_array.
+	* gas/elf/dwarf2-3.d: Don't run on h8300.
+
+2010-07-19  Andreas Schwab  <schwab@redhat.com>
+
+	* gas/i386/x86-64-unwind.d: Ignore "Key to Flags" contents.
+	* gas/ia64/alias-ilp32.d: Likewise.
+	* gas/ia64/alias.d: Likewise.
+	* gas/ia64/group-1.d: Likewise.
+	* gas/ia64/group-2.d: Likewise.
+	* gas/ia64/secname-ilp32.d: Likewise.
+	* gas/ia64/secname.d: Likewise.
+	* gas/ia64/unwind-ilp32.d: Likewise.
+	* gas/ia64/unwind.d: Likewise.
+	* gas/mmix/byte-1.d: Likewise.
+	* gas/mmix/loc-1.d: Likewise.
+	* gas/mmix/loc-2.d: Likewise.
+	* gas/mmix/loc-3.d: Likewise.
+	* gas/mmix/loc-4.d: Likewise.
+	* gas/mmix/loc-5.d: Likewise.
+
+2010-07-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/i386.exp: Run dw2-compress-2 only for 32bit.
+
+2010-07-14  Rhonda Wittels  <rhonda@codesourcery.com>
+
+	* gas/elf/pseudo.s: New.
+	* gas/elf/pseudo.l: New.
+	* gas/elf/pseudo.d: New.
+	* gas/elf/elf.exp: Run the new test.
+
+2010-07-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/default.exp (ADDR2LINE): New.
+	(ADDR2LINEFLAGS): Likewise.
+
+	* gas/i386/i386.exp: Run dw2-compress-2 and x86-64-dw2-compress-2.
+
+	* gas/i386/dw2-compress-2.d: New.
+	* gas/i386/dw2-compress-2.s: Likewise.
+	* gas/i386/x86-64-dw2-compress-2.d: Likewise.
+	* gas/i386/x86-64-dw2-compress-2.s: Likewise.
+
+	* lib/gas-defs.exp (run_dump_test): Support addr2line as dump
+	program.
+	(slurp_options): Allow numbers in options.
+
+2010-07-14  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/elf/dwarf2-3.s: Replace .short and .long directives in
+	.debug_info section with .2byte and .4byte respectively.
+
 2010-07-11  Kai Tietz  <kai.tietz@onevision.com>
 
 	* gas/pe/aligncomm-b.d: Regenerated content dump.
