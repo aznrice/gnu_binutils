@@ -1,3 +1,8 @@
+2010-07-23  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-sec64k-7.patch: Removed.
+	* README: Likewise.
+
 2010-07-05  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-group-12.patch: Removed.
