@@ -142,8 +142,10 @@ ld/testsuite/
 2010-07-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ld-elf/compress.exp: New.
-	* ld-elf/compress1.d: Likewise.
 	* ld-elf/compress1.s: Likewise.
+	* ld-elf/compress1a.d: Likewise.
+	* ld-elf/compress1b.d: Likewise.
+	* ld-elf/compress1c.d: Likewise.
 
 diff --git a/bfd/archive.c b/bfd/archive.c
 index 1b3f692..ed40141 100644
@@ -175,7 +177,7 @@ index 1b3f692..ed40141 100644
  
  bfd *
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index f97c67f..7785e68 100644
+index 277d432..f242e8c 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
 @@ -1348,6 +1348,12 @@ typedef struct bfd_section
@@ -224,7 +226,7 @@ index f97c67f..7785e68 100644
                                                                         \
    /* output_offset, output_section,              alignment_power,  */  \
       0,             (struct bfd_section *) &SEC, 0,                    \
-@@ -4988,6 +4997,16 @@ struct bfd
+@@ -5056,6 +5065,16 @@ struct bfd
       will be consistent from run to run.  */
  #define BFD_DETERMINISTIC_OUTPUT 0x4000
  
@@ -241,7 +243,7 @@ index f97c67f..7785e68 100644
    /* Currently my_archive is tested before adding origin to
       anything. I believe that this can become always an add of
       origin, with origin set to 0 for non archive files.  */
-@@ -5815,8 +5834,21 @@ bfd_byte *bfd_simple_get_relocated_section_contents
+@@ -5883,8 +5902,21 @@ bfd_byte *bfd_simple_get_relocated_section_contents
     (bfd *abfd, asection *sec, bfd_byte *outbuf, asymbol **symbol_table);
  
  /* Extracted from compress.c.  */
@@ -1148,7 +1150,7 @@ index b378622..a843f12 100644
    if (offset + count < count
        || offset + count > sz)
 diff --git a/bfd/libbfd.h b/bfd/libbfd.h
-index 3da79d9..775ae27 100644
+index 94bbd8e..f312602 100644
 --- a/bfd/libbfd.h
 +++ b/bfd/libbfd.h
 @@ -815,6 +815,16 @@ extern void bfd_section_already_linked_table_traverse
@@ -1192,10 +1194,10 @@ index 7aa088f..aef3cf3 100644
  
    return TRUE;
 diff --git a/bfd/reloc.c b/bfd/reloc.c
-index 7d16869..8a3432c 100644
+index f8a39c9..b237c08 100644
 --- a/bfd/reloc.c
 +++ b/bfd/reloc.c
-@@ -5623,15 +5623,13 @@ bfd_generic_get_relocated_section_contents (bfd *abfd,
+@@ -5711,15 +5711,13 @@ bfd_generic_get_relocated_section_contents (bfd *abfd,
    long reloc_size;
    arelent **reloc_vector;
    long reloc_count;
@@ -1552,10 +1554,10 @@ index f94dee9..61f049e 100644
    if (bfd_check_format (file, bfd_archive))
      {
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index fd81d2d..6614eda 100644
+index c2bb10d..40cc747 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
-@@ -9875,8 +9875,7 @@ dump_section_as_bytes (Elf_Internal_Shdr * section,
+@@ -9881,8 +9881,7 @@ dump_section_as_bytes (Elf_Internal_Shdr * section,
    putchar ('\n');
  }
  
@@ -1565,7 +1567,7 @@ index fd81d2d..6614eda 100644
  
  static int
  uncompress_section_contents (unsigned char **buffer ATTRIBUTE_UNUSED,
-@@ -9942,6 +9941,8 @@ uncompress_section_contents (unsigned char **buffer ATTRIBUTE_UNUSED,
+@@ -9948,6 +9947,8 @@ uncompress_section_contents (unsigned char **buffer ATTRIBUTE_UNUSED,
  
   fail:
    free (uncompressed_buffer);
@@ -1574,7 +1576,7 @@ index fd81d2d..6614eda 100644
    return 0;
  #endif  /* HAVE_ZLIB_H */
  }
-@@ -9952,30 +9953,23 @@ load_specific_debug_section (enum dwarf_section_display_enum debug,
+@@ -9958,30 +9959,23 @@ load_specific_debug_section (enum dwarf_section_display_enum debug,
  {
    struct dwarf_section * section = &debug_displays [debug].section;
    char buf [64];
@@ -2710,21 +2712,6 @@ index 0000000..1e13394
 +
 +run_cc_link_tests $build_tests
 +run_ld_link_exec_tests [] $run_tests
-diff --git a/ld/testsuite/ld-elf/compress1.d b/ld/testsuite/ld-elf/compress1.d
-new file mode 100644
-index 0000000..fca4351
---- /dev/null
-+++ b/ld/testsuite/ld-elf/compress1.d
-@@ -0,0 +1,9 @@
-+#as: --compress-debug-sections
-+#ld: -e func_cu2
-+#readelf: -S --wide
-+#
-+
-+#failif
-+#...
-+  \[[ 0-9]+\] \.zdebug_.*[ 	]+PROGBITS[ 	0-9a-z]+ .*
-+#...
 diff --git a/ld/testsuite/ld-elf/compress1.s b/ld/testsuite/ld-elf/compress1.s
 new file mode 100644
 index 0000000..8ef0a15
@@ -2947,3 +2934,48 @@ index 0000000..8ef0a15
 +	.4byte	.Lbegin_text1-.Lend_text1
 +	.4byte	0x0
 +	.4byte	0x0
+diff --git a/ld/testsuite/ld-elf/compress1a.d b/ld/testsuite/ld-elf/compress1a.d
+new file mode 100644
+index 0000000..963623c
+--- /dev/null
++++ b/ld/testsuite/ld-elf/compress1a.d
+@@ -0,0 +1,9 @@
++#source: compress1.s
++#as: --compress-debug-sections
++#ld: -e func_cu2
++#readelf: -S --wide
++
++#failif
++#...
++  \[[ 0-9]+\] \.zdebug_.*[ 	]+PROGBITS[ 	0-9a-z]+ .*
++#...
+diff --git a/ld/testsuite/ld-elf/compress1b.d b/ld/testsuite/ld-elf/compress1b.d
+new file mode 100644
+index 0000000..02109d5
+--- /dev/null
++++ b/ld/testsuite/ld-elf/compress1b.d
+@@ -0,0 +1,9 @@
++#source: compress1.s
++#as: --compress-debug-sections
++#ld: -r
++#readelf: -S --wide
++
++#failif
++#...
++  \[[ 0-9]+\] \.zdebug_.*[ 	]+PROGBITS[ 	0-9a-z]+ .*
++#...
+diff --git a/ld/testsuite/ld-elf/compress1c.d b/ld/testsuite/ld-elf/compress1c.d
+new file mode 100644
+index 0000000..2822ce6
+--- /dev/null
++++ b/ld/testsuite/ld-elf/compress1c.d
+@@ -0,0 +1,9 @@
++#source: compress1.s
++#as: --compress-debug-sections
++#ld: -shared
++#readelf: -S --wide
++
++#failif
++#...
++  \[[ 0-9]+\] \.zdebug_.*[ 	]+PROGBITS[ 	0-9a-z]+ .*
++#...

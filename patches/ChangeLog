@@ -1,6 +1,6 @@
 2010-07-23  H.J. Lu  <hjl.tools@gmail.com>
 
-	* binutils-zlib-3.patch: New.
+	* binutils-zlib-4.patch: New.
 	* README: Apply it.
 
 2010-07-23  H.J. Lu  <hjl.tools@gmail.com>
