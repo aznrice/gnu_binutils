@@ -7,7 +7,6 @@ text_label:
 	.frame	$sp,0,$31
 	.set	noreorder
 	.cpload	$25
-	.set	reorder
 	.cprestore	0
 	jal	$25
 	jal	$4,$25
@@ -17,6 +16,8 @@ text_label:
 
 # Test j as well.
 	j	text_label
+	.set	reorder
+	nop
 	.end	text_label
 
 # Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
