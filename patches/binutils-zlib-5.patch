@@ -127,6 +127,9 @@ gas/testsuite/
 	Updated.
 	* elf/dwarf2-2.d: Likewise.
 
+	* gas/i386/i386.exp: Remove xfail on dw2-compress-2 and
+	x86-64-dw2-compress-2.
+
 ld/
 
 2010-07-22  H.J. Lu  <hongjiu.lu@intel.com>
@@ -1017,7 +1020,7 @@ index af9d7d6..5827881 100644
       0,             NULL,           0,
    /* relocation, orelocation, reloc_count, filepos, rel_filepos,   */
 diff --git a/bfd/elf.c b/bfd/elf.c
-index e7651ba..fb49fb2 100644
+index 90fc3d1..045ca95 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -1008,6 +1008,52 @@ _bfd_elf_make_section_from_shdr (bfd *abfd,
@@ -1074,7 +1077,7 @@ index e7651ba..fb49fb2 100644
  }
  
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index f445912..7eccf5f 100644
+index e0fbc83..f8cce67 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -9349,10 +9349,8 @@ elf_link_input_bfd (struct elf_final_link_info *finfo, bfd *input_bfd)
@@ -1554,10 +1557,10 @@ index f94dee9..61f049e 100644
    if (bfd_check_format (file, bfd_archive))
      {
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index c2bb10d..40cc747 100644
+index 614f761..40afa1d 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
-@@ -9881,8 +9881,7 @@ dump_section_as_bytes (Elf_Internal_Shdr * section,
+@@ -9885,8 +9885,7 @@ dump_section_as_bytes (Elf_Internal_Shdr * section,
    putchar ('\n');
  }
  
@@ -1567,7 +1570,7 @@ index c2bb10d..40cc747 100644
  
  static int
  uncompress_section_contents (unsigned char **buffer ATTRIBUTE_UNUSED,
-@@ -9948,6 +9947,8 @@ uncompress_section_contents (unsigned char **buffer ATTRIBUTE_UNUSED,
+@@ -9952,6 +9951,8 @@ uncompress_section_contents (unsigned char **buffer ATTRIBUTE_UNUSED,
  
   fail:
    free (uncompressed_buffer);
@@ -1576,7 +1579,7 @@ index c2bb10d..40cc747 100644
    return 0;
  #endif  /* HAVE_ZLIB_H */
  }
-@@ -9958,30 +9959,23 @@ load_specific_debug_section (enum dwarf_section_display_enum debug,
+@@ -9962,30 +9963,23 @@ load_specific_debug_section (enum dwarf_section_display_enum debug,
  {
    struct dwarf_section * section = &debug_displays [debug].section;
    char buf [64];
@@ -2548,6 +2551,26 @@ index 389918c..38f62b8 100644
 +
 +	.byte		0x0			/* Terminator */
 +	.byte		0x0			/* Terminator */
+diff --git a/gas/testsuite/gas/i386/i386.exp b/gas/testsuite/gas/i386/i386.exp
+index 8b36d9d..e4d544b 100644
+--- a/gas/testsuite/gas/i386/i386.exp
++++ b/gas/testsuite/gas/i386/i386.exp
+@@ -214,7 +214,6 @@ if [expr ([istarget "i*86-*-*"] ||  [istarget "x86_64-*-*"]) && [gas_32_check]]
+ 	run_dump_test "localpic"
+ 	run_dump_test "debug1"
+ 
+-	setup_xfail "*-*-*"
+ 	run_dump_test "dw2-compress-2"
+     }
+ 
+@@ -403,7 +402,6 @@ if [expr ([istarget "i*86-*-*"] || [istarget "x86_64-*-*"]) && [gas_64_check]] t
+ 	run_dump_test "x86-64-localpic"
+ 	run_dump_test "debug1"
+ 
+-	setup_xfail "*-*-*"
+ 	run_dump_test "x86-64-dw2-compress-2"
+     }
+ 
 diff --git a/gas/write.c b/gas/write.c
 index 71ac635..2c70d45 100644
 --- a/gas/write.c
