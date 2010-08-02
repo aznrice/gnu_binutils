@@ -1,3 +1,129 @@
+2010-08-02  Ian Lance Taylor  <iant@google.com>
+
+	PR 11855
+	* script.cc (Script_options::Script_options): Initialize
+	symbol_definitions_ and symbol_references_.
+	(Script_options::add_symbol_assignment): Update
+	symbol_definitions_ and symbol_references_.
+	(Script_options::add_symbol_reference): New function.
+	(script_symbol): New function.
+	* script.h (class Script_options): Add symbol_definitions_ and
+	symbol_references_ fields.
+	(Script_options::referenced_const_iterator): New type.
+	(Script_options::referenced_begin): New function.
+	(Script_options::referenced_end): New function.
+	(Script_options::is_referenced): New function.
+	(Script_options::any_unreferenced): New function.
+	* script-c.h (script_symbol): Declare.
+	* yyscript.y (exp): Call script_symbol.
+	* symtab.cc: Include "script.h".
+	(Symbol_table::gc_mark_undef_symbols): Add layout parameter.
+	Change all callers.  Check symbols referenced by scripts.
+	(Symbol_table::add_undefined_symbols_from_command_line): Add
+	layout parameter.  Change all callers.
+	(Symbol_table::do_add_undefined_symbols_from_command_line):
+	Likewise.  Break out loop body.  Check symbols referenced by
+	scripts.
+	(Symbol_table::add_undefined_symbol_from_command_line): New
+	function broken out of
+	do_add_undefined_symbols_from_command_line.
+	* symtab.h (class Symbol_table): Update declarations.
+	* archive.cc: Include "layout.h".
+	(Archive::should_include_member): Add layout parameter.  Change
+	all callers.  Check for symbol mentioned in expression.
+	* archive.h (class Archive): Update declaration.
+	* object.cc (Sized_relobj::do_should_include_member): Add layout
+	parameter.
+	* object.h (Object::should_include_member): Add layout parameter.
+	Change all callers.
+	(Object::do_should_include_member): Add layout parameter.
+	(class Sized_relobj): Update declaration.
+	* dynobj.cc (Sized_dynobj::do_should_include_member): Add layout
+	parameter.
+	* dynobj.h (class Sized_dynobj): Update declaration.
+	* plugin.cc (Sized_pluginobj::do_should_include_member): Add
+	layout parameter.
+	* plugin.h (class Sized_pluginobj): Update declaration.
+
+2010-08-02  Ian Lance Taylor  <iant@google.com>
+
+	PR 11866
+	* output.cc (Output_segment::set_offset): Search for the first and
+	last sections rather than assuming that the list is in order.
+	(Output_segment::find_first_and_last_list): New function.
+	* output.h (class Output_segment): Update declarations.
+	* testsuite/Makefile.am (check_PROGRAMS): Add relro_strip_test.
+	(relro_strip_test_SOURCES): New variable.
+	(relro_strip_test_DEPENDENCIES): New variable.
+	(relro_strip_test_LDFLAGS): New variable.
+	(relro_strip_test_LDADD): New variable.
+	(relro_strip_test.so): New target.
+
+2010-08-02  Ian Lance Taylor  <iant@google.com>
+
+	* i386.cc (class Target_i386): Add got_tlsdesc_ field.
+	(Target_i386::Target_i386):: Initialize got_tlsdesc_.
+	(Target_i386::got_tlsdesc_section): New function.
+	(Target_i386::got_section): Create space for GOT entries for
+	TLSDESC relocations.
+	(Target_i386::Scan::local): Use TLSDESC GOT for unoptimized
+	R_386_TLS_GOTDESC.
+	(Target_i386::Scan::global): Likewise.
+	(Target_i386::Relocate::relocate_tls): Adjust GOT offset when
+	using TLSDESC GOT.
+	* x86_64.cc (class Target_x86_64): Add got_tlsdesc_ field.
+	(Target_x86_64::Target_x86_64):: Initialize got_tlsdesc_.
+	(Target_x86_64::got_tlsdesc_section): New function.
+	(Target_x86_64::got_section): Create space for GOT entries for
+	TLSDESC relocations.
+	(Target_x86_64::Scan::local): Use TLSDESC GOT for unoptimized
+	R_386_TLS_GOTDESC.
+	(Target_x86_64::Scan::global): Likewise.
+	(Target_x86_64::Relocate::relocate_tls): Adjust GOT offset when
+	using TLSDESC GOT.
+
+2010-08-02  Ian Lance Taylor  <iant@google.com>
+
+	* testsuite/final_layout.sh: Use dc to convert from hex to
+	decimal.
+
+2010-07-29  Sriraman Tallam  <tmsriram@google.com>
+
+	* arm.cc (Target_arm<big_endian>::gc_process_relocs): Add template
+	paramter to the call to gold::gc_process_relocs.
+	* i386.cc (Target_i386<big_endian>::gc_process_relocs): Add template
+	paramter to the call to gold::gc_process_relocs.
+	* x86_64.cc (Target_x86_64<big_endian>::gc_process_relocs): Add template
+	parameter to the call to gold::gc_process_relocs.
+	* powerpc.cc (Target_powerpc<big_endian>::gc_process_relocs): Add
+	template parameter to the call to gold::gc_process_relocs.
+	* sparc.cc (Target_sparc<big_endian>::gc_process_relocs): Add template
+	paramter to the call to gold::gc_process_relocs.
+	* gc.h (get_embedded_addend_size): New function.
+	(gc_process_relocs): Save the size of the reloc for use by ICF.
+	* icf.cc (get_section_contents): Get the addend from the text section
+	for SHT_REL relocation sections.
+	* icf.h (Icf::Reloc_addend_size_info): New typedef.
+	(Icf::Reloc_info): Add new member reloc_addend_size_info.
+	* int_encoding.h (read_from_pointer): New overloaded function.
+	* testsuite/Makefile.am (icf_sht_rel_addend_test): New test.
+	* testsuite/icf_sht_rel_addend_test.sh: New file.
+	* testsuite/icf_sht_rel_addend_test_1.cc: New file.
+	* testsuite/icf_sht_rel_addend_test_2.cc: New file.
+
+2010-07-28  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* configure.ac (AM_INIT_AUTOMAKE): Use parallel-tests option.
+	* Makefile.in: Regenerate.
+	* testsuite/Makefile.in: Regenerate.
+
+2010-07-27  Jeffrey Yasskin  <jyasskin@google.com>
+
+	* testsuite/debug_msg.sh: Test mixed weak/strong symbol behavior.
+	* gold/testsuite/debug_msg.cc: Likewise.
+	* gold/testsuite/odr_violation1.cc
+	* gold/testsuite/odr_violation2.cc
+
 2010-07-21  Cary Coutant  <ccoutant@google.com>
 
 	* merge.h (Output_merge_string::Merged_string): Remove object, shndx,

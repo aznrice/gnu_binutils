@@ -1,3 +1,57 @@
+2010-08-02  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-d30v.c (d30v_cons_align): Don't align constants
+	in debug sections.
+
+2010-08-02  Alan Modra  <amodra@gmail.com>
+
+	PR gas/11867
+	* expr.c (operand <'-' and '~'>): Widen bignums.
+	(operand <'!'>): Correct bignum result and convert to O_constant.
+	* read.c (emit_expr): Don't assert on .byte bignum.  Don't display
+	bignum truncated warning for sign extended bignums.
+
+2010-08-02  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-v850.c (md_assemble): Always pass format string to
+	as_warn.
+	(md_apply_fix): Similarly for as_warn_where.
+
+2010-07-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386-intel.c: Reformat.
+
+2010-07-29  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-ppc.c (ppc_fix_adjustable): Add got reloc types used
+	in large toc code.
+
+2010-07-28  Alan Modra  <amodra@gmail.com>
+
+	PR gas/11841
+	* symbols.c (symbol_clone): Correct typo in previous patch.
+
+2010-07-28  Alan Modra  <amodra@gmail.com>
+
+	PR gas/11841
+	* symbols.c (symbol_clone): Clear BSF_SECTION_SYM flag.
+
+2010-07-28  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-ppc.c (md_assemble): Don't attempt to print NUL in
+	syntax error message.
+
+2010-07-27  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (mips16_macro_build): Pass "args" by
+	reference rather than value.
+	(macro_build): Update accordingly.
+
+2010-07-27  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (mips_ip): Use symbol_temp_new_now to create
+	a fake label.
+
 2010-07-24  Maciej W. Rozycki  <macro@codesourcery.com>
 
 	* config/tc-mips.c (macro)[M_JAL_1, M_JAL_2]: Handle the JALR

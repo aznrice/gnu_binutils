@@ -232,6 +232,18 @@ icf_string_merge_test: icf_string_merge_test.o gcctestdir/ld
 icf_string_merge_test.stdout: icf_string_merge_test
 	$(TEST_NM) icf_string_merge_test > icf_string_merge_test.stdout
 
+check_SCRIPTS += icf_sht_rel_addend_test.sh
+check_DATA += icf_sht_rel_addend_test.stdout
+MOSTLYCLEANFILES += icf_sht_rel_addend_test
+icf_sht_rel_addend_test_1.o: icf_sht_rel_addend_test_1.cc
+	$(CXXCOMPILE) -O0 -c -ffunction-sections -fPIC -g -o $@ $<
+icf_sht_rel_addend_test_2.o: icf_sht_rel_addend_test_2.cc
+	$(CXXCOMPILE) -O0 -c -ffunction-sections -fPIC -g -o $@ $<
+icf_sht_rel_addend_test: icf_sht_rel_addend_test_1.o icf_sht_rel_addend_test_2.o gcctestdir/ld
+	$(CXXLINK) -Bgcctestdir/ -Wl,--icf=all icf_sht_rel_addend_test_1.o icf_sht_rel_addend_test_2.o
+icf_sht_rel_addend_test.stdout: icf_sht_rel_addend_test
+	$(TEST_NM) icf_sht_rel_addend_test > icf_sht_rel_addend_test.stdout
+
 check_PROGRAMS += basic_test
 check_PROGRAMS += basic_static_test
 check_PROGRAMS += basic_pic_test
@@ -1065,6 +1077,14 @@ relro_test.so: gcctestdir/ld relro_test_pic.o
 	$(CXXLINK) -Bgcctestdir/ -shared -Wl,-z,relro relro_test_pic.o
 relro_test_pic.o: relro_test.cc
 	$(CXXCOMPILE) -c -fpic -o $@ $<
+
+check_PROGRAMS += relro_strip_test
+relro_strip_test_SOURCES = relro_test_main.cc
+relro_strip_test_DEPENDENCIES = gcctestdir/ld relro_strip_test.so
+relro_strip_test_LDFLAGS = -Bgcctestdir/ -Wl,-R,.
+relro_strip_test_LDADD = relro_strip_test.so
+relro_strip_test.so: relro_test.so
+	$(TEST_STRIP) -o $@ $<
 
 check_PROGRAMS += relro_script_test
 relro_script_test_SOURCES = relro_test_main.cc

@@ -1,6 +1,4 @@
-#!/bin/sh
-
-# final_layout.sh -- test --final-layout
+# icf_sht_rel_addend_test.sh -- test --icf=all
 
 # Copyright 2010 Free Software Foundation, Inc.
 # Written by Sriraman Tallam <tmsriram@google.com>.
@@ -22,23 +20,16 @@
 # Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
-# The goal of this program is to verify if --section-ordering-file works as
-# intended.  File final_layout.cc is in this test.
 
 check()
 {
-    func_addr_1=`grep $2 $1 | awk '{print $1}' | tr 'abcdef' 'ABCDEF'`
-    func_addr_1=`echo 16i${func_addr_1}p | dc`
-    func_addr_2=`grep $3 $1 | awk '{print $1}' | tr 'abcdef' 'ABCDEF'`
-    func_addr_2=`echo 16i${func_addr_2}p | dc`
-    if [ $func_addr_1 -gt $func_addr_2 ]
+    func_addr_1=`grep $2 $1 | awk '{print $1}'`
+    func_addr_2=`grep $3 $1 | awk '{print $1}'`
+    if [ $func_addr_1 = $func_addr_2 ]
     then
-        echo "final layout of" $2 "and" $3 "is not right."
+        echo "Identical Code Folding should not fold" $2 "and" $3
 	exit 1
     fi
 }
 
-check final_layout.stdout "_Z3barv" "_Z3bazv"
-check final_layout.stdout "_Z3bazv" "_Z3foov"
-check final_layout.stdout "global_varb" "global_vara"
-check final_layout.stdout "global_vara" "global_varc"
+check icf_sht_rel_addend_test.stdout "name1" "name2"
