@@ -1,3 +1,10 @@
+2010-08-12  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr11843-1.patch: Removed.
+	* README: Likewise.
+
+	* binutils-pr11137-1.patch: Correct gcc PR #.
+
 2010-08-02  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-zlib-5.patch: New file. Replace ...
