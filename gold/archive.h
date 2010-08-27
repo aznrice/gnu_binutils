@@ -381,7 +381,7 @@ class Archive
   // The directory search path.
   Dirsearch* dirpath_;
   // The task reading this archive.
-  Task *task_;
+  Task* task_;
   // Number of members in this archive;
   unsigned int num_members_;
   // True if we exclude this library archive from automatic export.
@@ -481,7 +481,7 @@ class Lib_group
   // For reading the files.
   const Input_file_lib* lib_;
   // The task reading this lib group.
-  Task *task_;
+  Task* task_;
   // Table of the objects in the group.
   std::vector<Archive_member> members_;
 };
@@ -495,7 +495,8 @@ class Add_lib_group_symbols : public Task
                         Input_objects* input_objects,
                         Lib_group* lib, Task_token* next_blocker)
       : symtab_(symtab), layout_(layout), input_objects_(input_objects),
-        lib_(lib), this_blocker_(NULL), next_blocker_(next_blocker)
+        lib_(lib), readsyms_blocker_(NULL), this_blocker_(NULL),
+        next_blocker_(next_blocker)
   { }
 
   ~Add_lib_group_symbols();
@@ -513,9 +514,10 @@ class Add_lib_group_symbols : public Task
 
   // Set the blocker to use for this task.
   void
-  set_blocker(Task_token* this_blocker)
+  set_blocker(Task_token* readsyms_blocker, Task_token* this_blocker)
   {
-    gold_assert(this->this_blocker_ == NULL);
+    gold_assert(this->readsyms_blocker_ == NULL && this->this_blocker_ == NULL);
+    this->readsyms_blocker_ = readsyms_blocker;
     this->this_blocker_ = this_blocker;
   }
 
@@ -529,7 +531,8 @@ class Add_lib_group_symbols : public Task
   Symbol_table* symtab_;
   Layout* layout_;
   Input_objects* input_objects_;
-  Lib_group * lib_;
+  Lib_group* lib_;
+  Task_token* readsyms_blocker_;
   Task_token* this_blocker_;
   Task_token* next_blocker_;
 };

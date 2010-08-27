@@ -4191,7 +4191,8 @@ error_free_dyn:
 	h = (struct elf_link_hash_entry *) h->root.u.i.link;
 
       *sym_hash = h;
-      h->unique_global = (flags & BSF_GNU_UNIQUE) != 0;
+      if (is_elf_hash_table (htab))
+	h->unique_global = (flags & BSF_GNU_UNIQUE) != 0;
 
       new_weakdef = FALSE;
       if (dynamic
@@ -4791,6 +4792,7 @@ error_free_dyn:
   if (! dynamic
       && is_elf_hash_table (htab)
       && bed->check_relocs != NULL
+      && elf_object_id (abfd) == elf_hash_table_id (htab)
       && (*bed->relocs_compatible) (abfd->xvec, info->output_bfd->xvec))
     {
       asection *o;

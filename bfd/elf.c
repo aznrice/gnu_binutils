@@ -250,17 +250,18 @@ bfd_elf_allocate_object (bfd *abfd,
 
 
 bfd_boolean
-bfd_elf_make_generic_object (bfd *abfd)
+bfd_elf_make_object (bfd *abfd)
 {
+  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
   return bfd_elf_allocate_object (abfd, sizeof (struct elf_obj_tdata),
-				  GENERIC_ELF_DATA);
+				  bed->target_id);
 }
 
 bfd_boolean
 bfd_elf_mkcorefile (bfd *abfd)
 {
   /* I think this can be done just like an object file.  */
-  return bfd_elf_make_generic_object (abfd);
+  return abfd->xvec->_bfd_set_format[(int) bfd_object] (abfd);
 }
 
 static char *
@@ -3624,6 +3625,7 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
       asection *first_tls = NULL;
       asection *dynsec, *eh_frame_hdr;
       bfd_size_type amt;
+      bfd_vma addr_mask, wrap_to = 0;
 
       /* Select the allocated sections, and sort them.  */
 
@@ -3632,6 +3634,12 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
       if (sections == NULL)
 	goto error_return;
 
+      /* Calculate top address, avoiding undefined behaviour of shift
+	 left operator when shift count is equal to size of type
+	 being shifted.  */
+      addr_mask = ((bfd_vma) 1 << (bfd_arch_bits_per_address (abfd) - 1)) - 1;
+      addr_mask = (addr_mask << 1) + 1;
+
       i = 0;
       for (s = abfd->sections; s != NULL; s = s->next)
 	{
@@ -3639,6 +3647,9 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
 	    {
 	      sections[i] = s;
 	      ++i;
+	      /* A wrapping section potentially clashes with header.  */
+	      if (((s->lma + s->size) & addr_mask) < (s->lma & addr_mask))
+		wrap_to = (s->lma + s->size) & addr_mask;
 	    }
 	}
       BFD_ASSERT (i <= bfd_count_sections (abfd));
@@ -3708,8 +3719,10 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
 	  if (phdr_size == (bfd_size_type) -1)
 	    phdr_size = get_program_header_size (abfd, info);
 	  if ((abfd->flags & D_PAGED) == 0
-	      || sections[0]->lma < phdr_size
-	      || sections[0]->lma % maxpagesize < phdr_size % maxpagesize)
+	      || (sections[0]->lma & addr_mask) < phdr_size
+	      || ((sections[0]->lma & addr_mask) % maxpagesize
+		  < phdr_size % maxpagesize)
+	      || (sections[0]->lma & addr_mask & -maxpagesize) < wrap_to)
 	    phdr_in_segment = FALSE;
 	}
 
@@ -3774,9 +3787,8 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
 	    }
 	  else if (! writable
 		   && (hdr->flags & SEC_READONLY) == 0
-		   && (((last_hdr->lma + last_size - 1)
-			& ~(maxpagesize - 1))
-		       != (hdr->lma & ~(maxpagesize - 1))))
+		   && (((last_hdr->lma + last_size - 1) & -maxpagesize)
+		       != (hdr->lma & -maxpagesize)))
 	    {
 	      /* We don't want to put a writable section in a read only
 		 segment, unless they are on the same page in memory
@@ -3883,8 +3895,8 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
 		    if (s2->next->alignment_power == 2
 			&& (s2->next->flags & SEC_LOAD) != 0
 			&& CONST_STRNEQ (s2->next->name, ".note")
-			&& align_power (s2->vma + s2->size, 2)
-			   == s2->next->vma)
+			&& align_power (s2->lma + s2->size, 2)
+			   == s2->next->lma)
 		      count++;
 		    else
 		      break;

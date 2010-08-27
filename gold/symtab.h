@@ -582,9 +582,6 @@ class Symbol
   }
 
   // Return true if this symbol is a function that needs a PLT entry.
-  // If the symbol is defined in a dynamic object or if it is subject
-  // to pre-emption, we need to make a PLT entry. If we're doing a
-  // static link or a -pie link, we don't create PLT entries.
   bool
   needs_plt_entry() const
   {
@@ -592,12 +589,27 @@ class Symbol
     if (this->is_undefined() && !parameters->options().shared())
       return false;
 
-    return (!parameters->doing_static_link()
-	    && !parameters->options().pie()
-            && this->is_func()
-            && (this->is_from_dynobj()
-                || this->is_undefined()
-                || this->is_preemptible()));
+    // An STT_GNU_IFUNC symbol always needs a PLT entry, even when
+    // doing a static link.
+    if (this->type() == elfcpp::STT_GNU_IFUNC)
+      return true;
+
+    // We only need a PLT entry for a function.
+    if (!this->is_func())
+      return false;
+
+    // If we're doing a static link or a -pie link, we don't create
+    // PLT entries.
+    if (parameters->doing_static_link()
+	|| parameters->options().pie())
+      return false;
+
+    // We need a PLT entry if the function is defined in a dynamic
+    // object, or is undefined when building a shared object, or if it
+    // is subject to pre-emption.
+    return (this->is_from_dynobj()
+	    || this->is_undefined()
+	    || this->is_preemptible());
   }
 
   // When determining whether a reference to a symbol needs a dynamic
@@ -677,6 +689,10 @@ class Symbol
     // don't want to use it.
     if (!this->has_plt_offset())
       return false;
+
+    // For a STT_GNU_IFUNC symbol we always have to use the PLT entry.
+    if (this->type() == elfcpp::STT_GNU_IFUNC)
+      return true;
 
     // If we are going to generate a dynamic relocation, then we will
     // wind up using that, so no need to use the PLT entry.
@@ -805,7 +821,7 @@ class Symbol
   // index rather than a special code.
   template<int size, bool big_endian>
   void
-  init_base_object(const char *name, const char* version, Object* object,
+  init_base_object(const char* name, const char* version, Object* object,
 		   const elfcpp::Sym<size, big_endian>&, unsigned int st_shndx,
 		   bool is_ordinary);
 
@@ -996,7 +1012,7 @@ class Sized_symbol : public Symbol
   // index rather than a special code.
   template<bool big_endian>
   void
-  init_object(const char *name, const char* version, Object* object,
+  init_object(const char* name, const char* version, Object* object,
 	      const elfcpp::Sym<size, big_endian>&, unsigned int st_shndx,
 	      bool is_ordinary);
 
@@ -1451,7 +1467,7 @@ class Symbol_table
   // local symbols.
   off_t
   finalize(off_t off, off_t dynoff, size_t dyn_global_index, size_t dyncount,
-	   Stringpool* pool, unsigned int *plocal_symcount);
+	   Stringpool* pool, unsigned int* plocal_symcount);
 
   // Status code of Symbol_table::compute_final_value.
   enum Compute_final_value_status
@@ -1550,8 +1566,8 @@ class Symbol_table
   // Add a symbol.
   template<int size, bool big_endian>
   Sized_symbol<size>*
-  add_from_object(Object*, const char *name, Stringpool::Key name_key,
-		  const char *version, Stringpool::Key version_key,
+  add_from_object(Object*, const char* name, Stringpool::Key name_key,
+		  const char* version, Stringpool::Key version_key,
 		  bool def, const elfcpp::Sym<size, big_endian>& sym,
 		  unsigned int st_shndx, bool is_ordinary,
 		  unsigned int orig_st_shndx);
