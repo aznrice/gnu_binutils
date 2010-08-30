@@ -18,12 +18,10 @@ clean=$1
 patches="
 	binutils-indirect-3.patch
 	binutils-shr-94.patch
-	ld-env-11.patch
 	binutils-error-11.patch
 	binutils-signed-4.patch
 	binutils-weakdef-2.patch
 	bfd-64k-2.patch
-	ld-needed-4.patch
 	binutils-pr11137-1.patch
 	binutils-zlib-5.patch
 "
