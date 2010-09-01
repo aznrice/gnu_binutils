@@ -1,3 +1,18 @@
+2010-08-31  Nick Clifton  <nickc@redhat.com>
+
+	* ldlex.l (WILDCHAR): Add the caret and exclamation point
+	characters, so that they can be used inside globs.
+
+2010-08-31  Nick Clifton  <nickc@redhat.com>
+
+	* ld.texinfo (MEMORY): Clarify the behaviour of the ! character in
+	a region's attributes.
+
+2010-08-31  Alan Modra  <amodra@gmail.com>
+
+	* scripttempl/mmo.sc: Move assignment to "Main" inside .text
+	output section statement.
+
 2010-08-25  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/11946
