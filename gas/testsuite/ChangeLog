@@ -1,3 +1,32 @@
+2010-09-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/11974
+	* gas/i386/immed64.s: Add more movabs tests.
+	* gas/i386/immed64.d: Updated.
+
+2010-09-03  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gas/elf/dwarf2-1.d: Update DW_OP_reg5 expected output.
+	* gas/elf/dwarf2-2.d: Likewise.
+	* gas/i386/dw2-compress-1.d: Likewise.
+
+2010-09-03  Kai Tietz  <kai.tietz@onevision.com>
+
+	* gas/cfi/cfi-i386.d: Use objdump -Wf instead of readelf.
+	* gas/cfi/cfi-i386.s: Remove .type directives.
+	* gas/cfi/reloc-pe-i386.d: Adjust test for i386.
+
+2010-09-02  Richard Henderson  <rth@redhat.com>
+
+	* gas/cfi/cfi-common-1.d: Use objdump instead of readelf to dump.
+	* gas/cfi/cfi-common-2.d, gas/cfi/cfi-common-3.d,
+	gas/cfi/cfi-common-4.d, gas/cfi/cfi-common-6.d,
+	gas/cfi/cfi-common-7.d, gas/cfi/cfi-x86_64.d: Likewise.
+	* gas/cfi/cfi-x86_64.s: Remove .type directives.
+	* gas/cfi/cfi.exp: Run for pecoff objects too.
+
+	* gas/cfi/reloc-pe-i386.d, gas/cfi/reloc-pe-i386.s: New test.
+
 2010-08-31  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR binutils/11960
