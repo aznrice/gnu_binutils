@@ -1,3 +1,11 @@
+2010-09-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gold/11996
+	* object.cc (Sized_relobj::do_finalize_local_symbols): Remove
+	"This::" to work around a bug in gcc 4.2.
+
+	* testsuite/ifuncmain7.c (foo_ifunc): Add __attribute__ ((used)).
+
 2010-09-09  Rafael Espindola  <espindola@google.com>
 
 	* layout.cc (Layout::attach_allocated_section_to_segment): Don't put
@@ -8,7 +16,7 @@
 
 2010-09-08  Rafael Espindola  <espindola@google.com>
 
-      * layout.cc (Layout::set_segment_offsets): Always advance to a new page.
+	* layout.cc (Layout::set_segment_offsets): Always advance to a new page.
 
 2010-09-08  Doug Kwan  <dougkwan@google.com>
 
@@ -48,6 +56,13 @@
 	* testsuite/arm_cortex_a8_local.s: Ditto.
 	* testsuite/arm_cortex_a8_local_reloc.s: Ditto.
 	* testsuite/thumb_bl_out_of_range_local.s: Ditto.
+
+2010-09-08  Rafael Espindola  <espindola@google.com>
+
+	* Makefile.am (memory_test.stdout): Run readelf with -W.
+	* Makefile.in: Regenerate.
+	* testsuite/memory_test.sh: Make the regexps accept both 32 and
+	64 bit output.
 
 2010-09-08  Rafael Espindola  <espindola@google.com>
 
