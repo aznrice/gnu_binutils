@@ -1,3 +1,35 @@
+2010-09-09  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* config/tc-arm.c (arm_cpus): Add cortex-a15 entry.
+	* doc/c-arm.texi: Document -mcpu=cortex-a15.
+
+2010-09-09  Gunther Nikl  <gnikl@users.sourceforge.net>
+
+	* gas/config/tc-m68k.c (tc_gen_reloc): Handle references to defined
+	weak symbols first if generating an a.out object.
+
+2010-09-09 Tejas Belagod  <tejas.belagod@arm.com>
+
+	* config/tc-arm.c (md_apply_fix): Check if widened add, sub are
+	flag-setting and handle accordingly.
+
+2010-09-09  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/11972
+	* config/tc-arm.c (parse_big_immediate): Allow for bignums being
+	extended to the size of a .octa.
+
+2010-09-08  Julian Brown  <julian@codesourcery.com>
+
+	* config/tc-arm.c (create_neon_reg_alias): Deal with case
+	sensitivity.
+
+2010-09-08  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/11973
+	* config/tc-mn10300.c (md_convert_frag): Zero out top two bytes of
+	long call instruction's displacement.
+
 2010-09-03  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR gas/11974

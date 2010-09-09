@@ -503,10 +503,15 @@ Layout::choose_output_section(const Relobj* relobj, const char* name,
       const char* file_name = relobj == NULL ? NULL : relobj->name().c_str();
       Output_section** output_section_slot;
       Script_sections::Section_type script_section_type;
+      const char* orig_name = name;
       name = ss->output_section_name(file_name, name, &output_section_slot,
 				     &script_section_type);
       if (name == NULL)
 	{
+	  gold_debug(DEBUG_SCRIPT, _("Unable to create output section '%s' "
+				     "because it is not allowed by the "
+				     "SECTIONS clause of the linker script"),
+		     orig_name);
 	  // The SECTIONS clause says to discard this input section.
 	  return NULL;
 	}
@@ -1166,10 +1171,11 @@ Layout::attach_allocated_section_to_segment(Output_section* os)
   bool is_address_set = parameters->options().section_start(os->name(), &addr);
 
   // In general the only thing we really care about for PT_LOAD
-  // segments is whether or not they are writable, so that is how we
-  // search for them.  Large data sections also go into their own
-  // PT_LOAD segment.  People who need segments sorted on some other
-  // basis will have to use a linker script.
+  // segments is whether or not they are writable or executable,
+  // so that is how we search for them.
+  // Large data sections also go into their own PT_LOAD segment.
+  // People who need segments sorted on some other basis will
+  // have to use a linker script.
 
   Segment_list::const_iterator p;
   for (p = this->segment_list_.begin();
@@ -1181,6 +1187,9 @@ Layout::attach_allocated_section_to_segment(Output_section* os)
       if (!parameters->options().omagic()
 	  && ((*p)->flags() & elfcpp::PF_W) != (seg_flags & elfcpp::PF_W))
 	continue;
+      if (parameters->options().rosegment()
+          && ((*p)->flags() & elfcpp::PF_X) != (seg_flags & elfcpp::PF_X))
+        continue;
       // If -Tbss was specified, we need to separate the data and BSS
       // segments.
       if (parameters->options().user_set_Tbss())
@@ -1449,6 +1458,7 @@ Layout::define_group_signatures(Symbol_table* symtab)
 Output_segment*
 Layout::find_first_load_seg()
 {
+  Output_segment* best = NULL;
   for (Segment_list::const_iterator p = this->segment_list_.begin();
        p != this->segment_list_.end();
        ++p)
@@ -1457,8 +1467,13 @@ Layout::find_first_load_seg()
 	  && ((*p)->flags() & elfcpp::PF_R) != 0
 	  && (parameters->options().omagic()
 	      || ((*p)->flags() & elfcpp::PF_W) == 0))
-	return *p;
+        {
+          if (best == NULL || this->segment_precedes(*p, best))
+            best = *p;
+        }
     }
+  if (best != NULL)
+    return best;
 
   gold_assert(!this->script_options_->saw_phdrs_clause());
 
@@ -2562,7 +2577,6 @@ Layout::set_segment_offsets(const Target* target, Output_segment* load_seg,
   const bool check_sections = parameters->options().check_sections();
   Output_segment* last_load_segment = NULL;
 
-  bool was_readonly = false;
   for (Segment_list::iterator p = this->segment_list_.begin();
        p != this->segment_list_.end();
        ++p)
@@ -2609,21 +2623,17 @@ Layout::set_segment_offsets(const Target* target, Output_segment* load_seg,
 
 	  if (!are_addresses_set)
 	    {
-	      // If the last segment was readonly, and this one is
-	      // not, then skip the address forward one page,
-	      // maintaining the same position within the page.  This
-	      // lets us store both segments overlapping on a single
-	      // page in the file, but the loader will put them on
-	      // different pages in memory.
+	      // Skip the address forward one page, maintaining the same
+	      // position within the page.  This lets us store both segments
+	      // overlapping on a single page in the file, but the loader will
+	      // put them on different pages in memory. We will revisit this
+	      // decision once we know the size of the segment.
 
 	      addr = align_address(addr, (*p)->maximum_alignment());
 	      aligned_addr = addr;
 
-	      if (was_readonly && ((*p)->flags() & elfcpp::PF_W) != 0)
-		{
-		  if ((addr & (abi_pagesize - 1)) != 0)
-		    addr = addr + abi_pagesize;
-		}
+	      if ((addr & (abi_pagesize - 1)) != 0)
+                addr = addr + abi_pagesize;
 
 	      off = orig_off + ((addr - orig_addr) & (abi_pagesize - 1));
 	    }
@@ -2680,9 +2690,6 @@ Layout::set_segment_offsets(const Target* target, Output_segment* load_seg,
 	    }
 
 	  addr = new_addr;
-
-	  if (((*p)->flags() & elfcpp::PF_W) == 0)
-	    was_readonly = true;
 
 	  // Implement --check-sections.  We know that the segments
 	  // are sorted by LMA.

@@ -1,3 +1,95 @@
+2010-09-09  Rafael Espindola  <espindola@google.com>
+
+	* layout.cc (Layout::attach_allocated_section_to_segment): Don't put
+	sections with different PF_X flags in the same segment.
+	(Layout::find_first_load_seg): Search all segments to find the first
+	one.
+	* options.h (rosegment): New.
+
+2010-09-08  Rafael Espindola  <espindola@google.com>
+
+      * layout.cc (Layout::set_segment_offsets): Always advance to a new page.
+
+2010-09-08  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_exidx_cantunwind::do_print_to_mapfile): New method.
+	(Arm_relobj::do_relocate_sections): Add new parameter for output
+	file to match the parent.
+	(Target_arm::scan_reloc_section_for_stubs): Use would-be final values
+	of local symbols instead of input values.  Update code to track
+	changes in gold::relocate_section.
+	* object.cc (Sized_relobj::compute_final_local_value): New methods.
+	(Sized_relobj::compute_final_local_value_internal): New methods.
+	(Sized_relobj::do_finalize_local_symbols): Move code from loop
+	body into private version of Sized_relobj::compute_final_local_value.
+	Call the inline method.
+	* object.h (Symbol_value::Symbol_value): Define destructor.  Free
+	merged symbol value if there is one.
+	(Symbol_value::has_output_value): New method defintiion.
+	(Sized_relobj::Compute_final_local_value_status): New enum type.
+	(Sized_relobj::compute_final_local_value): New methods.
+	(Sized_relobj::compute_final_local_value_internal): New methods.
+	* Makefile.am (check_SCRIPTS): Add arm_branch_out_of_range.sh
+	and arm_cortex_a8.sh.
+	(thumb_bl_out_of_range_local, arm_cortex_a8_b_cond, arm_cortex_a8_bl,
+	arm_cortex_a8_blx, arm_cortex_a8_local, arm_corte_a8_local_reloc):
+	New tests.
+	* Makefile.in: Regenerate.
+	* testsuite/arm_bl_out_of_range.s: Update test.
+	* testsuite/thumb_bl_out_of_range.s: Ditto.
+	* testsuite/thumb_blx_out_of_range.s: Ditto.
+	* testsuite/arm_branch_out_of_range.sh: New file.
+	* testsuite/arm_cortex_a8.sh: Ditto.
+	* testsuite/arm_cortex_a8_b.s: Ditto.
+	* testsuite/arm_cortex_a8_b_cond.s: Ditto.
+	* testsuite/arm_cortex_a8_b_local.s: Ditto.
+	* testsuite/arm_cortex_a8_bl.s: Ditto.
+	* testsuite/arm_cortex_a8_blx.s: Ditto.
+	* testsuite/arm_cortex_a8_local.s: Ditto.
+	* testsuite/arm_cortex_a8_local_reloc.s: Ditto.
+	* testsuite/thumb_bl_out_of_range_local.s: Ditto.
+
+2010-09-08  Rafael Espindola  <espindola@google.com>
+
+	* script-sections.cc (Script_sections::add_memory_region): Convert
+	field precision to int.
+	* script.cc (script_set_section_region, script_set_section_region):
+	Convert field precision to int.
+
+2010-09-08  Rafael Espindola  <espindola@google.com>
+
+	* arm.cc (do_finalize_sections): Create the __exidx_start and
+	__exdix_end symbols even when the section is missing.
+
+2010-09-08  Nick Clifton  <nickc@redhat.com>
+
+	* README: Remove claim that MEMORY is not supported.
+	* expression.cc (script_exp_function_origin)
+	(script_exp_function_length): Move from here to ...
+	* script.cc: ... here.
+	(script_set_section_region, script_add_memory)
+	(script_parse_memory_attr, script_include_directive): New
+	functions.
+	* script-sections.cc
+	(class Memory_region): New class.
+	(class Output_section_definition): Add set_memory_region,
+	set_section_vma, set_section_lma and get_section_name methods.
+	(class Script_Sections): Add add_memory_region,
+	find_memory_region, find_memory_region_origin,
+	find_memory_region_length and set_memory_region methods.
+	Have set_section_addresses method walk the list of set memory
+	regions.
+	Extend the print methos to display memory regions.
+	* script-sections.h: Add prototypes for new methods.
+	Add enum for MEMORY region attributes.
+	* yyscript.y: Add support for parsing MEMORY regions.
+	* script-c.h: Add prototypes for new functions.
+	* testsuite/Makefile.am: Add test of MEMORY region functionality.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/memory_test.sh: New script.
+	* testsuite/memory_test.s: New assembler source file.
+	* testsuite/memory_test.t: New linker script.
+
 2010-08-27  Doug Kwan  <dougkwan@google.com>
 
 	* gold/resolve.cc (Symbol_table::should_override): Let a weak
