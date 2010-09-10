@@ -1,3 +1,8 @@
+2010-09-10  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr11997-1.patch: New.
+	* README: Apply it.
+
 2010-08-30  H.J. Lu  <hjl.tools@gmail.com>
 
 	* ld-env-11.patch: Removed.
