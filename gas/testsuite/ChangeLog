@@ -1,3 +1,55 @@
+2010-09-17  Tejas Belagod  <tejas.belagod@arm.com>
+
+	* gas/arm/thumb2_ldmstm.d: Change single-register stmia to use 16-bit
+	str encoding instead of str.w.  Likewise for ldmia.
+	* gas/arm/thumb2_ldmstm.s: Change stmia comment.  Add tests for T1
+	ldmia-to-ldr.
+
+2010-09-17  Tejas Belagod  <tejas.belagod@arm.com>
+
+	* gas/arm/msr-reg.s: New file.
+	* gas/arm/msr-reg.d: Likewise.
+	* gas/arm/msr-imm.s: Likewise.
+	* gas/arm/msr-imm.d: Likewise.
+	* gas/arm/msr-imm-bad.d: Likewise.
+	* gas/arm/msr-imm-bad.l: Likewise.
+	* gas/arm/msr-reg-bad.d: Likewise.
+	* gas/arm/msr-imm-bad.d: Likewise.
+	* gas/arm/msr-reg-thumb.d: Likewise.
+	* gas/arm/arch7.s: Add tests for xpsr.
+	* gas/arm/arch7.d: Likewise.
+
+2010-09-17  Tejas Belagod  <tejas.belagod@arm.com>
+
+	* gas/arm/copro.s: Add test for APSR_nzcv as a MRC operand.
+	* gas/arm/copro.d: Change pc in MRC to disassemble as APSR_nzcv.  Also
+	add disassembly for test added in copro.s
+
+2010-09-17  Andrew Burgess  <aburgess@broadcom.com>
+
+	PR gas/12011
+	* gas/elf/bad-section-flag.d, * gas/elf/bad-section-flag.err,
+	* gas/elf/bad-section-flag.s: New test.
+	* gas/elf/elf.exp: Run it.
+
+2010-09-16  Alan Modra  <amodra@gmail.com>
+
+	* gas/all/redef3.d: Don't run on arc.
+	* gas/i386/i386.exp: Don't run intel-got32 on linuxaout.  Move
+	x86_64 mingw exclusions to equivalent elf only block of tests.
+
+2010-09-15  Kai Tietz  <kai.tietz@onevision.com>
+
+	* gas/pe/pe.exp: Add new test.
+	* gas/pe/seh-x64-err-1.l: New.
+	* gas/pe/seh-x64-err-1.s: New.
+
+	* gas/pe/pe.exp: Add peseh-x64-4,5,6 tests.
+	* gas/pe/peseh-x64-4.s: New.
+	* gas/pe/peseh-x64-4.d: New.
+	* gas/pe/peseh-x64-5.d: New.
+	* gas/pe/peseh-x64-6.d: New.
+
 2010-09-14  Maciej W. Rozycki  <macro@codesourcery.com>
 
 	* gas/mips/mips32r2-sync.d: New test for MIPS32r2 "sync"

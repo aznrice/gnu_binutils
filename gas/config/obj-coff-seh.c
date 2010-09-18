@@ -22,42 +22,168 @@
 #include "obj-coff-seh.h"
 
 
+/* Private segment collection list.  */
+struct seh_seg_list {
+  segT seg;
+  int subseg;
+  char *seg_name;
+};
+
 /* Local data.  */
 static seh_context *seh_ctx_cur = NULL;
 
-static segT xdata_seg;
-static segT pdata_seg;
-static int  xdata_subseg;
+static struct hash_control *seh_hash;
+
+static struct seh_seg_list *x_segcur = NULL;
+static struct seh_seg_list *p_segcur = NULL;
 
 static void write_function_xdata (seh_context *);
 static void write_function_pdata (seh_context *);
 
 
-static void
-switch_xdata (int subseg)
+/* Build based on segment the derived .pdata/.xdata
+   segment name containing origin segment's postfix name part.  */
+static char *
+get_pxdata_name (segT seg, const char *base_name)
 {
-  if (xdata_seg == NULL)
-    {
-      xdata_seg = subseg_new (".xdata", 0);
-      bfd_set_section_flags (stdoutput, xdata_seg,
-			     ((SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA)
-			      & bfd_applicable_section_flags (stdoutput)));
-    }
-  subseg_set (xdata_seg, subseg);
+  const char *name,*dollar, *dot;
+  char *sname;
+
+  name = bfd_get_section_name (stdoutput, seg);
+
+  dollar = strchr (name, '$');
+  dot = strchr (name + 1, '.');
+
+  if (!dollar && !dot)
+    name = "";
+  else if (!dollar)
+    name = dot;
+  else if (!dot)
+    name = dollar;
+  else if (dot < dollar)
+    name = dot;
+  else
+    name = dollar;
+
+  sname = concat (base_name, name, NULL);
+
+  return sname;
+}
+
+/* Allocate a seh_seg_list structure.  */
+static struct seh_seg_list *
+alloc_pxdata_item (segT seg, int subseg, char *name)
+{
+  struct seh_seg_list *r;
+
+  r = (struct seh_seg_list *)
+    xmalloc (sizeof (struct seh_seg_list) + strlen (name));
+  r->seg = seg;
+  r->subseg = subseg;
+  r->seg_name = name;
+  return r;
+}
+
+/* Generate pdata/xdata segment with same linkonce properties
+   of based segment.  */
+static segT
+make_pxdata_seg (segT cseg, char *name)
+{
+  segT save_seg = now_seg;
+  int save_subseg = now_subseg;
+  segT r;
+  flagword flags;
+
+  r = subseg_new (name, 0);
+  /* Check if code segment is marked as linked once.  */
+  flags = bfd_get_section_flags (stdoutput, cseg)
+    & (SEC_LINK_ONCE | SEC_LINK_DUPLICATES_DISCARD
+       | SEC_LINK_DUPLICATES_ONE_ONLY | SEC_LINK_DUPLICATES_SAME_SIZE
+       | SEC_LINK_DUPLICATES_SAME_CONTENTS);
+
+  /* Add standard section flags.  */
+  flags |= SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA;
+
+  /* Apply possibly linked once flags to new generated segment, too.  */
+  if (!bfd_set_section_flags (stdoutput, r, flags))
+    as_bad (_("bfd_set_section_flags: %s"),
+	    bfd_errmsg (bfd_get_error ()));
+
+  /* Restore to previous segment.  */
+  subseg_set (save_seg, save_subseg);
+  return r;
 }
 
 static void
-switch_pdata (void)
+seh_hash_insert (const char *name, struct seh_seg_list *item)
 {
-  if (pdata_seg == NULL)
+  const char *error_string;
+
+  if ((error_string = hash_jam (seh_hash, name, (char *) item)))
+    as_fatal (_("Inserting \"%s\" into structure table failed: %s"),
+	      name, error_string);
+}
+
+static struct seh_seg_list *
+seh_hash_find (char *name)
+{
+  return (struct seh_seg_list *) hash_find (seh_hash, name);
+}
+
+static struct seh_seg_list *
+seh_hash_find_or_make (segT cseg, const char *base_name)
+{
+  struct seh_seg_list *item;
+  char *name;
+
+  /* Initialize seh_hash once.  */
+  if (!seh_hash)
+    seh_hash = hash_new ();
+
+  name = get_pxdata_name (cseg, base_name);
+
+  item = seh_hash_find (name);
+  if (!item)
     {
-      pdata_seg = subseg_new (".pdata", 0);
-      bfd_set_section_flags (stdoutput, pdata_seg,
-			     ((SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA)
-			      & bfd_applicable_section_flags (stdoutput)));
+      item = alloc_pxdata_item (make_pxdata_seg (cseg, name), 0, name);
+
+      seh_hash_insert (item->seg_name, item);
     }
   else
-    subseg_set (pdata_seg, 0);
+    free (name);
+
+  return item;
+}
+
+/* Check if current segment has same name.  */
+static int
+seh_validate_seg (const char *directive)
+{
+  const char *cseg_name, *nseg_name;
+  if (seh_ctx_cur->code_seg == now_seg)
+    return 1;
+  cseg_name = bfd_get_section_name (stdoutput, seh_ctx_cur->code_seg);
+  nseg_name = bfd_get_section_name (stdoutput, now_seg);
+  as_bad (_("%s used in segment '%s' instead of expected '%s'"),
+  	  directive, nseg_name, cseg_name);
+  ignore_rest_of_line ();
+  return 0;
+}
+
+static void
+switch_xdata (int subseg, segT code_seg)
+{
+  x_segcur = seh_hash_find_or_make (code_seg, ".xdata");
+
+  subseg_set (x_segcur->seg, subseg);
+}
+
+static void
+switch_pdata (segT code_seg)
+{
+  p_segcur = seh_hash_find_or_make (code_seg, ".pdata");
+
+  subseg_set (p_segcur->seg, p_segcur->subseg);
 }
 
 /* Parsing routines.  */
@@ -260,7 +386,7 @@ obj_coff_seh_handlerdata (int what ATTRIBUTE_UNUSED)
     return;
   demand_empty_rest_of_line ();
 
-  switch_xdata (seh_ctx_cur->subsection + 1);
+  switch_xdata (seh_ctx_cur->subsection + 1, seh_ctx_cur->code_seg);
 }
 
 /* Mark end of current context.  */
@@ -284,7 +410,7 @@ obj_coff_seh_endproc (int what ATTRIBUTE_UNUSED)
       as_bad (_(".seh_endproc used without .seh_proc"));
       return;
     }
-
+  seh_validate_seg (".seh_endproc");
   do_seh_endproc ();
 }
 
@@ -311,10 +437,13 @@ obj_coff_seh_proc (int what ATTRIBUTE_UNUSED)
 
   seh_ctx_cur = XCNEW (seh_context);
 
+  seh_ctx_cur->code_seg = now_seg;
+
   if (seh_get_target_kind () == seh_kind_x64)
     {
-      seh_ctx_cur->subsection = xdata_subseg;
-      xdata_subseg += 2;
+      x_segcur = seh_hash_find_or_make (seh_ctx_cur->code_seg, ".xdata");
+      seh_ctx_cur->subsection = x_segcur->subseg;
+      x_segcur->subseg += 2;
     }
 
   SKIP_WHITESPACE ();
@@ -334,7 +463,8 @@ obj_coff_seh_proc (int what ATTRIBUTE_UNUSED)
 static void
 obj_coff_seh_endprologue (int what ATTRIBUTE_UNUSED)
 {
-  if (!verify_context (".seh_endprologue"))
+  if (!verify_context (".seh_endprologue")
+      || !seh_validate_seg (".seh_endprologue"))
     return;
   demand_empty_rest_of_line ();
 
@@ -439,7 +569,8 @@ obj_coff_seh_pushreg (int what ATTRIBUTE_UNUSED)
 {
   int reg;
 
-  if (!verify_context_and_target (".seh_pushreg", seh_kind_x64))
+  if (!verify_context_and_target (".seh_pushreg", seh_kind_x64)
+      || !seh_validate_seg (".seh_pushreg"))
     return;
 
   reg = seh_x64_read_reg (".seh_pushreg", 1);
@@ -456,7 +587,8 @@ obj_coff_seh_pushreg (int what ATTRIBUTE_UNUSED)
 static void
 obj_coff_seh_pushframe (int what ATTRIBUTE_UNUSED)
 {
-  if (!verify_context_and_target (".seh_pushframe", seh_kind_x64))
+  if (!verify_context_and_target (".seh_pushframe", seh_kind_x64)
+      || !seh_validate_seg (".seh_pushframe"))
     return;
   demand_empty_rest_of_line ();
 
@@ -472,7 +604,8 @@ obj_coff_seh_save (int what)
   int code, reg, scale;
   offsetT off;
 
-  if (!verify_context_and_target (directive, seh_kind_x64))
+  if (!verify_context_and_target (directive, seh_kind_x64)
+      || !seh_validate_seg (directive))
     return;
 
   reg = seh_x64_read_reg (directive, what);
@@ -517,7 +650,8 @@ obj_coff_seh_stackalloc (int what ATTRIBUTE_UNUSED)
   offsetT off;
   int code, info;
 
-  if (!verify_context_and_target (".seh_stackalloc", seh_kind_x64))
+  if (!verify_context_and_target (".seh_stackalloc", seh_kind_x64)
+      || !seh_validate_seg (".seh_stackalloc"))
     return;
 
   off = get_absolute_expression ();
@@ -554,7 +688,8 @@ obj_coff_seh_setframe (int what ATTRIBUTE_UNUSED)
   offsetT off;
   int reg;
 
-  if (!verify_context_and_target (".seh_setframe", seh_kind_x64))
+  if (!verify_context_and_target (".seh_setframe", seh_kind_x64)
+      || !seh_validate_seg (".seh_setframe"))
     return;
 
   reg = seh_x64_read_reg (".seh_setframe", 0);
@@ -766,7 +901,7 @@ write_function_xdata (seh_context *c)
   if (seh_get_target_kind () != seh_kind_x64)
     return;
 
-  switch_xdata (c->subsection);
+  switch_xdata (c->subsection, c->code_seg);
 
   seh_x64_write_function_xdata (c);
 
@@ -832,8 +967,8 @@ write_function_pdata (seh_context *c)
   expressionS exp;
   segT save_seg = now_seg;
   int save_subseg = now_subseg;
-
-  switch_pdata ();
+  memset (&exp, 0, sizeof (expressionS));
+  switch_pdata (c->code_seg);
 
   switch (seh_get_target_kind ())
     {
@@ -843,8 +978,12 @@ write_function_pdata (seh_context *c)
 
       exp.X_add_symbol = c->start_addr;
       emit_expr (&exp, 4);
+      exp.X_op = O_symbol_rva;
+      exp.X_add_number = 0;
       exp.X_add_symbol = c->end_addr;
       emit_expr (&exp, 4);
+      exp.X_op = O_symbol_rva;
+      exp.X_add_number = 0;
       exp.X_add_symbol = c->xdata_addr;
       emit_expr (&exp, 4);
       break;

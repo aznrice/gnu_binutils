@@ -5321,7 +5321,9 @@ parse_psr (char **str)
   p = *str;
   if (strncasecmp (p, "SPSR", 4) == 0)
     psr_field = SPSR_BIT;
-  else if (strncasecmp (p, "CPSR", 4) == 0)
+  else if (strncasecmp (p, "CPSR", 4) == 0 
+	   || (strncasecmp (p, "APSR", 4) == 0
+	       && !ARM_CPU_HAS_FEATURE (selected_cpu, arm_ext_m)))
     psr_field = 0;
   else
     {
@@ -9941,30 +9943,68 @@ do_t_ldmstm (void)
 	{
 	  mask = 1 << inst.operands[0].reg;
 
-	  if (inst.operands[0].reg <= 7
-	      && (inst.instruction == T_MNEM_stmia
-		  ? inst.operands[0].writeback
-		  : (inst.operands[0].writeback
-		     == !(inst.operands[1].imm & mask))))
+	  if (inst.operands[0].reg <= 7)
 	    {
 	      if (inst.instruction == T_MNEM_stmia
-		  && (inst.operands[1].imm & mask)
-		  && (inst.operands[1].imm & (mask - 1)))
-		as_warn (_("value stored for r%d is UNKNOWN"),
-			 inst.operands[0].reg);
+		  ? inst.operands[0].writeback
+		  : (inst.operands[0].writeback
+		     == !(inst.operands[1].imm & mask)))
+	        {
+		  if (inst.instruction == T_MNEM_stmia
+		      && (inst.operands[1].imm & mask)
+		      && (inst.operands[1].imm & (mask - 1)))
+		    as_warn (_("value stored for r%d is UNKNOWN"),
+			     inst.operands[0].reg);
 
-	      inst.instruction = THUMB_OP16 (inst.instruction);
-	      inst.instruction |= inst.operands[0].reg << 8;
-	      inst.instruction |= inst.operands[1].imm;
-	      narrow = TRUE;
+		  inst.instruction = THUMB_OP16 (inst.instruction);
+		  inst.instruction |= inst.operands[0].reg << 8;
+		  inst.instruction |= inst.operands[1].imm;
+		  narrow = TRUE;
+		}
+	      else if ((inst.operands[1].imm & (inst.operands[1].imm-1)) == 0)
+		{
+		  /* This means 1 register in reg list one of 3 situations:
+		     1. Instruction is stmia, but without writeback.
+		     2. lmdia without writeback, but with Rn not in
+		        reglist.
+		     3. ldmia with writeback, but with Rn in reglist.
+		     Case 3 is UNPREDICTABLE behaviour, so we handle
+		     case 1 and 2 which can be converted into a 16-bit
+		     str or ldr. The SP cases are handled below.  */
+		  unsigned long opcode;
+		  /* First, record an error for Case 3.  */
+		  if (inst.operands[1].imm & mask
+		      && inst.operands[0].writeback)
+    		    inst.error = 
+			_("having the base register in the register list when "
+			  "using write back is UNPREDICTABLE");
+		    
+		  opcode = (inst.instruction == T_MNEM_stmia ? T_MNEM_str 
+							     : T_MNEM_ldr);
+		  inst.instruction = THUMB_OP16 (opcode);
+		  inst.instruction |= inst.operands[0].reg << 3;
+		  inst.instruction |= (ffs (inst.operands[1].imm)-1);
+		  narrow = TRUE;
+		}
 	    }
-	  else if (inst.operands[0] .reg == REG_SP
-		   && inst.operands[0].writeback)
+	  else if (inst.operands[0] .reg == REG_SP)
 	    {
-	      inst.instruction = THUMB_OP16 (inst.instruction == T_MNEM_stmia
-					     ? T_MNEM_push : T_MNEM_pop);
-	      inst.instruction |= inst.operands[1].imm;
-	      narrow = TRUE;
+	      if (inst.operands[0].writeback)
+		{
+		  inst.instruction = 
+			THUMB_OP16 (inst.instruction == T_MNEM_stmia
+			            ? T_MNEM_push : T_MNEM_pop);
+		  inst.instruction |= inst.operands[1].imm;
+	          narrow = TRUE;
+		}
+	      else if ((inst.operands[1].imm & (inst.operands[1].imm-1)) == 0)
+		{
+		  inst.instruction = 
+			THUMB_OP16 (inst.instruction == T_MNEM_stmia
+			            ? T_MNEM_str_sp : T_MNEM_ldr_sp);
+		  inst.instruction |= ((ffs (inst.operands[1].imm)-1) << 8);
+	          narrow = TRUE;
+		}
 	    }
 	}
 
@@ -16214,6 +16254,8 @@ static const struct asm_psr psrs[] =
   {"c",	   PSR_c},
   {"x",	   PSR_x},
   {"s",	   PSR_s},
+  {"g",	   PSR_s},
+
   /* Combinations of flags.  */
   {"fs",   PSR_f | PSR_s},
   {"fx",   PSR_f | PSR_x},
@@ -16275,6 +16317,10 @@ static const struct asm_psr psrs[] =
   {"csxf", PSR_c | PSR_s | PSR_x | PSR_f},
   {"cxfs", PSR_c | PSR_x | PSR_f | PSR_s},
   {"cxsf", PSR_c | PSR_x | PSR_s | PSR_f},
+
+  /* APSR flags */
+  {"nzcvq", PSR_f},
+  {"nzcvqg", PSR_s | PSR_f}
 };
 
 /* Table of V7M psr names.  */
@@ -16704,7 +16750,7 @@ static const struct asm_opcode insns[] =
  TCE("stc",	c000000, ec000000, 3, (RCP, RCN, ADDRGLDC),	        lstc,   lstc),
  TC3("stcl",	c400000, ec400000, 3, (RCP, RCN, ADDRGLDC),	        lstc,   lstc),
  TCE("mcr",	e000010, ee000010, 6, (RCP, I7b, RR, RCN, RCN, oI7b),   co_reg, co_reg),
- TCE("mrc",	e100010, ee100010, 6, (RCP, I7b, RR, RCN, RCN, oI7b),   co_reg, co_reg),
+ TCE("mrc",	e100010, ee100010, 6, (RCP, I7b, APSR_RR, RCN, RCN, oI7b),   co_reg, co_reg),
 
 #undef  ARM_VARIANT
 #define ARM_VARIANT  & arm_ext_v2s /* ARM 3 - swp instructions.  */
