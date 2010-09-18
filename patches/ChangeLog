@@ -1,3 +1,8 @@
+2010-09-18  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr11997-1.patch: Removed.
+	* README: Likewise.
+
 2010-09-10  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-pr11997-1.patch: New.
