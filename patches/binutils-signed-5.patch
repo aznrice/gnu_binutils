@@ -1,33 +1,18 @@
-binutils/
-
-2007-06-22  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* objdump.c (disassemble_bytes): Print addend as signed.
-	(dump_reloc_set): Likewise.
-
-gas/testsuite/
-
-2007-06-22  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* gas/alpha/elf-reloc-1.d: Expect addend as signed.
-	* gas/i386/mixed-mode-reloc64.d: Likewise.
-	* gas/i386/reloc64.d: Likewise.
-	* gas/ia64/pcrel.d: Likewise.
-	* gas/mips/branch-misc-2-64.d: Likewise.
-	* gas/mips/branch-misc-2pic-64.d: Likewise.
-	* gas/mips/ldstla-n64-sym32.d: Likewise.
-	* gas/mips/mips16-hilo-n32.d: Likewise.
-	* gas/ppc/astest.d: Likewise.
-	* gas/ppc/astest2.d: Likewise.
-	* gas/ppc/astest2_64.d: Likewise.
-	* gas/ppc/astest64.d: Likewise.
-	* gas/ppc/test1elf32.d: Likewise.
-	* gas/ppc/test1elf64.d: Likewise.
-	* gas/sparc/reloc64.d: Likewise.
-
---- binutils/binutils/objdump.c.signed	2009-12-12 09:53:00.000000000 -0800
-+++ binutils/binutils/objdump.c	2009-12-12 09:55:59.000000000 -0800
-@@ -1754,8 +1754,15 @@ disassemble_bytes (struct disassemble_in
+diff --git a/binutils/ChangeLog.addend b/binutils/ChangeLog.addend
+new file mode 100644
+index 0000000..e0bd096
+--- /dev/null
++++ b/binutils/ChangeLog.addend
+@@ -0,0 +1,4 @@
++2007-06-22  H.J. Lu  <hongjiu.lu@intel.com>
++
++	* objdump.c (disassemble_bytes): Print addend as signed.
++	(dump_reloc_set): Likewise.
+diff --git a/binutils/objdump.c b/binutils/objdump.c
+index 8e7d24d..6f28c73 100644
+--- a/binutils/objdump.c
++++ b/binutils/objdump.c
+@@ -1802,8 +1802,15 @@ disassemble_bytes (struct disassemble_info * inf,
  
  	      if (q->addend)
  		{
@@ -45,7 +30,7 @@ gas/testsuite/
  		}
  
  	      printf ("\n");
-@@ -2834,8 +2841,15 @@ dump_reloc_set (bfd *abfd, asection *sec
+@@ -2912,8 +2919,15 @@ dump_reloc_set (bfd *abfd, asection *sec, arelent **relpp, long relcount)
  
        if (q->addend)
  	{
@@ -63,8 +48,50 @@ gas/testsuite/
  	}
  
        printf ("\n");
---- binutils/gas/testsuite/gas/alpha/elf-reloc-1.d.signed	2009-11-17 10:48:30.000000000 -0800
-+++ binutils/gas/testsuite/gas/alpha/elf-reloc-1.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/ChangeLog.addend b/gas/testsuite/ChangeLog.addend
+new file mode 100644
+index 0000000..9809f77
+--- /dev/null
++++ b/gas/testsuite/ChangeLog.addend
+@@ -0,0 +1,21 @@
++2010-10-01  H.J. Lu  <hongjiu.lu@intel.com>
++
++	* gas/all/fwdexp.d: Expect addend as signed.
++
++2007-06-22  H.J. Lu  <hongjiu.lu@intel.com>
++
++	* gas/alpha/elf-reloc-1.d: Expect addend as signed.
++	* gas/i386/mixed-mode-reloc64.d: Likewise.
++	* gas/i386/reloc64.d: Likewise.
++	* gas/ia64/pcrel.d: Likewise.
++	* gas/mips/branch-misc-2-64.d: Likewise.
++	* gas/mips/branch-misc-2pic-64.d: Likewise.
++	* gas/mips/ldstla-n64-sym32.d: Likewise.
++	* gas/mips/mips16-hilo-n32.d: Likewise.
++	* gas/ppc/astest.d: Likewise.
++	* gas/ppc/astest2.d: Likewise.
++	* gas/ppc/astest2_64.d: Likewise.
++	* gas/ppc/astest64.d: Likewise.
++	* gas/ppc/test1elf32.d: Likewise.
++	* gas/ppc/test1elf64.d: Likewise.
++	* gas/sparc/reloc64.d: Likewise.
+diff --git a/gas/testsuite/gas/all/fwdexp.d b/gas/testsuite/gas/all/fwdexp.d
+index b30e350..e6d1d96 100644
+--- a/gas/testsuite/gas/all/fwdexp.d
++++ b/gas/testsuite/gas/all/fwdexp.d
+@@ -5,7 +5,7 @@
+ 
+ RELOCATION RECORDS FOR .*
+ OFFSET +TYPE +VALUE 
+-0+ .*(\.data|i)(|\+0xf+e|\+0xf+c|\+0xf+8)
++0+ .*(\.data|i)(|\+0xf+e|\+0xf+c|\+0xf+8|-0x0*2|-0x0*4|-0x0*8)
+ 
+ Contents of section .*
+  0+ (0+|feff|fffe|fcffffff|fffffffc|f8ffffff ffffffff|ffffffff fffffff8) .*
+diff --git a/gas/testsuite/gas/alpha/elf-reloc-1.d b/gas/testsuite/gas/alpha/elf-reloc-1.d
+index 3985975..69a16b7 100644
+--- a/gas/testsuite/gas/alpha/elf-reloc-1.d
++++ b/gas/testsuite/gas/alpha/elf-reloc-1.d
 @@ -16,6 +16,6 @@ OFFSET           TYPE              VALUE
  0*000001c GPRELHIGH         d
  0*0000020 GPRELLOW          e
@@ -73,8 +100,10 @@ gas/testsuite/
 +0*0000030 GPDISP            \.text-0x0*0000008
  
  
---- binutils/gas/testsuite/gas/i386/mixed-mode-reloc64.d.signed	2009-11-17 10:48:31.000000000 -0800
-+++ binutils/gas/testsuite/gas/i386/mixed-mode-reloc64.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/i386/mixed-mode-reloc64.d b/gas/testsuite/gas/i386/mixed-mode-reloc64.d
+index dc50e43..9b82cb5 100644
+--- a/gas/testsuite/gas/i386/mixed-mode-reloc64.d
++++ b/gas/testsuite/gas/i386/mixed-mode-reloc64.d
 @@ -7,8 +7,8 @@
  RELOCATION RECORDS FOR \[.text\]:
  OFFSET[ 	]+TYPE[ 	]+VALUE[ 	]*
@@ -87,8 +116,10 @@ gas/testsuite/
  [0-9a-f]+[ 	]+R_X86_64_GOT32[ 	]+xtrn[ 	]*
 -[0-9a-f]+[ 	]+R_X86_64_PLT32[ 	]+xtrn\+0xf+c[ 	]*
 +[0-9a-f]+[ 	]+R_X86_64_PLT32[ 	]+xtrn-0x0*4[ 	]*
---- binutils/gas/testsuite/gas/i386/reloc64.d.signed	2009-11-17 10:48:31.000000000 -0800
-+++ binutils/gas/testsuite/gas/i386/reloc64.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/i386/reloc64.d b/gas/testsuite/gas/i386/reloc64.d
+index 5c14019..b4780d4 100644
+--- a/gas/testsuite/gas/i386/reloc64.d
++++ b/gas/testsuite/gas/i386/reloc64.d
 @@ -16,33 +16,33 @@ Disassembly of section \.text:
  .*[ 	]+R_X86_64_PC32[ 	]+xtrn\+0x0*2
  .*[ 	]+R_X86_64_PC16[ 	]+xtrn\+0x0*2
@@ -134,9 +165,11 @@ gas/testsuite/
  .*[ 	]+R_X86_64_DTPOFF64[ 	]+xtrn
  .*[ 	]+R_X86_64_DTPOFF32[ 	]+xtrn
  .*[ 	]+R_X86_64_DTPOFF32[ 	]+xtrn
---- binutils/gas/testsuite/gas/ia64/pcrel.d.signed	2009-11-17 10:48:31.000000000 -0800
-+++ binutils/gas/testsuite/gas/ia64/pcrel.d	2009-12-12 09:53:12.000000000 -0800
-@@ -9,28 +9,28 @@ OFFSET[[:space:]]+TYPE[[:space:]]+VALUE[
+diff --git a/gas/testsuite/gas/ia64/pcrel.d b/gas/testsuite/gas/ia64/pcrel.d
+index 674060d..a01c006 100644
+--- a/gas/testsuite/gas/ia64/pcrel.d
++++ b/gas/testsuite/gas/ia64/pcrel.d
+@@ -9,28 +9,28 @@ OFFSET[[:space:]]+TYPE[[:space:]]+VALUE[[:space:]]*
  0+10[[:space:]]+PCREL22[[:space:]]+esym
  0+20[[:space:]]+PCREL22[[:space:]]+esym\+0x0+20
  0+30[[:space:]]+PCREL22[[:space:]]+esym
@@ -169,8 +202,10 @@ gas/testsuite/
  
  
  Contents of section \.mov:
---- binutils/gas/testsuite/gas/mips/branch-misc-2-64.d.signed	2009-11-17 10:48:31.000000000 -0800
-+++ binutils/gas/testsuite/gas/mips/branch-misc-2-64.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/mips/branch-misc-2-64.d b/gas/testsuite/gas/mips/branch-misc-2-64.d
+index 064c42f..b540b8a 100644
+--- a/gas/testsuite/gas/mips/branch-misc-2-64.d
++++ b/gas/testsuite/gas/mips/branch-misc-2-64.d
 @@ -13,51 +13,51 @@ Disassembly of section .text:
  	\.\.\.
  	\.\.\.
@@ -250,8 +285,10 @@ gas/testsuite/
 +[ 	]*b8: R_MIPS_NONE	\*ABS\*-0x4
  0+00bc <[^>]*> 00000000 	nop
  	\.\.\.
---- binutils/gas/testsuite/gas/mips/branch-misc-2pic-64.d.signed	2009-11-17 10:48:31.000000000 -0800
-+++ binutils/gas/testsuite/gas/mips/branch-misc-2pic-64.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/mips/branch-misc-2pic-64.d b/gas/testsuite/gas/mips/branch-misc-2pic-64.d
+index 6b8720d..3cb292d 100644
+--- a/gas/testsuite/gas/mips/branch-misc-2pic-64.d
++++ b/gas/testsuite/gas/mips/branch-misc-2pic-64.d
 @@ -13,51 +13,51 @@ Disassembly of section .text:
  	\.\.\.
  	\.\.\.
@@ -331,8 +368,10 @@ gas/testsuite/
 +[ 	]*b8: R_MIPS_NONE	\*ABS\*-0x4
  0+00bc <[^>]*> 00000000 	nop
  	\.\.\.
---- binutils/gas/testsuite/gas/mips/ldstla-n64-sym32.d.signed	2009-11-17 10:48:31.000000000 -0800
-+++ binutils/gas/testsuite/gas/mips/ldstla-n64-sym32.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/mips/ldstla-n64-sym32.d b/gas/testsuite/gas/mips/ldstla-n64-sym32.d
+index 8d30cfb..066d749 100644
+--- a/gas/testsuite/gas/mips/ldstla-n64-sym32.d
++++ b/gas/testsuite/gas/mips/ldstla-n64-sym32.d
 @@ -196,19 +196,19 @@ Disassembly .*:
  .*: R_MIPS_NONE	.*
  .*	daddu	a0,a0,v1
@@ -433,8 +472,10 @@ gas/testsuite/
  .*: R_MIPS_NONE	.*
  .*: R_MIPS_NONE	.*
  .*	daddu	at,at,v1
---- binutils/gas/testsuite/gas/mips/mips16-hilo-n32.d.signed	2009-11-17 10:48:31.000000000 -0800
-+++ binutils/gas/testsuite/gas/mips/mips16-hilo-n32.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/mips/mips16-hilo-n32.d b/gas/testsuite/gas/mips/mips16-hilo-n32.d
+index 2e3c8a1..5ac680d 100644
+--- a/gas/testsuite/gas/mips/mips16-hilo-n32.d
++++ b/gas/testsuite/gas/mips/mips16-hilo-n32.d
 @@ -141,45 +141,45 @@ Disassembly of section \.text:
   13c:	f400 3480 	sll	a0,16
   140:	f010 4c00 	addiu	a0,-32768
@@ -559,8 +600,10 @@ gas/testsuite/
   41c:	6d01      	li	a1,1
   41e:	f400 35a0 	sll	a1,16
   422:	9d80      	lw	a0,0\(a1\)
---- binutils/gas/testsuite/gas/ppc/astest.d.signed	2009-11-17 10:48:32.000000000 -0800
-+++ binutils/gas/testsuite/gas/ppc/astest.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/ppc/astest.d b/gas/testsuite/gas/ppc/astest.d
+index 715bc4e..aebc745 100644
+--- a/gas/testsuite/gas/ppc/astest.d
++++ b/gas/testsuite/gas/ppc/astest.d
 @@ -52,11 +52,11 @@ Disassembly of section \.text:
    60:	00 00 00 00 	\.long 0x0
  			60: R_PPC_ADDR32	z
@@ -575,8 +618,10 @@ gas/testsuite/
    70:	ff ff ff 9c 	\.long 0xffffff9c
    74:	ff ff ff 9c 	\.long 0xffffff9c
    78:	00 00 00 00 	\.long 0x0
---- binutils/gas/testsuite/gas/ppc/astest2.d.signed	2009-11-17 10:48:32.000000000 -0800
-+++ binutils/gas/testsuite/gas/ppc/astest2.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/ppc/astest2.d b/gas/testsuite/gas/ppc/astest2.d
+index e0e1943..030e985 100644
+--- a/gas/testsuite/gas/ppc/astest2.d
++++ b/gas/testsuite/gas/ppc/astest2.d
 @@ -48,11 +48,11 @@ Disassembly of section \.text:
    60:	00 00 00 00 	\.long 0x0
  			60: R_PPC_ADDR32	z
@@ -591,8 +636,10 @@ gas/testsuite/
    70:	00 00 00 08 	\.long 0x8
    74:	00 00 00 08 	\.long 0x8
  
---- binutils/gas/testsuite/gas/ppc/astest2_64.d.signed	2009-11-17 10:48:32.000000000 -0800
-+++ binutils/gas/testsuite/gas/ppc/astest2_64.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/ppc/astest2_64.d b/gas/testsuite/gas/ppc/astest2_64.d
+index 356db54..901d425 100644
+--- a/gas/testsuite/gas/ppc/astest2_64.d
++++ b/gas/testsuite/gas/ppc/astest2_64.d
 @@ -45,11 +45,11 @@ Disassembly of section \.text:
    58:	00 00 00 00 	\.long 0x0
  			58: R_PPC64_ADDR32	z
@@ -607,8 +654,10 @@ gas/testsuite/
    68:	00 00 00 08 	\.long 0x8
    6c:	00 00 00 08 	\.long 0x8
  
---- binutils/gas/testsuite/gas/ppc/astest64.d.signed	2009-11-17 10:48:32.000000000 -0800
-+++ binutils/gas/testsuite/gas/ppc/astest64.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/ppc/astest64.d b/gas/testsuite/gas/ppc/astest64.d
+index d8edf05..a1a39cc 100644
+--- a/gas/testsuite/gas/ppc/astest64.d
++++ b/gas/testsuite/gas/ppc/astest64.d
 @@ -49,11 +49,11 @@ Disassembly of section \.text:
    58:	00 00 00 00 	\.long 0x0
  			58: R_PPC64_ADDR32	z
@@ -623,8 +672,10 @@ gas/testsuite/
    68:	ff ff ff a4 	\.long 0xffffffa4
    6c:	ff ff ff a4 	\.long 0xffffffa4
    70:	00 00 00 00 	\.long 0x0
---- binutils/gas/testsuite/gas/ppc/test1elf32.d.signed	2009-11-17 10:48:32.000000000 -0800
-+++ binutils/gas/testsuite/gas/ppc/test1elf32.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/ppc/test1elf32.d b/gas/testsuite/gas/ppc/test1elf32.d
+index 2e76061..80cc667 100644
+--- a/gas/testsuite/gas/ppc/test1elf32.d
++++ b/gas/testsuite/gas/ppc/test1elf32.d
 @@ -79,7 +79,7 @@ Disassembly of section \.data:
  
  0+000c <dat0>:
@@ -634,8 +685,10 @@ gas/testsuite/
  
  0+0010 <dat1>:
    10:	00 00 00 00 	\.long 0x0
---- binutils/gas/testsuite/gas/ppc/test1elf64.d.signed	2009-11-17 10:48:32.000000000 -0800
-+++ binutils/gas/testsuite/gas/ppc/test1elf64.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/ppc/test1elf64.d b/gas/testsuite/gas/ppc/test1elf64.d
+index 8ea8230..33fb6db 100644
+--- a/gas/testsuite/gas/ppc/test1elf64.d
++++ b/gas/testsuite/gas/ppc/test1elf64.d
 @@ -114,7 +114,7 @@ Disassembly of section \.data:
  
  0000000000000014 <dat0>:
@@ -645,8 +698,10 @@ gas/testsuite/
  
  0000000000000018 <dat1>:
    18:	00 00 00 00 	\.long 0x0
---- binutils/gas/testsuite/gas/sparc/reloc64.d.signed	2009-11-17 10:48:32.000000000 -0800
-+++ binutils/gas/testsuite/gas/sparc/reloc64.d	2009-12-12 09:53:12.000000000 -0800
+diff --git a/gas/testsuite/gas/sparc/reloc64.d b/gas/testsuite/gas/sparc/reloc64.d
+index da40d0c..70bc99d 100644
+--- a/gas/testsuite/gas/sparc/reloc64.d
++++ b/gas/testsuite/gas/sparc/reloc64.d
 @@ -35,13 +35,13 @@ Disassembly of section .text:
  			44: R_SPARC_LO10	.text
    48:	01 00 00 00 	nop 
