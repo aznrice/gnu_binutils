@@ -1,3 +1,90 @@
+2010-09-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/11812
+	* ld-i386/nogot2.d: New
+	* ld-i386/nogot2.s: Likewise.
+	* ld-x86-64/nogot2.d: Likewise.
+	* ld-x86-64/nogot2.s: Likewise.
+
+	* ld-i386/i386.exp: Run nogot2.
+	* ld-x86-64/x86-64.exp: Likewise.
+
+2010-09-29  Alan Modra  <amodra@gmail.com>
+
+	* ld-h8300/h8300.exp: Use is_elf_format.
+
+	* lib/ld-lib.exp (is_elf_format): Merge with binutils and gas versions.
+	(is_aout_format): Update target list.
+	(is_pecoff_format): Remove unnecessary line continuation.
+
+2010-09-27  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* ld-s390/tlsbin.dd: bcr 0,%r7 -> nopr %r7.
+	* ld-s390/tlsbin_64.dd: Likewise.
+	* ld-s390/tlspic.dd: Likewise.
+	* ld-s390/tlspic_64.dd: Likewise.
+
+2010-09-23  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/11812
+	* ld-i386/nogot1.s: Don't use GOTOFF.
+
+2010-09-23  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* ld-tic6x/pcrel-reloc-local-r-rel-rela.d: New test.
+
+2010-09-23  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* ld-arm/attr-merge-6.attr: Update for Security Extensions.
+	* ld-arm/attr-merge-7.attr: Likewise.
+
+2010-09-23  Alan Modra  <amodra@gmail.com>
+
+	* ld-elf/elf.exp: Don't run --gc-sections tls var test on v850.
+	* ld-elf/group2.d: xfail xstormy.
+	* ld-elf/group4.d: Likewise.
+	* ld-elf/group5.d: Likewise.
+	* ld-elf/group6.d: Likewise.
+	* ld-elf/init-fini-arrays.d: xfail cr16 and crx.
+	* ld-elf/orphan2.d: xfail xstormy.
+	* ld-elf/sec64k.exp: Don't run on targets using generic linker.
+	Allow a larger range for ld -r expected bar_1 section.  Don't run
+	final link test on a number of targets.  Select avr6 for avr targets.
+	* ld-elfcomm/elfcomm.exp: Don't attempt on hpux.
+
+	* ld-d10v/reloc-007.d: Don't error.
+	* ld-d10v/reloc-008.d: Likewise.
+	* ld-d10v/reloc-015.d: Likewise.
+	* ld-d10v/reloc-016.d: Likewise.
+	* ld-d10v/reloc-012.ld: Use a sane offset.
+
+2010-09-20  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* ld-arm/attr-merge-6.attr: Update test for change in canonical CPU
+	name.
+	* ld-arm/attr-merge-7.attr: Likewise.
+	* ld-arm/attr-merge-2.attr: Likewise.
+	* ld-arm/attr-merge-arch-2.attr: Likewise.
+
+2010-09-20  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* ld-arm/script-type.ld: Update to generate symbols in a section.
+
+2010-09-19  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* ld-mips-elf/elf-rel-got-n32.d: Swap two local GOT entries
+	and remove some duplication between the global and local GOT
+	entries.  Adjust GP offsets accordingly.
+	* ld-mips-elf/elf-rel-got-n64-linux.d: Likewise.
+	* ld-mips-elf/elf-rel-xgot-n32.d: Reorder GOT entries and update
+	GP offsets accordingly.
+	* ld-mips-elf/elf-rel-xgot-n64-linux.d: Likewise.
+	* ld-mips-elf/mips16-pic-1.gd: Move all global GOT entries to
+	the local GOT.
+	* ld-mips-elf/mips16-pic-1.dd: Update GP offsets accordingly.
+	* ld-mips-elf/multi-got-no-shared.d: Adjust GP setup for
+	smaller GOT sizes.
+
 2010-09-18  Alan Modra  <amodra@gmail.com>
 
 	* lib/ld-lib.exp (check_gc_sections_available): Fail more targets.

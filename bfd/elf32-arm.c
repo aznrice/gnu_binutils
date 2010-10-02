@@ -4486,7 +4486,6 @@ elf32_arm_size_stubs (bfd *output_bfd,
 		    {
 		      /* It's a local symbol.  */
 		      Elf_Internal_Sym *sym;
-		      Elf_Internal_Shdr *hdr;
 
 		      if (local_syms == NULL)
 			{
@@ -4502,8 +4501,16 @@ elf32_arm_size_stubs (bfd *output_bfd,
 			}
 
 		      sym = local_syms + r_indx;
-		      hdr = elf_elfsections (input_bfd)[sym->st_shndx];
-		      sym_sec = hdr->bfd_section;
+		      if (sym->st_shndx == SHN_UNDEF)
+			sym_sec = bfd_und_section_ptr;
+		      else if (sym->st_shndx == SHN_ABS)
+			sym_sec = bfd_abs_section_ptr;
+		      else if (sym->st_shndx == SHN_COMMON)
+			sym_sec = bfd_com_section_ptr;
+		      else
+			sym_sec =
+			  bfd_section_from_elf_index (input_bfd, sym->st_shndx);
+
 		      if (!sym_sec)
 			/* This is an undefined symbol.  It can never
 			   be resolved. */
@@ -9063,7 +9070,7 @@ elf32_arm_relocate_section (bfd *                  output_bfd,
 	    name = bfd_section_name (input_bfd, sec);
 	}
 
-      if (r_symndx != 0
+      if (r_symndx != STN_UNDEF
 	  && r_type != R_ARM_NONE
 	  && (h == NULL
 	      || h->root.type == bfd_link_hash_defined
@@ -10902,7 +10909,7 @@ elf32_arm_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  /* PR 9934: It is possible to have relocations that do not
 	     refer to symbols, thus it is also possible to have an
 	     object file containing relocations but no symbol table.  */
-	  && (r_symndx > 0 || nsyms > 0))
+	  && (r_symndx > STN_UNDEF || nsyms > 0))
 	{
 	  (*_bfd_error_handler) (_("%B: bad symbol index: %d"), abfd,
 				   r_symndx);

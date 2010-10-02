@@ -1,3 +1,48 @@
+2010-10-01  Alan Modra  <amodra@gmail.com>
+
+	PR ld/12066
+	* ldexp.c (fold_name): Treat absolute symbols as plain numbers.
+	* ld.texinfo (Expression Section): Don't say absolute symbols
+	are addresses.
+
+2010-09-29  Alan Modra  <amodra@gmail.com>
+
+	* ldlang.c (lang_place_orphans): Zero vma when relocatable or non-load
+	section for orphans handled here.
+
+2010-09-27  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* configure: Regenerate.
+
+2010-09-23  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	* scripttempl/armcoff.sc: Revert 2010-09-22 change.
+
+2010-09-23  Alan Modra  <amodra@gmail.com>
+
+	* ldlang.c (lang_add_section): Don't copy SEC_RELOC from input
+	to output section on a final link.
+
+2010-09-22  Kai Tietz  <kai.tietz@onevision.com>
+
+	* ldlang.c (lang_add_section): Allow for debugging
+	section to be marked as noload but to keep content.
+	(IGNORE_SECTION): Likewise.
+	(lang_check_section_addresses): Likewise.
+	* ldwrite.c (build_link_order): Likewise.
+
+	* emultempl/pe.em (gld_${EMULATION_NAME}_place_orphan): Add
+	idata to orphan set.
+	* emultempl/pep.em: Likewise.
+	* scripttempl/armcoff.sc: Separate idata
+	and add __IAT_start__ and __IAT_end__ labels.
+	* scripttempl/pe.sc: Likewise.
+	* scripttempl/pep.sc: Likewise.
+
+2010-09-20  David S. Miller  <davem@davemloft.net>
+
+	* emulparams/elf32_sparc.sh: Set NOP to 0x01000000
+
 2010-09-16  Alan Modra  <amodra@gmail.com>
 
 	* ld.texinfo (NOLOAD): Do not erroneously state that contents will

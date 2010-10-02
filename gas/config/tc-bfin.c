@@ -1,5 +1,5 @@
 /* tc-bfin.c -- Assembler for the ADI Blackfin.
-   Copyright 2005, 2006, 2007, 2008, 2009
+   Copyright 2005, 2006, 2007, 2008, 2009, 2010
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -136,7 +136,7 @@ const pseudo_typeS md_pseudo_table[] = {
 };
 
 /* Characters that are used to denote comments and line separators. */
-const char comment_chars[] = "";
+const char comment_chars[] = "#";
 const char line_comment_chars[] = "#";
 const char line_separator_chars[] = ";";
 
@@ -181,7 +181,8 @@ typedef enum bfin_cpu_type
   BFIN_CPU_BF548M,
   BFIN_CPU_BF549,
   BFIN_CPU_BF549M,
-  BFIN_CPU_BF561
+  BFIN_CPU_BF561,
+  BFIN_CPU_BF592,
 } bfin_cpu_t;
 
 bfin_cpu_t bfin_cpu_type = BFIN_CPU_UNKNOWN;
@@ -206,15 +207,19 @@ struct bfin_cpu bfin_cpus[] =
 
   {"bf506", BFIN_CPU_BF506, 0x0000, AC_05000074},
 
+  {"bf512", BFIN_CPU_BF512, 0x0002, AC_05000074},
   {"bf512", BFIN_CPU_BF512, 0x0001, AC_05000074},
   {"bf512", BFIN_CPU_BF512, 0x0000, AC_05000074},
 
+  {"bf514", BFIN_CPU_BF514, 0x0002, AC_05000074},
   {"bf514", BFIN_CPU_BF514, 0x0001, AC_05000074},
   {"bf514", BFIN_CPU_BF514, 0x0000, AC_05000074},
 
+  {"bf516", BFIN_CPU_BF516, 0x0002, AC_05000074},
   {"bf516", BFIN_CPU_BF516, 0x0001, AC_05000074},
   {"bf516", BFIN_CPU_BF516, 0x0000, AC_05000074},
 
+  {"bf518", BFIN_CPU_BF518, 0x0002, AC_05000074},
   {"bf518", BFIN_CPU_BF518, 0x0001, AC_05000074},
   {"bf518", BFIN_CPU_BF518, 0x0000, AC_05000074},
 
@@ -312,6 +317,9 @@ struct bfin_cpu bfin_cpus[] =
   {"bf561", BFIN_CPU_BF561, 0x0005, AC_05000074},
   {"bf561", BFIN_CPU_BF561, 0x0003, AC_05000074},
   {"bf561", BFIN_CPU_BF561, 0x0002, AC_05000074},
+
+  {"bf592", BFIN_CPU_BF592, 0x0001, AC_05000074},
+  {"bf592", BFIN_CPU_BF592, 0x0000, AC_05000074},
 
   {NULL, 0, 0, 0}
 };
@@ -1810,6 +1818,16 @@ bfin_gen_pseudodbg_assert (int dbgop, REG_T regtest, int expected)
   ASSIGN (expected);
 
   return GEN_OPCODE32 ();
+}
+
+INSTR_T
+bfin_gen_pseudochr (int ch)
+{
+  INIT (PseudoChr);
+
+  ASSIGN (ch);
+
+  return GEN_OPCODE16 ();
 }
 
 /* Multiple instruction generation.  */

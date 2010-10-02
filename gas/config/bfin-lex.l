@@ -208,6 +208,8 @@ int yylex (void);
 [bB]                                    return B;
 [aA][zZ]  _REG.regno = S_AZ;   return STATUS_REG;
 [aA][nN]  _REG.regno = S_AN;   return STATUS_REG;
+[aA][cC]0_[cC][oO][pP][yY]  _REG.regno = S_AC0_COPY; return STATUS_REG;
+[vV]_[cC][oO][pP][yY]       _REG.regno = S_V_COPY;   return STATUS_REG;
 [aA][qQ]  _REG.regno = S_AQ;   return STATUS_REG;
 [aA][cC]0 _REG.regno = S_AC0;  return STATUS_REG;
 [aA][cC]1 _REG.regno = S_AC1;  return STATUS_REG;
@@ -216,6 +218,7 @@ int yylex (void);
 [aA][vV]1 _REG.regno = S_AV1;  return STATUS_REG;
 [aA][vV]1[sS] _REG.regno = S_AV1S; return STATUS_REG;
 [vV][sS]  _REG.regno = S_VS;   return STATUS_REG;
+[rR][nN][dD]_[mM][oO][dD]  _REG.regno = S_RND_MOD; return STATUS_REG;
 
 
 [aA][sS][tT][aA][tT]   _REG.regno = REG_ASTAT; return REG;
@@ -230,7 +233,7 @@ int yylex (void);
 [aA]1"."[hH]    return A_ONE_DOT_H;
 [aA]0"."[hH]    return A_ZERO_DOT_H;
 [aA][bB][sS]                            return ABS;
-abort                                   return ABORT;
+[aA][bB][oO][rR][tT]                    return ABORT;
 [aA]1"."[xX]    _REG.regno = REG_A1x; return REG;
 [aA]1"."[wW]    _REG.regno = REG_A1w; return REG;
 [aA]1           _REG.regno = REG_A1;  return REG_A_DOUBLE_ONE;
@@ -296,7 +299,7 @@ abort                                   return ABORT;
     yylval.value = parse_int (&yytext);
     return NUMBER;
   }
-[A-Za-z_$.][A-Za-z0-9_$.]* {
+[[:alpha:]\x80-\xff_$.][[:alnum:]\x80-\xff_$.]* {
     yylval.symbol = symbol_find_or_make (yytext);
     symbol_mark_used (yylval.symbol);
     return SYMBOL;

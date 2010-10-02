@@ -1,3 +1,119 @@
+2010-10-01  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* elf32-arm.c (elf32_arm_size_stubs): Don't choke on local symbols in
+	SHN_UNDEF, SHN_ABS, SHN_COMMON.
+
+2010-09-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/11812
+	* elf32-i386.c (elf_i386_size_dynamic_sections): Don't
+	 allocate .got.plt section if there are no GOT nor PLT
+	 entries and there is no refeence to _GLOBAL_OFFSET_TABLE_.
+	 * elf64-x86-64.c (elf64_x86_64_size_dynamic_sections): Li.kewise.
+
+	* elflink.c (_bfd_elf_define_linkage_sym): Clear non_elf.
+
+2010-09-27  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* configure: Regenerate.
+
+2010-09-24  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* elf32-arm.c, elf32-cris.c, elf32-hppa.c, elf32-i370.c, elf32-m32r.c,
+	elf32-m68k.c, elf32-microblaze.c, elf32-ppc.c, elf32-score.c,
+	elf32-score7.c, elf32-sh.c, elf32-vax.c, elf32-xtensa.c, elf64-alpha.c,
+	elf64-hppa.c, elf64-mips.c, elf64-ppc.c, elf64-sparc.c, elfcode.h,
+	elflink.c, elfxx-ia64.c, elfxx-mips.c: Use STN_UNDEF when referring to
+	the zero symbol index.
+
+	* elflink.c (bfd_elf_reloc_symbol_deleted_p): Compare the symbol index
+	to STN_UNDEF, not SHN_UNDEF.
+
+2010-09-23  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* elf32-tic6x.c (elf32_tic6x_fake_sections): New function.
+	(elf_backend_fake_sections): Define.
+
+2010-09-23  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* bfd-in2.h (BFD_RELOC_ARM_HVC): New enum value.
+
+2010-09-23  Alan Modra  <amodra@gmail.com>
+
+	* cpu-d10v.c: Make bits_per_address 18 for all arch_info entries.
+
+2010-09-23  Alan Modra  <amodra@gmail.com>
+
+	* elf.c (_bfd_elf_init_private_section_data): Allow for SEC_RELOC
+	difference between input and output section.
+
+2010-09-22  Kai Tietz  <kai.tietz@onevision.com>
+
+	* coffcode.h (sec_to_styp_flags): Adjust debug
+	sections to be conform to pe-coff specification
+	and avoid marking them as excluded.
+	(styp_to_sec_flags): Doing reverse mapping.
+
+	* peXXigen.c (_bfd_XXi_final_link_postscript): Add handling for
+	setting IAT directory entry.
+
+2010-09-20  Richard Henderson  <rth@redhat.com>
+
+	* elf64-alpha.c (elf64_alpha_howto_table): Use bfd_elf_generic_reloc.
+
+2010-09-19  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* elfxx-mips.c (mips_elf_link_hash_entry): Add got_only_for_calls.
+	(mips_elf_link_hash_newfunc): Initialize it.
+	(mips_elf_record_global_got_symbol): Add a for_call parameter.
+	(mips_elf_count_got_symbols): Check SYMBOL_CALLS_LOCAL rather
+	than SYMBOL_REFERENCES_LOCAL if the GOT entry is only used for calls.
+	Try to remove .got entries in favour of .got.plt entries on VxWorks.
+	(_bfd_mips_elf_check_relocs): Do not try to avoid allocating
+	a global GOT entry for VxWorks calls.  Update uses of
+	mips_elf_record_global_got_symbol.
+	(allocate_dynrelocs): Set got_only_for_calls to false if the GOT
+	entry is used for dynamic relocations.
+
+2010-09-19  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* elfxx-mips.c (mips_got_entry): Adjust commentary.
+	(mips_elf_create_local_got_entry): If given a symbol, check that it
+	has been assigned to the local part of the GOT.
+	(mips_elf_count_got_symbols): Take the bfd_link_info as argument
+	instead of the master GOT.  Put all locally-binding symbols in
+	the local area.
+	(mips_elf_make_got_per_bfd): Use global_got_area to decide whether
+	a symbol lives in the local or global area.
+	(mips_elf_local_relocation_p): Remove check_forced argument and
+	retain only the !check_forced behavior.
+	(mips_elf_calculate_relocation): Adjust call accordingly.
+	Use global_got_area to decide whether an output relocation
+	should be local or global.  Explicitly decay R_MIPS_GOT_PAGE
+	into R_MIPS_GOT_DISP where appropriate.  Fix selection of
+	local vs. global semantics for R_MIPS*_26.  Remove redundant
+	reevaluation of what is stored in was_local_p.
+	(mips_elf_create_dynamic_relocation): Use global_got_area to decide
+	whether the relocation should be against a global or local symbol.
+	(mips_elf_lay_out_got): Update the GOT traversal after the above
+	change to mips_elf_count_got_symbols.
+	(mips_elf_adjust_addend): Adjust call to mips_elf_local_relocation_p.
+	(_bfd_mips_elf_relocate_section): Likewise.
+	(_bfd_mips_elf_finish_dynamic_symbol): Use global_got_area to decide
+	whether the symbol has a global got entry.
+	(_bfd_mips_vxworks_finish_dynamic_symbol): Likewise.
+
+2010-09-19  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* elfxx-mips.c (allocate_dynrelocs): Don't add relocation symbols
+	to the global GOT on VxWorks.
+
+2010-09-19  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* elfxx-mips.c (_bfd_mips_elf_check_relocs): On VxWorks,
+	exclude __GOTT_BASE__ and __GOTT_INDEX__ from the warning
+	about HI/LO relocations in shared objects.
+
 2010-09-16  Alan Modra  <amodra@gmail.com>
 
 	* elf32-spu.c (spu_elf_size_sections): Omit fixups for non-alloc

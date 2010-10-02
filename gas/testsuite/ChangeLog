@@ -1,3 +1,129 @@
+2010-09-29  Alan Modra  <amodra@gmail.com>
+
+	* gas/all/fwdexp.d, * gas/all/fwdexp.s: New test.
+	* gas/all/gas.exp: Run it.
+
+2010-09-29  Alan Modra  <amodra@gmail.com>
+
+	* lib/gas-defs.exp (is_elf_format): Merge with binutils and ld versions.
+	(is_aout_format): Copy from ld testsuite.
+	(is_pecoff_format): Merge with ld version.
+
+2010-09-27  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* gas/tic6x/got-reloc.s: New test.
+	* gas/tic6x/got-reloc.d: New test.
+
+2010-09-27  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* gas/s390/s390.exp: Run the zarch-z196 test.
+	* gas/s390/zarch-z196.d: Add new instructions.
+	* gas/s390/zarch-z196.s: Likewise.
+	* gas/s390/zarch-z9-109.d: Likewise.
+	* gas/s390/zarch-z9-109.s: Likewise.
+
+2010-09-27  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* gas/s390/esa-g5.d: Adjust serveral instructions.
+	* gas/s390/esa-reloc.d: Likewise.
+	* gas/s390/esa-z990.d: Likewise.
+	* gas/s390/zarch-reloc.d: Likewise.
+	* gas/s390/zarch-z10.d: Likewise.
+	* gas/s390/zarch-z9-ec.d: Likewise.
+	* gas/s390/zarch-z900.d: Likewise.
+
+2010-09-27  Tejas Belagod  <tejas.belagod@arm.com>
+
+	* gas/arm/vldr.s: New test for pc-relative VLDR disassembly comment.
+	* gas/arm/vldr.d: Likewise.
+	* gas/arm/vstr-bad.s: New test for PC-relative VSTR.
+	* gas/arm/vstr-thumb-bad.l: Likewise.
+	* gas/arm/vstr-thumb-bad.d: Likewise.
+	* gas/arm/vstr-arm-bad.l: Likewise.
+	* gas/arm/vstr-arm-bad.d: Likewise.
+
+2010-09-23  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* gas/arm/armv7-a+virt.d: New test.
+	* gas/arm/armv7-a+virt.s: Likewise.
+	* gas/arm/attr-march-all.d: Update for Virtualization Extensions.
+	* gas/arm/attr-march-armv7-a+sec+virt.d: New test.
+	* gas/arm/attr-march-armv7-a+virt.d: Likewise.
+
+2010-09-23  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* gas/arm/armv7-a+idiv.d: New test.
+	* gas/arm/armv7-a+idiv.s: Likewise.
+	* gas/arm/attr-march-all.d: Update for Integer divide extension.
+	* gas/arm/attr-march-armv7-a+idiv.d: New test.
+
+2010-09-23  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* gas/arm/archv6s-m-bad.d: New test.
+	* gas/arm/archv6s-m-bad.l: Likewise.
+	* gas/arm/archv6s-m.d: Likewise.
+	* gas/arm/archv6s-m.s: Likewise.
+	* gas/arm/attr-march-armv6-m+os.d: Likewise.
+	* gas/arm/attr-march-armv6s-m.d: Likewise.
+
+2010-09-23  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* gas/arm/attr-march-all.d: Update for Security Extensions..
+	* gas/arm/attr-march-armv6k+sec.d: New test.
+	* gas/arm/attr-march-armv6z.d: Update for Security Extensions.
+	* gas/arm/attr-march-armv6zk.d: Likewise.
+	* gas/arm/attr-march-armv6zkt2.d: Likewise.
+	* gas/arm/attr-march-armv6zt2.d: Likewise.
+	* gas/arm/attr-march-armv7-a+sec.d: New test.
+	* gas/arm/attr-mcpu.d: Update for Security Extensions.
+	* gas/arm/thumb32.d: Likewise.
+	* gas/arm/thumb32.s: Likewise.
+
+2010-09-23  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* gas/arm/arch7a-mp.d: Add.
+	* gas/arm/arch7ar-mp.s: Likewise.
+	* gas/arm/arch7r-mp.d: Likewise.
+	* gas/arm/armv2-mp-bad.d: Likewise.
+	* gas/arm/armv2-mp-bad.l: Likewise.
+	* gas/arm/attr-march-all.d: Update for MP extension.
+	* gas/arm/attr-march-armv7-a+mp.d: Add.
+	* gas/arm/attr-march-armv7-r+mp.d: Likewise.
+
+2010-09-23  Alan Modra  <amodra@gmail.com>
+
+	* gas/all/gas.exp: Update "forward" and "redef3" xfails.
+	* gas/m68k/all.exp: Don't xfail pcrel on uclinux.
+	* gas/sh/arch/arch.exp: Don't pass dashes to send_log.
+
+2010-09-23  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/jal.d: Remove duplicate pattern.
+
+2010-09-22  Robin Getz  <robin.getz@analog.com>
+
+	* gas/bfin/expected_move_errors.l: Update error output.
+
+2010-09-22  Robin Getz  <robin.getz@analog.com>
+
+	* gas/bfin/pseudo.d, gas/bfin/pseudo.s: New test.
+	* gas/bfin/bfin.exp: Add new "pseudo" test.
+
+2010-09-22  Mike Frysinger  <vapier@gentoo.org>
+
+	* gas/bfin/parallel2.d, gas/bfin/parallel3.d, gas/bfin/shift.d,
+	gas/bfin/vector.2, gas/bfin/vector2.d: Change SHIFT to LSHIFT.
+
+2010-09-20  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* gas/arm/attr-cpu-directive.d: Update test for change in canonical
+	CPU name.
+	* gas/arm/attr-mcpu.d: Likewise.
+
+2010-09-20  Richard Henderson  <rth@redhat.com>
+
+	* gas/elf/elf.exp: Disable symtab test for alpha.
+
 2010-09-17  Tejas Belagod  <tejas.belagod@arm.com>
 
 	* gas/arm/thumb2_ldmstm.d: Change single-register stmia to use 16-bit
