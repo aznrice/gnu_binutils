@@ -1,3 +1,51 @@
+2010-10-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* dwarf.c (byte_get_signed): Make it extern.
+
+	* dwarf.h (byte_get_signed): New.
+
+	* readelf.c (BYTE_GET_SIGNED): New.
+	(slurp_rela_relocs): Use BYTE_GET_SIGNED on r_addend.
+	(dump_relocations): Properly dump r_addend.
+
+2010-10-08  Joseph Myers  <joseph@codesourcery.com>
+
+	* nm.c (value_format_64bit): Define appropriately for __MSVCRT__.
+	(set_print_radix): Update for __MSVCRT__ definition of
+	value_format_64bit.
+
+2010-10-08  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	Fix build with -DDEBUG=7
+	* nlmheader.y (DEBUG token): Rename to DEBUG_K.
+
+2010-10-06  Alan Modra  <amodra@gmail.com>
+
+	* bucomm.c (bfd_nonfatal, bfd_nonfatal_message): Don't clobber errno.
+
+2010-10-05  Alan Modra  <amodra@gmail.com>
+
+	* bucomm.c (bfd_nonfatal): Flush stdout before output to stderr.
+	(bfd_nonfatal_message, report, list_matching_formats): Likewise.
+	(list_supported_targets): Tidy.
+	* objdump.c (free_only_list): Formatting.
+	(slurp_dynamic_symtab): Non-zero exit status for "not a dynamic
+	object".
+	(update_source_path): Delete redundant check for NULL filename.
+	(disassemble_bytes): Error if disassemble_fn returns a value
+	that won't increment address.
+	(disassemble_data): Don't capitalize error message.
+	(read_section_stabs): Likewise.
+	(main): Return non-zero exit status on bad options.
+
+2010-10-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/12088
+	* nm.c (plugin_target): New.
+	(main): Set plugin_target to "plugin" for --plugin.
+	(display_file): Pass plugin_target to bfd_openr if target
+	isn't set.
+
 2010-09-27  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
 
 	* configure: Regenerate.

@@ -2106,7 +2106,7 @@ static const insn_sequence elf32_arm_stub_short_branch_v4t_thumb_arm[] =
    blx to reach the stub if necessary.  */
 static const insn_sequence elf32_arm_stub_long_branch_any_arm_pic[] =
   {
-    ARM_INSN(0xe59fc000),             /* ldr   r12, [pc] */
+    ARM_INSN(0xe59fc000),             /* ldr   ip, [pc] */
     ARM_INSN(0xe08ff00c),             /* add   pc, pc, ip */
     DATA_WORD(0, R_ARM_REL32, -4),    /* dcd   R_ARM_REL32(X-4) */
   };
@@ -2117,7 +2117,7 @@ static const insn_sequence elf32_arm_stub_long_branch_any_arm_pic[] =
    ARMv7).  */
 static const insn_sequence elf32_arm_stub_long_branch_any_thumb_pic[] =
   {
-    ARM_INSN(0xe59fc004),             /* ldr   r12, [pc, #4] */
+    ARM_INSN(0xe59fc004),             /* ldr   ip, [pc, #4] */
     ARM_INSN(0xe08fc00c),             /* add   ip, pc, ip */
     ARM_INSN(0xe12fff1c),             /* bx    ip */
     DATA_WORD(0, R_ARM_REL32, 0),     /* dcd   R_ARM_REL32(X) */
@@ -3269,9 +3269,7 @@ arm_type_of_stub (struct bfd_link_info *info,
 
   /* If a stub is needed, record the actual destination type.  */
   if (stub_type != arm_stub_none)
-    {
-      *actual_st_type = st_type;
-    }
+    *actual_st_type = st_type;
 
   return stub_type;
 }
@@ -7231,12 +7229,12 @@ elf32_arm_final_link_relocate (reloc_howto_type *           howto,
 
 	  /* A branch to an undefined weak symbol is turned into a jump to
 	     the next instruction unless a PLT entry will be created.
-	     Do the same for local undefined symbols.
+	     Do the same for local undefined symbols (but not for STN_UNDEF).
 	     The jump to the next instruction is optimized as a NOP depending
 	     on the architecture.  */
 	  if (h ? (h->root.type == bfd_link_hash_undefweak
 		   && !(splt != NULL && h->plt.offset != (bfd_vma) -1))
-	      : bfd_is_und_section (sym_sec))
+	      : r_symndx != STN_UNDEF && bfd_is_und_section (sym_sec))
 	    {
 	      value = (bfd_get_32 (input_bfd, hit_data) & 0xf0000000);
 
@@ -8910,9 +8908,11 @@ elf32_arm_relocate_section (bfd *                  output_bfd,
 	     undefined symbol.  This is a daft object file, but we
 	     should at least do something about it.  V4BX & NONE
 	     relocations do not use the symbol and are explicitly
-	     allowed to use the undefined symbol, so allow those.  */
+	     allowed to use the undefined symbol, so allow those.
+	     Likewise for relocations against STN_UNDEF.  */
 	  if (r_type != R_ARM_V4BX
 	      && r_type != R_ARM_NONE
+	      && r_symndx != STN_UNDEF
 	      && bfd_is_und_section (sec)
 	      && ELF_ST_BIND (sym->st_info) != STB_WEAK)
 	    {

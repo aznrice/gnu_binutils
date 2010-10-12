@@ -1,3 +1,47 @@
+2010-10-11  Steve Kilbane  <steve.kilbane@analog.com>
+
+	* config/bfin-lex.l (FLAGS): New state.
+	(X, Z, S, M, T): Require FLAGS state.
+	("(", ")"): Start/stop FLAGS state.
+
+2010-10-11  David Gibson  <david.gibson@analog.com>
+
+	* config/bfin-aux.h (bfin_loop_attempt_create_label): New prototype.
+	* config/bfin-parse.y (LOOP_BEGIN, LOOP_END): Handle numeric labels.
+	* config/tc-bfin.c (bfin_loop_attempt_create_label): New funtion.
+
+2010-10-11  David Gibson  <david.gibson@analog.com>
+
+	* config/tc-bfin.c (bfin_gen_loop): Check symbol before removing.
+
+2010-10-08  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	Fix build with -DDEBUG=7
+	* config/obj-coff.c (s_get_name, symbol_dump): Add prototypes.
+
+2010-10-07  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* config/tc-tic6x.c (tic6x_try_encode): Correct encoding of fstg field
+	in SPKERNEL instructions.
+
+2010-10-06  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* config/tc-arm.c (encode_branch): Remove superfluous braces.
+	(do_t_branch): Move reloc setting to end of routine.
+
+2010-10-04  David Daney  <ddaney@caviumnetworks.com>
+
+	* config/tc-mips.c (mips_fix_cn63xxp1): New variable.
+	(mips_ip):  Add errata work around when mips_fix_cn63xxp1 set.
+	(OPTION_FIX_CN63XXP1, OPTION_NO_FIX_CN63XXP1): New enum options
+	enumerations.
+	(md_longopts): Add options for -mfix-cn63xxp1 and -mno-fix-cn63xxp1.
+	(md_parse_option): Handle OPTION_FIX_CN63XXP1 and
+	OPTION_NO_FIX_CN63XXP1.
+	(md_show_usage): Add documentation for -mfix-cn63xxp1.
+	* doc/c-mips.texi (-mfix-cn63xxp1, -mno-fix-cn63xxp1): Document
+	the new options.
+
 2010-09-29  Bernd Schmidt  <bernds@codesourcery.com>
 
 	* gas/tic6x/insns-bad-1.s: Remove test for readonly tscl.
