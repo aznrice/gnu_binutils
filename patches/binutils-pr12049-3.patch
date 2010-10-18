@@ -1,0 +1,380 @@
+gas/
+
+2010-10-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/12049
+	* write.c (relax_frag): Take an argument to indicate forward
+	relax.
+	(update_relax_frag_address): New.
+	(relax_segment): Use it.  Call update_relax_frag_address to
+	update fr_address for all successive frags after
+	rs_machine_dependent frag.
+
+	* write.h (relax_frag): Updated.
+
+gas/testsuite/
+
+2010-10-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/12049
+	* gas/i386/i386.exp: Run relax-1 and relax-2.
+
+	* gas/i386/relax-1.d: New.
+	* gas/i386/relax-1.s: Likewise.
+	* gas/i386/relax-2.d: Likewise.
+	* gas/i386/relax-2.s: Likewise.
+
+diff --git a/gas/testsuite/gas/i386/i386.exp b/gas/testsuite/gas/i386/i386.exp
+index f4465c2..18710f9 100644
+--- a/gas/testsuite/gas/i386/i386.exp
++++ b/gas/testsuite/gas/i386/i386.exp
+@@ -199,6 +199,8 @@ if [expr ([istarget "i*86-*-*"] ||  [istarget "x86_64-*-*"]) && [gas_32_check]]
+ 	run_dump_test "intelpic"
+ 
+ 	run_dump_test "relax"
++	run_dump_test "relax-1"
++	run_dump_test "relax-2"
+ 	run_dump_test "gotpc"
+ 	run_dump_test "tlsd"
+ 	run_dump_test "tlspic"
+diff --git a/gas/testsuite/gas/i386/relax-1.d b/gas/testsuite/gas/i386/relax-1.d
+new file mode 100644
+index 0000000..9075d76
+--- /dev/null
++++ b/gas/testsuite/gas/i386/relax-1.d
+@@ -0,0 +1,16 @@
++#name: i386 relax 1
++#objdump: -dw
++
++.*: +file format .*
++
++
++Disassembly of section .text:
++
++0+ <.text>:
++#...
++   e:	e9 8d 00 00 00       	jmp    0xa0
++#...
++  21:	eb 7d                	jmp    0xa0
++#...
++  a0:	90                   	nop
++#pass
+diff --git a/gas/testsuite/gas/i386/relax-1.s b/gas/testsuite/gas/i386/relax-1.s
+new file mode 100644
+index 0000000..9bae8d9
+--- /dev/null
++++ b/gas/testsuite/gas/i386/relax-1.s
+@@ -0,0 +1,10 @@
++	.text
++        .fill 14, 1, 0x90
++	jmp	.LBB1_23
++        .fill 14, 1, 0x90
++	jmp	.LBB1_23
++        .fill 18, 1, 0x90
++	.align	16, 0x90
++        .fill 96, 1, 0x90
++.LBB1_23:
++	nop
+diff --git a/gas/testsuite/gas/i386/relax-2.d b/gas/testsuite/gas/i386/relax-2.d
+new file mode 100644
+index 0000000..f04e71d
+--- /dev/null
++++ b/gas/testsuite/gas/i386/relax-2.d
+@@ -0,0 +1,16 @@
++#name: i386 relax 3
++#objdump: -dw
++
++.*: +file format .*
++
++
++Disassembly of section .text:
++
++0+ <.text>:
++#...
++  38:	0f 85 88 00 00 00    	jne    0xc6
++#...
++  48:	75 7c                	jne    0xc6
++#...
++  c6:	90                   	nop
++#pass
+diff --git a/gas/testsuite/gas/i386/relax-2.s b/gas/testsuite/gas/i386/relax-2.s
+new file mode 100644
+index 0000000..f01aea4
+--- /dev/null
++++ b/gas/testsuite/gas/i386/relax-2.s
+@@ -0,0 +1,10 @@
++	.text
++        .fill 56, 1, 0x90
++	jne .LBB0_43
++        .fill 10, 1, 0x90
++	jne .LBB0_43
++        .fill 5, 1, 0x90
++	.align 16, 0x90
++        .fill 118, 1, 0x90
++.LBB0_43:
++	nop
+diff --git a/gas/write.c b/gas/write.c
+index 71ac635..6415170 100644
+--- a/gas/write.c
++++ b/gas/write.c
+@@ -2115,7 +2115,7 @@ write_object_file (void)
+ /* Relax a fragment by scanning TC_GENERIC_RELAX_TABLE.  */
+ 
+ long
+-relax_frag (segT segment, fragS *fragP, long stretch)
++relax_frag (segT segment, fragS *fragP, long stretch, int *forward)
+ {
+   const relax_typeS *this_type;
+   const relax_typeS *start_type;
+@@ -2203,7 +2203,10 @@ relax_frag (segT segment, fragS *fragP, long stretch)
+ 
+   growth = this_type->rlx_length - start_type->rlx_length;
+   if (growth != 0)
+-    fragP->fr_subtype = this_state;
++    {
++      fragP->fr_subtype = this_state;
++      *forward = aim >= 0;
++    }
+   return growth;
+ }
+ 
+@@ -2229,6 +2232,84 @@ relax_align (register relax_addressT address,	/* Address now.  */
+   return (new_address - address);
+ }
+ 
++/* Update fr_address with address and return the next address.  */
++
++static relax_addressT
++update_relax_frag_address (segT segment, struct frag *fragP,
++			   relax_addressT address)
++{
++  fragP->fr_address = address;
++  address += fragP->fr_fix;
++  switch (fragP->fr_type)
++    {
++    case rs_fill:
++      address += fragP->fr_offset * fragP->fr_var;
++      break;
++
++    case rs_align:
++    case rs_align_code:
++    case rs_align_test:
++	{
++	  addressT offset = relax_align (address, (int) fragP->fr_offset);
++
++	  if (fragP->fr_subtype != 0 && offset > fragP->fr_subtype)
++	    offset = 0;
++
++	  if (offset % fragP->fr_var != 0)
++	    {
++	      as_bad_where (fragP->fr_file, fragP->fr_line,
++			    _("alignment padding (%lu bytes) not a multiple of %ld"),
++			    (unsigned long) offset, (long) fragP->fr_var);
++	      offset -= (offset % fragP->fr_var);
++	    }
++
++	  address += offset;
++	}
++      break;
++
++    case rs_org:
++    case rs_space:
++      /* Assume .org is nugatory. It will grow with 1st relax.  */
++      break;
++
++    case rs_machine_dependent:
++      /* If fr_symbol is an expression, this call to
++	 resolve_symbol_value sets up the correct segment, which will
++	 likely be needed in md_estimate_size_before_relax.  */
++      if (fragP->fr_symbol)
++	resolve_symbol_value (fragP->fr_symbol);
++
++      address += md_estimate_size_before_relax (fragP, segment);
++      break;
++
++#ifndef WORKING_DOT_WORD
++      /* Broken words don't concern us yet.  */
++    case rs_broken_word:
++      break;
++#endif
++
++    case rs_leb128:
++      /* Initial guess is always 1; doing otherwise can result in
++	 stable solutions that are larger than the minimum.  */
++      address += fragP->fr_offset = 1;
++      break;
++
++    case rs_cfa:
++      address += eh_frame_estimate_size_before_relax (fragP);
++      break;
++
++    case rs_dwarf2dbg:
++      address += dwarf2dbg_estimate_size_before_relax (fragP);
++      break;
++
++    default:
++      BAD_CASE (fragP->fr_type);
++      break;
++    }
++
++  return address;
++}
++
+ /* Now we have a segment, not a crowd of sub-segments, we can make
+    fr_address values.
+ 
+@@ -2258,81 +2339,15 @@ relax_segment (struct frag *segment_frag_root, segT segment, int pass)
+        fragP = fragP->fr_next, frag_count ++)
+     {
+       fragP->relax_marker = 0;
+-      fragP->fr_address = address;
+-      address += fragP->fr_fix;
+-
+-      switch (fragP->fr_type)
+-	{
+-	case rs_fill:
+-	  address += fragP->fr_offset * fragP->fr_var;
+-	  break;
+-
+-	case rs_align:
+-	case rs_align_code:
+-	case rs_align_test:
+-	  {
+-	    addressT offset = relax_align (address, (int) fragP->fr_offset);
+-
+-	    if (fragP->fr_subtype != 0 && offset > fragP->fr_subtype)
+-	      offset = 0;
+-
+-	    if (offset % fragP->fr_var != 0)
+-	      {
+-		as_bad_where (fragP->fr_file, fragP->fr_line,
+-			      _("alignment padding (%lu bytes) not a multiple of %ld"),
+-			      (unsigned long) offset, (long) fragP->fr_var);
+-		offset -= (offset % fragP->fr_var);
+-	      }
+-
+-	    address += offset;
+-	  }
+-	  break;
+-
+-	case rs_org:
+-	case rs_space:
+-	  /* Assume .org is nugatory. It will grow with 1st relax.  */
+-	  break;
+-
+-	case rs_machine_dependent:
+-	  /* If fr_symbol is an expression, this call to
+-	     resolve_symbol_value sets up the correct segment, which will
+-	     likely be needed in md_estimate_size_before_relax.  */
+-	  if (fragP->fr_symbol)
+-	    resolve_symbol_value (fragP->fr_symbol);
+-
+-	  address += md_estimate_size_before_relax (fragP, segment);
+-	  break;
+-
+-#ifndef WORKING_DOT_WORD
+-	  /* Broken words don't concern us yet.  */
+-	case rs_broken_word:
+-	  break;
+-#endif
+-
+-	case rs_leb128:
+-	  /* Initial guess is always 1; doing otherwise can result in
+-	     stable solutions that are larger than the minimum.  */
+-	  address += fragP->fr_offset = 1;
+-	  break;
+-
+-	case rs_cfa:
+-	  address += eh_frame_estimate_size_before_relax (fragP);
+-	  break;
+-
+-	case rs_dwarf2dbg:
+-	  address += dwarf2dbg_estimate_size_before_relax (fragP);
+-	  break;
+-
+-	default:
+-	  BAD_CASE (fragP->fr_type);
+-	  break;
+-	}
++      address = update_relax_frag_address (segment, fragP, address);
+     }
+ 
+   /* Do relax().  */
+   {
+     unsigned long max_iterations;
+ 
++    int iteration;
++
+     /* Cumulative address adjustment.  */
+     offsetT stretch;
+ 
+@@ -2380,6 +2395,7 @@ relax_segment (struct frag *segment_frag_root, segT segment, int pass)
+       max_iterations = frag_count;
+ 
+     ret = 0;
++    iteration = 0;
+     do
+       {
+ 	stretch = 0;
+@@ -2391,6 +2407,7 @@ relax_segment (struct frag *segment_frag_root, segT segment, int pass)
+ 	    addressT was_address;
+ 	    offsetT offset;
+ 	    symbolS *symbolP;
++	    int forward = 0;
+ 
+ 	    fragP->relax_marker ^= 1;
+ 	    was_address = fragP->fr_address;
+@@ -2637,9 +2654,30 @@ relax_segment (struct frag *segment_frag_root, segT segment, int pass)
+ #ifdef TC_GENERIC_RELAX_TABLE
+ 		/* The default way to relax a frag is to look through
+ 		   TC_GENERIC_RELAX_TABLE.  */
+-		growth = relax_frag (segment, fragP, stretch);
++		growth = relax_frag (segment, fragP, stretch, &forward);
+ #endif /* TC_GENERIC_RELAX_TABLE  */
+ #endif
++		if (!iteration && !pass && forward)
++		  {
++		    /* If this frag is grown due to forward relaxation,
++		       update fr_address for all successive frags.  Only
++		       do it for the first iteration to avoid excessive
++		       relaxation.  */
++		    fragS *f = fragP->fr_next;
++		    if (f)
++		      {
++			/* Update address with growth.  */
++			relax_addressT new_address
++			  = f->fr_address + growth;
++			for (; f; f = f->fr_next)
++			  new_address
++			    = update_relax_frag_address (segment, f,
++							 new_address);
++
++			/* Adjust stretch.  */
++			stretch -= growth;
++		      }
++		  }
+ 		break;
+ 
+ 	      case rs_leb128:
+@@ -2687,6 +2725,8 @@ relax_segment (struct frag *segment_frag_root, segT segment, int pass)
+ 	  rs_leb128_fudge += 1;
+ 	else
+ 	  rs_leb128_fudge = 0;
++
++	iteration++;
+       }
+     /* Until nothing further to relax.  */
+     while (stretched && -- max_iterations);
+diff --git a/gas/write.h b/gas/write.h
+index 8303f1b..ba8f0c3 100644
+--- a/gas/write.h
++++ b/gas/write.h
+@@ -169,7 +169,7 @@ extern void record_alignment (segT seg, int align);
+ extern int get_recorded_alignment (segT seg);
+ extern void subsegs_finish (void);
+ extern void write_object_file (void);
+-extern long relax_frag (segT, fragS *, long);
++extern long relax_frag (segT, fragS *, long, int *);
+ extern int relax_segment (struct frag *, segT, int);
+ extern void number_to_chars_littleendian (char *, valueT, int);
+ extern void number_to_chars_bigendian (char *, valueT, int);
