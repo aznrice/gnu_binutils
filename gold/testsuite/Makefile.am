@@ -115,7 +115,7 @@ incremental_test_1.o: incremental_test_1.c
 incremental_test_2.o: incremental_test_2.c
 	$(COMPILE) -O0 -c -ffunction-sections -g -o $@ $<
 incremental_test: incremental_test_1.o incremental_test_2.o gcctestdir/ld
-	$(LINK) -Bgcctestdir/ -Wl,-incremental incremental_test_1.o incremental_test_2.o -Wl,-debug 2> incremental_test.cmdline
+	$(LINK) -Bgcctestdir/ -Wl,--incremental-full incremental_test_1.o incremental_test_2.o -Wl,-debug 2> incremental_test.cmdline
 incremental_test.stdout: incremental_test ../incremental-dump
 	../incremental-dump incremental_test > $@
 
@@ -1076,6 +1076,8 @@ protected_3.err: protected_4_pic.o gcctestdir/ld
 	fi
 
 check_PROGRAMS += relro_test
+check_SCRIPTS += relro_test.sh
+check_DATA += relro_test.stdout
 relro_test_SOURCES = relro_test_main.cc
 relro_test_DEPENDENCIES = gcctestdir/ld relro_test.so
 relro_test_LDFLAGS = -Bgcctestdir/ -Wl,-R,.
@@ -1084,6 +1086,8 @@ relro_test.so: gcctestdir/ld relro_test_pic.o
 	$(CXXLINK) -Bgcctestdir/ -shared -Wl,-z,relro relro_test_pic.o
 relro_test_pic.o: relro_test.cc
 	$(CXXCOMPILE) -c -fpic -o $@ $<
+relro_test.stdout: relro_test.so
+	$(TEST_READELF) -SlW relro_test.so > relro_test.stdout
 
 check_PROGRAMS += relro_strip_test
 relro_strip_test_SOURCES = relro_test_main.cc

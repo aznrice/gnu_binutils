@@ -1,3 +1,82 @@
+2010-10-18  Kai Tietz  <kaI.tietz@onevision.com>
+
+	* gas/i386/disp32.d: Adjust initial symbol check.
+	* gas/i386/x86-64-disp32.d: Likewise.
+
+2010-10-18  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/ld.d: Spell out section offsets and addends
+	explicitly.  Clean up some regexps.
+	* gas/mips/ld-ilocks.d: Likewise.  Add missing "$" prefixes to
+	the names of FP registers.
+	* gas/mips/ld-ilocks-addr32.d: Likewise.
+	* gas/mips/ld.s: Align sections to 4k, adjust padding.
+
+2010-10-18  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/ld.d: Use wildcard address matching.
+	* gas/mips/ld-ilocks.d: Likewise.
+	* gas/mips/ld-ilocks-addr32.d: Likewise.
+
+2010-10-18  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/mips.exp (run_dump_test_arch): Get the name of the
+	architecture to check against for an architecture-specific test
+	from the properties instead of the name passed.
+
+2010-10-18  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/lineno.s: Convert to o32.
+	* gas/mips/lineno.d: Adjust patterns accordingly.  Force the o32
+	ABI.
+
+2010-10-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/i386.exp: Run x86-64-nops-1-g64.
+
+	* gas/i386/x86-64-nops-1.d: Remove -mtune=generic64.
+
+	* gas/i386/x86-64-nops-1-g64.d: New.
+
+2010-10-15  David Gibson  <david.gibson@analog.com>
+
+	* gas/bfin/loop_label.s, gas/bfin/loop_label.d,
+	gas/bfin/loop_label2.s, gas/bfin/loop_label2.d,
+	gas/bfin/loop_temps.s, gas/bfin/loop_temps.d: New tests.
+	* gas/bfin/bfin.exp: Add loop_label, loop_label2, and loop_temps.
+
+2010-10-15  Robin Getz  <robin.getz@analog.com>
+
+	* gas/bfin/16bit_illegals.s, gas/bfin/16bit_illegals.d,
+	gas/bfin/parallel_illegal.s, gas/bfin/parallel_illegal.d: New tests.
+	* gas/bfin/bfin.exp: Add 16bit_illegals and parallel_illegal.
+
+2010-10-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* gas/bfin/video.s: Add BYTEOP2M insns.
+	* gas/bfin/video.d, gas/bfin/video2.s, gas/bfin/video2.d: Likewise.
+
+2010-10-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* gas/bfin/video.d: Change addresses to regexps.
+	* gas/bfin/video2.d: Likewise.
+
+2010-10-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/i386.exp: Run inval-reg.
+
+	* gas/i386/inval-reg.l: New.
+	* gas/i386/inval-reg.s: Likewise.
+
+2010-10-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/disp32.d: New.
+	* gas/i386/disp32.s: Likewise.
+	* gas/i386/x86-64-disp32.d: Likewise.
+	* gas/i386/x86-64-disp32.s: Likewise.
+
+	* gas/i386/i386.exp: Run disp32 and x86-64-disp32.
+
 2010-10-11  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 
 	* gas/s390/zarch-z196.d: Adjust the load/store on condition

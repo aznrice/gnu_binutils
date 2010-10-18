@@ -1,3 +1,40 @@
+2010-10-18  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* mips-opc.c (mips_builtin_opcodes): Move M_LD_OB and M_SD_OB
+	macros before their corresponding MIPS III hardware instructions.
+
+2010-10-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-gen.c (cpu_flag_init): Add CpuNop to CPU_GENERIC64_FLAGS.
+
+	* i386-init.h: Regenerated.
+
+2010-10-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-dis.c (decode_dsp32alu_0): Call imm5d() for BYTEOP2M.
+
+2010-10-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-opc.tbl: Remove CheckRegSize from movq.
+	* i386-tbl.h: Regenerated.
+
+2010-10-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-opc.tbl: Remove CheckRegSize from instructions with
+	0, 1 or fixed operands.
+	* i386-tbl.h: Regenerated.
+
+2010-10-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-gen.c (opcode_modifiers): Add CheckRegSize.
+
+	* i386-opc.h (CheckRegSize): New.
+	(i386_opcode_modifier): Add checkregsize.
+
+	* i386-opc.tbl: Add CheckRegSize to instructions which
+	require register size check.
+	* i386-tbl.h: Regenerated.
+
 2010-10-12  Andreas Schwab  <schwab@linux-m68k.org>
 
 	* m68k-opc.c (m68k_opcodes): Move fnop before fbf.

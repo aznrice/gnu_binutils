@@ -218,7 +218,7 @@ Layout::Layout(int number_of_input_files, Script_options* script_options)
   this->special_output_list_.reserve(2);
 
   // Initialize structure needed for an incremental build.
-  if (parameters->options().incremental())
+  if (parameters->incremental())
     this->incremental_inputs_ = new Incremental_inputs;
 
   // The section name pool is worth optimizing in all cases, because
@@ -2656,17 +2656,21 @@ Layout::set_segment_offsets(const Target* target, Output_segment* load_seg,
 	    }
 
 	  unsigned int shndx_hold = *pshndx;
+	  bool has_relro = false;
 	  uint64_t new_addr = (*p)->set_section_addresses(this, false, addr,
 							  increase_relro,
+							  &has_relro,
                                                           &off, pshndx);
 
 	  // Now that we know the size of this segment, we may be able
 	  // to save a page in memory, at the cost of wasting some
 	  // file space, by instead aligning to the start of a new
 	  // page.  Here we use the real machine page size rather than
-	  // the ABI mandated page size.
+	  // the ABI mandated page size.  If the segment has been
+	  // aligned so that the relro data ends at a page boundary,
+	  // we do not try to realign it.
 
-	  if (!are_addresses_set && aligned_addr != addr)
+	  if (!are_addresses_set && !has_relro && aligned_addr != addr)
 	    {
 	      uint64_t first_off = (common_pagesize
 				    - (aligned_addr
@@ -2685,6 +2689,7 @@ Layout::set_segment_offsets(const Target* target, Output_segment* load_seg,
 		  off = align_file_offset(off, addr, abi_pagesize);
 		  new_addr = (*p)->set_section_addresses(this, true, addr,
 							 increase_relro,
+							 &has_relro,
                                                          &off, pshndx);
 		}
 	    }

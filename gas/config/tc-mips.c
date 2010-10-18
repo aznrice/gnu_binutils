@@ -1191,6 +1191,9 @@ static const pseudo_typeS mips_pseudo_table[] =
   {"origin", s_org, 0},
   {"repeat", s_rept, 0},
 
+  /* For MIPS this is non-standard, but we define it for consistency.  */
+  {"sbss", s_change_sec, 'B'},
+
   /* These pseudo-ops are defined in read.c, but must be overridden
      here for one reason or another.  */
   {"align", s_align, 0},
@@ -7200,26 +7203,7 @@ macro (struct mips_cl_insn *ip)
 
 	      relax_switch ();
 
-	      /* We just generated two relocs.  When tc_gen_reloc
-		 handles this case, it will skip the first reloc and
-		 handle the second.  The second reloc already has an
-		 extra addend of 4, which we added above.  We must
-		 subtract it out, and then subtract another 4 to make
-		 the first reloc come out right.  The second reloc
-		 will come out right because we are going to add 4 to
-		 offset_expr when we build its instruction below.
-
-		 If we have a symbol, then we don't want to include
-		 the offset, because it will wind up being included
-		 when we generate the reloc.  */
-
-	      if (offset_expr.X_op == O_constant)
-		offset_expr.X_add_number -= 8;
-	      else
-		{
-		  offset_expr.X_add_number = -4;
-		  offset_expr.X_op = O_constant;
-		}
+	      offset_expr.X_add_number -= 4;
 	    }
 	  used_at = 1;
 	  macro_build_lui (&offset_expr, AT);
@@ -7364,15 +7348,18 @@ macro (struct mips_cl_insn *ip)
       break;
 
     case M_LD_OB:
-      s = "lw";
+      s = HAVE_64BIT_GPRS ? "ld" : "lw";
       goto sd_ob;
     case M_SD_OB:
-      s = "sw";
+      s = HAVE_64BIT_GPRS ? "sd" : "sw";
     sd_ob:
-      gas_assert (HAVE_32BIT_ADDRESSES);
       macro_build (&offset_expr, s, "t,o(b)", treg, BFD_RELOC_LO16, breg);
-      offset_expr.X_add_number += 4;
-      macro_build (&offset_expr, s, "t,o(b)", treg + 1, BFD_RELOC_LO16, breg);
+      if (!HAVE_64BIT_GPRS)
+	{
+	  offset_expr.X_add_number += 4;
+	  macro_build (&offset_expr, s, "t,o(b)", treg + 1,
+		       BFD_RELOC_LO16, breg);
+	}
       break;
 
    /* New code added to support COPZ instructions.
@@ -12673,6 +12660,17 @@ s_change_sec (int sec)
 	{
 	  bfd_set_section_flags (stdoutput, seg,
 				 SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_DATA);
+	  if (strncmp (TARGET_OS, "elf", 3) != 0)
+	    record_alignment (seg, 4);
+	}
+      demand_empty_rest_of_line ();
+      break;
+
+    case 'B':
+      seg = subseg_new (".sbss", (subsegT) get_absolute_expression ());
+      if (IS_ELF)
+	{
+	  bfd_set_section_flags (stdoutput, seg, SEC_ALLOC);
 	  if (strncmp (TARGET_OS, "elf", 3) != 0)
 	    record_alignment (seg, 4);
 	}
