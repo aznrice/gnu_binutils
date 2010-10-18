@@ -89,10 +89,10 @@ ld/testsuite/
 	* ld-ia64/error4.d: Likewise.
 
 diff --git a/bfd/elf-bfd.h b/bfd/elf-bfd.h
-index 754e733..e9d71b3 100644
+index 66dcbcd..7e36cfe 100644
 --- a/bfd/elf-bfd.h
 +++ b/bfd/elf-bfd.h
-@@ -2281,7 +2281,7 @@ extern asection _bfd_elf_large_com_section;
+@@ -2285,7 +2285,7 @@ extern asection _bfd_elf_large_com_section;
  #define RELOC_FOR_GLOBAL_SYMBOL(info, input_bfd, input_section, rel,	\
  				r_symndx, symtab_hdr, sym_hashes,	\
  				h, sec, relocation,			\
@@ -101,7 +101,7 @@ index 754e733..e9d71b3 100644
    do									\
      {									\
        /* It seems this can happen with erroneous or unsupported		\
-@@ -2296,6 +2296,7 @@ extern asection _bfd_elf_large_com_section;
+@@ -2300,6 +2300,7 @@ extern asection _bfd_elf_large_com_section;
  	h = (struct elf_link_hash_entry *) h->root.u.i.link;		\
  									\
        warned = FALSE;							\
@@ -109,7 +109,7 @@ index 754e733..e9d71b3 100644
        unresolved_reloc = FALSE;						\
        relocation = 0;							\
        if (h->root.type == bfd_link_hash_defined				\
-@@ -2318,7 +2319,7 @@ extern asection _bfd_elf_large_com_section;
+@@ -2322,7 +2323,7 @@ extern asection _bfd_elf_large_com_section;
  	;								\
        else if (info->unresolved_syms_in_objects == RM_IGNORE		\
  	       && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)		\
@@ -118,7 +118,7 @@ index 754e733..e9d71b3 100644
        else if (!info->relocatable)					\
  	{								\
  	  bfd_boolean err;						\
-@@ -2334,6 +2335,7 @@ extern asection _bfd_elf_large_com_section;
+@@ -2338,6 +2339,7 @@ extern asection _bfd_elf_large_com_section;
  	}								\
        (void) unresolved_reloc;						\
        (void) warned;							\
@@ -146,7 +146,7 @@ index 0fafe55..9e6b071 100644
  
        if (sec != NULL && elf_discarded_section (sec))
 diff --git a/bfd/elf-m10300.c b/bfd/elf-m10300.c
-index f151c21..7a01618 100644
+index a4da9d5..a527fe0 100644
 --- a/bfd/elf-m10300.c
 +++ b/bfd/elf-m10300.c
 @@ -1457,13 +1457,13 @@ mn10300_elf_relocate_section (bfd *output_bfd,
@@ -166,10 +166,10 @@ index f151c21..7a01618 100644
  	  h = (struct elf32_mn10300_link_hash_entry *) hh;
  
 diff --git a/bfd/elf32-arm.c b/bfd/elf32-arm.c
-index f6115bd..c3999fc 100644
+index 9fce4b0..964d45c 100644
 --- a/bfd/elf32-arm.c
 +++ b/bfd/elf32-arm.c
-@@ -8986,12 +8986,12 @@ elf32_arm_relocate_section (bfd *                  output_bfd,
+@@ -9022,12 +9022,12 @@ elf32_arm_relocate_section (bfd *                  output_bfd,
  	}
        else
  	{
@@ -185,7 +185,7 @@ index f6115bd..c3999fc 100644
  	  sym_type = h->type;
  	}
 diff --git a/bfd/elf32-avr.c b/bfd/elf32-avr.c
-index a9b41fa..14299ef 100644
+index 7334340..9320e63 100644
 --- a/bfd/elf32-avr.c
 +++ b/bfd/elf32-avr.c
 @@ -1221,12 +1221,12 @@ elf32_avr_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
@@ -204,7 +204,7 @@ index a9b41fa..14299ef 100644
  	  name = h->root.root.string;
  	}
 diff --git a/bfd/elf32-bfin.c b/bfd/elf32-bfin.c
-index e8cdf22..6bddb07 100644
+index ac41d63..905ad02 100644
 --- a/bfd/elf32-bfin.c
 +++ b/bfd/elf32-bfin.c
 @@ -1420,12 +1420,12 @@ bfin_relocate_section (bfd * output_bfd,
@@ -277,7 +277,7 @@ index 5016c6e..ef7e743 100644
  
        if (sec != NULL && elf_discarded_section (sec))
 diff --git a/bfd/elf32-cris.c b/bfd/elf32-cris.c
-index 1783ae3..54bc579 100644
+index f3ed80d..a61e572 100644
 --- a/bfd/elf32-cris.c
 +++ b/bfd/elf32-cris.c
 @@ -1106,13 +1106,13 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
@@ -354,10 +354,10 @@ index f96b1f6..66af8d2 100644
  	  name = h->root.root.string;
  	}
 diff --git a/bfd/elf32-frv.c b/bfd/elf32-frv.c
-index 8d940c0..5eead49 100644
+index f6975f3..e1b0d05 100644
 --- a/bfd/elf32-frv.c
 +++ b/bfd/elf32-frv.c
-@@ -2800,13 +2800,13 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
+@@ -2801,13 +2801,13 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
  	}
        else
  	{
@@ -371,8 +371,8 @@ index 8d940c0..5eead49 100644
 -				   unresolved_reloc, warned);
 +				   unresolved_reloc, warned, ignored);
  	  osec = sec;
+ 	  name = h->root.root.string;
  	}
- 
 diff --git a/bfd/elf32-h8300.c b/bfd/elf32-h8300.c
 index e05efbd..dc02000 100644
 --- a/bfd/elf32-h8300.c
@@ -393,10 +393,10 @@ index e05efbd..dc02000 100644
  
        if (sec != NULL && elf_discarded_section (sec))
 diff --git a/bfd/elf32-hppa.c b/bfd/elf32-hppa.c
-index 32a374f..3c2db7f 100644
+index 3a3a355..546df99 100644
 --- a/bfd/elf32-hppa.c
 +++ b/bfd/elf32-hppa.c
-@@ -3721,13 +3721,14 @@ elf32_hppa_relocate_section (bfd *output_bfd,
+@@ -3712,13 +3712,14 @@ elf32_hppa_relocate_section (bfd *output_bfd,
        else
  	{
  	  struct elf_link_hash_entry *eh;
@@ -414,10 +414,10 @@ index 32a374f..3c2db7f 100644
  	  if (!info->relocatable
  	      && relocation == 0
 diff --git a/bfd/elf32-i386.c b/bfd/elf32-i386.c
-index 7964c4f..319a6ab 100644
+index 8d8bc85..37700a9 100644
 --- a/bfd/elf32-i386.c
 +++ b/bfd/elf32-i386.c
-@@ -2947,11 +2947,12 @@ elf_i386_relocate_section (bfd *output_bfd,
+@@ -3008,11 +3008,12 @@ elf_i386_relocate_section (bfd *output_bfd,
        else
  	{
  	  bfd_boolean warned ATTRIBUTE_UNUSED;
@@ -490,7 +490,7 @@ index 4dcc866..afb8142 100644
  	  name = h->root.root.string;
  	}
 diff --git a/bfd/elf32-lm32.c b/bfd/elf32-lm32.c
-index 727fc7a..efd2f04 100644
+index 49b2130..7defbad 100644
 --- a/bfd/elf32-lm32.c
 +++ b/bfd/elf32-lm32.c
 @@ -884,12 +884,12 @@ lm32_elf_relocate_section (bfd *output_bfd,
@@ -528,10 +528,10 @@ index 2107486..f3b6bd8 100644
  	  is_far = (h && (h->other & STO_M68HC12_FAR));
  	}
 diff --git a/bfd/elf32-m68k.c b/bfd/elf32-m68k.c
-index ff37a3c..1efe8aa 100644
+index 8d1ee7f..d30ba7a 100644
 --- a/bfd/elf32-m68k.c
 +++ b/bfd/elf32-m68k.c
-@@ -3703,12 +3703,12 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
+@@ -3707,12 +3707,12 @@ elf_m68k_relocate_section (output_bfd, info, input_bfd, input_section,
  	}
        else
  	{
@@ -585,7 +585,7 @@ index 1993b03..1ce5ef2 100644
  	  name = h->root.root.string;
  	}
 diff --git a/bfd/elf32-microblaze.c b/bfd/elf32-microblaze.c
-index e4c319d..adeef17 100644
+index f32e06e..0ea88db 100644
 --- a/bfd/elf32-microblaze.c
 +++ b/bfd/elf32-microblaze.c
 @@ -815,11 +815,12 @@ microblaze_elf_relocate_section (bfd *output_bfd,
@@ -679,10 +679,10 @@ index af7bc25..a6f7f96 100644
  
        if (sec != NULL && elf_discarded_section (sec))
 diff --git a/bfd/elf32-ppc.c b/bfd/elf32-ppc.c
-index bf182c9..275610e 100644
+index 58e9807..dd5b1e4 100644
 --- a/bfd/elf32-ppc.c
 +++ b/bfd/elf32-ppc.c
-@@ -6794,10 +6794,12 @@ ppc_elf_relocate_section (bfd *output_bfd,
+@@ -6801,10 +6801,12 @@ ppc_elf_relocate_section (bfd *output_bfd,
  	}
        else
  	{
@@ -697,7 +697,7 @@ index bf182c9..275610e 100644
  	  sym_name = h->root.root.string;
  	}
 diff --git a/bfd/elf32-rx.c b/bfd/elf32-rx.c
-index 7d9dbc1..5a79539 100644
+index 4b31a35..e66bd1a 100644
 --- a/bfd/elf32-rx.c
 +++ b/bfd/elf32-rx.c
 @@ -491,12 +491,12 @@ rx_elf_relocate_section
@@ -716,7 +716,7 @@ index 7d9dbc1..5a79539 100644
  	  name = h->root.root.string;
  	}
 diff --git a/bfd/elf32-s390.c b/bfd/elf32-s390.c
-index 336ba36..c64564f 100644
+index bc8e054..c143863 100644
 --- a/bfd/elf32-s390.c
 +++ b/bfd/elf32-s390.c
 @@ -2284,11 +2284,12 @@ elf_s390_relocate_section (output_bfd, info, input_bfd, input_section,
@@ -734,10 +734,10 @@ index 336ba36..c64564f 100644
  
        if (sec != NULL && elf_discarded_section (sec))
 diff --git a/bfd/elf32-tic6x.c b/bfd/elf32-tic6x.c
-index dc837fb..2c59f8a 100644
+index a570f88..a3f51fb 100644
 --- a/bfd/elf32-tic6x.c
 +++ b/bfd/elf32-tic6x.c
-@@ -1459,12 +1459,12 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
+@@ -1458,12 +1458,12 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
  	}
        else
  	{
@@ -753,10 +753,10 @@ index dc837fb..2c59f8a 100644
  
        if (sec != NULL && elf_discarded_section (sec))
 diff --git a/bfd/elf32-v850.c b/bfd/elf32-v850.c
-index 0ab7de8..807be8c 100644
+index e153e83..21ad9c7 100644
 --- a/bfd/elf32-v850.c
 +++ b/bfd/elf32-v850.c
-@@ -1617,7 +1617,7 @@ v850_elf_relocate_section (bfd *output_bfd,
+@@ -2073,7 +2073,7 @@ v850_elf_relocate_section (bfd *output_bfd,
  	}
        else
  	{
@@ -765,7 +765,7 @@ index 0ab7de8..807be8c 100644
  
  	  /* Note - this check is delayed until now as it is possible and
  	     valid to have a file without any symbols but with relocs that
-@@ -1634,7 +1634,7 @@ v850_elf_relocate_section (bfd *output_bfd,
+@@ -2090,7 +2090,7 @@ v850_elf_relocate_section (bfd *output_bfd,
  	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
  				   r_symndx, symtab_hdr, sym_hashes,
  				   h, sec, relocation,
@@ -775,7 +775,7 @@ index 0ab7de8..807be8c 100644
  
        if (sec != NULL && elf_discarded_section (sec))
 diff --git a/bfd/elf32-vax.c b/bfd/elf32-vax.c
-index 1582ac7..f0e65f1 100644
+index db67faf..b78d8ba 100644
 --- a/bfd/elf32-vax.c
 +++ b/bfd/elf32-vax.c
 @@ -1412,12 +1412,12 @@ elf_vax_relocate_section (bfd *output_bfd,
@@ -832,7 +832,7 @@ index 53c40ad..b4088f2 100644
  
        if (sec != NULL && elf_discarded_section (sec))
 diff --git a/bfd/elf32-xtensa.c b/bfd/elf32-xtensa.c
-index 770d9a8..f21b4e9 100644
+index 6cd396a..78f236d 100644
 --- a/bfd/elf32-xtensa.c
 +++ b/bfd/elf32-xtensa.c
 @@ -2646,10 +2646,12 @@ elf_xtensa_relocate_section (bfd *output_bfd,
@@ -850,10 +850,10 @@ index 770d9a8..f21b4e9 100644
  	  if (relocation == 0
  	      && !unresolved_reloc
 diff --git a/bfd/elf64-alpha.c b/bfd/elf64-alpha.c
-index 649d370..078df7a 100644
+index a6a795d..0c627eb 100644
 --- a/bfd/elf64-alpha.c
 +++ b/bfd/elf64-alpha.c
-@@ -4211,7 +4211,7 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
+@@ -4216,7 +4216,7 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
  	}
        else
  	{
@@ -862,7 +862,7 @@ index 649d370..078df7a 100644
  	  bfd_boolean unresolved_reloc;
  	  struct elf_link_hash_entry *hh;
  	  struct elf_link_hash_entry **sym_hashes = elf_sym_hashes (input_bfd);
-@@ -4219,7 +4219,7 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
+@@ -4224,7 +4224,7 @@ elf64_alpha_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
  	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
  				   r_symndx, symtab_hdr, sym_hashes,
  				   hh, sec, value,
@@ -892,10 +892,10 @@ index 3ac4950..0004749 100644
  	}
  
 diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
-index b97bd3a..136167d 100644
+index 2cdb0a2..628b74f 100644
 --- a/bfd/elf64-ppc.c
 +++ b/bfd/elf64-ppc.c
-@@ -11603,10 +11603,12 @@ ppc64_elf_relocate_section (bfd *output_bfd,
+@@ -11614,10 +11614,12 @@ ppc64_elf_relocate_section (bfd *output_bfd,
  	}
        else
  	{
@@ -910,7 +910,7 @@ index b97bd3a..136167d 100644
  	  sym_type = h_elf->type;
  	}
 diff --git a/bfd/elf64-s390.c b/bfd/elf64-s390.c
-index e994e46..13e3a73 100644
+index 2f253b9..c9e1039 100644
 --- a/bfd/elf64-s390.c
 +++ b/bfd/elf64-s390.c
 @@ -2272,11 +2272,12 @@ elf_s390_relocate_section (bfd *output_bfd,
@@ -928,10 +928,10 @@ index e994e46..13e3a73 100644
  
        if (sec != NULL && elf_discarded_section (sec))
 diff --git a/bfd/elf64-x86-64.c b/bfd/elf64-x86-64.c
-index 21524fa..64c487a 100644
+index 677d9c4..acc9278 100644
 --- a/bfd/elf64-x86-64.c
 +++ b/bfd/elf64-x86-64.c
-@@ -2677,11 +2677,12 @@ elf64_x86_64_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
+@@ -2730,11 +2730,12 @@ elf64_x86_64_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
        else
  	{
  	  bfd_boolean warned ATTRIBUTE_UNUSED;
@@ -946,7 +946,7 @@ index 21524fa..64c487a 100644
  
        if (sec != NULL && elf_discarded_section (sec))
 diff --git a/bfd/elfxx-ia64.c b/bfd/elfxx-ia64.c
-index 0646ed1..48d9d8d 100644
+index 6b52bc6..4db0427 100644
 --- a/bfd/elfxx-ia64.c
 +++ b/bfd/elfxx-ia64.c
 @@ -4648,17 +4648,17 @@ elfNN_ia64_relocate_section (bfd *output_bfd,
@@ -971,7 +971,7 @@ index 0646ed1..48d9d8d 100644
  	}
  
 diff --git a/bfd/elfxx-sparc.c b/bfd/elfxx-sparc.c
-index 58b1890..570d34c 100644
+index 979505a..1593f58 100644
 --- a/bfd/elfxx-sparc.c
 +++ b/bfd/elfxx-sparc.c
 @@ -2940,12 +2940,12 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd,
@@ -990,10 +990,10 @@ index 58b1890..570d34c 100644
  	    {
  	      /* To avoid generating warning messages about truncated
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index 08679ec..ba2f495 100644
+index 04b5633..fd9e9fd 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
-@@ -105,6 +105,9 @@ bfd_boolean add_DT_NEEDED_for_dynamic = TRUE;
+@@ -110,6 +110,9 @@ bfd_boolean add_DT_NEEDED_for_dynamic = TRUE;
  /* TRUE if we should demangle symbol names.  */
  bfd_boolean demangling;
  
@@ -1003,7 +1003,7 @@ index 08679ec..ba2f495 100644
  args_type command_line;
  
  ld_config_type config;
-@@ -350,6 +353,27 @@ main (int argc, char **argv)
+@@ -355,6 +358,27 @@ main (int argc, char **argv)
    if (! link_info.shared || link_info.pie)
      link_info.executable = TRUE;
  
@@ -1044,10 +1044,10 @@ index 57ce8d7..fcf4adb 100644
  extern const char *output_filename;
  extern struct bfd_link_info link_info;
 diff --git a/ld/lexsup.c b/ld/lexsup.c
-index b992fca..8982126 100644
+index 0c44151..cc42b87 100644
 --- a/ld/lexsup.c
 +++ b/ld/lexsup.c
-@@ -605,7 +605,6 @@ parse_args (unsigned argc, char **argv)
+@@ -618,7 +618,6 @@ parse_args (unsigned argc, char **argv)
    struct option *longopts;
    struct option *really_longopts;
    int last_optind;
@@ -1055,7 +1055,7 @@ index b992fca..8982126 100644
  
    shortopts = (char *) xmalloc (OPTION_COUNT * 3 + 2);
    longopts = (struct option *)
-@@ -1160,12 +1159,7 @@ parse_args (unsigned argc, char **argv)
+@@ -1183,12 +1182,7 @@ parse_args (unsigned argc, char **argv)
  	  if (config.has_shared)
  	    {
  	      link_info.shared = TRUE;
@@ -1069,11 +1069,10 @@ index b992fca..8982126 100644
  	    }
  	  else
  	    einfo (_("%P%F: -shared not supported\n"));
-@@ -1509,14 +1503,6 @@ parse_args (unsigned argc, char **argv)
-       set_default_dirlist (default_dirlist);
+@@ -1533,14 +1527,6 @@ parse_args (unsigned argc, char **argv)
        free (default_dirlist);
      }
--
+ 
 -  if (link_info.unresolved_syms_in_objects == RM_NOT_YET_SET)
 -    /* FIXME: Should we allow emulations a chance to set this ?  */
 -    link_info.unresolved_syms_in_objects = how_to_report_unresolved_symbols;
@@ -1081,9 +1080,10 @@ index b992fca..8982126 100644
 -  if (link_info.unresolved_syms_in_shared_libs == RM_NOT_YET_SET)
 -    /* FIXME: Should we allow emulations a chance to set this ?  */
 -    link_info.unresolved_syms_in_shared_libs = how_to_report_unresolved_symbols;
- }
- 
- /* Add the (colon-separated) elements of DIRLIST_PTR to the
+-
+ #ifdef ENABLE_PLUGINS
+   /* Now all the plugin arguments have been gathered, we can load them.  */
+   if (plugin_load_plugins ())
 diff --git a/ld/testsuite/ld-ia64/error1.d b/ld/testsuite/ld-ia64/error1.d
 new file mode 100644
 index 0000000..82142b6
