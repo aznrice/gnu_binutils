@@ -4,11 +4,6 @@
 	* binutils-error-11.patch: This. Removed.
 	* README: Likewise.
 
-2010-10-18  H.J. Lu  <hjl.tools@gmail.com>
-
-	* binutils-pr12049-3.patch: New.
-	* README: Apply it.
-
 2010-10-01  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-signed-5.patch: New file. Replace ...

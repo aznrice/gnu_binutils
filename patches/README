@@ -24,7 +24,6 @@ patches="
 	bfd-64k-2.patch
 	binutils-pr11137-1.patch
 	binutils-zlib-5.patch
-	binutils-pr12049-3.patch
 "
 
 if [ -n "$clean" ]
