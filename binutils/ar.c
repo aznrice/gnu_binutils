@@ -244,6 +244,7 @@ usage (int help)
       fprintf (s, _("  p            - print file(s) found in the archive\n"));
       fprintf (s, _("  q[f]         - quick append file(s) to the archive\n"));
       fprintf (s, _("  r[ab][f][u]  - replace existing or insert new file(s) into the archive\n"));
+      fprintf (s, _("  s            - act as ranlib\n"));
       fprintf (s, _("  t            - display contents of archive\n"));
       fprintf (s, _("  x[o]         - extract file(s) from the archive\n"));
       fprintf (s, _(" command specific modifiers:\n"));

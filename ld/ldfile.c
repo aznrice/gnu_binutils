@@ -150,6 +150,9 @@ ldfile_try_open_bfd (const char *attempt,
       return FALSE;
     }
 
+  /* Linker needs to decompress sections.  */
+  entry->the_bfd->flags |= BFD_DECOMPRESS;
+
   /* If we are searching for this file, see if the architecture is
      compatible with the output file.  If it isn't, keep searching.
      If we can't open the file as an object file, stop the search
@@ -547,7 +550,6 @@ check_for_scripts_dir (char *dir)
 
    SCRIPTDIR (passed from Makefile)
 	     (adjusted according to the current location of the binary)
-   SCRIPTDIR (passed from Makefile)
    the dir where this program is (for using it from the build tree).  */
 
 static char *
@@ -570,10 +572,6 @@ find_scripts_dir (void)
 	return dir;
       free (dir);
     }
-
-  if (check_for_scripts_dir (SCRIPTDIR))
-    /* We've been installed normally.  */
-    return SCRIPTDIR;
 
   /* Look for "ldscripts" in the dir where our binary is.  */
   dir = make_relative_prefix (program_name, ".", ".");

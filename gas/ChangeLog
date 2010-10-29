@@ -1,3 +1,73 @@
+2010-10-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* write.c (compress_debug): Optimize section flags check.
+
+2010-10-29  Bernd Schmidt  <bernds@codesourcery.com>
+            Joseph Myers  <joseph@codesourcery.com>
+
+	* config/tc-tic6x.c (OPTION_MDSBT, OPTION_MNO_DSBT): New enum
+	values.
+	(md_longopts): Add mdsbt and mno-dsbt.
+	(tic6x_dsbt): New static variable.
+	(md_parse_option): Handle OPTION_MDSBT and OPTION_MNO_DSBT.
+	(md_show_usage): Output help text for -mdsbt and -mno-dsbt.
+	(TAG): Add comma at the end.
+	(tic6x_set_attributes): Set Tag_ABI_DSBT.
+	* doc/as.texinfo: Document -mdsbt and -mno-dsbt.
+	* doc/c-tic6x.texi (TIC6X Options): Likewise.
+	(TIC6X Directives): Mention Tag_ABI_DSBT.
+
+2010-10-28  Matthias Klose  <doko@ubuntu.com>
+
+	* doc/as.texinfo: Add directory section for info document.
+
+2010-10-28  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* config/tc-s390.c (md_begin): Only add to hash table if cpu and
+	mode mask fit.
+
+2010-10-28  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-d30v.c (d30v_cons_align): Don't align .eh_frame.
+
+2010-10-26  Alan Modra  <amodra@gmail.com>
+
+	* config/obj-coff.c (coff_format_ops): Fix typo.
+
+2010-10-25  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (macro2): Delete.
+
+2010-10-25  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* config/tc-tic6x.c: Add attribution.
+
+2010-10-25  Mark Mitchell  <mark@codesourcery.com>
+
+	* obj.h (struct format_ops): Add adjust_symtab.
+	* config/obj-multi.h (obj_adjust_symtab): Define.
+	* config/obj-aout.c (aout_format_ops): Init new field.
+	* config/obj-coff.c (coff_format_ops): Likewise.
+	* config/obj-ecoff.c (ecoff_format_ops): Likewise.
+	* config/obj-elf.c (elf_format_ops): Likewise.
+
+2010-10-25  Alan Modra  <amodra@gmail.com>
+
+	PR gas/12049
+	* write.c (relax_frag): Don't allow forward branches to temporarily
+	becomde backward branches.
+
+2010-10-23  Mark Mitchell  <mark@codesourcery.com>
+
+	* config/obj-elf.c (elf_adjust_symtab): New.  Move group section
+	processing here from elf_frob_file.  Ensure that group signature
+	symbols have the name of the group.
+	(elf_frob_file): Move group section processing to
+	elf_adjust_symtab.
+	* config/obj-elf.h (elf_adjust_symtab): Declare.
+	(obj_adjust_symtab): Define.
+	* config/tc-arm.c (arm_adjust_symtab): Call elf_adjust_symtab.
+
 2010-10-22  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
 	* config/tc-sparc.h [TE_SOLARIS] (ELF_TARGET_FORMAT): Define as

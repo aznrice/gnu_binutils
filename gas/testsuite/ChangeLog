@@ -1,3 +1,245 @@
+2010-10-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf/dwarf2-1.s: Replace .zdebug_abbrev section with
+	.debug_abbrev section.
+	* elf/dwarf2-2.3: Likewise.
+
+	* elf/dwarf2-1.d: Pass --compress-debug-sections to assembler.
+	Updated.
+	* elf/dwarf2-2.d: Likewise.
+
+	* gas/i386/i386.exp: Remove xfail on dw2-compress-2 and
+	x86-64-dw2-compress-2.
+
+2010-10-29  Bernd Schmidt  <bernds@codesourcery.com>
+            Joseph Myers  <joseph@codesourcery.com>
+
+	* gas/tic6x/attr-dsbt-directive-1.d,
+	gas/tic6x/attr-dsbt-directive-1.s,
+	gas/tic6x/attr-dsbt-directive-2.d,
+	gas/tic6x/attr-dsbt-directive-2.s,
+	gas/tic6x/attr-dsbt-opts-mdsbt.d,
+	gas/tic6x/attr-dsbt-opts-mno-dsbt.d: New tests.
+
+2010-10-28  Thomas Schwinge  <thomas@schwinge.name>
+
+	* gas/iq2000/load-hazards.exp: Sort all filename globs.
+	* gas/iq2000/yield.exp: Likewise.
+	* gas/mt/errors.exp: Likewise.
+
+2010-10-28  Alan Modra  <amodra@gmail.com>
+
+	* gas/elf/elf.exp (groupautob): Don't run on xtensa.
+	* gas/elf/groupautoa.d: Change test name.
+	* gas/elf/groupautob.d: Change test name.
+
+2010-10-27  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* gas/all/gas.exp: Don't run byte test on s390.
+
+2010-10-27  Alan Modra  <amodra@gmail.com>
+
+	* gas/i386/x86-64-relax-1.s: Use .balign. not .align.
+	* gas/i386/x86-64-relax-1.d: Remove label match, match pe output.
+
+	* gas/i386/relax-1.s: Use .p2align, not .align.
+	* gas/i386/relax-2.s: Likewise.
+	* gas/i386/relax-1.d: Remove label match.
+	* gas/i386/relax-2.d: Likewise.  Correct test name.
+
+2010-10-26  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	* gas/i386/relax-1.d: Generalize regexes a bit.
+	* gas/i386/relax-2.d: Likewise.
+
+2010-10-25  Chao-ying Fu  <fu@mips.com>
+
+	* gas/mips/mips32-dsp.d, gas/mips/mips32-dsp.s: Add madd, maddu, msub,
+	msubu, mult, multu.
+
+2010-10-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/12049
+	* gas/i386/i386.exp: Run relax-1 and relax-2 for all 32bit
+	targets.  Run x86-64-relax-1.
+
+	* gas/i386/x86-64-relax-1.d: New.
+	* gas/i386/x86-64-relax-1.s: Likewise.
+
+2010-10-24  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/mips.exp: Simplify enabling of MIPS16 testing.
+
+2010-10-24  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/at-1.d: Handle ECOFF relocations.
+	* gas/mips/eret-1.d: Handle ECOFF.
+	* gas/mips/eret-2.d: Likewise.
+	* gas/mips/eret-3.d: Likewise.
+	* gas/mips/mips.exp: Only run "aent" for ELF.
+
+2010-10-24  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/ld.s: Adjust to let SD, L.D, S.D, LDC1 and SDC1
+	macros to be tested, according to the "tsd", "tl_d", "ts_d",
+	"tldc1" and "tsdc1" symbols.
+	* gas/mips/sd.d: New test.
+	* gas/mips/ecoff@sd.d: Likewise, ECOFF version.
+	* gas/mips/mips1@ecoff@sd.d: Likewise, MIPS I/ECOFF version.
+	* gas/mips/r3000@ecoff@sd.d: Likewise, R3000/ECOFF version.
+	* gas/mips/r3900@ecoff@sd.d: Likewise, R3900/ECOFF version.
+	* gas/mips/mips2@ecoff@sd.d: Likewise, MIPS II/ECOFF version.
+	* gas/mips/mips32@ecoff@sd.d: Likewise, MIPS32/ECOFF version.
+	* gas/mips/mips32r2@ecoff@sd.d: Likewise, MIPS32r2/ECOFF
+	version.
+	* gas/mips/sd-forward.d: New test.
+	* gas/mips/ecoff@sd-forward.d: Likewise, ECOFF version.
+	* gas/mips/mips1@ecoff@sd-forward.d: Likewise, MIPS I/ECOFF
+	version.
+	* gas/mips/r3000@ecoff@sd-forward.d: Likewise, R3000/ECOFF
+	version.
+	* gas/mips/r3900@ecoff@sd-forward.d: Likewise, R3900/ECOFF
+	version.
+	* gas/mips/mips2@ecoff@sd-forward.d: Likewise, MIPS II/ECOFF
+	version.
+	* gas/mips/mips32@ecoff@sd-forward.d: Likewise, MIPS32/ECOFF
+	version.
+	* gas/mips/mips32r2@ecoff@sd-forward.d: Likewise, MIPS32r2/ECOFF
+	version.
+	* gas/mips/l_d.d: New test.
+	* gas/mips/mips1@l_d.d: Likewise, MIPS I version.
+	* gas/mips/r3000@l_d.d: Likewise, R3000 version.
+	* gas/mips/r3900@l_d.d: Likewise, R3900 version.
+	* gas/mips/l_d-forward.d: New test.
+	* gas/mips/mips1@l_d-forward.d: Likewise, MIPS I version.
+	* gas/mips/r3000@l_d-forward.d: Likewise, R3000 version.
+	* gas/mips/r3900@l_d-forward.d: Likewise, R3900 version.
+	* gas/mips/s_d.d: New test.
+	* gas/mips/mips1@s_d.d: Likewise, MIPS I version.
+	* gas/mips/r3000@s_d.d: Likewise, R3000 version.
+	* gas/mips/r3900@s_d.d: Likewise, R3900 version.
+	* gas/mips/s_d-forward.d: New test.
+	* gas/mips/mips1@s_d-forward.d: Likewise, MIPS I version.
+	* gas/mips/r3000@s_d-forward.d: Likewise, R3000 version.
+	* gas/mips/r3900@s_d-forward.d: Likewise, R3900 version.
+	* gas/mips/ldc1.d: New test.
+	* gas/mips/ldc1-forward.d: Likewise.
+	* gas/mips/sdc1.d: Likewise.
+	* gas/mips/sdc1-forward.d: Likewise.
+	* gas/mips/sd-n32.d: Likewise.
+	* gas/mips/sd-n64.d: Likewise.
+	* gas/mips/sd-f-n32.d: Likewise.
+	* gas/mips/sd-f-n64.d: Likewise.
+	* gas/mips/l_d-n32.d: Likewise.
+	* gas/mips/l_d-n64.d: Likewise.
+	* gas/mips/l_d-f-n32.d: Likewise.
+	* gas/mips/l_d-f-n64.d: Likewise.
+	* gas/mips/s_d-n32.d: Likewise.
+	* gas/mips/s_d-n64.d: Likewise.
+	* gas/mips/s_d-f-n32.d: Likewise.
+	* gas/mips/s_d-f-n64.d: Likewise.
+	* gas/mips/ldc1-n32.d: Likewise.
+	* gas/mips/ldc1-n64.d: Likewise.
+	* gas/mips/ldc1-f-n32.d: Likewise.
+	* gas/mips/ldc1-f-n64.d: Likewise.
+	* gas/mips/sdc1-n32.d: Likewise.
+	* gas/mips/sdc1-n64.d: Likewise.
+	* gas/mips/sdc1-f-n32.d: Likewise.
+	* gas/mips/sdc1-f-n64.d: Likewise.
+	* gas/mips/mips.exp: Run the new tests.
+
+2010-10-24  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/ld.s: Adjust to let data objects be only
+	defined/declared (as appropriate) at the end of assembly, based
+	on the presence or not of the "forward" symbol.
+	* gas/mips/ld-forward.d: New test.
+	* gas/mips/mips1@ld-forward.d: Likewise. MIPS I version.
+	* gas/mips/r3000@ld-forward.d: Likewise, R3000 version.
+	* gas/mips/ecoff@ld-forward.d: Likewise, ECOFF version.
+	* gas/mips/r3900@ecoff@ld-forward.d: Likewise, R3900/ECOFF
+	version.
+	* gas/mips/mips2@ecoff@ld-forward.d: Likewise, MIPS II/ECOFF
+	version.
+	* gas/mips/mips32@ecoff@ld-forward.d: Likewise, MIPS32/ECOFF
+	version.
+	* gas/mips/mips32r2@ecoff@ld-forward.d: Likewise, MIPS32r2/ECOFF
+	version.
+	* gas/mips/ld-n32-forward.d: New test.
+	* gas/mips/ld-n64-forward.d: Likewise.
+	* gas/mips/mips.exp: Run the new tests.
+
+2010-10-24  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/ld-n32.d: New test.
+	* gas/mips/ld-n64.d: Likewise.
+	* gas/mips/mips.exp: Run the new tests.
+
+2010-10-24  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/ld.d: Rename to...
+	* gas/mips/mips1@ld.d: ... this.
+	* gas/mips/ld-ilocks.d: Rename to...
+	* gas/mips/ld.d: ... this.
+	* gas/mips/r3000@ld.d: New test, R3000 version.
+	* gas/mips/ecoff@ld.d: Likewise, ECOFF version.
+	* gas/mips/r3900@ecoff@ld.d: Likewise, R3900/ECOFF version.
+	* gas/mips/mips2@ecoff@ld.d: Likewise, MIPS II/ECOFF version.
+	* gas/mips/mips32@ecoff@ld.d: Likewise, MIPS32/ECOFF version.
+	* gas/mips/mips32r2@ecoff@ld.d: Likewise, MIPS32r2/ECOFF version.
+	* gas/mips/mips.exp: Remove "ld-ilocks" and run "ld" over all
+	architectures matching "mips1".
+
+2010-10-24  Maciej W. Rozycki  <macro@linux-mips.org>
+            Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* gas/mips/mips.exp (run_dump_test_arch): Check for the presence
+	of a file-format-specific test too.
+	(run_dump_test_arches): Pull elf, ecoff and aout variables for
+	use by the above.
+
+2010-10-24  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/ld.s: Remove "l.d", "s.d" and "sd" instructions.
+	* gas/mips/ld.d: Adjust accordingly.
+	* gas/mips/ld-ilocks.d: Likewise
+
+2010-10-24  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/ld.s: Remove ".set mips1".
+	* gas/mips/ld.d: Remove "-march=r4000" and "-mmips:4000" from
+	gas/objdump options.
+	* gas/mips/ld-ilocks.d: Add "-32" to gas options.
+	* gas/mips/mips.exp: Run the two cases with run_dump_test_arches.
+
+2010-10-24  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/ld.s: Remove MIPS III bits.
+	* gas/mips/ld.d: Adjust accordingly.
+	* gas/mips/ld-ilocks.d: Likewise.
+	* gas/mips/ld-ilocks-addr32.d: Remove file.
+	* gas/mips/mips.exp: Adjust accordingly.
+
+2010-10-24  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* gas/mips/ld.d: Spell out reloc names.
+	* gas/mips/ld-ilocks.d: Likewise.
+	* gas/mips/ld-ilocks-addr32.d: Likewise.
+
+2010-10-23  Mark Mitchell  <mark@codesourcery.com>
+
+	* gas/elf/elf.exp: Add group0c test.
+	* gas/elf/group0c.d: New.
+	* gas/elf/group0a.d: Expect ".group" for the name of group
+	sections.
+	* gas/elf/group0b.d: Likewise.
+	* gas/elf/group1a.d: Likewise.
+	* gas/elf/group1b.d: Likewise.
+	* gas/elf/groupautoa.d: Likewise.
+	* gas/elf/groupautob.d: Likewise.
+	* gas/elf/section4.d: Likewise.
+	* gas/ia64/group-1.d: Likewise.  Adjust hard-coded constants.
+
 2010-10-22  Nick Clifton  <nickc@redhat.com>
 
 	* gas/all/fwdexp.d: Also look for f8ffffff.

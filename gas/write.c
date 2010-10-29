@@ -1350,10 +1350,10 @@ compress_debug (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
   char *header;
   struct z_stream_s *strm;
   int x;
+  flagword flags = bfd_get_section_flags (abfd, sec);
 
   if (seginfo == NULL
-      || !(bfd_get_section_flags (abfd, sec) & SEC_HAS_CONTENTS)
-      || (bfd_get_section_flags (abfd, sec) & SEC_ALLOC))
+      || (flags & (SEC_ALLOC | SEC_HAS_CONTENTS)) == SEC_ALLOC)
     return;
 
   section_name = bfd_get_section_name (stdoutput, sec);
@@ -2163,6 +2163,13 @@ relax_frag (segT segment, fragS *fragP, long stretch)
 	  if (stretch < 0
 	      || sym_frag->region == fragP->region)
 	    target += stretch;
+	  /* If we get here we know we have a forward branch.  This
+	     relax pass may have stretched previous instructions so
+	     far that omitting STRETCH would make the branch
+	     negative.  Don't allow this in case the negative reach is
+	     large enough to require a larger branch instruction.  */
+	  else if (target < address)
+	    target = fragP->fr_next->fr_address + stretch;
 	}
     }
 

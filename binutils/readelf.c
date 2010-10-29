@@ -9286,8 +9286,10 @@ is_32bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 1; /* R_68K_32.  */
     case EM_860:
       return reloc_type == 1; /* R_860_32.  */
+    case EM_960:
+      return reloc_type == 2; /* R_960_32.  */
     case EM_ALPHA:
-      return reloc_type == 1; /* XXX Is this right ?  */
+      return reloc_type == 1; /* R_ALPHA_REFLONG.  */
     case EM_ARC:
       return reloc_type == 1; /* R_ARC_32.  */
     case EM_ARM:
@@ -9339,6 +9341,8 @@ is_32bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 1; /* R_MCORE_ADDR32.  */
     case EM_CYGNUS_MEP:
       return reloc_type == 4; /* R_MEP_32.  */
+    case EM_MICROBLAZE:
+      return reloc_type == 1; /* R_MICROBLAZE_32.  */
     case EM_MIPS:
       return reloc_type == 2; /* R_MIPS_32.  */
     case EM_MMIX:
@@ -9432,6 +9436,8 @@ is_32bit_pcrel_reloc (unsigned int reloc_type)
       return reloc_type == 10; /* R_ALPHA_SREL32.  */
     case EM_ARM:
       return reloc_type == 3;  /* R_ARM_REL32 */
+    case EM_MICROBLAZE:
+      return reloc_type == 2;  /* R_MICROBLAZE_32_PCREL.  */
     case EM_PARISC:
       return reloc_type == 9;  /* R_PARISC_PCREL32.  */
     case EM_PPC:
@@ -9981,8 +9987,7 @@ dump_section_as_bytes (Elf_Internal_Shdr * section,
   putchar ('\n');
 }
 
-/* Uncompresses a section that was compressed using zlib, in place.
-   This is a copy of bfd_uncompress_section_contents, in bfd/compress.c  */
+/* Uncompresses a section that was compressed using zlib, in place.  */
 
 static int
 uncompress_section_contents (unsigned char **buffer ATTRIBUTE_UNUSED,
@@ -10048,6 +10053,8 @@ uncompress_section_contents (unsigned char **buffer ATTRIBUTE_UNUSED,
 
  fail:
   free (uncompressed_buffer);
+  /* Indicate decompression failure.  */
+  *buffer = NULL;
   return 0;
 #endif  /* HAVE_ZLIB_H */
 }
@@ -10058,13 +10065,10 @@ load_specific_debug_section (enum dwarf_section_display_enum debug,
 {
   struct dwarf_section * section = &debug_displays [debug].section;
   char buf [64];
-  int section_is_compressed;
 
   /* If it is already loaded, do nothing.  */
   if (section->start != NULL)
     return 1;
-
-  section_is_compressed = section->name == section->compressed_name;
 
   snprintf (buf, sizeof (buf), _("%s section data"), section->name);
   section->address = sec->sh_addr;
@@ -10072,15 +10076,11 @@ load_specific_debug_section (enum dwarf_section_display_enum debug,
   section->start = (unsigned char *) get_data (NULL, (FILE *) file,
                                                sec->sh_offset, 1,
                                                sec->sh_size, buf);
+  if (uncompress_section_contents (&section->start, &section->size))
+    sec->sh_size = section->size;
+
   if (section->start == NULL)
     return 0;
-
-  if (section_is_compressed)
-    {
-      if (! uncompress_section_contents (&section->start, &section->size))
-        return 0;
-      sec->sh_size = section->size;
-    }
 
   if (debug_displays [debug].relocate)
     apply_relocations ((FILE *) file, sec, section->start);
@@ -10797,6 +10797,24 @@ display_tic6x_attribute (unsigned char * p)
 	  break;
 	case C6XABI_Tag_ISA_C674X:
 	  printf ("C674x\n");
+	  break;
+	default:
+	  printf ("??? (%d)\n", val);
+	  break;
+	}
+      return p;
+
+    case Tag_ABI_DSBT:
+      val = read_uleb128 (p, &len);
+      p += len;
+      printf ("  Tag_ABI_DSBT: ");
+      switch (val)
+	{
+	case 0:
+	  printf (_("DSBT addressing not used\n"));
+	  break;
+	case 1:
+	  printf (_("DSBT addressing used\n"));
 	  break;
 	default:
 	  printf ("??? (%d)\n", val);

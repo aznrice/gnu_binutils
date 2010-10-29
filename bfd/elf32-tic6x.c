@@ -1,6 +1,8 @@
 /* 32-bit ELF support for TI C6X
    Copyright 2010
    Free Software Foundation, Inc.
+   Contributed by Joseph Myers <joseph@codesourcery.com>
+   		  Bernd Schmidt  <bernds@codesourcery.com>
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1467,15 +1469,8 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 	}
 
       if (sec != NULL && elf_discarded_section (sec))
-	{
-	  /* For relocs against symbols from removed linkonce sections,
-	     or sections discarded by a linker script, we just want the
-	     section contents zeroed.  Avoid any special processing.  */
-	  _bfd_clear_contents (howto, input_bfd, contents + rel->r_offset);
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
-	}
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rel, relend, howto, contents);
 
       if (info->relocatable)
 	{
@@ -1728,6 +1723,12 @@ elf32_tic6x_merge_attributes (bfd *ibfd, bfd *obfd)
     = elf32_tic6x_merge_arch_attributes (in_attr[Tag_ISA].i,
 					 out_attr[Tag_ISA].i);
 
+  if (out_attr[Tag_ABI_DSBT].i != in_attr[Tag_ABI_DSBT].i)
+    {
+      _bfd_error_handler
+	(_("warning: %B and %B differ in whether code is compiled for DSBT"),
+	 obfd, ibfd);
+    }
   /* Merge Tag_compatibility attributes and any common GNU ones.  */
   _bfd_elf_merge_object_attributes (ibfd, obfd);
 

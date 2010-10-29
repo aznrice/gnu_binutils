@@ -1,3 +1,64 @@
+2010-10-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* addr2line.c (process_file): Set BFD_DECOMPRESS.
+
+	* objcopy.c (do_debug_sections): New.
+	(OPTION_COMPRESS_DEBUG_SECTIONS): New.
+	(OPTION_DECOMPRESS_DEBUG_SECTIONS): Likewise.
+	(copy_options): Add OPTION_COMPRESS_DEBUG_SECTIONS and
+	OPTION_DECOMPRESS_DEBUG_SECTIONS.
+	(copy_usage): Add --compress-debug-sections and
+	--decompress-debug-sections.
+	(copy_file): Set BFD_COMPRESS or BFD_DECOMPRESS.
+	(copy_section): Replace bfd_get_section_contents with
+	bfd_get_full_section_contents.
+	(copy_main): Handle OPTION_COMPRESS_DEBUG_SECTIONS and
+	OPTION_DECOMPRESS_DEBUG_SECTIONS.  Check do_debug_sections to
+	rename DWARF debug sections.
+
+	* objdump.c (load_specific_debug_section): Replace
+	bfd_get_section_contents with bfd_get_full_section_contents. 
+	Remove bfd_uncompress_section_contents.
+	(dump_section): Replace bfd_get_section_contents with
+	bfd_get_full_section_contents.
+	(display_file): Set BFD_DECOMPRESS if needed.
+
+	* readelf.c (uncompress_section_contents): Set buffer to NULL
+	to indiate decompression failure.
+	(load_specific_debug_section): Always call
+	uncompress_section_contents.
+
+	* doc/binutils.texi: Document --compress-debug-sections and
+	--decompress-debug-sections.
+
+2010-10-29  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/12058
+	* ar.c (usage): Revert previous change.  Describe how 's' can be
+	used as a command letter.
+	* doc/binutils.texi (ar cmdline): Describe how 's' can be used as
+	a command letter.
+
+2010-10-29  Bernd Schmidt  <bernds@codesourcery.com>
+            Joseph Myers  <joseph@codesourcery.com>
+
+	* readelf.c (display_tic6x_attribute): Handle Tag_ABI_DSBT.
+
+2010-10-28  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/12058
+	* ar.c (usage): Remove spurious 's' from list of accepted command
+	letters.
+
+2010-10-28  Alan Modra  <amodra@gmail.com>
+
+	* readelf.c (is_32bit_abs_reloc): Support i960 and microblaze.
+	(is_32bit_pcrel_reloc): Support microblaze.
+
+2010-10-26  Nick Clifton  <nickc@redhat.com>
+
+	* po/ja.po: Updated Japanese transaltion.
+
 2010-10-21  Joseph Myers  <joseph@codesourcery.com>
 
 	* readelf.c (display_tic6x_attribute): Update for attribute

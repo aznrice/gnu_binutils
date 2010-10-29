@@ -3704,7 +3704,12 @@ find_stub_size_and_template (enum elf32_arm_stub_type stub_type,
   unsigned int size;
 
   template_sequence = stub_definitions[stub_type].template_sequence;
+  if (stub_template)
+    *stub_template = template_sequence;
+
   template_size = stub_definitions[stub_type].template_size;
+  if (stub_template_size)
+    *stub_template_size = template_size;
 
   size = 0;
   for (i = 0; i < template_size; i++)
@@ -3723,15 +3728,9 @@ find_stub_size_and_template (enum elf32_arm_stub_type stub_type,
 
 	default:
 	  BFD_FAIL ();
-	  return FALSE;
+	  return 0;
 	}
     }
-
-  if (stub_template)
-    *stub_template = template_sequence;
-
-  if (stub_template_size)
-    *stub_template_size = template_size;
 
   return size;
 }
@@ -9033,15 +9032,8 @@ elf32_arm_relocate_section (bfd *                  output_bfd,
 	}
 
       if (sec != NULL && elf_discarded_section (sec))
-	{
-	  /* For relocs against symbols from removed linkonce sections,
-	     or sections discarded by a linker script, we just want the
-	     section contents zeroed.  Avoid any special processing.  */
-	  _bfd_clear_contents (howto, input_bfd, contents + rel->r_offset);
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
-	}
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rel, relend, howto, contents);
 
       if (info->relocatable)
 	{
