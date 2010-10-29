@@ -1,3 +1,8 @@
+2010-10-29  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-zlib-5.patch: Removed.
+	* README: Likewise.
+
 2010-10-18  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-error-12.patch: New file. Replace ...
