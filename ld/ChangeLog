@@ -1,3 +1,84 @@
+2010-11-05  Tristan Gingold  <gingold@adacore.com>
+
+	* po/ld.pot: Regenerate
+	* po/POTFILES.in: Regenerate
+
+2010-11-05  Tristan Gingold  <gingold@adacore.com>
+
+	* NEWS: Add marker for 2.21.
+
+2010-11-05  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	* plugin.h (plugin_active_plugins_p): New prototype.
+	(is_ir_dummy_bfd): Delete prototype.
+	* plugin.c: Fix formatting issues.
+	(is_ir_dummy_bfd): Make static.
+	(plugin_active_plugins_p): New function.
+	* ldfile.c (ldfile_try_open_bfd): Use it to save work if no plugins
+	are loaded.  Always close file descriptor after claim handler returns.
+	* ldmain.c (add_archive_element): Likewise.
+
+2010-11-05  Alan Modra  <amodra@gmail.com>
+
+	* ldlang.c (lang_add_section): Distinguish ELF treatment of NOLOAD.
+	(map_input_to_output_sections): Likewise.
+	(lang_size_sections_1): Likewise.
+	(IGNORE_SECTION): Don't test SEC_NEVER_LOAD.
+	(lang_check_section_addresses): Likewise.
+
+2010-11-04  Kai Tietz  <kai.tietz@onevision.com>
+
+	* scripttempl/pe.sc (.debug_types): New.
+	* scripttempl/pep.sc: Likewise.
+
+2010-11-04  Alan Modra  <amodra@gmail.com>
+
+	* plugin.c (is_ir_dummy_bfd): Don't segfault on NULL abfd.
+
+2010-11-03  Nick Clifton  <nickc@redhat.com>
+
+	PR ld/12001
+	* ldlang.c (ldlang_def_chain_list): New variable.  Contains a list
+	of symbols defined via the --defsym command line option and
+	currently waiting assignment.
+	(insert_defined): Add a defined symbol to the symbol table.
+	(ldlang_add_def): Add a entry to the ldlang_def_chain_list.
+	(lang_place_defineds): Walk ldlang_def_chain_list defining the
+	symbols.
+	(lang_process): Call lang_place_defineds.
+	(lang_add_assignment): If the assignment has come from a --defsym
+	command line option then call lang_add_def.
+
+2010-11-03  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am (eelf64hppa.c): Correct dependencies.
+	* Makefile.in: Regenerate.
+
+2010-11-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* scripttempl/armbpabi.sc: Include compressed DWARF debug
+	sections.
+	* scripttempl/avr.sc: Likewise.
+	* scripttempl/elf32cr16.sc: Likewise.
+	* scripttempl/elf32crx.sc: Likewise.
+	* scripttempl/elf32msp430.sc: Likewise.
+	* scripttempl/elf32msp430_3.sc: Likewise.
+	* scripttempl/elf32sh-symbian.sc: Likewise.
+	* scripttempl/elf64hppa.sc: Likewise.
+	* scripttempl/elf_chaos.sc: Likewise.
+	* scripttempl/elfd10v.sc: Likewise.
+	* scripttempl/elfd30v.sc: Likewise.
+	* scripttempl/elfi370.sc: Likewise.
+	* scripttempl/elfm68hc11.sc: Likewise.
+	* scripttempl/elfm68hc12.sc: Likewise.
+	* scripttempl/elfxtensa.sc: Likewise.
+	* scripttempl/ip2k.sc: Likewise.
+	* scripttempl/iq2000.sc: Likewise.
+	* scripttempl/mep.sc: Likewise.
+	* scripttempl/mmo.sc: Likewise.
+	* scripttempl/v850.sc: Likewise.
+	* scripttempl/xstormy16.sc: Likewise.
+
 2010-10-29  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ldfile.c (ldfile_try_open_bfd): Set BFD_DECOMPRESS after

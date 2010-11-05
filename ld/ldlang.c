@@ -2250,16 +2250,14 @@ lang_add_section (lang_statement_list_type *ptr,
     case noload_section:
       flags &= ~SEC_LOAD;
       flags |= SEC_NEVER_LOAD;
-      if (((bfd_get_flavour (section->owner)
-	    == bfd_target_ecoff_flavour)
-	   || (bfd_get_flavour (section->owner)
-	       == bfd_target_coff_flavour)))
-	{
-	  if ((flags & (SEC_COFF_SHARED_LIBRARY | SEC_DEBUGGING)) == 0)
-	    flags &= ~SEC_HAS_CONTENTS;
-	}
-      else
+      /* Unfortunately GNU ld has managed to evolve two different
+	 meanings to NOLOAD in scripts.  ELF gets a .bss style noload,
+	 alloc, no contents section.  All others get a noload, noalloc
+	 section.  */
+      if (bfd_get_flavour (link_info.output_bfd) == bfd_target_elf_flavour)
 	flags &= ~SEC_HAS_CONTENTS;
+      else
+	flags &= ~SEC_ALLOC;
       break;
     }
 
@@ -3344,6 +3342,65 @@ lang_place_undefineds (void)
     insert_undefined (ptr->name);
 }
 
+typedef struct bfd_sym_chain ldlang_def_chain_list_type;
+
+static ldlang_def_chain_list_type ldlang_def_chain_list_head;
+
+/* Insert NAME as defined in the symbol table.  */
+
+static void
+insert_defined (const char *name)
+{
+  struct bfd_link_hash_entry *h;
+
+  h = bfd_link_hash_lookup (link_info.hash, name, TRUE, FALSE, TRUE);
+  if (h == NULL)
+    einfo (_("%P%F: bfd_link_hash_lookup failed: %E\n"));
+  if (h->type == bfd_link_hash_new
+      || h->type == bfd_link_hash_undefined
+      || h->type == bfd_link_hash_undefweak)
+    {
+      h->type = bfd_link_hash_defined;
+      h->u.def.section = bfd_abs_section_ptr;
+      h->u.def.value   = 0;
+    }
+}
+
+/* Like lang_add_undef, but this time for symbols defined on the
+   command line.  */
+
+static void
+ldlang_add_def (const char *const name)
+{
+  if (link_info.output_bfd != NULL)
+    insert_defined (xstrdup (name));
+  else
+    {
+      ldlang_def_chain_list_type *new_def;
+
+      new_def = (ldlang_def_chain_list_type *) stat_alloc (sizeof (*new_def));
+      new_def->next = ldlang_def_chain_list_head.next;
+      ldlang_def_chain_list_head.next = new_def;
+
+      new_def->name = xstrdup (name);
+    }
+}
+
+/* Run through the list of defineds created above and place them
+   into the linker hash table as defined symbols belonging to the
+   script file.  */
+
+static void
+lang_place_defineds (void)
+{
+  ldlang_def_chain_list_type *ptr;
+
+  for (ptr = ldlang_def_chain_list_head.next;
+       ptr != NULL;
+       ptr = ptr->next)
+    insert_defined (ptr->name);
+}
+
 /* Check for all readonly or some readwrite sections.  */
 
 static void
@@ -3512,7 +3569,11 @@ map_input_to_output_sections
 	      flags = SEC_HAS_CONTENTS;
 	      break;
 	    case noload_section:
-	      flags = SEC_NEVER_LOAD;
+	      if (bfd_get_flavour (link_info.output_bfd)
+		  == bfd_target_elf_flavour)
+		flags = SEC_NEVER_LOAD | SEC_ALLOC;
+	      else
+		flags = SEC_NEVER_LOAD | SEC_HAS_CONTENTS;
 	      break;
 	    }
 	  if (os->bfd_section == NULL)
@@ -4574,13 +4635,9 @@ sort_sections_by_lma (const void *arg1, const void *arg2)
   return 0;
 }
 
-/* On ELF, a debugging section must never set SEC_NEVER_LOAD, as no output
-   would be written for it. So the combination of debugging and never-load
-   is something which can only happen for pe-coff and must not be ignored.  */
 #define IGNORE_SECTION(s) \
-  ((s->flags & (SEC_NEVER_LOAD | SEC_DEBUGGING)) == SEC_NEVER_LOAD	\
-   || (s->flags & SEC_ALLOC) == 0				\
-   || ((s->flags & SEC_THREAD_LOCAL) != 0			\
+  ((s->flags & SEC_ALLOC) == 0				\
+   || ((s->flags & SEC_THREAD_LOCAL) != 0		\
 	&& (s->flags & SEC_LOAD) == 0))
 
 /* Check to see if any allocated sections overlap with other allocated
@@ -4612,8 +4669,7 @@ lang_check_section_addresses (void)
   for (s = link_info.output_bfd->sections; s != NULL; s = s->next)
     {
       /* Only consider loadable sections with real contents.  */
-      if ((s->flags & (SEC_NEVER_LOAD | SEC_DEBUGGING)) == SEC_NEVER_LOAD
-	  || !(s->flags & SEC_LOAD)
+      if (!(s->flags & SEC_LOAD)
 	  || !(s->flags & SEC_ALLOC)
 	  || s->size == 0)
 	continue;
@@ -5192,7 +5248,10 @@ lang_size_sections_1
 		       should have space allocated to it, unless the
 		       user has explicitly stated that the section
 		       should not be allocated.  */
-		    if (output_section_statement->sectype != noalloc_section)
+		    if (output_section_statement->sectype != noalloc_section
+			&& (output_section_statement->sectype != noload_section
+			    || (bfd_get_flavour (link_info.output_bfd)
+				== bfd_target_elf_flavour)))
 		      output_section_statement->bfd_section->flags |= SEC_ALLOC;
 		  }
 		dot = newdot;
@@ -6350,6 +6409,7 @@ lang_process (void)
 
   /* Add to the hash table all undefineds on the command line.  */
   lang_place_undefineds ();
+  lang_place_defineds ();
 
   if (!bfd_section_already_linked_table_init ())
     einfo (_("%P%F: Failed to create hash table\n"));
@@ -6633,6 +6693,10 @@ lang_assignment_statement_type *
 lang_add_assignment (etree_type *exp)
 {
   lang_assignment_statement_type *new_stmt;
+
+  extern int parsing_defsym;
+  if (parsing_defsym)
+    ldlang_add_def (exp->assign.dst);
 
   new_stmt = new_stat (lang_assignment_statement, stat_ptr);
   new_stmt->exp = exp;
