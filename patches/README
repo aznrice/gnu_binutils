@@ -24,6 +24,7 @@ patches="
 	bfd-64k-2.patch
 	binutils-pr11137-1.patch
 	ld-pr46319-1.patch
+	binutils-compress-1.patch
 "
 
 if [ -n "$clean" ]

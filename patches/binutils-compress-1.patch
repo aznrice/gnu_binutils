@@ -1,0 +1,119 @@
+binutils/testsuite/
+
+2010-11-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* binutils-all/compress.exp: Pass --nocompress-debug-sections to
+	assembler for uncompressed debug sections.
+
+	* binutils-all/testranges.d: Also expect .zdebug in section name.
+
+gas/
+
+2010-11-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (flag_compress_debug): Default to compress
+	debug sections for Linux.
+
+gas/testsuite/
+
+2010-11-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/elf/dwarf2-3.d: Also expect .zdebug in section name.
+	* gas/i386/debug1.d: Likewise.
+	* gas/lns/lns-common-1.d: Likewise.
+	* gas/lns/lns-duplicate.d: Likewise.
+
+diff --git a/binutils/testsuite/binutils-all/compress.exp b/binutils/testsuite/binutils-all/compress.exp
+index fdf71fb..a1c1ba8 100644
+--- a/binutils/testsuite/binutils-all/compress.exp
++++ b/binutils/testsuite/binutils-all/compress.exp
+@@ -28,8 +28,8 @@ set compressedfile2 tmpdir/dw2-2-compressed.o
+ set libfile tmpdir/libdw2.a
+ set compressedcopyfile tmpdir/dw2-copy-compressed
+ 
+-if { ![binutils_assemble $srcdir/$subdir/dw2-1.S $testfile] } then {
+-    fail "compressed debug sections"
++if { ![binutils_assemble $srcdir/$subdir/dw2-1.S $testfile --nocompress-debug-sections] } then {
++    unsupported "compressed debug sections"
+     return
+ }
+ 
+diff --git a/binutils/testsuite/binutils-all/testranges.d b/binutils/testsuite/binutils-all/testranges.d
+index c074a35..66943c0 100644
+--- a/binutils/testsuite/binutils-all/testranges.d
++++ b/binutils/testsuite/binutils-all/testranges.d
+@@ -4,7 +4,7 @@
+ #name: unordered .debug_info references to .debug_ranges
+ #not-target: ia64-*-*
+ 
+-Contents of the .debug_ranges section:
++Contents of the \.(z|)debug_ranges section:
+ 
+     Offset   Begin    End
+     00000000 00000001 00000002 
+diff --git a/gas/config/tc-i386.c b/gas/config/tc-i386.c
+index 9c33cf9..7b6ec4e 100644
+--- a/gas/config/tc-i386.c
++++ b/gas/config/tc-i386.c
+@@ -35,6 +35,11 @@
+ #include "elf/x86-64.h"
+ #include "opcodes/i386-init.h"
+ 
++#ifdef TE_LINUX
++/* Default to compress debug sections for Linux.  */
++int flag_compress_debug = 1;
++#endif
++
+ #ifndef REGISTER_WARNINGS
+ #define REGISTER_WARNINGS 1
+ #endif
+diff --git a/gas/testsuite/gas/elf/dwarf2-3.d b/gas/testsuite/gas/elf/dwarf2-3.d
+index 44a2a6d..cccfe99 100644
+--- a/gas/testsuite/gas/elf/dwarf2-3.d
++++ b/gas/testsuite/gas/elf/dwarf2-3.d
+@@ -2,7 +2,7 @@
+ #name: DWARF2 3
+ #not-target: ia64-*-* h8300-*-*
+ 
+-Raw dump of debug contents of section .debug_line:
++Raw dump of debug contents of section \.(z|)debug_line:
+ 
+   Offset:                      0x0
+   Length:                      41
+diff --git a/gas/testsuite/gas/i386/debug1.d b/gas/testsuite/gas/i386/debug1.d
+index 437e38f..2b34ffb 100644
+--- a/gas/testsuite/gas/i386/debug1.d
++++ b/gas/testsuite/gas/i386/debug1.d
+@@ -2,7 +2,7 @@
+ #readelf: -wl
+ #name: DWARF2 debugging information 1
+ 
+-Raw dump of debug contents of section .debug_line:
++Raw dump of debug contents of section \.(z|)debug_line:
+ 
+   Offset:                      0x0
+   Length:                      .*
+diff --git a/gas/testsuite/gas/lns/lns-common-1.d b/gas/testsuite/gas/lns/lns-common-1.d
+index e28896f..d75ba2b 100644
+--- a/gas/testsuite/gas/lns/lns-common-1.d
++++ b/gas/testsuite/gas/lns/lns-common-1.d
+@@ -1,6 +1,6 @@
+ #readelf: -wl
+ #name: lns-common-1
+-Raw dump of debug contents of section \.debug_line:
++Raw dump of debug contents of section \.(|z)debug_line:
+ #...
+   Initial value of 'is_stmt':  1
+ #...
+diff --git a/gas/testsuite/gas/lns/lns-duplicate.d b/gas/testsuite/gas/lns/lns-duplicate.d
+index 4e28649..8bcdace 100644
+--- a/gas/testsuite/gas/lns/lns-duplicate.d
++++ b/gas/testsuite/gas/lns/lns-duplicate.d
+@@ -1,6 +1,6 @@
+ #readelf: -wl
+ #name: lns-duplicate
+-Raw dump of debug contents of section \.debug_line:
++Raw dump of debug contents of section \.(z|)debug_line:
+ #...
+  Line Number Statements:
+   Extended opcode 2: set Address to .*
