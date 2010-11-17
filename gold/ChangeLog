@@ -1,3 +1,30 @@
+2010-11-16  Cary Coutant  <ccoutant@google.com>
+
+	PR gold/12220
+	* dwarf_reader.cc (Sized_dwarf_line_info::Sized_dwarf_line_info):
+	Check for ".zdebug_line".
+
+2010-11-16  Doug Kwan  <dougkwan@google.com>
+	    Cary Coutant  <ccoutant@google.com>
+
+	* output.h (Output_segment::set_section_addresses): Pass increase_relro
+	by reference; adjust all callers.
+	* output.cc (Output_segment::set_section_addresses): Adjust references
+	to increase_relro. Add padding to *increase_relro when ORDER_RELRO_LAST
+	list is empty.
+	(Output_segment::set_offset): Assert if PT_GNU_RELRO segment does not
+	end at page boundary.
+
+2010-11-16  Cary Coutant  <ccoutant@google.com>
+
+	PR gold/12220
+	* layout.cc (Layout::choose_output_section): Transform names of
+	compressed sections even when using a script with a SECTIONS clause.
+	(Layout::output_section_name): Remove code to transform
+	compressed debug section names.
+	* output.cc (Output_section::add_input_section): Use uncompressed
+	section size when tracking input sections.
+
 2010-11-11  Richard Sandiford  <richard.sandiford@linaro.org>
 
 	* symtab.h (Symbol::NON_PIC_REF): Remove.
