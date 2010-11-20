@@ -22,7 +22,6 @@ patches="
 	binutils-signed-5.patch
 	binutils-weakdef-2.patch
 	bfd-64k-2.patch
-	ld-pr46319-1.patch
 "
 
 if [ -n "$clean" ]
