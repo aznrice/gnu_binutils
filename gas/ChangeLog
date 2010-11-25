@@ -1,3 +1,31 @@
+2010-11-25  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* config/tc-s390.c (current_cpu): Initialize with latest CPU.
+	(init_default_arch): Default to z/Architecture mode if CPU provides it.
+	Remove the check setting the CPU default.
+
+2010-11-25  Alan Modra  <amodra@gmail.com>
+
+	* po/es.po: Update.
+
+2010-11-25  Alan Modra  <amodra@gmail.com>
+
+	PR gas/12264
+	* compress-debug.c: Include config.h first.
+
+2010-11-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* doc/as.texinfo: Refer to and include c-bfin.texi for Blackfin
+	options.
+	* doc/c-bfin.texi: Add markup for use in manpage generation.
+
+2010-11-23  Sterling Augustine  <sterling@tensilica.com>
+
+	* doc/as.texinfo: Refer to and include c-xtensa.texi for Xtensa
+	options.  Move Xtensa options to proper alphabetical location.
+
+	* doc/c-xtensa.texi: Add markup for use in manpage generation.
+
 2010-11-23  Mingming Sun  <mingm.sun@gmail.com>
 
 	* config/tc-mips.c (mips_cpu_info_table): Move loongson3a after sb1.
@@ -19,7 +47,7 @@
 
 2010-11-19  Alan Modra  <amodra@gmail.com>
 
-    	PR 2606
+	PR 2606
 	* configure.in: Disable emulations for PE targets.
 	* configure: Regenerate.
 
