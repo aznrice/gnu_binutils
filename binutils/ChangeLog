@@ -1,3 +1,27 @@
+2010-12-03  Doug Evans  <dje@google.com>
+
+	* dwarf.c: #include "bfd_stdint.h".
+	(do_gdb_index): New global.
+	(display_gdb_index): New function.
+	(dwarf_select_sections_by_names) Add "gdb_index".
+	(dwarf_select_sections_all): Set do_gdb_index.
+	(debug_displays): Add .gdb_index.
+	* dwarf.h (do_gdb_index): Declare.
+	* objdump.c (usage): Add gdb_index.
+	* readelf.c (usage): Add gdb_index.
+	(process_section_headers): Process ".gdb_index".
+	* doc/binutils.texi (readelf): Document gdb_index dump.
+	(objdump): Ditto.
+
+2010-12-01  Kai Tietz  <kai.tietz@onevision.com>
+
+	PR binutils/11065
+	* dlltool.c (dll_name_set_by_exp_name): New variable.
+	(def_name): Allow setting of dll_name by .def file.
+	(def_library): Likewise.
+	(main): Set dll_name_set_by_exp_name, if dll_name is
+	set indirect by exp_name.
+
 2010-11-26  Alan Modra  <amodra@gmail.com>
 
 	* dwarf.c (decode_location_expression, display_debug_frames): Move
