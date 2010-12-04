@@ -16,7 +16,7 @@ dir=`dirname $0`
 clean=$1
 
 patches="
-	binutils-indirect-3.patch
+	binutils-indirect-4.patch
 	binutils-shr-94.patch
 	binutils-error-12.patch
 	binutils-signed-5.patch

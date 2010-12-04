@@ -1,5 +1,11 @@
 2010-12-04  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-indirect-4.patch: New file. Replace ...
+	* binutils-indirect-3.patch: This. Removed.
+	* README: Likewise.
+
+2010-12-04  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-2stage-1.patch: New.
 	* README: Apply it.
 

@@ -35,9 +35,11 @@ ld/testsuite/
 	* ld-elf/indirect4b.c: Likewise.
 	* ld-elf/indirect4c.c: Likewise.
 
---- binutils/bfd/elflink.c.indirect	2010-03-22 06:24:57.000000000 -0700
-+++ binutils/bfd/elflink.c	2010-03-22 06:26:40.000000000 -0700
-@@ -898,6 +898,33 @@ elf_merge_st_other (bfd *abfd, struct el
+diff --git a/bfd/elflink.c b/bfd/elflink.c
+index 32575d9..f6f2740 100644
+--- a/bfd/elflink.c
++++ b/bfd/elflink.c
+@@ -899,6 +899,33 @@ elf_merge_st_other (bfd *abfd, struct elf_link_hash_entry *h,
      }
  }
  
@@ -71,7 +73,7 @@ ld/testsuite/
  /* This function is called when we want to define a new symbol.  It
     handles the various cases which arise when we find a definition in
     a dynamic object, or when there is already a definition in a
-@@ -926,6 +953,7 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -927,6 +954,7 @@ _bfd_elf_merge_symbol (bfd *abfd,
  {
    asection *sec, *oldsec;
    struct elf_link_hash_entry *h;
@@ -79,7 +81,7 @@ ld/testsuite/
    struct elf_link_hash_entry *flip;
    int bind;
    bfd *oldbfd;
-@@ -964,8 +992,9 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -965,8 +993,9 @@ _bfd_elf_merge_symbol (bfd *abfd,
    if (!(*bed->relocs_compatible) (abfd->xvec, info->output_bfd->xvec))
      return TRUE;
  
@@ -91,7 +93,7 @@ ld/testsuite/
    while (h->root.type == bfd_link_hash_indirect
  	 || h->root.type == bfd_link_hash_warning)
      h = (struct elf_link_hash_entry *) h->root.u.i.link;
-@@ -1131,23 +1160,11 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -1138,23 +1167,11 @@ _bfd_elf_merge_symbol (bfd *abfd,
    /* We need to remember if a symbol has a definition in a dynamic
       object or is weak in all dynamic objects. Internal and hidden
       visibility will make it unavailable to dynamic objects.  */
@@ -119,7 +121,7 @@ ld/testsuite/
      }
  
    /* If the old symbol has non-default visibility, we ignore the new
-@@ -1159,6 +1176,7 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -1166,6 +1183,7 @@ _bfd_elf_merge_symbol (bfd *abfd,
        *skip = TRUE;
        /* Make sure this symbol is dynamic.  */
        h->ref_dynamic = 1;
@@ -127,7 +129,7 @@ ld/testsuite/
        /* A protected symbol has external availability. Make sure it is
  	 recorded as dynamic.
  
-@@ -1716,6 +1734,7 @@ _bfd_elf_add_default_symbol (bfd *abfd,
+@@ -1718,6 +1736,7 @@ _bfd_elf_add_default_symbol (bfd *abfd,
  	  if (! dynamic)
  	    {
  	      if (! info->executable
@@ -135,7 +137,7 @@ ld/testsuite/
  		  || hi->ref_dynamic)
  		*dynsym = TRUE;
  	    }
-@@ -3866,6 +3885,7 @@ error_free_dyn:
+@@ -3860,6 +3879,7 @@ error_free_dyn:
        flagword flags;
        const char *name;
        struct elf_link_hash_entry *h;
@@ -143,7 +145,7 @@ ld/testsuite/
        bfd_boolean definition;
        bfd_boolean size_change_ok;
        bfd_boolean type_change_ok;
-@@ -4185,6 +4205,9 @@ error_free_dyn:
+@@ -4179,6 +4199,9 @@ error_free_dyn:
  	goto error_free_vers;
  
        h = *sym_hash;
@@ -153,7 +155,7 @@ ld/testsuite/
        while (h->root.type == bfd_link_hash_indirect
  	     || h->root.type == bfd_link_hash_warning)
  	h = (struct elf_link_hash_entry *) h->root.u.i.link;
-@@ -4376,22 +4399,36 @@ error_free_dyn:
+@@ -4371,22 +4394,36 @@ error_free_dyn:
  		      h->dynamic_def = 1;
  		    }
  		}
@@ -200,7 +202,7 @@ ld/testsuite/
  		dynsym = TRUE;
  	    }
  
-@@ -8436,6 +8473,10 @@ elf_link_check_versioned_symbol (struct 
+@@ -8442,6 +8479,10 @@ elf_link_check_versioned_symbol (struct bfd_link_info *info,
    if (!is_elf_hash_table (info->hash))
      return FALSE;
  
@@ -211,27 +213,30 @@ ld/testsuite/
    switch (h->root.type)
      {
      default:
-@@ -8653,11 +8694,17 @@ elf_link_output_extsym (struct elf_link_
-       && !h->dynamic_weak
-       && ! elf_link_check_versioned_symbol (finfo->info, bed, h))
+@@ -8662,6 +8703,11 @@ elf_link_output_extsym (struct elf_link_hash_entry *h, void *data)
      {
+       bfd *def_bfd;
+       const char *msg;
 +      struct elf_link_hash_entry *hi = h;
 +
 +      /* Check indirect symbol.  */
 +      while (hi->root.type == bfd_link_hash_indirect)
 +	hi = (struct elf_link_hash_entry *) hi->root.u.i.link;
-+
-       (*_bfd_error_handler)
- 	(_("%B: %s symbol `%s' in %B is referenced by DSO"),
- 	 finfo->output_bfd,
--	 h->root.u.def.section == bfd_abs_section_ptr
--	 ? finfo->output_bfd : h->root.u.def.section->owner,
-+	 hi->root.u.def.section == bfd_abs_section_ptr
-+	 ? finfo->output_bfd : hi->root.u.def.section->owner,
- 	 ELF_ST_VISIBILITY (h->other) == STV_INTERNAL
- 	 ? "internal"
- 	 : ELF_ST_VISIBILITY (h->other) == STV_HIDDEN
-@@ -8884,6 +8931,23 @@ elf_link_output_extsym (struct elf_link_
+ 
+       if (ELF_ST_VISIBILITY (h->other) == STV_INTERNAL)
+ 	msg = _("%B: internal symbol `%s' in %B is referenced by DSO");
+@@ -8670,8 +8716,8 @@ elf_link_output_extsym (struct elf_link_hash_entry *h, void *data)
+       else
+ 	msg = _("%B: local symbol `%s' in %B is referenced by DSO");
+       def_bfd = finfo->output_bfd;
+-      if (h->root.u.def.section != bfd_abs_section_ptr)
+-	def_bfd = h->root.u.def.section->owner;
++      if (hi->root.u.def.section != bfd_abs_section_ptr)
++	def_bfd = hi->root.u.def.section->owner;
+       (*_bfd_error_handler) (msg, finfo->output_bfd, def_bfd,
+ 			     h->root.root.string);
+       bfd_set_error (bfd_error_bad_value);
+@@ -8899,6 +8945,23 @@ elf_link_output_extsym (struct elf_link_hash_entry *h, void *data)
      {
        bfd_byte *esym;
  
@@ -255,8 +260,11 @@ ld/testsuite/
        sym.st_name = h->dynstr_index;
        esym = finfo->dynsym_sec->contents + h->dynindx * bed->s->sizeof_sym;
        if (! check_dynsym (finfo->output_bfd, &sym))
---- binutils/ld/testsuite/ld-elf/indirect.exp.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect.exp	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect.exp b/ld/testsuite/ld-elf/indirect.exp
+new file mode 100644
+index 0000000..603179a
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect.exp
 @@ -0,0 +1,126 @@
 +# Expect script for various indirect symbol tests.
 +#   Copyright 2006 Free Software Foundation, Inc.
@@ -334,8 +342,7 @@ ld/testsuite/
 +
 +global ld
 +
-+set string ": final link failed: Nonrepresentable section on output"
-+
++set string ": final link failed: Bad value"
 +set string1 ": local symbol \`foo\' in tmpdir/indirect1b.o is referenced by DSO"
 +
 +set testname "Indirect symbol 1a"
@@ -346,6 +353,7 @@ ld/testsuite/
 +set cmd "$ld -e start -o tmpdir/indirect1 tmpdir/indirect1a.o tmpdir/libindirect1c.so tmpdir/indirect1b.o"
 +check_link_message "$cmd" [list $string1 $string] "$testname"
 +
++set string ": final link failed: Nonrepresentable section on output"
 +set string2 ": No symbol version section for versioned symbol \`foo@FOO\'"
 +set testname "Indirect symbol 2"
 +set cmd "$ld -shared  -o tmpdir/indirect2.so tmpdir/indirect2.o"
@@ -384,8 +392,11 @@ ld/testsuite/
 +}
 +
 +run_ld_link_exec_tests [] $run_tests
---- binutils/ld/testsuite/ld-elf/indirect1a.c.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect1a.c	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect1a.c b/ld/testsuite/ld-elf/indirect1a.c
+new file mode 100644
+index 0000000..6931542
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect1a.c
 @@ -0,0 +1,8 @@
 +extern void bar (void);
 +
@@ -395,8 +406,11 @@ ld/testsuite/
 +  bar ();
 +  return 0;
 +}
---- binutils/ld/testsuite/ld-elf/indirect1b.c.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect1b.c	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect1b.c b/ld/testsuite/ld-elf/indirect1b.c
+new file mode 100644
+index 0000000..51740f9
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect1b.c
 @@ -0,0 +1,6 @@
 +void
 +foo (void)
@@ -404,8 +418,11 @@ ld/testsuite/
 +}
 +
 +asm (".symver foo,foo@FOO");
---- binutils/ld/testsuite/ld-elf/indirect1c.c.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect1c.c	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect1c.c b/ld/testsuite/ld-elf/indirect1c.c
+new file mode 100644
+index 0000000..eae278d
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect1c.c
 @@ -0,0 +1,7 @@
 +extern void foo (void);
 +
@@ -414,8 +431,11 @@ ld/testsuite/
 +{
 +  foo ();
 +}
---- binutils/ld/testsuite/ld-elf/indirect2.c.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect2.c	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect2.c b/ld/testsuite/ld-elf/indirect2.c
+new file mode 100644
+index 0000000..6df29be
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect2.c
 @@ -0,0 +1,9 @@
 +extern void foo (void);
 +
@@ -426,13 +446,19 @@ ld/testsuite/
 +{
 +  foo ();
 +}
---- binutils/ld/testsuite/ld-elf/indirect3.out.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect3.out	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect3.out b/ld/testsuite/ld-elf/indirect3.out
+new file mode 100644
+index 0000000..482e981
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect3.out
 @@ -0,0 +1,2 @@
 +MAIN
 +DSO
---- binutils/ld/testsuite/ld-elf/indirect3a.c.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect3a.c	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect3a.c b/ld/testsuite/ld-elf/indirect3a.c
+new file mode 100644
+index 0000000..0f6ddc8
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect3a.c
 @@ -0,0 +1,10 @@
 +extern void bar (void);
 +extern void foo (void);
@@ -444,8 +470,11 @@ ld/testsuite/
 +  bar ();
 +  return 0;
 +}
---- binutils/ld/testsuite/ld-elf/indirect3b.c.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect3b.c	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect3b.c b/ld/testsuite/ld-elf/indirect3b.c
+new file mode 100644
+index 0000000..dbb37c3
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect3b.c
 @@ -0,0 +1,9 @@
 +#include <stdio.h>
 +
@@ -456,8 +485,11 @@ ld/testsuite/
 +}
 +
 +asm (".symver foo,foo@FOO");
---- binutils/ld/testsuite/ld-elf/indirect3c.c.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect3c.c	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect3c.c b/ld/testsuite/ld-elf/indirect3c.c
+new file mode 100644
+index 0000000..b52cb95
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect3c.c
 @@ -0,0 +1,15 @@
 +#include <stdio.h>
 +
@@ -474,13 +506,19 @@ ld/testsuite/
 +{
 +  foo ();
 +}
---- binutils/ld/testsuite/ld-elf/indirect4.out.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect4.out	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect4.out b/ld/testsuite/ld-elf/indirect4.out
+new file mode 100644
+index 0000000..3b34ee4
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect4.out
 @@ -0,0 +1,2 @@
 +MAIN2
 +MAIN2
---- binutils/ld/testsuite/ld-elf/indirect4a.c.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect4a.c	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect4a.c b/ld/testsuite/ld-elf/indirect4a.c
+new file mode 100644
+index 0000000..0f6ddc8
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect4a.c
 @@ -0,0 +1,10 @@
 +extern void bar (void);
 +extern void foo (void);
@@ -492,8 +530,11 @@ ld/testsuite/
 +  bar ();
 +  return 0;
 +}
---- binutils/ld/testsuite/ld-elf/indirect4b.c.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect4b.c	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect4b.c b/ld/testsuite/ld-elf/indirect4b.c
+new file mode 100644
+index 0000000..b8db9d0
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect4b.c
 @@ -0,0 +1,17 @@
 +#include <stdio.h>
 +
@@ -512,8 +553,11 @@ ld/testsuite/
 +}
 +
 +asm (".symver foo1,foo@FOO1");
---- binutils/ld/testsuite/ld-elf/indirect4c.c.indirect	2010-03-22 06:25:17.000000000 -0700
-+++ binutils/ld/testsuite/ld-elf/indirect4c.c	2010-03-22 06:25:17.000000000 -0700
+diff --git a/ld/testsuite/ld-elf/indirect4c.c b/ld/testsuite/ld-elf/indirect4c.c
+new file mode 100644
+index 0000000..b52cb95
+--- /dev/null
++++ b/ld/testsuite/ld-elf/indirect4c.c
 @@ -0,0 +1,15 @@
 +#include <stdio.h>
 +
