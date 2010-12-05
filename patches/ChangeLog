@@ -1,5 +1,11 @@
 2010-12-05  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-2stage-4.patch: New file. Replace ...
+	* binutils-2stage-3.patch: This. Removed.
+	* README: Likewise.
+
+2010-12-05  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-2stage-3.patch: New file. Replace ...
 	* binutils-2stage-1.patch: This. Removed.
 	* README: Likewise.

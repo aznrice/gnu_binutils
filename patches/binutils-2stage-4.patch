@@ -14,9 +14,8 @@ ld/
 2010-12-05  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
-	* ldfile.c (ldfile_try_open_bfd): Turn on BFD_PLUGIN and set
-	claimed to false on non-object files and unclaimed object files.
-	Set stage1.
+	* ldfile.c (ldfile_try_open_bfd): Set BFD_PLUGIN for plugin. Set
+	stage1.
 
 	* ldlang.c (cmdline_list): New.
 	(cmdline_next_claimed_output): Likewise.
@@ -28,6 +27,8 @@ ld/
 	(cmdline_list_insert_claimed_output): Likewise.
 	(new_afile): Set stage1 to FALSE;
 	(lang_init): Call cmdline_list_init.
+	(lang_gc_sections): Don't clear SEC_EXCLUDE if BFD_PLUGIN is
+	set.
 	(lang_process): Call plugin_active_plugins_p to check plugin
 	support.  Check cmdline_next_claimed_output before opening
 	stage 2 input.  Call debug_cmdline_list if trace_file_tries
@@ -47,9 +48,11 @@ ld/
 
 	* ldmain.c (add_archive_element): Call
 	cmdline_set_next_claimed_output with archive BFD.  Set
-	BFD_PLUGIN if input isn't claimed by plugin.
+	BFD_PLUGIN for plugin.
 
-	* lexsup.c (parse_args): Call cmdline_list_append if needed.
+	* lexsup.c (ld_options): Add -flto and -flto-partition= for
+	GCC LTO option compatibility.
+	(parse_args): Call cmdline_list_append if needed.
 
 	* plugin.c (plugin_opt_plugin_arg): Ignore -pass-through=.
 	(add_input_file): Replace lang_add_input_file with
@@ -121,10 +124,10 @@ index a9ce7cc..7265156 100644
  .  {* Currently my_archive is tested before adding origin to
  .     anything. I believe that this can become always an add of
 diff --git a/ld/ldfile.c b/ld/ldfile.c
-index 3d9feb5..a708dc2 100644
+index 3d9feb5..0ec49bf 100644
 --- a/ld/ldfile.c
 +++ b/ld/ldfile.c
-@@ -312,46 +312,63 @@ success:
+@@ -312,46 +312,64 @@ success:
       bfd_object that it sets the bfd's arch and mach, which
       will be needed when and if we want to bfd_create a new
       one using this one as a template.  */
@@ -199,10 +202,11 @@ index 3d9feb5..a708dc2 100644
 +		     dummy bfd.  Can't avoid speculatively creating it,
 +		     alas.  */
 +		  bfd_close_all_done (file.handle);
-+		  /* Mark this input has been processed by plugin.  */
-+		  entry->the_bfd->flags |= BFD_PLUGIN;
 +		  entry->claimed = FALSE;
 +		}
++
++	      /* Mark this input has been processed by plugin.  */
++	      entry->the_bfd->flags |= BFD_PLUGIN;
  	    }
  	}
 +      else 
@@ -221,7 +225,7 @@ index 3d9feb5..a708dc2 100644
       their chance to claim it, so this is success.  */
    return TRUE;
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 2927ec8..b418bf2 100644
+index 2927ec8..a955503 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -70,6 +70,8 @@ static lang_statement_list_type *stat_save[10];
@@ -260,7 +264,27 @@ index 2927ec8..b418bf2 100644
    lang_list_init (stat_ptr);
  
    lang_list_init (&input_file_chain);
-@@ -6418,21 +6426,71 @@ lang_process (void)
+@@ -6249,10 +6257,15 @@ lang_gc_sections (void)
+     {
+       LANG_FOR_EACH_INPUT_STATEMENT (f)
+ 	{
+-	  asection *sec;
+-	  for (sec = f->the_bfd->sections; sec != NULL; sec = sec->next)
+-	    if ((sec->flags & SEC_DEBUGGING) == 0)
+-	      sec->flags &= ~SEC_EXCLUDE;
++	  /* Don't clear SEC_EXCLUDE if BFD_PLUGIN is set.  */
++	  if ((f->the_bfd->flags & BFD_PLUGIN) == 0)
++	    {
++	      asection *sec;
++	      for (sec = f->the_bfd->sections; sec != NULL;
++		   sec = sec->next)
++		if ((sec->flags & SEC_DEBUGGING) == 0)
++		  sec->flags &= ~SEC_EXCLUDE;
++	    }
+ 	}
+     }
+ 
+@@ -6418,21 +6431,77 @@ lang_process (void)
    open_input_bfds (statement_list.head, FALSE);
  
  #ifdef ENABLE_PLUGINS
@@ -312,9 +336,15 @@ index 2927ec8..b418bf2 100644
 +	      if (exclude)
 +		{
 +		  asection *sec;
++
++		  if (trace_files || trace_file_tries)
++		    info_msg (_("exclude stage 1 input: %B\n"), p);
++
 +		  for (sec = p->sections; sec != NULL; sec = sec->next)
 +		    sec->flags |= SEC_EXCLUDE;
 +		}
++	      else if (trace_files || trace_file_tries)
++		info_msg (_("keep stage 1 input: %B\n"), p);
 +	    }
 +
 +	  /* Free the old already linked table and create a new one.  */
@@ -339,7 +369,7 @@ index 2927ec8..b418bf2 100644
      }
  #endif /* ENABLE_PLUGINS */
  
-@@ -7852,3 +7910,166 @@ lang_append_dynamic_list_cpp_new (void)
+@@ -7852,3 +7921,166 @@ lang_append_dynamic_list_cpp_new (void)
  
    lang_append_dynamic_list (dynamic);
  }
@@ -569,7 +599,7 @@ index 0b7b43b..8ba3e5a 100644
 +
  #endif
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index c5b7d88..e8780be 100644
+index c5b7d88..8f30a69 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
 @@ -798,6 +798,7 @@ add_archive_element (struct bfd_link_info *info,
@@ -580,7 +610,7 @@ index c5b7d88..e8780be 100644
  
    input = (lang_input_statement_type *)
        xcalloc (1, sizeof (lang_input_statement_type));
-@@ -809,20 +810,32 @@ add_archive_element (struct bfd_link_info *info,
+@@ -809,20 +810,31 @@ add_archive_element (struct bfd_link_info *info,
       (if enabled) may possibly alter it to point to a replacement
       BFD, but we still want to output the original BFD filename.  */
    orig_input = *input;
@@ -593,8 +623,7 @@ index c5b7d88..e8780be 100644
 -      int fd = open (bfd_my_archive (abfd)->filename, O_RDONLY | O_BINARY);
 -      if (fd >= 0)
 +      if (archive == NULL)
-+	info_msg (_("plugin ignored non-archive member: %s\n"),
-+		  abfd->filename);
++	info_msg (_("plugin ignored non-archive member: %B\n"), abfd);
 +      else
  	{
 +	  /* We must offer this archive member to the plugins to claim.  */
@@ -605,8 +634,8 @@ index c5b7d88..e8780be 100644
 +	  if (fd < 0)
 +	    {
 +	      bfd_set_error (bfd_error_system_call);
-+	      einfo (_("%P%F: plugin cannot open archive %s: %E\n"),
-+		     archive->filename);
++	      einfo (_("%P%F: plugin cannot open archive %B: %E\n"),
++		     archive);
 +	    }
 +
  	  /* Offset and filesize must refer to the individual archive
@@ -618,7 +647,7 @@ index c5b7d88..e8780be 100644
  	  file.offset = abfd->origin;
  	  file.filesize = arelt_size (abfd);
  	  file.fd = fd;
-@@ -836,6 +849,9 @@ add_archive_element (struct bfd_link_info *info,
+@@ -836,6 +848,9 @@ add_archive_element (struct bfd_link_info *info,
  	  close (fd);
  	  if (claimed)
  	    {
@@ -628,15 +657,16 @@ index c5b7d88..e8780be 100644
  	      /* Substitute the dummy BFD.  */
  	      input->the_bfd = file.handle;
  	      input->claimed = TRUE;
-@@ -846,6 +862,8 @@ add_archive_element (struct bfd_link_info *info,
- 	    {
- 	      /* Abandon the dummy BFD.  */
+@@ -848,6 +863,9 @@ add_archive_element (struct bfd_link_info *info,
  	      bfd_close_all_done (file.handle);
-+	      /* Mark this input has been processed by plugin.  */
-+	      input->the_bfd->flags |= BFD_PLUGIN;
  	      input->claimed = FALSE;
  	    }
++
++	  /* Mark this input has been processed by plugin.  */
++	  input->the_bfd->flags |= BFD_PLUGIN;
  	}
+     }
+ #endif /* ENABLE_PLUGINS */
 @@ -898,16 +916,16 @@ add_archive_element (struct bfd_link_info *info,
  	  header_printed = TRUE;
  	}
@@ -658,10 +688,23 @@ index c5b7d88..e8780be 100644
  		 + 2);
  	}
 diff --git a/ld/lexsup.c b/ld/lexsup.c
-index e4356bc..722bbf6 100644
+index e4356bc..94fa2cd 100644
 --- a/ld/lexsup.c
 +++ b/ld/lexsup.c
-@@ -719,6 +719,7 @@ parse_args (unsigned argc, char **argv)
+@@ -283,6 +283,12 @@ static const struct ld_option ld_options[] =
+     '\0', N_("PLUGIN"), N_("Load named plugin"), ONE_DASH },
+   { {"plugin-opt", required_argument, NULL, OPTION_PLUGIN_OPT},
+     '\0', N_("ARG"), N_("Send arg to last-loaded plugin"), ONE_DASH },
++  { {"flto", optional_argument, NULL, OPTION_IGNORE},
++    '\0', NULL, N_("Ignored for GCC LTO option compatibility"),
++    ONE_DASH },
++  { {"flto-partition=", required_argument, NULL, OPTION_IGNORE},
++    '\0', NULL, N_("Ignored for GCC LTO option compatibility"),
++    ONE_DASH },
+ #endif /* ENABLE_PLUGINS */
+   { {"Qy", no_argument, NULL, OPTION_IGNORE},
+     '\0', NULL, N_("Ignored for SVR4 compatibility"), ONE_DASH },
+@@ -719,6 +725,7 @@ parse_args (unsigned argc, char **argv)
      {
        int longind;
        int optc;
@@ -669,7 +712,7 @@ index e4356bc..722bbf6 100644
  
        /* Using last_optind lets us avoid calling ldemul_parse_args
  	 multiple times on a single option, which would lead to
-@@ -757,7 +758,10 @@ parse_args (unsigned argc, char **argv)
+@@ -757,7 +764,10 @@ parse_args (unsigned argc, char **argv)
  	  einfo (_("%P%F: use the --help option for usage information\n"));
  
  	case 1:			/* File name.  */
@@ -681,7 +724,7 @@ index e4356bc..722bbf6 100644
  	  break;
  
  	case OPTION_IGNORE:
-@@ -914,7 +918,10 @@ parse_args (unsigned argc, char **argv)
+@@ -914,7 +924,10 @@ parse_args (unsigned argc, char **argv)
  	  ldfile_add_library_path (optarg, TRUE);
  	  break;
  	case 'l':
@@ -693,7 +736,7 @@ index e4356bc..722bbf6 100644
  	  break;
  	case 'M':
  	  config.map_filename = "-";
-@@ -1099,9 +1106,11 @@ parse_args (unsigned argc, char **argv)
+@@ -1099,9 +1112,11 @@ parse_args (unsigned argc, char **argv)
  	    if (stat (optarg, &s) >= 0
  		&& ! S_ISDIR (s.st_mode))
  	      {
@@ -708,7 +751,7 @@ index e4356bc..722bbf6 100644
  		break;
  	      }
  	  }
-@@ -1483,6 +1492,7 @@ parse_args (unsigned argc, char **argv)
+@@ -1483,6 +1498,7 @@ parse_args (unsigned argc, char **argv)
  	  break;
  	case '(':
  	  lang_enter_group ();
@@ -716,7 +759,7 @@ index e4356bc..722bbf6 100644
  	  ingroup++;
  	  break;
  	case ')':
-@@ -1490,6 +1500,7 @@ parse_args (unsigned argc, char **argv)
+@@ -1490,6 +1506,7 @@ parse_args (unsigned argc, char **argv)
  	    einfo (_("%P%F: group ended before it began (--help for usage)\n"));
  
  	  lang_leave_group ();

@@ -22,7 +22,7 @@ patches="
 	binutils-signed-5.patch
 	binutils-weakdef-2.patch
 	bfd-64k-2.patch
-	binutils-2stage-3.patch
+	binutils-2stage-4.patch
 "
 
 if [ -n "$clean" ]
