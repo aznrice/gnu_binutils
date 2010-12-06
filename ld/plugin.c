@@ -307,10 +307,31 @@ asymbol_from_plugin_symbol (bfd *abfd, asymbol *asym,
   if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
     {
       elf_symbol_type *elfsym = elf_symbol_from (abfd, asym);
+      unsigned char visibility;
+
       if (!elfsym)
-	einfo (_("%P%F: %s: non-ELF symbol in ELF BFD!"), asym->name);
-      elfsym->internal_elf_sym.st_other &= ~3;
-      elfsym->internal_elf_sym.st_other |= ldsym->visibility;
+	einfo (_("%P%F: %s: non-ELF symbol in ELF BFD!\n"), asym->name);
+      switch (ldsym->visibility)
+	{
+	default:
+	  einfo (_("%P%F: unknown ELF symbol visibility: %d!\n"),
+		 ldsym->visibility);
+	case LDPV_DEFAULT:
+	  visibility = STV_DEFAULT;
+	  break;
+	case LDPV_PROTECTED:
+	  visibility = STV_PROTECTED;
+	  break;
+	case LDPV_INTERNAL:
+	  visibility = STV_INTERNAL;
+	  break;
+	case LDPV_HIDDEN:
+	  visibility = STV_HIDDEN;
+	  break;
+	}
+      elfsym->internal_elf_sym.st_other
+	= (visibility | (elfsym->internal_elf_sym.st_other
+			 & ~ELF_ST_VISIBILITY (-1)));
     }
 
   return LDPS_OK;
@@ -416,8 +437,8 @@ is_visible_from_outside (struct ld_plugin_symbol *lsym, asection *section,
 	 opportunities during LTRANS at worst; it will not give false
 	 negatives, which can lead to the disastrous conclusion that the
 	 related symbol is IRONLY.  (See GCC PR46319 for an example.)  */
-      return lsym->visibility == LDPV_DEFAULT
-	|| lsym->visibility == LDPV_PROTECTED;
+      return (lsym->visibility == LDPV_DEFAULT
+	      || lsym->visibility == LDPV_PROTECTED);
     }
   return FALSE;
 }
@@ -455,7 +476,7 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms)
 	  && blhe->type != bfd_link_hash_common)
 	{
 	  /* We should not have a new, indirect or warning symbol here.  */
-	  einfo ("%P%F: %s: plugin symbol table corrupt (sym type %d)",
+	  einfo ("%P%F: %s: plugin symbol table corrupt (sym type %d)\n",
 		 called_plugin->name, blhe->type);
 	}
 
@@ -566,12 +587,14 @@ message (int level, const char *format, ...)
     case LDPL_ERROR:
     default:
 	{
-	  char *newfmt = ACONCAT ((level == LDPL_FATAL ? "%F" : "%X",
-				   format, NULL));
+	  char *newfmt = ACONCAT ((level == LDPL_FATAL ? "%P%F:" : "%P%X:",
+				   format, "\n", NULL));
 	  vfinfo (stderr, newfmt, args, TRUE);
 	}
       break;
     }
+
+  fputc('\n', stderr);
 
   va_end (args);
   return LDPS_OK;
@@ -848,7 +871,7 @@ plugin_notice (struct bfd_link_info *info ATTRIBUTE_UNUSED,
       /* This is a ref from a non-IR file, so note the ref'd symbol
 	 in the non-IR-only hash.  */
       if (!bfd_hash_lookup (non_ironly_hash, name, TRUE, TRUE))
-	einfo (_("%P%X: %s: hash table failure adding symbol %s"),
+	einfo (_("%P%X: %s: hash table failure adding symbol %s\n"),
 	       abfd->filename, name);
     }
   else if (!is_ref && is_dummy)
@@ -881,10 +904,10 @@ plugin_multiple_definition (struct bfd_link_info *info, const char *name,
       struct bfd_link_hash_entry *blhe
 	= bfd_link_hash_lookup (info->hash, name, FALSE, FALSE, FALSE);
       if (!blhe)
-	einfo (_("%P%X: %s: can't find IR symbol '%s'"), nbfd->filename,
+	einfo (_("%P%X: %s: can't find IR symbol '%s'\n"), nbfd->filename,
 	       name);
       else if (blhe->type != bfd_link_hash_defined)
-	einfo (_("%P%x: %s: bad IR symbol type %d"), name, blhe->type);
+	einfo (_("%P%x: %s: bad IR symbol type %d\n"), name, blhe->type);
       /* Replace it with new details.  */
       blhe->u.def.section = nsec;
       blhe->u.def.value = nval;
