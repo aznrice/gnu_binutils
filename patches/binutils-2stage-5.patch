@@ -3,6 +3,7 @@ bfd/
 2010-12-05  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
+	PR ld/12277
 	* bfd.c (BFD_PLUGIN): New.
 	(BFD_FLAGS_SAVED): Add BFD_PLUGIN.
 	(BFD_FLAGS_FOR_BFD_USE_MASK): Likewise.
@@ -14,6 +15,7 @@ ld/
 2010-12-05  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
+	PR ld/12277
 	* ldfile.c (ldfile_try_open_bfd): Set BFD_PLUGIN for plugin. Set
 	stage1.
 
@@ -64,10 +66,11 @@ ld/testsuite/
 2010-12-05  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
-	* ld-plugin/func1i.c: New.
+	PR ld/12277
+	* ld-plugin/func1p.c: New.
 	* ld-plugin/func2.c: Likewise.
-	* ld-plugin/func2h.c: Likewise.
-	* ld-plugin/func3p.c: Likewise.
+	* ld-plugin/func2i.c: Likewise.
+	* ld-plugin/func3h.c: Likewise.
 
 	* ld-plugin/plugin.exp: Add object files for symbols claimed
 	or created by testplugin.
@@ -124,7 +127,7 @@ index a9ce7cc..7265156 100644
  .  {* Currently my_archive is tested before adding origin to
  .     anything. I believe that this can become always an add of
 diff --git a/ld/ldfile.c b/ld/ldfile.c
-index 3d9feb5..0ec49bf 100644
+index a9a6954..9601a45 100644
 --- a/ld/ldfile.c
 +++ b/ld/ldfile.c
 @@ -312,46 +312,64 @@ success:
@@ -225,7 +228,7 @@ index 3d9feb5..0ec49bf 100644
       their chance to claim it, so this is success.  */
    return TRUE;
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 2927ec8..a955503 100644
+index e804a53..1453db3 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -70,6 +70,8 @@ static lang_statement_list_type *stat_save[10];
@@ -537,7 +540,7 @@ index 2927ec8..a955503 100644
 +  info_msg ("\n");
 +}
 diff --git a/ld/ldlang.h b/ld/ldlang.h
-index 0b7b43b..8ba3e5a 100644
+index 15e5587..f41fe44 100644
 --- a/ld/ldlang.h
 +++ b/ld/ldlang.h
 @@ -279,6 +279,9 @@ typedef struct lang_input_statement_struct
@@ -768,7 +771,7 @@ index e4356bc..94fa2cd 100644
  	  break;
  
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 6afc14b..c321996 100644
+index 8c919b6..d78c058 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -211,6 +211,17 @@ plugin_opt_plugin_arg (const char *arg)
@@ -789,7 +792,7 @@ index 6afc14b..c321996 100644
    newarg = xmalloc (sizeof *newarg);
    newarg->arg = arg;
    newarg->next = NULL;
-@@ -520,9 +531,7 @@ static enum ld_plugin_status
+@@ -541,9 +552,7 @@ static enum ld_plugin_status
  add_input_file (const char *pathname)
  {
    ASSERT (called_plugin);
@@ -800,7 +803,7 @@ index 6afc14b..c321996 100644
    return LDPS_OK;
  }
  
-@@ -531,9 +540,7 @@ static enum ld_plugin_status
+@@ -552,9 +561,7 @@ static enum ld_plugin_status
  add_input_library (const char *pathname)
  {
    ASSERT (called_plugin);
@@ -811,16 +814,16 @@ index 6afc14b..c321996 100644
    return LDPS_OK;
  }
  
-diff --git a/ld/testsuite/ld-plugin/func1i.c b/ld/testsuite/ld-plugin/func1i.c
+diff --git a/ld/testsuite/ld-plugin/func1p.c b/ld/testsuite/ld-plugin/func1p.c
 new file mode 100644
-index 0000000..eb334a8
+index 0000000..917dcbb
 --- /dev/null
-+++ b/ld/testsuite/ld-plugin/func1i.c
++++ b/ld/testsuite/ld-plugin/func1p.c
 @@ -0,0 +1,8 @@
 +extern int retval;
 +
 +int
-+__attribute__ ((visibility ("internal")))
++__attribute__ ((visibility ("protected")))
 +func1 (void)
 +{
 +  return retval;
@@ -838,30 +841,30 @@ index 0000000..d233fcf
 +{
 +  return retval;
 +}
-diff --git a/ld/testsuite/ld-plugin/func2h.c b/ld/testsuite/ld-plugin/func2h.c
+diff --git a/ld/testsuite/ld-plugin/func2i.c b/ld/testsuite/ld-plugin/func2i.c
 new file mode 100644
-index 0000000..9398108
+index 0000000..00d7cdd
 --- /dev/null
-+++ b/ld/testsuite/ld-plugin/func2h.c
++++ b/ld/testsuite/ld-plugin/func2i.c
+@@ -0,0 +1,8 @@
++extern int retval;
++
++int
++__attribute__ ((visibility ("internal")))
++func2 (void)
++{
++  return retval;
++}
+diff --git a/ld/testsuite/ld-plugin/func3h.c b/ld/testsuite/ld-plugin/func3h.c
+new file mode 100644
+index 0000000..525de63
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/func3h.c
 @@ -0,0 +1,8 @@
 +extern int retval;
 +
 +int
 +__attribute__ ((visibility ("hidden")))
-+func2 (void)
-+{
-+  return retval;
-+}
-diff --git a/ld/testsuite/ld-plugin/func3p.c b/ld/testsuite/ld-plugin/func3p.c
-new file mode 100644
-index 0000000..fdba15b
---- /dev/null
-+++ b/ld/testsuite/ld-plugin/func3p.c
-@@ -0,0 +1,8 @@
-+extern int retval;
-+
-+int
-+__attribute__ ((visibility ("protected")))
 +func3 (void)
 +{
 +  return retval;
@@ -910,7 +913,7 @@ index b74f4a6..a4db899 100644
  hook called: claim_file tmpdir/main.o \[@0/.* not claimed
  hook called: claim_file tmpdir/func.o \[@0/.* CLAIMED
 diff --git a/ld/testsuite/ld-plugin/plugin.exp b/ld/testsuite/ld-plugin/plugin.exp
-index 8952f1d..665c2b4 100644
+index 8952f1d..fd0f939 100644
 --- a/ld/testsuite/ld-plugin/plugin.exp
 +++ b/ld/testsuite/ld-plugin/plugin.exp
 @@ -70,6 +70,7 @@ set plugin_nm_output ""
@@ -950,9 +953,9 @@ index 8952f1d..665c2b4 100644
  			-plugin-opt sym:${_}func3::0:3:0 \
  			-plugin-opt dumpresolutions \
 +			-plugin-opt add:tmpdir/func.o \
-+			-plugin-opt add:tmpdir/func1i.o \
-+			-plugin-opt add:tmpdir/func2h.o \
-+			-plugin-opt add:tmpdir/func3p.o \
++			-plugin-opt add:tmpdir/func1p.o \
++			-plugin-opt add:tmpdir/func2i.o \
++			-plugin-opt add:tmpdir/func3h.o \
      $testobjfiles $libs" "" "" {{ld plugin-ignore.d} \
  				{readelf -s plugin-vis-1.d}} "main.x" ] \
  ]
@@ -962,9 +965,9 @@ index 8952f1d..665c2b4 100644
  
 -if { [is_elf_format] } {
 +if { [is_elf_format] \
-+     && [ld_compile "$CC $CFLAGS" $srcdir/$subdir/func1i.c tmpdir/func1i.o] \
-+     && [ld_compile "$CC $CFLAGS" $srcdir/$subdir/func2h.c tmpdir/func2h.o] \
-+     && [ld_compile "$CC $CFLAGS" $srcdir/$subdir/func3p.c tmpdir/func3p.o] } {
++     && [ld_compile "$CC $CFLAGS" $srcdir/$subdir/func1p.c tmpdir/func1p.o] \
++     && [ld_compile "$CC $CFLAGS" $srcdir/$subdir/func2i.c tmpdir/func2i.o] \
++     && [ld_compile "$CC $CFLAGS" $srcdir/$subdir/func3h.c tmpdir/func3h.o] } {
      run_ld_link_tests $plugin_extra_elf_tests
  }
  
