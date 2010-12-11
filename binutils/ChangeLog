@@ -1,3 +1,49 @@
+2010-12-10  Alan Modra  <amodra@gmail.com>
+
+	* binemul.h (do_ar_emul_append): Declare.
+	* binemul.c (any_ok): New function.
+	(do_ar_emul_append): Rename from do_ar_emul_default_append.  Make
+	global, add check arg.  Adjust callers.
+	(ar_emul_default_replace): Tidy.
+	* configure.tgt (powerpc-*-aix[5-9]*,rs6000-*-aix[5-9]*): Use
+	bin_aix_emulation.
+	* emul_aix.c (bin_aix5_emulation, ar_emul_aix_internal): Delete.
+	(ar_emul_aix5_append, ar_emul_aix5_replace): Delete.
+	(check_aix): New function.
+	(ar_emul_aix_append, ar_emul_aix_replace): Rewrite.
+
+2010-12-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* .gitignore: New file.
+
+2010-12-08  Alan Modra  <amodra@gmail.com>
+
+	* ar.c: Formatting.
+	(usage): Correct help strings.
+	(decode_options): Correct getopt_long short options.  Remove
+	duplicate non-handled option message.
+	(main): Don't handle -M specially.
+
+2010-12-08  Arnaud Lacombe  <lacombar@gmail.com>
+
+	* ar.c (long_options): Add target.
+	(decode_options): Handle the --target option.
+	(open_inarch): Check for plugin's target, default to --target
+	(replace_members): Use generic `target'.
+
+	* ar.c (operation): New global variable.
+	(show_version): Likewise.
+	(show_help): Likewise.
+	(long_options): Likewise.
+	(usage): Fix help string argument order.
+	(decode_options): New.
+	(ranlib_main): Use getopt_long.
+	(main): Use decode_options.
+
+	* ar.c (main): Split ranlib path.
+	(ranlib_usage): New
+	(ranlib_main): New
+
 2010-12-03  Doug Evans  <dje@google.com>
 
 	* dwarf.c: #include "bfd_stdint.h".

@@ -1,8 +1,30 @@
+2010-12-10  Ian Lance Taylor  <iant@google.com>
+
+	PR bootstrap/46819
+	* configure.ac: For --disable-libgcj clear libgcj_saved.
+	* configure: Rebuild.
+
+2010-12-10  Tobias Burnus  <burnus@net-b.de>
+
+	PR fortran/46540
+	* configure.ac: Add --disable-libquadmath and
+	--disable-libquadmath-support.
+	* configure: Regenerate.
+
+2010-12-10  Tristan Gingold  <gingold@adacore.com>
+
+	* src-release (ETC_SUPPORT): add gnu-oids.texi
+
 2010-12-03  Hans-Peter Nilsson  <hp@axis.com>
 
 	PR libffi/46792
 	* configure.ac (cris-*-elf, crisv32-*-elf): Disable target-libffi.
 	* configure: Regenerate.
+
+2010-12-02  Ian Lance Taylor  <iant@google.com>
+
+	* configure.ac: Always set default for poststage1_ldflags to
+	-static-libstdc++ -static-libgcc.
 
 2010-12-02  Jeff Johnston  <jjohnstn@redhat.com>
 

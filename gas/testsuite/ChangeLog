@@ -1,3 +1,48 @@
+2010-12-11 Mingming Sun <mingm.sun@gmail.com>
+
+	* gas/mips/loongson-3a.s, gas/mips/loongson-3a.d: New test.
+	* gas/mips/mips.exp: Run it.
+
+2010-12-09  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/elf_ase_mips16.d: Update test for new MIPS16 ASE flag
+	semantics.
+	* gas/mips/elf_ase_mips16-2.d: New test.
+	* gas/mips/nop.s: Source for the new test.
+	* gas/mips/mips.exp: Run the new test.
+
+2010-12-09  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/jal-svr4pic.d: Also use wildcard address matching in
+	relocations.
+	* gas/mips/mips1@jal-svr4pic.d: Likewise.
+	* gas/mips/jal-svr4pic-noreorder.d: Likewise.
+	* gas/mips/mips1@jal-svr4pic-noreorder.d: Likewise.
+
+2010-12-09  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/ldstla-32.d: Update according to a 16-bit constant
+	offset optimization.
+	* gas/mips/ldstla-32-mips3.d: Likewise.
+	* gas/mips/ldstla-32-shared.d: Likewise.
+	* gas/mips/ldstla-32-mips3-shared.d: Likewise.
+
+2010-12-09  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/at-2.l: Adjust according to message capitalization
+	fixes.
+	* gas/mips/illegal.l: Likewise.
+	* gas/mips/jalr.l: Likewise.
+	* gas/mips/octeon-ill.l: Likewise.
+	* gas/mips/tls-ill.l: Likewise.
+
+2010-12-09  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/ldstla-32.d: Use wildcard address matching.
+	* gas/mips/ldstla-32-mips3.d: Likewise.
+	* gas/mips/ldstla-32-shared.d: Likewise.
+	* gas/mips/ldstla-32-mips3-shared.d: Likewise.
+
 2010-12-02  Richard Sandiford  <richard.sandiford@linaro.org>
 
 	* gas/i386/ifunc-2.s, gas/i386/ifunc-2.l: New test.
