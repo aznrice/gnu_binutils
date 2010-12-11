@@ -829,7 +829,7 @@ index a9a6954..e1568d6 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index e804a53..2302f57 100644
+index e804a53..2561005 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -37,6 +37,7 @@
@@ -1087,7 +1087,7 @@ index e804a53..2302f57 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -7852,3 +7975,1162 @@ lang_append_dynamic_list_cpp_new (void)
+@@ -7852,3 +7975,1163 @@ lang_append_dynamic_list_cpp_new (void)
  
    lang_append_dynamic_list (dynamic);
  }
@@ -1388,6 +1388,7 @@ index e804a53..2302f57 100644
 +     the list by archive name and archive member origin.  */
 +  new_opt = (cmdline_union_type *) stat_alloc (sizeof (*new_opt));
 +  new_opt->header.type = cmdline_is_bfd_enum;
++  new_opt->header.next = NULL;
 +  new_opt->abfd.abfd = (bfd *) data;
 +
 +  c = cmdline_object_only_archive_list.head;
