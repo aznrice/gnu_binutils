@@ -1,6 +1,6 @@
 bfd/
 
-2010-12-10  H.J. Lu  <hongjiu.lu@intel.com>
+2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -13,10 +13,7 @@ bfd/
 	(BFD_FLAGS_FOR_BFD_USE_MASK): Likewise.
 	(bfd): Add object_only_section and lto_type.
 
-	* elf.c (special_sections_g): Add ".gnu.lto_" and
-	".gnu_object_only".
-
-	* elflink.c (elf_link_add_archive_symbols): Remove subsbfd.
+	* elf.c (special_sections_g): Add ".gnu_object_only".
 
 	* format.c (bfd_set_lto_type): New.
 	(bfd_check_format_matches): Use it.
@@ -27,7 +24,7 @@ bfd/
 
 binutils/
 
-2010-12-10  H.J. Lu  <hongjiu.lu@intel.com>
+2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -41,26 +38,24 @@ binutils/
 
 gas/testsuite/
 
-2010-12-10  H.J. Lu  <hongjiu.lu@intel.com>
+2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
-	* gas/elf/elf.exp: Run section9.
-
-	* gas/elf/section9.d: New.
-	* gas/elf/section9.s: Likewise.
+	* gas/elf/section9.s: Add the .gnu_object_only test.
+	* gas/elf/section9.d: Updated.
 
 include/
 
-2010-12-10  H.J. Lu  <hongjiu.lu@intel.com>
+2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* bfdlink.h (bfd_link_info): Add emit_gnu_object_only and
 	emitting_gnu_object_only.
 
 include/elf/
 
-2010-12-10  H.J. Lu  <hongjiu.lu@intel.com>
+2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -69,7 +64,7 @@ include/elf/
 
 ld/
 
-2010-12-10  H.J. Lu  <hongjiu.lu@intel.com>
+2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -132,7 +127,7 @@ ld/
 
 ld/testsuite/
 
-2010-12-10  H.J. Lu  <hongjiu.lu@intel.com>
+2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -333,45 +328,17 @@ index a9ce7cc..7cf8a4e 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index 075a668..962616e 100644
+index 0e7cd9a..962616e 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
-@@ -2082,7 +2082,9 @@ static const struct bfd_elf_special_section special_sections_f[] =
- static const struct bfd_elf_special_section special_sections_g[] =
- {
+@@ -2084,6 +2084,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
    { STRING_COMMA_LEN (".gnu.linkonce.b"), -2, SHT_NOBITS,      SHF_ALLOC + SHF_WRITE },
-+  { STRING_COMMA_LEN (".gnu.lto_"),       -1, SHT_PROGBITS,    SHF_EXCLUDE },
+   { STRING_COMMA_LEN (".gnu.lto_"),       -1, SHT_PROGBITS,    SHF_EXCLUDE },
    { STRING_COMMA_LEN (".got"),             0, SHT_PROGBITS,    SHF_ALLOC + SHF_WRITE },
 +  { STRING_COMMA_LEN (".gnu_object_only"), 0, SHT_GNU_OBJECT_ONLY, SHF_EXCLUDE },
    { STRING_COMMA_LEN (".gnu.version"),     0, SHT_GNU_versym,  0 },
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
-diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 32575d9..a8aac7c 100644
---- a/bfd/elflink.c
-+++ b/bfd/elflink.c
-@@ -5011,7 +5011,6 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
- 	{
- 	  struct elf_link_hash_entry *h;
- 	  bfd *element;
--	  bfd *subsbfd = NULL;
- 	  struct bfd_link_hash_entry *undefs_tail;
- 	  symindex mark;
- 
-@@ -5075,11 +5074,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
- 	  undefs_tail = info->hash->undefs_tail;
- 
- 	  if (! (*info->callbacks->add_archive_element)
--				(info, element, symdef->name, &subsbfd))
-+				(info, element, symdef->name, &element))
- 	    goto error_return;
--	  /* Potentially, the add_archive_element hook may have set a
--	     substitute BFD for us.  */
--	  if (! bfd_link_add_symbols (subsbfd ? subsbfd : element, info))
-+	  if (! bfd_link_add_symbols (element, info))
- 	    goto error_return;
- 
- 	  /* If there are any new undefined symbols, we need to make
 diff --git a/bfd/format.c b/bfd/format.c
 index 4d89a85..6feac37 100644
 --- a/bfd/format.c
@@ -511,42 +478,24 @@ index b8ab55b..6d0a368 100644
  
      default:
        if ((sh_type >= SHT_LOPROC) && (sh_type <= SHT_HIPROC))
-diff --git a/gas/testsuite/gas/elf/elf.exp b/gas/testsuite/gas/elf/elf.exp
-index 3babe0b..7f86266 100644
---- a/gas/testsuite/gas/elf/elf.exp
-+++ b/gas/testsuite/gas/elf/elf.exp
-@@ -174,6 +174,7 @@ if { ([istarget "*-*-*elf*"]
-     run_dump_test "section6"
-     run_dump_test "section7"
-     run_dump_test "section8"
-+    run_dump_test "section9"
-     run_dump_test "dwarf2-1"
-     run_dump_test "dwarf2-2"
-     run_dump_test "dwarf2-3"
 diff --git a/gas/testsuite/gas/elf/section9.d b/gas/testsuite/gas/elf/section9.d
-new file mode 100644
-index 0000000..bb66fa5
---- /dev/null
+index 1acf63e..bb66fa5 100644
+--- a/gas/testsuite/gas/elf/section9.d
 +++ b/gas/testsuite/gas/elf/section9.d
-@@ -0,0 +1,8 @@
-+#readelf: -S --wide
-+#name: section flags
-+
-+#...
-+[ 	]*\[.*\][ 	]+\.gnu\.lto_main[ 	]+PROGBITS.*[ 	]+E[   ]+.*
-+[ 	]*\[.*\][ 	]+\.gnu\.lto_\.pureconst[ 	]+PROGBITS.*[ 	]+E[   ]+.*
+@@ -4,4 +4,5 @@
+ #...
+ [ 	]*\[.*\][ 	]+\.gnu\.lto_main[ 	]+PROGBITS.*[ 	]+E[   ]+.*
+ [ 	]*\[.*\][ 	]+\.gnu\.lto_\.pureconst[ 	]+PROGBITS.*[ 	]+E[   ]+.*
 +[ 	]*\[.*\][ 	]+\.gnu_object_only[ 	]+GNU_OBJECT_ONLY.*[ 	]+E[   ]+.*
-+#pass
+ #pass
 diff --git a/gas/testsuite/gas/elf/section9.s b/gas/testsuite/gas/elf/section9.s
-new file mode 100644
-index 0000000..abcdea1
---- /dev/null
+index 6b8b107..abcdea1 100644
+--- a/gas/testsuite/gas/elf/section9.s
 +++ b/gas/testsuite/gas/elf/section9.s
-@@ -0,0 +1,6 @@
-+	.section .gnu.lto_main,"",%progbits
-+	.byte 0,0,0,0
-+	.section .gnu.lto_.pureconst,"",%progbits
-+	.byte 0,0,0,0
+@@ -2,3 +2,5 @@
+ 	.byte 0,0,0,0
+ 	.section .gnu.lto_.pureconst,"",%progbits
+ 	.byte 0,0,0,0
 +	.section .gnu_object_only
 +	.byte 0,0,0,0
 diff --git a/include/bfdlink.h b/include/bfdlink.h
@@ -829,7 +778,7 @@ index a9a6954..e1568d6 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index e804a53..2561005 100644
+index 03a11bd..2561005 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -37,6 +37,7 @@
@@ -920,11 +869,10 @@ index e804a53..2561005 100644
      einfo (_("%P%F: can not create hash table: %E\n"));
  }
  
-@@ -2717,15 +2738,22 @@ load_symbols (lang_input_statement_type *entry,
+@@ -2717,6 +2738,14 @@ load_symbols (lang_input_statement_type *entry,
  		  loaded = FALSE;
  		}
  
--	      subsbfd = NULL;
 +	      if (link_info.emitting_gnu_object_only)
 +		{
 +		  if (!cmdline_on_object_only_archive_list_p (member))
@@ -933,20 +881,10 @@ index e804a53..2561005 100644
 +	      else if (cmdline_claimed_archive_member_p (member))
 +		continue;
 +
-+	      subsbfd = member;
+ 	      subsbfd = member;
  	      if (! ((*link_info.callbacks->add_archive_element)
  		     (&link_info, member, "--whole-archive", &subsbfd)))
- 		abort ();
- 
- 	      /* Potentially, the add_archive_element hook may have set a
- 		 substitute BFD for us.  */
--	      if (! bfd_link_add_symbols (subsbfd ? subsbfd : member,
--					&link_info))
-+	      if (! bfd_link_add_symbols (member, &link_info))
- 		{
- 		  einfo (_("%F%B: could not read symbols: %E\n"), member);
- 		  loaded = FALSE;
-@@ -6249,10 +6277,15 @@ lang_gc_sections (void)
+@@ -6248,10 +6277,15 @@ lang_gc_sections (void)
      {
        LANG_FOR_EACH_INPUT_STATEMENT (f)
  	{
@@ -966,7 +904,7 @@ index e804a53..2561005 100644
  	}
      }
  
-@@ -6418,23 +6451,113 @@ lang_process (void)
+@@ -6417,23 +6451,113 @@ lang_process (void)
    open_input_bfds (statement_list.head, FALSE);
  
  #ifdef ENABLE_PLUGINS
@@ -1087,7 +1025,7 @@ index e804a53..2561005 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -7852,3 +7975,1163 @@ lang_append_dynamic_list_cpp_new (void)
+@@ -7851,3 +7975,1163 @@ lang_append_dynamic_list_cpp_new (void)
  
    lang_append_dynamic_list (dynamic);
  }
