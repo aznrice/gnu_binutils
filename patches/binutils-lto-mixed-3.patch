@@ -778,7 +778,7 @@ index a9a6954..e1568d6 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 03a11bd..2561005 100644
+index 6dc0229..67f6a23 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -37,6 +37,7 @@
@@ -882,9 +882,9 @@ index 03a11bd..2561005 100644
 +		continue;
 +
  	      subsbfd = member;
- 	      if (! ((*link_info.callbacks->add_archive_element)
- 		     (&link_info, member, "--whole-archive", &subsbfd)))
-@@ -6248,10 +6277,15 @@ lang_gc_sections (void)
+ 	      if (!(*link_info.callbacks
+ 		    ->add_archive_element) (&link_info, member,
+@@ -6249,10 +6278,15 @@ lang_gc_sections (void)
      {
        LANG_FOR_EACH_INPUT_STATEMENT (f)
  	{
@@ -904,7 +904,7 @@ index 03a11bd..2561005 100644
  	}
      }
  
-@@ -6417,23 +6451,113 @@ lang_process (void)
+@@ -6418,23 +6452,113 @@ lang_process (void)
    open_input_bfds (statement_list.head, FALSE);
  
  #ifdef ENABLE_PLUGINS
@@ -1025,7 +1025,7 @@ index 03a11bd..2561005 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -7851,3 +7975,1163 @@ lang_append_dynamic_list_cpp_new (void)
+@@ -7852,3 +7976,1162 @@ lang_append_dynamic_list_cpp_new (void)
  
    lang_append_dynamic_list (dynamic);
  }
@@ -1251,8 +1251,7 @@ index 03a11bd..2561005 100644
 +	calimed = c->abfd.abfd;
 +	claimed_archive = bfd_my_archive (calimed);
 +	if (strcmp (archive->filename, claimed_archive->filename) == 0
-+	    && abfd->origin == calimed->origin
-+	    && arelt_size (abfd) == arelt_size (calimed))
++	    && abfd->origin == calimed->origin)
 +	  return TRUE;
 +	break;
 +      }
@@ -2273,7 +2272,7 @@ index 15e5587..b8dfbb6 100644
 +
  #endif
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index 5530dca..cc852f2 100644
+index 5530dca..9931c45 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
 @@ -213,6 +213,9 @@ main (int argc, char **argv)
@@ -2395,7 +2394,7 @@ index 5530dca..cc852f2 100644
  	  file.offset = abfd->origin;
  	  file.filesize = arelt_size (abfd);
  	  file.fd = fd;
-@@ -829,11 +822,17 @@ add_archive_element (struct bfd_link_info *info,
+@@ -829,21 +822,36 @@ add_archive_element (struct bfd_link_info *info,
  	  close (fd);
  	  if (claimed)
  	    {
@@ -2413,9 +2412,13 @@ index 5530dca..cc852f2 100644
  	    }
  	  else
  	    {
-@@ -841,9 +840,14 @@ add_archive_element (struct bfd_link_info *info,
+ 	      /* Abandon the dummy BFD.  */
  	      bfd_close_all_done (file.handle);
  	      input->claimed = FALSE;
++	      /* Warn about the unclaimed archive member with IR.  */
++	      if (abfd->lto_type == lto_ir_object)
++		info_msg ("%P: LTO IR sections in %B aren't used\n",
++			  abfd);
  	    }
 +
 +	  /* Mark this input has been processed by plugin.  */
@@ -2428,7 +2431,7 @@ index 5530dca..cc852f2 100644
  
    ldlang_add_file (input);
  
-@@ -891,16 +895,16 @@ add_archive_element (struct bfd_link_info *info,
+@@ -891,16 +899,16 @@ add_archive_element (struct bfd_link_info *info,
  	  header_printed = TRUE;
  	}
  
@@ -2448,7 +2451,7 @@ index 5530dca..cc852f2 100644
  		 + strlen (bfd_get_filename (abfd))
  		 + 2);
  	}
-@@ -1477,3 +1481,38 @@ notice (struct bfd_link_info *info,
+@@ -1477,3 +1485,38 @@ notice (struct bfd_link_info *info,
  
    return TRUE;
  }
