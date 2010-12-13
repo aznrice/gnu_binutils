@@ -23,6 +23,7 @@ patches="
 	binutils-weakdef-2.patch
 	bfd-64k-2.patch
 	binutils-lto-mixed-3.patch
+	binutils-init-mixed-1.patch
 "
 
 if [ -n "$clean" ]

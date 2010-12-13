@@ -1,0 +1,684 @@
+config/
+
+2010-12-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* initfini-array.m4: New.
+
+ld/
+
+2010-12-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.am (GENSCRIPTS): Add @enable_initfini_array@.
+
+	* NEWS: Mention SORT_BY_INIT_PRIORITY.
+
+	* configure.in:  Add ACX_INITFINI_ARRAY.
+
+	* genscripts.sh (ENABLE_INITFINI_ARRAY): New.
+
+	* ld.h (sort_type): Add by_init_priority.
+
+	* ld.texinfo: Document SORT_BY_INIT_PRIORITY.
+
+	* ldgram.y (SORT_BY_INIT_PRIORITY): New.
+	(wildcard_spec): Handle SORT_BY_INIT_PRIORITY.
+
+	* ldlang.c (get_init_priority): New.
+	(compare_section): Use get_init_priority for by_init_priority.
+
+	* ldlex.l (SORT_BY_INIT_PRIORITY): New.
+
+	* scripttempl/elf.sc: Support ENABLE_INITFINI_ARRAY.
+
+	* Makefile.in: Regenerated.
+	* aclocal.m4: Regenerated.
+	* config.in: Likewise.
+	* configure: Likewise.
+
+ld/testsuite/
+
+2010-12-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/elf.exp (array_tests): Add init-mixed.
+	(array_tests_static): Likewise.
+	Also delete tmpdir/init-mixed.
+
+	* ld-elf/init-mixed.c: New.
+	* ld-elf/init-mixed.out: Likewise.
+
+diff --git a/config/initfini-array.m4 b/config/initfini-array.m4
+new file mode 100644
+index 0000000..c09f144
+--- /dev/null
++++ b/config/initfini-array.m4
+@@ -0,0 +1,42 @@
++dnl Copyright (C) 2010 Free Software Foundation, Inc.
++dnl
++dnl GCC is free software; you can redistribute it and/or modify
++dnl it under the terms of the GNU General Public License as published by
++dnl the Free Software Foundation; either version 3, or (at your option)
++dnl any later version.
++dnl
++dnl GCC is distributed in the hope that it will be useful,
++dnl but WITHOUT ANY WARRANTY; without even the implied warranty of
++dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++dnl GNU General Public License for more details.
++dnl
++dnl You should have received a copy of the GNU General Public License
++dnl along with GCC; see the file COPYING3.  If not see
++dnl <http://www.gnu.org/licenses/>.
++
++AC_DEFUN([ACX_INITFINI_ARRAY],
++[AC_REQUIRE([AC_CANONICAL_BUILD])
++AC_REQUIRE([AC_CANONICAL_TARGET])
++AC_ARG_ENABLE(initfini-array,
++	[  --enable-initfini-array	use .init_array/.fini_array sections],
++	[], [
++AC_CACHE_CHECK(for .preinit_array/.init_array/.fini_array support,
++		 gcc_cv_initfini_array, [dnl
++  if test "x${build}" = "x${target}" ; then
++    AC_RUN_IFELSE([AC_LANG_SOURCE([
++static int x = -1;
++int main (void) { return x; }
++int foo (void) { x = 0; }
++int (*fp) (void) __attribute__ ((section (".init_array"))) = foo;])],
++	     [gcc_cv_initfini_array=yes], [gcc_cv_initfini_array=no],
++	     [gcc_cv_initfini_array=no])
++   else
++     gcc_cv_initfini_array=no
++   fi])
++  enable_initfini_array=$gcc_cv_initfini_array
++])
++AC_SUBST(enable_initfini_array)])
++if test $enable_initfini_array = yes; then
++  AC_DEFINE(HAVE_INITFINI_ARRAY, 1,
++    [Define .init_array/.fini_array sections are available and working.])
++fi])
+diff --git a/ld/Makefile.am b/ld/Makefile.am
+index d9e1bcc..9f016df 100644
+--- a/ld/Makefile.am
++++ b/ld/Makefile.am
+@@ -611,7 +611,7 @@ stringify.sed: ${srcdir}/emultempl/$(STRINGIFY)
+ 
+ # These all start with e so 'make clean' can find them.
+ 
+-GENSCRIPTS = LIB_PATH='${LIB_PATH}' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@ @target@ @target_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@
++GENSCRIPTS = LIB_PATH='${LIB_PATH}' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@ @target@ @target_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@ @enable_initfini_array@
+ GEN_DEPENDS = $(srcdir)/genscripts.sh stringify.sed
+ ELF_DEPS = $(srcdir)/emultempl/elf32.em $(srcdir)/emultempl/elf-generic.em
+ ELF_GEN_DEPS = $(srcdir)/emultempl/generic.em $(srcdir)/emultempl/elf-generic.em $(srcdir)/emultempl/genelf.em
+diff --git a/ld/Makefile.in b/ld/Makefile.in
+index 01511bc..c807947 100644
+--- a/ld/Makefile.in
++++ b/ld/Makefile.in
+@@ -54,6 +54,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
+ 	$(top_srcdir)/../bfd/warning.m4 $(top_srcdir)/../config/acx.m4 \
+ 	$(top_srcdir)/../config/depstand.m4 \
+ 	$(top_srcdir)/../config/gettext-sister.m4 \
++	$(top_srcdir)/../config/initfini-array.m4 \
+ 	$(top_srcdir)/../config/largefile.m4 \
+ 	$(top_srcdir)/../config/lead-dot.m4 \
+ 	$(top_srcdir)/../config/nls.m4 \
+@@ -299,6 +300,7 @@ datarootdir = @datarootdir@
+ do_compare = @do_compare@
+ docdir = @docdir@
+ dvidir = @dvidir@
++enable_initfini_array = @enable_initfini_array@
+ exec_prefix = @exec_prefix@
+ host = @host@
+ host_alias = @host_alias@
+@@ -797,7 +799,7 @@ EMULATION_FILES = emultempl/pe.em emultempl/armcoff.em
+ POTFILES = $(CFILES) $(HFILES) $(EMULATION_FILES)
+ 
+ # These all start with e so 'make clean' can find them.
+-GENSCRIPTS = LIB_PATH='${LIB_PATH}' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@ @target@ @target_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@
++GENSCRIPTS = LIB_PATH='${LIB_PATH}' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@ @target@ @target_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@ @enable_initfini_array@
+ GEN_DEPENDS = $(srcdir)/genscripts.sh stringify.sed
+ ELF_DEPS = $(srcdir)/emultempl/elf32.em $(srcdir)/emultempl/elf-generic.em
+ ELF_GEN_DEPS = $(srcdir)/emultempl/generic.em $(srcdir)/emultempl/elf-generic.em $(srcdir)/emultempl/genelf.em
+diff --git a/ld/NEWS b/ld/NEWS
+index eaa5b0b..b303490 100644
+--- a/ld/NEWS
++++ b/ld/NEWS
+@@ -1,5 +1,9 @@
+ -*- text -*-
+ 
++* Added SORT_BY_INIT_PRIORITY to the linker script language to permit
++sorting sections by numerical value of the GCC init_priority attribute
++encoded in the section name.
++
+ Changes in 2.21:
+ 
+ 
+diff --git a/ld/aclocal.m4 b/ld/aclocal.m4
+index 2f88266..49d2932 100644
+--- a/ld/aclocal.m4
++++ b/ld/aclocal.m4
+@@ -994,6 +994,7 @@ m4_include([../bfd/warning.m4])
+ m4_include([../config/acx.m4])
+ m4_include([../config/depstand.m4])
+ m4_include([../config/gettext-sister.m4])
++m4_include([../config/initfini-array.m4])
+ m4_include([../config/largefile.m4])
+ m4_include([../config/lead-dot.m4])
+ m4_include([../config/nls.m4])
+diff --git a/ld/config.in b/ld/config.in
+index f49327c..929da90 100644
+--- a/ld/config.in
++++ b/ld/config.in
+@@ -61,6 +61,9 @@
+ /* Define to 1 if you have the `glob' function. */
+ #undef HAVE_GLOB
+ 
++/* Define .init_array/.fini_array sections are available and working. */
++#undef HAVE_INITFINI_ARRAY
++
+ /* Define to 1 if you have the <inttypes.h> header file. */
+ #undef HAVE_INTTYPES_H
+ 
+diff --git a/ld/configure b/ld/configure
+index 088c721..6d4be16 100755
+--- a/ld/configure
++++ b/ld/configure
+@@ -609,6 +609,7 @@ EMUL_EXTRA_OFILES
+ EMULATION_OFILES
+ EMUL
+ STRINGIFY
++enable_initfini_array
+ ENABLE_PLUGINS_FALSE
+ ENABLE_PLUGINS_TRUE
+ NATIVE_LIB_DIRS
+@@ -778,6 +779,7 @@ enable_fast_install
+ with_gnu_ld
+ enable_libtool_lock
+ enable_nls
++enable_initfini_array
+ '
+       ac_precious_vars='build_alias
+ host_alias
+@@ -1427,6 +1429,7 @@ Optional Features:
+                           optimize for fast installation [default=yes]
+   --disable-libtool-lock  avoid locking (might break parallel builds)
+   --disable-nls           do not use Native Language Support
++  --enable-initfini-array	use .init_array/.fini_array sections
+ 
+ Optional Packages:
+   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+@@ -11622,7 +11625,7 @@ else
+   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<_LT_EOF
+-#line 11625 "configure"
++#line 11628 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+@@ -11728,7 +11731,7 @@ else
+   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<_LT_EOF
+-#line 11731 "configure"
++#line 11734 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+@@ -12944,6 +12947,51 @@ else
+ fi
+ 
+ 
++
++
++# Check whether --enable-initfini-array was given.
++if test "${enable_initfini_array+set}" = set; then :
++  enableval=$enable_initfini_array;
++else
++
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for .preinit_array/.init_array/.fini_array support" >&5
++$as_echo_n "checking for .preinit_array/.init_array/.fini_array support... " >&6; }
++if test "${gcc_cv_initfini_array+set}" = set; then :
++  $as_echo_n "(cached) " >&6
++else
++    if test "x${build}" = "x${target}" ; then
++    if test "$cross_compiling" = yes; then :
++  gcc_cv_initfini_array=no
++else
++  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++
++static int x = -1;
++int main (void) { return x; }
++int foo (void) { x = 0; }
++int (*fp) (void) __attribute__ ((section (".init_array"))) = foo;
++_ACEOF
++if ac_fn_c_try_run "$LINENO"; then :
++  gcc_cv_initfini_array=yes
++else
++  gcc_cv_initfini_array=no
++fi
++rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
++  conftest.$ac_objext conftest.beam conftest.$ac_ext
++fi
++
++   else
++     gcc_cv_initfini_array=no
++   fi
++fi
++{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_initfini_array" >&5
++$as_echo "$gcc_cv_initfini_array" >&6; }
++  enable_initfini_array=$gcc_cv_initfini_array
++
++fi
++
++
++
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking for a known getopt prototype in unistd.h" >&5
+ $as_echo_n "checking for a known getopt prototype in unistd.h... " >&6; }
+ if test "${ld_cv_decl_getopt_unistd_h+set}" = set; then :
+diff --git a/ld/configure.in b/ld/configure.in
+index 85fe903..172deaf 100644
+--- a/ld/configure.in
++++ b/ld/configure.in
+@@ -175,6 +175,8 @@ if test x$enable_plugins = xno ; then
+ fi
+ AM_CONDITIONAL([ENABLE_PLUGINS], [test x$enable_plugins = xyes])
+ 
++ACX_INITFINI_ARRAY
++
+ AC_MSG_CHECKING(for a known getopt prototype in unistd.h)
+ AC_CACHE_VAL(ld_cv_decl_getopt_unistd_h,
+ [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <unistd.h>], [extern int getopt (int, char *const*, const char *);])],
+diff --git a/ld/genscripts.sh b/ld/genscripts.sh
+index c86631b..61981bd 100755
+--- a/ld/genscripts.sh
++++ b/ld/genscripts.sh
+@@ -30,6 +30,7 @@
+ #          default_emulation \
+ #          native_lib_dirs \
+ #          use_sysroot \
++#          enable_initfini_array \
+ #          this_emulation \
+ # optional:
+ #          tool_dir \
+@@ -89,9 +90,10 @@ EMULATION_LIBPATH=$8
+ NATIVE_LIB_DIRS=$9
+ shift 9
+ use_sysroot=$1
+-EMULATION_NAME=$2
+-TOOL_LIB=$3
+-CUSTOMIZER_SCRIPT=$4
++ENABLE_INITFINI_ARRAY=$2
++EMULATION_NAME=$3
++TOOL_LIB=$4
++CUSTOMIZER_SCRIPT=$5
+ 
+ # Can't use ${TOOL_LIB:-$target_alias} here due to an Ultrix shell bug.
+ if [ "x${TOOL_LIB}" = "x" ] ; then
+diff --git a/ld/ld.h b/ld/ld.h
+index aa0979d..21323d8 100644
+--- a/ld/ld.h
++++ b/ld/ld.h
+@@ -86,7 +86,8 @@ typedef enum {sort_none, sort_ascending, sort_descending} sort_order;
+ /* A wildcard specification.  */
+ 
+ typedef enum {
+-  none, by_name, by_alignment, by_name_alignment, by_alignment_name
++  none, by_name, by_alignment, by_name_alignment, by_alignment_name,
++  by_init_priority
+ } sort_type;
+ 
+ extern sort_type sort_section;
+diff --git a/ld/ld.texinfo b/ld/ld.texinfo
+index 4c58e48..6d36dfb 100644
+--- a/ld/ld.texinfo
++++ b/ld/ld.texinfo
+@@ -3911,6 +3911,12 @@ into ascending order by name before placing them in the output file.
+ difference is @code{SORT_BY_ALIGNMENT} will sort sections into
+ ascending order by alignment before placing them in the output file.
+ 
++@cindex SORT_BY_INIT_PRIORITY
++@code{SORT_BY_INIT_PRIORITY} is very similar to @code{SORT_BY_NAME}. The
++difference is @code{SORT_BY_INIT_PRIORITY} will sort sections into
++ascending order by numerical value of the GCC init_priority attribute
++encoded in the section name before placing them in the output file.
++
+ @cindex SORT
+ @code{SORT} is an alias for @code{SORT_BY_NAME}.
+ 
+diff --git a/ld/ldgram.y b/ld/ldgram.y
+index 69a84c7..ed0aaa7 100644
+--- a/ld/ldgram.y
++++ b/ld/ldgram.y
+@@ -126,6 +126,7 @@ static int error_index;
+ %token SECTIONS PHDRS INSERT_K AFTER BEFORE
+ %token DATA_SEGMENT_ALIGN DATA_SEGMENT_RELRO_END DATA_SEGMENT_END
+ %token SORT_BY_NAME SORT_BY_ALIGNMENT
++%token SORT_BY_INIT_PRIORITY
+ %token '{' '}'
+ %token SIZEOF_HEADERS OUTPUT_FORMAT FORCE_COMMON_ALLOCATION OUTPUT_ARCH
+ %token INHIBIT_COMMON_ALLOCATION
+@@ -482,6 +483,12 @@ wildcard_spec:
+ 			  $$.sorted = by_name;
+ 			  $$.exclude_name_list = $5;
+ 			}
++	|	SORT_BY_INIT_PRIORITY '(' wildcard_name ')'
++			{
++			  $$.name = $3;
++			  $$.sorted = by_init_priority;
++			  $$.exclude_name_list = NULL;
++			}
+ 	;
+ 
+ exclude_name_list:
+diff --git a/ld/ldlang.c b/ld/ldlang.c
+index 6dc0229..2cd5814 100644
+--- a/ld/ldlang.c
++++ b/ld/ldlang.c
+@@ -371,18 +371,65 @@ match_simple_wild (const char *pattern, const char *name)
+   return TRUE;
+ }
+ 
++/* Return the numerical value of the init_priority attribute from
++   section name NAME.  */
++
++static long int
++get_init_priority (const char *name)
++{
++  char *end;
++  long int init_priority;
++
++  /* GCC uses the following section names for the init_priority
++     attribute with numerical values 101 and 65535 inclusive:
++
++     1: .init_array.NNNN/.fini_array.NNNN: Where NNNN is the
++	decimal numerical value of the init_priority attribute.
++     2: .ctors.NNNN/.ctors.NNNN: Where NNNN is 65535 minus the
++	decimal numerical value of the init_priority attribute.
++   */
++  if (strncmp (name, ".init_array.", 12) == 0
++      || strncmp (name, ".fini_array.", 12) == 0)
++    {
++      init_priority = strtoul (name + 12, &end, 10);
++      return *end ? 0 : init_priority;
++    }
++  else if (strncmp (name, ".ctors.", 7) == 0
++	   || strncmp (name, ".dtors.", 7) == 0)
++    {
++      init_priority = strtoul (name + 7, &end, 10);
++      return *end ? 0 : 65535 - init_priority;
++    }
++
++  return 0;
++}
++
+ /* Compare sections ASEC and BSEC according to SORT.  */
+ 
+ static int
+ compare_section (sort_type sort, asection *asec, asection *bsec)
+ {
+   int ret;
++  long int ainit_priority, binit_priority;
+ 
+   switch (sort)
+     {
+     default:
+       abort ();
+ 
++    case by_init_priority:
++      ainit_priority
++	= get_init_priority (bfd_get_section_name (asec->owner, asec));
++      binit_priority
++	= get_init_priority (bfd_get_section_name (bsec->owner, bsec));
++      if (ainit_priority == 0 || binit_priority == 0)
++	goto sort_by_name;
++      ret = ainit_priority - binit_priority;
++      if (ret)
++	break;
++      else
++	goto sort_by_name;
++
+     case by_alignment_name:
+       ret = (bfd_section_alignment (bsec->owner, bsec)
+ 	     - bfd_section_alignment (asec->owner, asec));
+@@ -391,6 +438,7 @@ compare_section (sort_type sort, asection *asec, asection *bsec)
+       /* Fall through.  */
+ 
+     case by_name:
++sort_by_name:
+       ret = strcmp (bfd_get_section_name (asec->owner, asec),
+ 		    bfd_get_section_name (bsec->owner, bsec));
+       break;
+diff --git a/ld/ldlex.l b/ld/ldlex.l
+index 7f038b3..7560ca2 100644
+--- a/ld/ldlex.l
++++ b/ld/ldlex.l
+@@ -297,6 +297,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
+ <BOTH,SCRIPT>"SORT_BY_NAME"		{ RTOKEN(SORT_BY_NAME); }
+ <BOTH,SCRIPT>"SORT_BY_ALIGNMENT"	{ RTOKEN(SORT_BY_ALIGNMENT); }
+ <BOTH,SCRIPT>"SORT"			{ RTOKEN(SORT_BY_NAME); }
++<BOTH,SCRIPT>"SORT_BY_INIT_PRIORITY"	{ RTOKEN(SORT_BY_INIT_PRIORITY); }
+ <EXPRESSION,BOTH,SCRIPT>"NOLOAD"	{ RTOKEN(NOLOAD);}
+ <EXPRESSION,BOTH,SCRIPT>"DSECT"		{ RTOKEN(DSECT);}
+ <EXPRESSION,BOTH,SCRIPT>"COPY"		{ RTOKEN(COPY);}
+diff --git a/ld/scripttempl/elf.sc b/ld/scripttempl/elf.sc
+index f020a66..a4fcf64 100644
+--- a/ld/scripttempl/elf.sc
++++ b/ld/scripttempl/elf.sc
+@@ -222,18 +222,45 @@ test "${LARGE_SECTIONS}" = "yes" && LARGE_SECTIONS="
+     *(.ldata${RELOCATING+ .ldata.* .gnu.linkonce.l.*})
+     ${RELOCATING+. = ALIGN(. != 0 ? ${ALIGNMENT} : 1);}
+   }"
++if test "${ENABLE_INITFINI_ARRAY}" = "yes"; then
++  SORT_INIT_ARRAY="KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))"
++  SORT_FINI_ARRAY="KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))"
++  CTORS_IN_INIT_ARRAY="KEEP (*(EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o $OTHER_EXCLUDE_FILES) .ctors))"
++  DTORS_IN_FINI_ARRAY="KEEP (*(EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o $OTHER_EXCLUDE_FILES) .dtors))"
++  CTORS="
++    KEEP (*crtend.o(.ctors))
++    KEEP (*crtend?.o(.ctors))"
++  DTORS="
++    KEEP (*crtend.o(.dtors))
++    KEEP (*crtend?.o(.dtors))"
++else
++  SORT_INIT_ARRAY="KEEP (*(SORT(.init_array.*)))"
++  SORT_FINI_ARRAY="KEEP (*(SORT(.fini_array.*)))"
++  CTORS_IN_INIT_ARRAY=
++  DTORS_IN_FINI_ARRAY=
++  CTORS="
++    KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o $OTHER_EXCLUDE_FILES) .ctors))
++    KEEP (*(SORT(.ctors.*)))
++    KEEP (*(.ctors))"
++  DTORS="
++    KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o $OTHER_EXCLUDE_FILES) .dtors))
++    KEEP (*(SORT(.dtors.*)))
++    KEEP (*(.dtors))"
++fi
+ INIT_ARRAY=".init_array   ${RELOCATING-0} :
+   {
+     ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__init_array_start = .);}}
+-    KEEP (*(SORT(.init_array.*)))
++    ${SORT_INIT_ARRAY}
+     KEEP (*(.init_array))
++    ${CTORS_IN_INIT_ARRAY}
+     ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__init_array_end = .);}}
+   }"
+ FINI_ARRAY=".fini_array   ${RELOCATING-0} :
+   {
+     ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__fini_array_start = .);}}
+-    KEEP (*(SORT(.fini_array.*)))
++    ${SORT_FINI_ARRAY}
+     KEEP (*(.fini_array))
++    ${DTORS_IN_FINI_ARRAY}
+     ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN (${USER_LABEL_PREFIX}__fini_array_end = .);}}
+   }"
+ CTOR=".ctors        ${CONSTRUCTING-0} : 
+@@ -247,19 +274,16 @@ CTOR=".ctors        ${CONSTRUCTING-0} :
+        linker won't look for a file to match a
+        wildcard.  The wildcard also means that it
+        doesn't matter which directory crtbegin.o
+-       is in.  */
++       is in. 
+ 
+-    KEEP (*crtbegin.o(.ctors))
+-    KEEP (*crtbegin?.o(.ctors))
+-
+-    /* We don't want to include the .ctor section from
++       We don't want to include the .ctor section from
+        the crtend.o file until after the sorted ctors.
+        The .ctor section from the crtend file contains the
+        end of ctors marker and it must be last */
+ 
+-    KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o $OTHER_EXCLUDE_FILES) .ctors))
+-    KEEP (*(SORT(.ctors.*)))
+-    KEEP (*(.ctors))
++    KEEP (*crtbegin.o(.ctors))
++    KEEP (*crtbegin?.o(.ctors))
++    ${CTORS}
+     ${CONSTRUCTING+${CTOR_END}}
+   }"
+ DTOR=".dtors        ${CONSTRUCTING-0} :
+@@ -267,9 +291,7 @@ DTOR=".dtors        ${CONSTRUCTING-0} :
+     ${CONSTRUCTING+${DTOR_START}}
+     KEEP (*crtbegin.o(.dtors))
+     KEEP (*crtbegin?.o(.dtors))
+-    KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o $OTHER_EXCLUDE_FILES) .dtors))
+-    KEEP (*(SORT(.dtors.*)))
+-    KEEP (*(.dtors))
++    ${DTORS}
+     ${CONSTRUCTING+${DTOR_END}}
+   }"
+ STACK="  .stack        ${RELOCATING-0}${RELOCATING+${STACK_ADDR}} :
+diff --git a/ld/testsuite/ld-elf/elf.exp b/ld/testsuite/ld-elf/elf.exp
+index fc21683..a1e70da 100644
+--- a/ld/testsuite/ld-elf/elf.exp
++++ b/ld/testsuite/ld-elf/elf.exp
+@@ -74,11 +74,13 @@ set array_tests {
+     {"preinit array" "" "" {preinit.c} "preinit" "preinit.out"}
+     {"init array" "" "" {init.c} "init" "init.out"}
+     {"fini array" "" "" {fini.c} "fini" "fini.out"}
++    {"init array mixed" "" "" {init-mixed.c} "init-mixed" "init-mixed.out" "-I."}
+ }
+ set array_tests_static {
+     {"static preinit array" "-static" "" {preinit.c} "preinit" "preinit.out"}
+     {"static init array" "-static" "" {init.c} "init" "init.out"}
+     {"static fini array" "-static" "" {fini.c} "fini" "fini.out"}
++    {"static init array mixed" "" "" {init-mixed.c} "init-mixed" "init-mixed.out" "-I."}
+ }
+ 
+ # NetBSD ELF systems do not currently support the .*_array sections.
+@@ -93,4 +95,4 @@ switch -regexp $target_triplet {
+ }
+ run_ld_link_exec_tests $xfails $array_tests_static
+ 
+-catch "exec rm -f tmpdir/preinit tmpdir/init tmpdir/fini" status
++catch "exec rm -f tmpdir/preinit tmpdir/init tmpdir/fini tmpdir/init-mixed" status
+diff --git a/ld/testsuite/ld-elf/init-mixed.c b/ld/testsuite/ld-elf/init-mixed.c
+new file mode 100644
+index 0000000..1d0c727
+--- /dev/null
++++ b/ld/testsuite/ld-elf/init-mixed.c
+@@ -0,0 +1,98 @@
++#include <stdio.h>
++#include <stdlib.h>
++
++#include "config.h"
++
++#ifdef HAVE_INITFINI_ARRAY
++static int count;
++
++static void
++init1005 ()
++{
++  if (count != 0)
++    abort ();
++  count = 1005;
++}
++void (*const init_array1005[]) ()
++  __attribute__ ((section (".init_array.01005"), aligned (sizeof (void *))))
++  = { init1005 };
++static void
++fini1005 ()
++{
++  if (count != 1005)
++    abort ();
++}
++void (*const fini_array1005[]) ()
++  __attribute__ ((section (".fini_array.01005"), aligned (sizeof (void *))))
++  = { fini1005 };
++
++static void
++ctor1007 ()
++{
++  if (count != 1005)
++    abort ();
++  count = 1007;
++}
++void (*const ctors1007[]) ()
++  __attribute__ ((section (".ctors.64528"), aligned (sizeof (void *))))
++  = { ctor1007 };
++static void
++dtor1007 ()
++{
++  if (count != 1007)
++    abort ();
++  count = 1005;
++}
++void (*const dtors1007[]) ()
++  __attribute__ ((section (".dtors.64528"), aligned (sizeof (void *))))
++  = { dtor1007 };
++
++static void
++init65530 ()
++{
++  if (count != 1007)
++    abort ();
++  count = 65530;
++}
++void (*const init_array65530[]) ()
++  __attribute__ ((section (".init_array.65530"), aligned (sizeof (void *))))
++  = { init65530 };
++static void
++fini65530 ()
++{
++  if (count != 65530)
++    abort ();
++  count = 1007;
++}
++void (*const fini_array65530[]) ()
++  __attribute__ ((section (".fini_array.65530"), aligned (sizeof (void *))))
++  = { fini65530 };
++
++static void
++ctor65535 ()
++{
++  if (count != 65530)
++    abort ();
++  count = 65535;
++}
++void (*const ctors65535[]) ()
++  __attribute__ ((section (".ctors"), aligned (sizeof (void *))))
++  = { ctor65535 };
++static void
++dtor65535 ()
++{
++  if (count != 65535)
++    abort ();
++  count = 65530;
++}
++void (*const dtors65535[]) ()
++  __attribute__ ((section (".dtors"), aligned (sizeof (void *))))
++  = { dtor65535 };
++#endif
++
++int
++main ()
++{
++  printf ("OK\n");
++  return 0;
++}
+diff --git a/ld/testsuite/ld-elf/init-mixed.out b/ld/testsuite/ld-elf/init-mixed.out
+new file mode 100644
+index 0000000..d86bac9
+--- /dev/null
++++ b/ld/testsuite/ld-elf/init-mixed.out
+@@ -0,0 +1 @@
++OK
