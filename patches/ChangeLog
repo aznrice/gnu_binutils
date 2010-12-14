@@ -1,5 +1,10 @@
 2010-12-14  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-compress-rel-1.patch: New.
+	* README: Apply it.
+
+2010-12-14  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-init-mixed-3.patch: New file. Replace ...
 	* binutils-init-mixed-2.patch: This. Removed.
 	* README: Likewise.

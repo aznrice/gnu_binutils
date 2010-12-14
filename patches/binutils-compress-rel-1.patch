@@ -1,0 +1,31 @@
+2010-12-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* simple.c (bfd_simple_get_relocated_section_contents): If a
+	compressed section doesn't use RELA relocations, decompress it
+	first before applying simple relocations.
+
+diff --git a/bfd/simple.c b/bfd/simple.c
+index 03d1a15..ac92f80 100644
+--- a/bfd/simple.c
++++ b/bfd/simple.c
+@@ -207,6 +207,20 @@ bfd_simple_get_relocated_section_contents (bfd *abfd,
+       if (data == NULL)
+ 	return NULL;
+       outbuf = data;
++
++      /* If a compressed section doesn't use RELA relocations, we
++	 decompress it now so that applying simple relocations won't
++	 change its content.  */
++      if (!sec->use_rela_p
++	  && sec->compress_status == DECOMPRESS_SECTION_SIZED)
++	{
++	  bfd_byte *saved_outbuf =  (bfd_byte *) bfd_malloc (amt);
++	  if (saved_outbuf == NULL)
++	    return NULL;
++	  /* Decompress the section.  */
++	  if (!bfd_get_full_section_contents (abfd, sec, &saved_outbuf))
++	    return NULL;
++	}
+     }
+ 
+   /* The sections in ABFD may already have output sections and offsets set.
