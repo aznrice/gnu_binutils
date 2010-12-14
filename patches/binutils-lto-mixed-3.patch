@@ -2272,7 +2272,7 @@ index 15e5587..b8dfbb6 100644
 +
  #endif
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index 5530dca..9931c45 100644
+index 5530dca..39363cd 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
 @@ -213,6 +213,9 @@ main (int argc, char **argv)
@@ -2416,8 +2416,8 @@ index 5530dca..9931c45 100644
  	      bfd_close_all_done (file.handle);
  	      input->claimed = FALSE;
 +	      /* Warn about the unclaimed archive member with IR.  */
-+	      if (abfd->lto_type == lto_ir_object)
-+		info_msg ("%P: LTO IR sections in %B aren't used\n",
++	      if (abfd->lto_type != lto_non_ir_object)
++		info_msg ("%P: LTO IR sections in %B aren't used in stage 2 linking\n",
 +			  abfd);
  	    }
 +

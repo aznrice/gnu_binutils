@@ -1,5 +1,11 @@
 2010-12-13  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-lto-mixed-3.patch: Check lto_non_ir_object instead
+	of lto_ir_object when warning about the unclaimed archive
+	member with IR.
+
+2010-12-13  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-init-mixed-2.patch: New file. Replace ...
 	* binutils-init-mixed-1.patch: This. Removed.
 	* README: Likewise.
