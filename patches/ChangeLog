@@ -1,5 +1,11 @@
 2010-12-13  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-init-mixed-2.patch: New file. Replace ...
+	* binutils-init-mixed-1.patch: This. Removed.
+	* README: Likewise.
+
+2010-12-13  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-init-mixed-1.patch: New.
 	* README: Apply it.
 
