@@ -1,5 +1,10 @@
 2010-12-16  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-pr12327-1.patch: Only make absolute symbol value
+	absolute.
+
+2010-12-16  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-pr12327-1.patch: New.
 	* README: Apply it.
 

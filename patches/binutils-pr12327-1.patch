@@ -3,8 +3,8 @@ ld/
 2010-12-16  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12327
-	* ldexp.c (exp_fold_tree_1): Don't make subexpressions absolute
-	on etree_name.
+	* ldexp.c (exp_fold_tree_1): Only make absolute symbol value
+	absolute.
 
 ld/testsuite/
 
@@ -18,19 +18,57 @@ ld/testsuite/
 	* ld-scripts/defined4.t: Likewise.
 
 diff --git a/ld/ldexp.c b/ld/ldexp.c
-index de7f9f2..4376364 100644
+index de7f9f2..c8fa331 100644
 --- a/ld/ldexp.c
 +++ b/ld/ldexp.c
-@@ -862,7 +862,8 @@ exp_fold_tree_1 (etree_type *tree)
+@@ -691,12 +691,15 @@ fold_name (etree_type *tree)
+ static void
+ exp_fold_tree_1 (etree_type *tree)
+ {
++  bfd_boolean absolute;
++
+   if (tree == NULL)
+     {
+       memset (&expld.result, 0, sizeof (expld.result));
+       return;
+     }
+ 
++  absolute = TRUE;
+   switch (tree->type.node_class)
+     {
+     case etree_value:
+@@ -851,6 +854,21 @@ exp_fold_tree_1 (etree_type *tree)
+ 
+     case etree_name:
+       fold_name (tree);
++      if (tree->name.name
++	  && tree->name.name[0] != '.'
++	  && tree->name.name[1] != '\0'
++	  && link_info.hash)
++	{
++	  struct bfd_link_hash_entry *h;
++
++	  /* Only make absolute symbol value absolute.  */
++	  h = bfd_link_hash_lookup (link_info.hash, tree->name.name,
++				    FALSE, FALSE, TRUE);
++	  if (h
++	      && (h->type == bfd_link_hash_defined
++		  || h->type == bfd_link_hash_defweak))
++	    absolute = (h->u.def.section == bfd_abs_section_ptr);
++	}
+       break;
+ 
+     default:
+@@ -861,7 +879,8 @@ exp_fold_tree_1 (etree_type *tree)
+ 
    /* Any value not inside an output section statement is an
       absolute value.  */
-   if (expld.result.valid_p
--      && expld.section == bfd_abs_section_ptr)
-+      && expld.section == bfd_abs_section_ptr
-+      && tree->type.node_class != etree_name)
+-  if (expld.result.valid_p
++  if (absolute
++      && expld.result.valid_p
+       && expld.section == bfd_abs_section_ptr)
      make_abs ();
  }
- 
 diff --git a/ld/testsuite/ld-scripts/defined.exp b/ld/testsuite/ld-scripts/defined.exp
 index 15cc079..5742ae9 100644
 --- a/ld/testsuite/ld-scripts/defined.exp
