@@ -1,3 +1,9 @@
+2010-12-17  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr12327-2.patch: New file. Replace ...
+	* binutils-pr12327-1.patch: This. Removed.
+	* README: Likewise.
+
 2010-12-16  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-pr12327-1.patch: Only make absolute symbol value
