@@ -127,6 +127,8 @@ struct ldexp_control {
   /* Working results.  */
   etree_value_type result;
   bfd_vma dot;
+  /* Set if an expression contains DEFINED().  */
+  bfd_boolean uses_defined;
 
   /* Current dot and section passed to ldexp folder.  */
   bfd_vma *dotp;
@@ -173,6 +175,8 @@ etree_type *exp_relop
   (asection *, bfd_vma);
 void exp_fold_tree
   (etree_type *, asection *, bfd_vma *);
+void exp_fold_tree_no_dot
+  (etree_type *);
 etree_type *exp_binop
   (int, etree_type *, etree_type *);
 etree_type *exp_trinop

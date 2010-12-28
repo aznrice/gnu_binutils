@@ -1,3 +1,20 @@
+2010-12-24  Alan Modra  <amodra@gmail.com>
+
+	* compress.c (decompress_contents): Style.
+	(bfd_get_full_section_contents): Do not decompress directly into
+	caller buffer or directly return cached section contents.
+	Check malloc return for compressed_buffer.
+
+2010-12-21  Kai Tietz  <kai.tietz@onevision.com>
+
+	* peXXigen.c (_bfd_XXi_final_link_postscript): Use
+	bfd_get_symbol_leading_char to determine "_tls_used" name.
+
+2010-12-21  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	* peXXigen.c (_bfd_XXi_final_link_postscript): Use correct size
+	for windows 64-bit TLS table size.
+
 2010-12-16  DJ Delorie  <dj@redhat.com>
 
 	* reloc.c (BFD_RELOC_RX_ABS16_REV): Add.
