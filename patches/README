@@ -23,8 +23,6 @@ patches="
 	binutils-weakdef-2.patch
 	bfd-64k-2.patch
 	binutils-lto-mixed-3.patch
-	binutils-compress-rel-2.patch
-	binutils-pr12327-2.patch
 "
 
 if [ -n "$clean" ]
