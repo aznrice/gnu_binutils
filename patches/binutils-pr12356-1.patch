@@ -1,0 +1,555 @@
+ld/
+
+2011-01-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12356
+	Revert 2011-12-20 by Alan Modra <amodra@gmail.com>.
+	* ld.texinfo (Expression Section): Remove __ld_compatibility.
+
+	* ldemul.c (after_open_default): Don't check  __ld_compatibility.
+	* ldexp.c (fold_name): Likewise.
+	(exp_fold_tree_1): Likewise.
+
+	* ldlang.c (ld_compatibility): Removed.
+	* ldlang.h (ld_compatibility): Likewise.
+
+	* emultempl/aix.em (gld${EMULATION_NAME}_after_open): Don't call
+	after_open_default.
+	* emultempl/armcoff.em (gld${EMULATION_NAME}_after_open): Likewise.
+	* emultempl/beos.em (gld${EMULATION_NAME}_after_open): Likewise.
+	* emultempl/elf32.em (gld${EMULATION_NAME}_after_open): Likewise.
+	* emultempl/genelf.em (gld${EMULATION_NAME}_after_open): Likewise.
+	* emultempl/lnk960.em (gld${EMULATION_NAME}_after_open): Likewise.
+	* emultempl/m68kcoff.em (gld${EMULATION_NAME}_after_open): Likewise.
+	* emultempl/mmo.em (gld${EMULATION_NAME}_after_open): Likewise.
+	* emultempl/pe.em (gld${EMULATION_NAME}_after_open): Likewise.
+	* emultempl/pep.em (gld${EMULATION_NAME}_after_open): Likewise.
+	* emultempl/sunos.em (gld${EMULATION_NAME}_after_open): Likewise.
+	* emultempl/z80.em (gld${EMULATION_NAME}_after_open): Likewise.
+
+2011-01-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12356
+	* ldlang.c: Revert 2011-12-20 by Alan Modra <amodra@gmail.com>.
+	* ldexp.h: Likewise.
+	* ldexp.c: Likewise.
+	* ldlang.c: Likewise.
+
+ld/testsuite/
+
+2011-01-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12356
+	* ld-scripts/default-script2.d: Revert 2011-12-20 by Alan
+	Modra <amodra@gmail.com>.
+
+	* ld-scripts/defined5.d: New.
+	* ld-scripts/defined5.s: Likewise.
+	* ld-scripts/defined5.t: Likewise.
+
+	* ld-scripts/defined.exp: Run defined5.
+
+diff --git a/ld/emultempl/aix.em b/ld/emultempl/aix.em
+index 60c4fc6..5ccb25c 100644
+--- a/ld/emultempl/aix.em
++++ b/ld/emultempl/aix.em
+@@ -608,8 +608,6 @@ gld${EMULATION_NAME}_after_open (void)
+   bfd_boolean r;
+   struct set_info *p;
+ 
+-  after_open_default ();
+-
+   /* Call ldctor_build_sets, after pretending that this is a
+      relocatable link.  We do this because AIX requires relocation
+      entries for all references to symbols, even in a final
+diff --git a/ld/emultempl/armcoff.em b/ld/emultempl/armcoff.em
+index 20bff14..b3cdde9 100644
+--- a/ld/emultempl/armcoff.em
++++ b/ld/emultempl/armcoff.em
+@@ -133,8 +133,6 @@ gld${EMULATION_NAME}_before_allocation (void)
+ static void
+ gld${EMULATION_NAME}_after_open (void)
+ {
+-  after_open_default ();
+-
+   if (strstr (bfd_get_target (link_info.output_bfd), "arm") == NULL)
+     {
+       /* The arm backend needs special fields in the output hash structure.
+diff --git a/ld/emultempl/beos.em b/ld/emultempl/beos.em
+index abd3979..370dbac 100644
+--- a/ld/emultempl/beos.em
++++ b/ld/emultempl/beos.em
+@@ -376,8 +376,6 @@ gld_${EMULATION_NAME}_set_symbols (void)
+ static void
+ gld_${EMULATION_NAME}_after_open (void)
+ {
+-  after_open_default ();
+-
+   /* Pass the wacky PE command line options into the output bfd.
+      FIXME: This should be done via a function, rather than by
+      including an internal BFD header.  */
+diff --git a/ld/emultempl/elf32.em b/ld/emultempl/elf32.em
+index 9120f85..34cc82c 100644
+--- a/ld/emultempl/elf32.em
++++ b/ld/emultempl/elf32.em
+@@ -1059,8 +1059,6 @@ gld${EMULATION_NAME}_after_open (void)
+   struct bfd_link_needed_list *needed, *l;
+   struct elf_link_hash_table *htab;
+ 
+-  after_open_default ();
+-
+   htab = elf_hash_table (&link_info);
+   if (!is_elf_hash_table (htab))
+     return;
+diff --git a/ld/emultempl/genelf.em b/ld/emultempl/genelf.em
+index ce416eb..62af4de 100644
+--- a/ld/emultempl/genelf.em
++++ b/ld/emultempl/genelf.em
+@@ -35,8 +35,6 @@ gld${EMULATION_NAME}_after_open (void)
+   asection *sec;
+   asymbol **syms;
+ 
+-  after_open_default ();
+-
+   if (link_info.relocatable)
+     for (ibfd = link_info.input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+       if ((syms = bfd_get_outsymbols (ibfd)) != NULL
+diff --git a/ld/emultempl/lnk960.em b/ld/emultempl/lnk960.em
+index 7120329..e13233c 100644
+--- a/ld/emultempl/lnk960.em
++++ b/ld/emultempl/lnk960.em
+@@ -265,7 +265,7 @@ struct ld_emulation_xfer_struct ld_lnk960_emulation =
+   lnk960_syslib,
+   lnk960_hll,
+   lnk960_after_parse,
+-  after_open_default,
++  NULL,			/* after_open */
+   lnk960_after_allocation,
+   lnk960_set_output_arch,
+   lnk960_choose_target,
+diff --git a/ld/emultempl/m68kcoff.em b/ld/emultempl/m68kcoff.em
+index b09a223..276c3b2 100644
+--- a/ld/emultempl/m68kcoff.em
++++ b/ld/emultempl/m68kcoff.em
+@@ -62,8 +62,6 @@ gld${EMULATION_NAME}_after_open (void)
+ {
+   bfd *abfd;
+ 
+-  after_open_default ();
+-
+   if (! command_line.embedded_relocs
+       || link_info.relocatable)
+     return;
+diff --git a/ld/emultempl/mmo.em b/ld/emultempl/mmo.em
+index 9b18186..d1a6f14 100644
+--- a/ld/emultempl/mmo.em
++++ b/ld/emultempl/mmo.em
+@@ -151,7 +151,6 @@ mmo_after_open (void)
+ 		   is->the_bfd);
+ 	}
+     }
+-  after_open_default ();
+ }
+ EOF
+ 
+diff --git a/ld/emultempl/pe.em b/ld/emultempl/pe.em
+index b4d7a63..df0678d 100644
+--- a/ld/emultempl/pe.em
++++ b/ld/emultempl/pe.em
+@@ -1219,8 +1219,6 @@ debug_section_p (bfd *abfd ATTRIBUTE_UNUSED, asection *sect, void *obj)
+ static void
+ gld_${EMULATION_NAME}_after_open (void)
+ {
+-  after_open_default ();
+-
+ #ifdef DLL_SUPPORT
+   if (pe_dll_extra_pe_debug)
+     {
+diff --git a/ld/emultempl/pep.em b/ld/emultempl/pep.em
+index e407296..4ab7489 100644
+--- a/ld/emultempl/pep.em
++++ b/ld/emultempl/pep.em
+@@ -1151,8 +1151,6 @@ debug_section_p (bfd *abfd ATTRIBUTE_UNUSED, asection *sect, void *obj)
+ static void
+ gld_${EMULATION_NAME}_after_open (void)
+ {
+-  after_open_default ();
+-
+   is_underscoring ();
+ #ifdef DLL_SUPPORT
+   if (pep_dll_extra_pe_debug)
+diff --git a/ld/emultempl/sunos.em b/ld/emultempl/sunos.em
+index 567b8e2..5c6c0a6 100644
+--- a/ld/emultempl/sunos.em
++++ b/ld/emultempl/sunos.em
+@@ -366,8 +366,6 @@ gld${EMULATION_NAME}_after_open (void)
+ {
+   struct bfd_link_needed_list *needed, *l;
+ 
+-  after_open_default ();
+-
+   /* We only need to worry about this when doing a final link.  */
+   if (link_info.relocatable || link_info.shared)
+     return;
+diff --git a/ld/emultempl/z80.em b/ld/emultempl/z80.em
+index eeb3213..100ebd0 100644
+--- a/ld/emultempl/z80.em
++++ b/ld/emultempl/z80.em
+@@ -79,8 +79,6 @@ gldz80_after_open (void)
+ {
+   unsigned long mach_type;
+ 
+-  after_open_default ();
+-
+   switch (result_mach_type)
+     {
+     case M_Z80STRICT:
+diff --git a/ld/ld.texinfo b/ld/ld.texinfo
+index d4419aa..1fffb79 100644
+--- a/ld/ld.texinfo
++++ b/ld/ld.texinfo
+@@ -5503,15 +5503,9 @@ section relative symbols and for builtin functions that return an
+ address, such as @code{ADDR}, @code{LOADADDR}, @code{ORIGIN} and
+ @code{SEGMENT_START}.  Other terms are simply numbers, or are builtin
+ functions that return a non-address value, such as @code{LENGTH}.
+-One complication is that unless you assign @code{__ld_compatibility}
+-a value of 221 or larger, numbers and absolute symbols are treated
+-differently depending on their location, for compatibility with older
+-versions of @code{ld}.  Expressions appearing outside an output
+-section definition treat all numbers as absolute addresses.
+-Expressions appearing inside an output section definition treat
+-absolute symbols as numbers.  If @code{__ld_compatibility} is assigned
+-a value larger than 221, then absolute symbols and numbers are simply
+-treated as numbers everywhere.
++Expressions appearing outside an output section definition treat all
++numbers as absolute addresses.  Expressions appearing inside an output
++section definition treat absolute symbols as numbers. 
+ 
+ In the following simple example,
+ 
+diff --git a/ld/ldemul.c b/ld/ldemul.c
+index 3c07ceb..f1f3979 100644
+--- a/ld/ldemul.c
++++ b/ld/ldemul.c
+@@ -226,16 +226,6 @@ after_parse_default (void)
+ void
+ after_open_default (void)
+ {
+-  struct bfd_link_hash_entry *h;
+-
+-  h = bfd_wrapped_link_hash_lookup (link_info.output_bfd,
+-				    &link_info,
+-				    "__ld_compatibility",
+-				    FALSE, FALSE, TRUE);
+-  if (h != NULL
+-      && (h->type == bfd_link_hash_defined
+-	  || h->type == bfd_link_hash_defweak))
+-    ld_compatibility = h->u.def.value;
+ }
+ 
+ void
+diff --git a/ld/ldexp.c b/ld/ldexp.c
+index 3261884..ea21040 100644
+--- a/ld/ldexp.c
++++ b/ld/ldexp.c
+@@ -44,6 +44,7 @@
+ #include "safe-ctype.h"
+ 
+ static void exp_fold_tree_1 (etree_type *);
++static void exp_fold_tree_no_dot (etree_type *);
+ static bfd_vma align_n (bfd_vma, bfd_vma);
+ 
+ segment_type *segments;
+@@ -503,7 +504,6 @@ fold_name (etree_type *tree)
+       break;
+ 
+     case DEFINED:
+-      expld.uses_defined = TRUE;
+       if (expld.phase == lang_first_phase_enum)
+ 	lang_track_definedness (tree->name.name);
+       else
+@@ -554,8 +554,7 @@ fold_name (etree_type *tree)
+ 			   tree->name.name);
+ 		}
+ 	      else if (output_section == bfd_abs_section_ptr
+-		       && (expld.section != bfd_abs_section_ptr
+-			   || ld_compatibility >= 221))
++		       && expld.section != bfd_abs_section_ptr)
+ 		new_number (h->u.def.value + h->u.def.section->output_offset);
+ 	      else
+ 		new_rel (h->u.def.value + h->u.def.section->output_offset,
+@@ -702,8 +701,7 @@ exp_fold_tree_1 (etree_type *tree)
+   switch (tree->type.node_class)
+     {
+     case etree_value:
+-      if (expld.section == bfd_abs_section_ptr
+-	  && ld_compatibility < 221)
++      if (expld.section == bfd_abs_section_ptr)
+ 	new_abs (tree->value.value);
+       else
+ 	new_number (tree->value.value);
+@@ -808,9 +806,7 @@ exp_fold_tree_1 (etree_type *tree)
+ 	    }
+ 
+ 	  exp_fold_tree_1 (tree->assign.src);
+-	  if (expld.result.valid_p
+-	      || (expld.phase == lang_first_phase_enum
+-		  && !expld.uses_defined))
++	  if (expld.result.valid_p)
+ 	    {
+ 	      if (h == NULL)
+ 		{
+@@ -874,17 +870,15 @@ exp_fold_tree (etree_type *tree, asection *current_section, bfd_vma *dotp)
+   expld.dot = *dotp;
+   expld.dotp = dotp;
+   expld.section = current_section;
+-  expld.uses_defined = FALSE;
+   exp_fold_tree_1 (tree);
+ }
+ 
+-void
++static void
+ exp_fold_tree_no_dot (etree_type *tree)
+ {
+   expld.dot = 0;
+   expld.dotp = NULL;
+   expld.section = bfd_abs_section_ptr;
+-  expld.uses_defined = FALSE;
+   exp_fold_tree_1 (tree);
+ }
+ 
+diff --git a/ld/ldexp.h b/ld/ldexp.h
+index 31a06ac..a15f64a 100644
+--- a/ld/ldexp.h
++++ b/ld/ldexp.h
+@@ -127,8 +127,6 @@ struct ldexp_control {
+   /* Working results.  */
+   etree_value_type result;
+   bfd_vma dot;
+-  /* Set if an expression contains DEFINED().  */
+-  bfd_boolean uses_defined;
+ 
+   /* Current dot and section passed to ldexp folder.  */
+   bfd_vma *dotp;
+@@ -175,8 +173,6 @@ etree_type *exp_relop
+   (asection *, bfd_vma);
+ void exp_fold_tree
+   (etree_type *, asection *, bfd_vma *);
+-void exp_fold_tree_no_dot
+-  (etree_type *);
+ etree_type *exp_binop
+   (int, etree_type *, etree_type *);
+ etree_type *exp_trinop
+diff --git a/ld/ldlang.c b/ld/ldlang.c
+index 097c390..32c4af3 100644
+--- a/ld/ldlang.c
++++ b/ld/ldlang.c
+@@ -109,7 +109,6 @@ bfd_boolean delete_output_file_on_failure = FALSE;
+ struct lang_phdr *lang_phdr_list;
+ struct lang_nocrossrefs *nocrossref_list;
+ bfd_boolean missing_file = FALSE;
+-int ld_compatibility;
+ 
+  /* Functions that traverse the linker script and might evaluate
+     DEFINED() need to increment this.  */
+@@ -3250,9 +3249,6 @@ open_input_bfds (lang_statement_union_type *s, bfd_boolean force)
+ 		}
+ 	    }
+ 	  break;
+-	case lang_assignment_statement_enum:
+-	  exp_fold_tree_no_dot (s->assignment_statement.exp);
+-	  break;
+ 	default:
+ 	  break;
+ 	}
+@@ -3399,6 +3395,65 @@ lang_place_undefineds (void)
+     insert_undefined (ptr->name);
+ }
+ 
++typedef struct bfd_sym_chain ldlang_def_chain_list_type;
++
++static ldlang_def_chain_list_type ldlang_def_chain_list_head;
++
++/* Insert NAME as defined in the symbol table.  */
++
++static void
++insert_defined (const char *name)
++{
++  struct bfd_link_hash_entry *h;
++
++  h = bfd_link_hash_lookup (link_info.hash, name, TRUE, FALSE, TRUE);
++  if (h == NULL)
++    einfo (_("%P%F: bfd_link_hash_lookup failed: %E\n"));
++  if (h->type == bfd_link_hash_new
++      || h->type == bfd_link_hash_undefined
++      || h->type == bfd_link_hash_undefweak)
++    {
++      h->type = bfd_link_hash_defined;
++      h->u.def.section = bfd_abs_section_ptr;
++      h->u.def.value   = 0;
++    }
++}
++
++/* Like lang_add_undef, but this time for symbols defined on the
++   command line.  */
++
++static void
++ldlang_add_def (const char *const name)
++{
++  if (link_info.output_bfd != NULL)
++    insert_defined (xstrdup (name));
++  else
++    {
++      ldlang_def_chain_list_type *new_def;
++
++      new_def = (ldlang_def_chain_list_type *) stat_alloc (sizeof (*new_def));
++      new_def->next = ldlang_def_chain_list_head.next;
++      ldlang_def_chain_list_head.next = new_def;
++
++      new_def->name = xstrdup (name);
++    }
++}
++
++/* Run through the list of defineds created above and place them
++   into the linker hash table as defined symbols belonging to the
++   script file.  */
++
++static void
++lang_place_defineds (void)
++{
++  ldlang_def_chain_list_type *ptr;
++
++  for (ptr = ldlang_def_chain_list_head.next;
++       ptr != NULL;
++       ptr = ptr->next)
++    insert_defined (ptr->name);
++}
++
+ /* Check for all readonly or some readwrite sections.  */
+ 
+ static void
+@@ -3927,12 +3982,12 @@ scan_for_self_assignment (const char * dst, etree_type * rhs)
+   switch (rhs->type.node_class)
+     {
+     case etree_binary:
+-      return (scan_for_self_assignment (dst, rhs->binary.lhs)
+-	      || scan_for_self_assignment (dst, rhs->binary.rhs));
++      return scan_for_self_assignment (dst, rhs->binary.lhs)
++	||   scan_for_self_assignment (dst, rhs->binary.rhs);
+ 
+     case etree_trinary:
+-      return (scan_for_self_assignment (dst, rhs->trinary.lhs)
+-	      || scan_for_self_assignment (dst, rhs->trinary.rhs));
++      return scan_for_self_assignment (dst, rhs->trinary.lhs)
++	||   scan_for_self_assignment (dst, rhs->trinary.rhs);
+ 
+     case etree_assign:
+     case etree_provided:
+@@ -3987,7 +4042,7 @@ print_assignment (lang_assignment_statement_type *assignment,
+ 
+       is_dot = (dst[0] == '.' && dst[1] == 0);
+       tree = assignment->exp->assign.src;
+-      computation_is_valid = is_dot || !scan_for_self_assignment (dst, tree);
++      computation_is_valid = is_dot || (scan_for_self_assignment (dst, tree) == FALSE);
+     }
+ 
+   osec = output_section->bfd_section;
+@@ -6406,6 +6461,7 @@ lang_process (void)
+ 
+   /* Add to the hash table all undefineds on the command line.  */
+   lang_place_undefineds ();
++  lang_place_defineds ();
+ 
+   if (!bfd_section_already_linked_table_init ())
+     einfo (_("%P%F: Failed to create hash table\n"));
+@@ -6467,7 +6523,6 @@ lang_process (void)
+ 
+   /* Run through the contours of the script and attach input sections
+      to the correct output sections.  */
+-  lang_statement_iteration++;
+   map_input_to_output_sections (statement_list.head, NULL, NULL);
+ 
+   process_insert_statements ();
+@@ -6691,6 +6746,10 @@ lang_add_assignment (etree_type *exp)
+ {
+   lang_assignment_statement_type *new_stmt;
+ 
++  extern int parsing_defsym;
++  if (parsing_defsym)
++    ldlang_add_def (exp->assign.dst);
++
+   new_stmt = new_stat (lang_assignment_statement, stat_ptr);
+   new_stmt->exp = exp;
+   return new_stmt;
+diff --git a/ld/ldlang.h b/ld/ldlang.h
+index 5850fcb..15e5587 100644
+--- a/ld/ldlang.h
++++ b/ld/ldlang.h
+@@ -469,7 +469,6 @@ extern bfd_boolean entry_from_cmdline;
+ extern lang_statement_list_type file_chain;
+ extern lang_statement_list_type input_file_chain;
+ 
+-extern int ld_compatibility;
+ extern int lang_statement_iteration;
+ extern bfd_boolean missing_file;
+ 
+diff --git a/ld/testsuite/ld-scripts/default-script2.d b/ld/testsuite/ld-scripts/default-script2.d
+index 68ce2aa..829718d 100644
+--- a/ld/testsuite/ld-scripts/default-script2.d
++++ b/ld/testsuite/ld-scripts/default-script2.d
+@@ -5,5 +5,5 @@
+ #...
+ 0*8000000 . _START
+ #...
+-0*9000000 T text
++0*8000000 T text
+ #pass
+diff --git a/ld/testsuite/ld-scripts/defined.exp b/ld/testsuite/ld-scripts/defined.exp
+index 6d0c9d5..10f14da 100644
+--- a/ld/testsuite/ld-scripts/defined.exp
++++ b/ld/testsuite/ld-scripts/defined.exp
+@@ -67,4 +67,5 @@ set prms_id 0
+ run_dump_test "defined2"
+ run_dump_test "defined3"
+ run_dump_test "defined4"
++run_dump_test "defined5"
+ set LDFLAGS "$saved_LDFLAGS"
+diff --git a/ld/testsuite/ld-scripts/defined5.d b/ld/testsuite/ld-scripts/defined5.d
+new file mode 100644
+index 0000000..d0a026e
+--- /dev/null
++++ b/ld/testsuite/ld-scripts/defined5.d
+@@ -0,0 +1,8 @@
++#ld: -Tdefined5.t
++#nm: -B
++#source: defined5.s
++
++# Check that arithmetic on DEFINED works.
++#...
++0+1000 D defined
++#pass
+diff --git a/ld/testsuite/ld-scripts/defined5.s b/ld/testsuite/ld-scripts/defined5.s
+new file mode 100644
+index 0000000..592e54c
+--- /dev/null
++++ b/ld/testsuite/ld-scripts/defined5.s
+@@ -0,0 +1,6 @@
++	.globl	defined
++	.data
++	.byte 0
++	.section .data.cacheline_aligned
++defined:
++	.byte 0
+diff --git a/ld/testsuite/ld-scripts/defined5.t b/ld/testsuite/ld-scripts/defined5.t
+new file mode 100644
+index 0000000..189da6b
+--- /dev/null
++++ b/ld/testsuite/ld-scripts/defined5.t
+@@ -0,0 +1,7 @@
++defined = addr1;
++SECTIONS {
++	.data.cacheline_aligned : { *(.data.cacheline_aligned) }
++	. = ALIGN (0x1000);
++	.data : { *(.data) }
++	addr1  = ADDR (.data);
++}
