@@ -1,5 +1,11 @@
 2011-01-01  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-signed-6.patch: New file. Replace ...
+	* binutils-signed-5.patch: This.  Removed.
+	* README: Likewise.
+
+2011-01-01  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-shr-95.patch: New file. Replace ...
 	* binutils-shr-94.patch: This. Removed.
 	* README: Likewise.

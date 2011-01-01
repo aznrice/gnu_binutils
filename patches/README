@@ -19,7 +19,7 @@ patches="
 	binutils-indirect-4.patch
 	binutils-shr-95.patch
 	binutils-error-12.patch
-	binutils-signed-5.patch
+	binutils-signed-6.patch
 	binutils-weakdef-2.patch
 	bfd-64k-2.patch
 	binutils-lto-mixed-3.patch
