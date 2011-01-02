@@ -3,7 +3,7 @@ ld/
 2011-01-01  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12356
-	Revert 2011-12-20 by Alan Modra <amodra@gmail.com>.
+	Revert 2010-12-20 by Alan Modra <amodra@gmail.com>.
 	* ld.texinfo (Expression Section): Remove __ld_compatibility.
 
 	* ldemul.c (after_open_default): Don't check  __ld_compatibility.
@@ -30,7 +30,7 @@ ld/
 2011-01-01  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12356
-	* ldlang.c: Revert 2011-12-20 by Alan Modra <amodra@gmail.com>.
+	* ldlang.c: Revert 2010-12-20 by Alan Modra <amodra@gmail.com>.
 	* ldexp.h: Likewise.
 	* ldexp.c: Likewise.
 	* ldlang.c: Likewise.
@@ -40,7 +40,7 @@ ld/testsuite/
 2011-01-01  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12356
-	* ld-scripts/default-script2.d: Revert 2011-12-20 by Alan
+	* ld-scripts/default-script2.d: Revert 2010-12-20 by Alan
 	Modra <amodra@gmail.com>.
 
 	* ld-scripts/defined5.d: New.
