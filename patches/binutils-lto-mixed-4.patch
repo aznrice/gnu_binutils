@@ -121,7 +121,7 @@ ld/
 
 	* emultempl/elf32.em (orphan_init_done): Moved out of
 	gld${EMULATION_NAME}_place_orphan.
-	(hold): Likewise.
+	(gld${EMULATION_NAME}_place_orphan): Initialize hold.
 	(gld${EMULATION_NAME}_finish): New.
 	(ld_${EMULATION_NAME}_emulation): Use gld${EMULATION_NAME}_finish.
 
@@ -156,7 +156,7 @@ ld/testsuite/
 	* ld-plugin/plugin-9.d: Likewise.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index e7805b6..bea54b1 100644
+index e75eb0d..f75a3d7 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
 @@ -1539,6 +1539,9 @@ struct relax_table {
@@ -169,7 +169,7 @@ index e7805b6..bea54b1 100644
  /* The absolute section.  */
  extern asection bfd_abs_section;
  #define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
-@@ -4971,6 +4974,14 @@ enum bfd_direction
+@@ -4975,6 +4978,14 @@ enum bfd_direction
      both_direction = 3
    };
  
@@ -184,7 +184,7 @@ index e7805b6..bea54b1 100644
  struct bfd
  {
    /* A unique identifier of the BFD  */
-@@ -5085,14 +5096,22 @@ struct bfd
+@@ -5089,14 +5100,22 @@ struct bfd
    /* Decompress sections in this BFD.  */
  #define BFD_DECOMPRESS 0x10000
  
@@ -209,7 +209,7 @@ index e7805b6..bea54b1 100644
  
    /* Currently my_archive is tested before adding origin to
       anything. I believe that this can become always an add of
-@@ -5115,6 +5134,9 @@ struct bfd
+@@ -5119,6 +5138,9 @@ struct bfd
    /* The last section on the section list.  */
    struct bfd_section *section_last;
  
@@ -219,7 +219,7 @@ index e7805b6..bea54b1 100644
    /* The number of sections.  */
    unsigned int section_count;
  
-@@ -5233,6 +5255,9 @@ struct bfd
+@@ -5237,6 +5259,9 @@ struct bfd
    /* Set if only required symbols should be added in the link hash table for
       this object.  Used by VMS linkers.  */
    unsigned int selective_search : 1;
@@ -229,7 +229,7 @@ index e7805b6..bea54b1 100644
  };
  
  typedef enum bfd_error
-@@ -5437,6 +5462,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
+@@ -5441,6 +5466,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
  
  char *bfd_demangle (bfd *, const char *, int);
  
@@ -340,7 +340,7 @@ index a9ce7cc..7cf8a4e 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index 0e7cd9a..962616e 100644
+index de0ab61..c33d10a 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2084,6 +2084,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -540,109 +540,36 @@ index 01c519d..335420c 100644
  /* The next three section types are defined by Solaris, and are named
     SHT_SUNW*.  We use them in GNU code, so we also define SHT_GNU*
 diff --git a/ld/emultempl/elf32.em b/ld/emultempl/elf32.em
-index 34cc82c..6bdea51 100644
+index 9120f85..bfbdc26 100644
 --- a/ld/emultempl/elf32.em
 +++ b/ld/emultempl/elf32.em
-@@ -1755,6 +1755,64 @@ output_rel_find (asection *sec, int isdyn)
+@@ -1757,6 +1757,8 @@ output_rel_find (asection *sec, int isdyn)
    return last;
  }
  
 +static int orphan_init_done = 0;
 +
-+static struct orphan_save orig_hold[] =
-+  {
-+    { ".text",
-+      SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE,
-+      0, 0, 0, 0 },
-+    { ".rodata",
-+      SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA,
-+      0, 0, 0, 0 },
-+    { ".data",
-+      SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_DATA,
-+      0, 0, 0, 0 },
-+    { ".bss",
-+      SEC_ALLOC,
-+      0, 0, 0, 0 },
-+    { 0,
-+      SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA,
-+      0, 0, 0, 0 },
-+    { ".interp",
-+      SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA,
-+      0, 0, 0, 0 },
-+    { ".sdata",
-+      SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_DATA | SEC_SMALL_DATA,
-+      0, 0, 0, 0 },
-+    { 0,
-+      SEC_HAS_CONTENTS,
-+      0, 0, 0, 0 },
-+  };
-+
-+static struct orphan_save hold[] =
-+  {
-+    { ".text",
-+      SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE,
-+      0, 0, 0, 0 },
-+    { ".rodata",
-+      SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA,
-+      0, 0, 0, 0 },
-+    { ".data",
-+      SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_DATA,
-+      0, 0, 0, 0 },
-+    { ".bss",
-+      SEC_ALLOC,
-+      0, 0, 0, 0 },
-+    { 0,
-+      SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA,
-+      0, 0, 0, 0 },
-+    { ".interp",
-+      SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA,
-+      0, 0, 0, 0 },
-+    { ".sdata",
-+      SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_DATA | SEC_SMALL_DATA,
-+      0, 0, 0, 0 },
-+    { 0,
-+      SEC_HAS_CONTENTS,
-+      0, 0, 0, 0 },
-+  };
-+
  /* Place an orphan section.  We use this to put random SHF_ALLOC
     sections in the right segment.  */
  
-@@ -1763,33 +1821,6 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1765,7 +1767,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
  				   const char *secname,
  				   int constraint)
  {
 -  static struct orphan_save hold[] =
--    {
--      { ".text",
--	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE,
--	0, 0, 0, 0 },
--      { ".rodata",
--	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA,
--	0, 0, 0, 0 },
--      { ".data",
--	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_DATA,
--	0, 0, 0, 0 },
--      { ".bss",
--	SEC_ALLOC,
--	0, 0, 0, 0 },
--      { 0,
--	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA,
--	0, 0, 0, 0 },
--      { ".interp",
--	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA,
--	0, 0, 0, 0 },
--      { ".sdata",
--	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_DATA | SEC_SMALL_DATA,
--	0, 0, 0, 0 },
--      { 0,
--	SEC_HAS_CONTENTS,
--	0, 0, 0, 0 },
--    };
++  static struct orphan_save orig_hold[] =
+     {
+       { ".text",
+ 	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE,
+@@ -1792,6 +1794,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+ 	SEC_HAS_CONTENTS,
+ 	0, 0, 0, 0 },
+     };
++  static struct orphan_save hold[ARRAY_SIZE (orig_hold)];
    enum orphan_save_index
      {
        orphan_text = 0,
-@@ -1801,7 +1832,6 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1803,7 +1806,6 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
        orphan_sdata,
        orphan_nonalloc
      };
@@ -650,7 +577,37 @@ index 34cc82c..6bdea51 100644
    struct orphan_save *place;
    lang_output_section_statement_type *after;
    lang_output_section_statement_type *os;
-@@ -1964,7 +1994,24 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1881,15 +1883,21 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+   if (!orphan_init_done)
+     {
+       lang_output_section_statement_type *lookup;
+-      struct orphan_save *ho;
++      struct orphan_save *ho, *horig;
++
++      for (ho = hold, horig = orig_hold;
++	   ho < hold + ARRAY_SIZE (hold);
++	   ++ho, ++horig)
++	{
++	  *ho = *horig;
++	  if (ho->name != NULL)
++	    {
++	      ho->os = lang_output_section_find (ho->name);
++	      if (ho->os != NULL && ho->os->flags == 0)
++		ho->os->flags = ho->flags;
++	    }
++	}
+ 
+-      for (ho = hold; ho < hold + sizeof (hold) / sizeof (hold[0]); ++ho)
+-	if (ho->name != NULL)
+-	  {
+-	    ho->os = lang_output_section_find (ho->name);
+-	    if (ho->os != NULL && ho->os->flags == 0)
+-	      ho->os->flags = ho->flags;
+-	  }
+       lookup = hold[orphan_bss].os;
+       if (lookup == NULL)
+ 	lookup = &lang_output_section_statement.head->output_section_statement;
+@@ -1966,7 +1974,21 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
  
    return lang_insert_orphan (s, secname, constraint, after, place, NULL, NULL);
  }
@@ -662,10 +619,7 @@ index 34cc82c..6bdea51 100644
 +{
 +  /* Support the object-only output.  */
 +  if (link_info.emit_gnu_object_only)
-+    {
-+      memcpy (hold, orig_hold, sizeof (orig_hold));
-+      orphan_init_done = 0;
-+    }
++    orphan_init_done = 0;
 +
 +  finish_default ();
 +}
@@ -675,7 +629,7 @@ index 34cc82c..6bdea51 100644
  fi
  
  if test x"$LDEMUL_AFTER_ALLOCATION" != xgld"$EMULATION_NAME"_after_allocation; then
-@@ -2478,7 +2525,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
+@@ -2480,7 +2502,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
    ${LDEMUL_GET_SCRIPT-gld${EMULATION_NAME}_get_script},
    "${EMULATION_NAME}",
    "${OUTPUT_FORMAT}",
@@ -790,7 +744,7 @@ index a9a6954..e1568d6 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 6dc0229..67f6a23 100644
+index 097c390..5c71f02 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -37,6 +37,7 @@
@@ -837,7 +791,7 @@ index 6dc0229..67f6a23 100644
  
  /* Exported variables.  */
  const char *output_target;
-@@ -1003,6 +1019,7 @@ new_afile (const char *name,
+@@ -1057,6 +1073,7 @@ new_afile (const char *name,
    lang_has_input_file = TRUE;
    p->target = target;
    p->sysrooted = FALSE;
@@ -845,7 +799,7 @@ index 6dc0229..67f6a23 100644
  
    if (file_type == lang_input_file_is_l_enum
        && name[0] == ':' && name[1] != '\0')
-@@ -1169,14 +1186,17 @@ output_section_statement_table_free (void)
+@@ -1223,14 +1240,17 @@ output_section_statement_table_free (void)
  /* Build enough state so that the parser can build its tree.  */
  
  void
@@ -865,7 +819,7 @@ index 6dc0229..67f6a23 100644
    lang_list_init (stat_ptr);
  
    lang_list_init (&input_file_chain);
-@@ -1195,10 +1215,11 @@ lang_init (void)
+@@ -1249,10 +1269,11 @@ lang_init (void)
       simpler to re-use working machinery than using a linked list in terms
       of code-complexity here in ld, besides the initialization which just
       looks like other code here.  */
@@ -881,7 +835,7 @@ index 6dc0229..67f6a23 100644
      einfo (_("%P%F: can not create hash table: %E\n"));
  }
  
-@@ -2717,6 +2738,14 @@ load_symbols (lang_input_statement_type *entry,
+@@ -2771,6 +2792,14 @@ load_symbols (lang_input_statement_type *entry,
  		  loaded = FALSE;
  		}
  
@@ -896,7 +850,7 @@ index 6dc0229..67f6a23 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6249,10 +6278,15 @@ lang_gc_sections (void)
+@@ -6247,10 +6276,15 @@ lang_gc_sections (void)
      {
        LANG_FOR_EACH_INPUT_STATEMENT (f)
  	{
@@ -916,7 +870,7 @@ index 6dc0229..67f6a23 100644
  	}
      }
  
-@@ -6418,23 +6452,113 @@ lang_process (void)
+@@ -6415,23 +6449,113 @@ lang_process (void)
    open_input_bfds (statement_list.head, FALSE);
  
  #ifdef ENABLE_PLUGINS
@@ -1037,7 +991,7 @@ index 6dc0229..67f6a23 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -7852,3 +7976,1162 @@ lang_append_dynamic_list_cpp_new (void)
+@@ -7846,3 +7970,1162 @@ lang_append_dynamic_list_cpp_new (void)
  
    lang_append_dynamic_list (dynamic);
  }
@@ -2201,7 +2155,7 @@ index 6dc0229..67f6a23 100644
 +      }
 +}
 diff --git a/ld/ldlang.h b/ld/ldlang.h
-index 15e5587..b8dfbb6 100644
+index 5850fcb..3a67354 100644
 --- a/ld/ldlang.h
 +++ b/ld/ldlang.h
 @@ -279,6 +279,9 @@ typedef struct lang_input_statement_struct
@@ -2214,7 +2168,7 @@ index 15e5587..b8dfbb6 100644
    /* Set when bfd opening is successful.  */
    unsigned int loaded : 1;
  
-@@ -473,7 +476,7 @@ extern int lang_statement_iteration;
+@@ -474,7 +477,7 @@ extern int lang_statement_iteration;
  extern bfd_boolean missing_file;
  
  extern void lang_init
@@ -2223,7 +2177,7 @@ index 15e5587..b8dfbb6 100644
  extern void lang_finish
    (void);
  extern lang_memory_region_type * lang_memory_region_lookup
-@@ -650,4 +653,59 @@ extern bfd_boolean
+@@ -651,4 +654,59 @@ extern bfd_boolean
  ldlang_override_segment_assignment
    (struct bfd_link_info *, bfd *, asection *, asection *, bfd_boolean);
  
@@ -2581,7 +2535,7 @@ index acb63fb..30e36db 100644
  	  break;
  
 diff --git a/ld/plugin.c b/ld/plugin.c
-index e4943c2..771a39f 100644
+index 10314a4..377a840 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -41,10 +41,6 @@
@@ -2637,7 +2591,7 @@ index e4943c2..771a39f 100644
  }
  
  /* Helpers to convert between BFD and GOLD symbol formats.  */
-@@ -532,9 +535,9 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms)
+@@ -533,9 +536,9 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms)
  	}
  
        /* Was originally def, weakdef, or common, but has been pre-empted.  */
@@ -2650,7 +2604,7 @@ index e4943c2..771a39f 100644
      }
    return LDPS_OK;
  }
-@@ -544,9 +547,7 @@ static enum ld_plugin_status
+@@ -545,9 +548,7 @@ static enum ld_plugin_status
  add_input_file (const char *pathname)
  {
    ASSERT (called_plugin);
@@ -2661,7 +2615,7 @@ index e4943c2..771a39f 100644
    return LDPS_OK;
  }
  
-@@ -555,9 +556,7 @@ static enum ld_plugin_status
+@@ -556,9 +557,7 @@ static enum ld_plugin_status
  add_input_library (const char *pathname)
  {
    ASSERT (called_plugin);
@@ -2686,7 +2640,7 @@ index 3049f36..4072584 100644
    SBSS=".sbss         ${RELOCATING-0} :
    {
 diff --git a/ld/scripttempl/elf.sc b/ld/scripttempl/elf.sc
-index f020a66..14cd287 100644
+index 37f7667..19917b3 100644
 --- a/ld/scripttempl/elf.sc
 +++ b/ld/scripttempl/elf.sc
 @@ -149,7 +149,7 @@ RELA_IPLT=".rela.iplt    ${RELOCATING-0} :
