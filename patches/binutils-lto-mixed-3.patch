@@ -1,10 +1,12 @@
 bfd/
 
-2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-05  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
+	PR ld/12323
+	PR ld/12365
 	* bfd.c (bfd_lto_object_type): New.
 	(BFD_PLUGIN): Likewise.
 	(BFD_PLUGIN_DUMMY): Likewise.
@@ -24,11 +26,13 @@ bfd/
 
 binutils/
 
-2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-05  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
+	PR ld/12323
+	PR ld/12365
 	* objcopy.c (group_signature): Removed.
 	(is_strip_section): Replace group_signature with
 	bfd_group_signature.
@@ -38,11 +42,13 @@ binutils/
 
 gas/testsuite/
 
-2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-05  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
+	PR ld/12323
+	PR ld/12365
 	* gas/elf/section9.s: Add the .gnu_object_only test.
 	* gas/elf/section9.d: Updated.
 
@@ -55,20 +61,24 @@ include/
 
 include/elf/
 
-2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-05  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
+	PR ld/12323
+	PR ld/12365
 	* common.h (SHT_GNU_OBJECT_ONLY): New.
 
 ld/
 
-2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-05  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
+	PR ld/12323
+	PR ld/12365
 	* ldfile.c: Updated for 2 stage linking and support for mixed
 	IR/non-IR objects.
 	* ldlang.c: Likewise.
@@ -127,11 +137,13 @@ ld/
 
 ld/testsuite/
 
-2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-05  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
+	PR ld/12323
+	PR ld/12365
 	* ld-plugin/func1p.c: New.
 	* ld-plugin/func2.c: Likewise.
 	* ld-plugin/func2i.c: Likewise.
