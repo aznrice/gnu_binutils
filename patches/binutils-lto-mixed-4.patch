@@ -7,6 +7,7 @@ bfd/
 	PR ld/12291
 	PR ld/12323
 	PR ld/12365
+	PR ld/12369
 	* bfd.c (bfd_lto_object_type): New.
 	(BFD_PLUGIN): Likewise.
 	(BFD_PLUGIN_DUMMY): Likewise.
@@ -33,6 +34,7 @@ binutils/
 	PR ld/12291
 	PR ld/12323
 	PR ld/12365
+	PR ld/12369
 	* objcopy.c (group_signature): Removed.
 	(is_strip_section): Replace group_signature with
 	bfd_group_signature.
@@ -49,6 +51,7 @@ gas/testsuite/
 	PR ld/12291
 	PR ld/12323
 	PR ld/12365
+	PR ld/12369
 	* gas/elf/section9.s: Add the .gnu_object_only test.
 	* gas/elf/section9.d: Updated.
 
@@ -68,6 +71,7 @@ include/elf/
 	PR ld/12291
 	PR ld/12323
 	PR ld/12365
+	PR ld/12369
 	* common.h (SHT_GNU_OBJECT_ONLY): New.
 
 ld/
@@ -79,6 +83,7 @@ ld/
 	PR ld/12291
 	PR ld/12323
 	PR ld/12365
+	PR ld/12369
 	* ldfile.c: Updated for 2 stage linking and support for mixed
 	IR/non-IR objects.
 	* ldlang.c: Likewise.
@@ -144,6 +149,7 @@ ld/testsuite/
 	PR ld/12291
 	PR ld/12323
 	PR ld/12365
+	PR ld/12369
 	* ld-plugin/func1p.c: New.
 	* ld-plugin/func2.c: Likewise.
 	* ld-plugin/func2i.c: Likewise.
