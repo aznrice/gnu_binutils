@@ -1,3 +1,17 @@
+2011-01-06  Paul Koning  <ni1d@arrl.net>
+
+	* gas/pdp11/absreloc.s: New.
+	* gas/pdp11/absreloc.d: New.
+
+2011-01-06  Paul Koning  <ni1d@arrl.net>
+
+	* gas/pdp11/opcode.d: Fix expected output for sec instruction.
+
+2011-01-05  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* gas/arm/blx-bad.s: New.
+	* gas/arm/blx-bad.d: New.
+
 2011-01-04  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* gas/i386/bmi-intel.d: New.
