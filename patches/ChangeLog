@@ -1,3 +1,9 @@
+2011-01-08  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-shr-96.patch: New file. Replace ...
+	* binutils-shr-95.patch: This. Removed.
+	* README: Likewise.
+
 2011-01-05  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-lto-mixed-4.patch: New file. Replace ...
