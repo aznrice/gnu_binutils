@@ -88,16 +88,27 @@ ld/
 	IR/non-IR objects.
 	* ldlang.c: Likewise.
 
+	* ldgram.y (INPUT): Call lang_enter_input and lang_leave_input.
+	(GROUP): Update calls to lang_enter_group and
+	lang_leave_group.
+	(input_list): Call cmdline_option_append_lang_input.
+
 	* ldlang.h (lang_input_statement_struct): Add stage1.
 	(lang_init): Take a bfd_boolean argument.
-	(cmdline_enum_type): New.
+	(lang_enter_group): Updated to take a boolean argument.
+	(lang_leave_group): Likewise.
+	(lang_enter_input): New.
+	(lang_leave_input): Likewise.
+	(cmdline_enum_type): Likewise.
 	(cmdline_header_type): Likewise.
 	(cmdline_input_statement_type): Likewise.
 	(cmdline_file_type): Likewise.
 	(cmdline_bfd_type): Likewise.
 	(cmdline_union_type): Likewise.
 	(cmdline_list_type): Likewise.
+	(cmdline_linker_script): Likewise.
 	(cmdline_option_append): Likewise.
+	(cmdline_option_append_lang_input): Likewise.
 	(cmdline_option_insert_claimed_output): Likewise.
 	(cmdline_set_next_claimed_output): Likewise.
 	(cmdline_claimed_archive_member_list_append): Likewise.
@@ -113,6 +124,11 @@ ld/
 	for mixed IR/non-IR objects.
 
 	* ldmain.h (ld_parse_linker_script): New.
+
+	* lexsup.c (parse_args): Call cmdline_option_append if needed.
+	Set and clear cmdline_linker_script before and after parsing
+	linker script.  Update calls to lang_enter_group and
+	lang_leave_group.
 
 	* plugin.c (IRONLY_SUFFIX_LEN): Removed.
 	(plugin_opt_plugin_arg): Ignore -pass-through=.
@@ -162,7 +178,7 @@ ld/testsuite/
 	* ld-plugin/plugin-9.d: Likewise.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index e75eb0d..f75a3d7 100644
+index 84fc75d..1fdcb52 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
 @@ -1539,6 +1539,9 @@ struct relax_table {
@@ -175,7 +191,7 @@ index e75eb0d..f75a3d7 100644
  /* The absolute section.  */
  extern asection bfd_abs_section;
  #define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
-@@ -4975,6 +4978,14 @@ enum bfd_direction
+@@ -4982,6 +4985,14 @@ enum bfd_direction
      both_direction = 3
    };
  
@@ -190,7 +206,7 @@ index e75eb0d..f75a3d7 100644
  struct bfd
  {
    /* A unique identifier of the BFD  */
-@@ -5089,14 +5100,22 @@ struct bfd
+@@ -5096,14 +5107,22 @@ struct bfd
    /* Decompress sections in this BFD.  */
  #define BFD_DECOMPRESS 0x10000
  
@@ -215,7 +231,7 @@ index e75eb0d..f75a3d7 100644
  
    /* Currently my_archive is tested before adding origin to
       anything. I believe that this can become always an add of
-@@ -5119,6 +5138,9 @@ struct bfd
+@@ -5126,6 +5145,9 @@ struct bfd
    /* The last section on the section list.  */
    struct bfd_section *section_last;
  
@@ -225,7 +241,7 @@ index e75eb0d..f75a3d7 100644
    /* The number of sections.  */
    unsigned int section_count;
  
-@@ -5237,6 +5259,9 @@ struct bfd
+@@ -5244,6 +5266,9 @@ struct bfd
    /* Set if only required symbols should be added in the link hash table for
       this object.  Used by VMS linkers.  */
    unsigned int selective_search : 1;
@@ -235,7 +251,7 @@ index e75eb0d..f75a3d7 100644
  };
  
  typedef enum bfd_error
-@@ -5441,6 +5466,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
+@@ -5448,6 +5473,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
  
  char *bfd_demangle (bfd *, const char *, int);
  
@@ -749,8 +765,90 @@ index a9a6954..e1568d6 100644
  
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
+diff --git a/ld/ldgram.y b/ld/ldgram.y
+index ed0aaa7..f50e4a9 100644
+--- a/ld/ldgram.y
++++ b/ld/ldgram.y
+@@ -335,11 +335,14 @@ ifile_p1:
+ 		{ command_line.force_common_definition = TRUE ; }
+ 	|	INHIBIT_COMMON_ALLOCATION
+ 		{ command_line.inhibit_common_definition = TRUE ; }
+-	|	INPUT '(' input_list ')'
++	|	INPUT
++		  { lang_enter_input (); }
++		    '(' input_list ')'
++		  { lang_leave_input (); }
+ 	|	GROUP
+-		  { lang_enter_group (); }
++		  { lang_enter_group (cmdline_linker_script == 1); }
+ 		    '(' input_list ')'
+-		  { lang_leave_group (); }
++		  { lang_leave_group (cmdline_linker_script == 2); }
+      	|	MAP '(' filename ')'
+ 		{ lang_add_map($3); }
+ 	|	INCLUDE filename
+@@ -361,23 +364,47 @@ ifile_p1:
+ 
+ input_list:
+ 		NAME
+-		{ lang_add_input_file($1,lang_input_file_is_search_file_enum,
+-				 (char *)NULL); }
++		{
++		  lang_input_statement_type *input;
++		  input = lang_add_input_file($1,lang_input_file_is_search_file_enum,
++					      (char *)NULL);
++		  cmdline_option_append_lang_input(input);
++		}
+ 	|	input_list ',' NAME
+-		{ lang_add_input_file($3,lang_input_file_is_search_file_enum,
+-				 (char *)NULL); }
++		{
++		  lang_input_statement_type *input;
++		  input = lang_add_input_file($3,lang_input_file_is_search_file_enum,
++					      (char *)NULL);
++		  cmdline_option_append_lang_input(input);
++		}
+ 	|	input_list NAME
+-		{ lang_add_input_file($2,lang_input_file_is_search_file_enum,
+-				 (char *)NULL); }
++		{
++		  lang_input_statement_type *input;
++		  input = lang_add_input_file($2,lang_input_file_is_search_file_enum,
++					      (char *)NULL);
++		  cmdline_option_append_lang_input(input);
++		}
+ 	|	LNAME
+-		{ lang_add_input_file($1,lang_input_file_is_l_enum,
+-				 (char *)NULL); }
++		{
++		  lang_input_statement_type *input;
++		  input = lang_add_input_file($1,lang_input_file_is_l_enum,
++					      (char *)NULL);
++		  cmdline_option_append_lang_input(input);
++		}
+ 	|	input_list ',' LNAME
+-		{ lang_add_input_file($3,lang_input_file_is_l_enum,
+-				 (char *)NULL); }
++		{
++		  lang_input_statement_type *input;
++		  input = lang_add_input_file($3,lang_input_file_is_l_enum,
++					      (char *)NULL);
++		  cmdline_option_append_lang_input(input);
++		}
+ 	|	input_list LNAME
+-		{ lang_add_input_file($2,lang_input_file_is_l_enum,
+-				 (char *)NULL); }
++		{
++		  lang_input_statement_type *input;
++		  input = lang_add_input_file($2,lang_input_file_is_l_enum,
++					      (char *)NULL);
++		  cmdline_option_append_lang_input(input);
++		}
+ 	|	AS_NEEDED '('
+ 		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
+ 		     input_list ')'
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 097c390..5c71f02 100644
+index 5251804..0cfc5a7 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -37,6 +37,7 @@
@@ -771,7 +869,7 @@ index 097c390..5c71f02 100644
  #ifndef offsetof
  #define offsetof(TYPE, MEMBER) ((size_t) & (((TYPE*) 0)->MEMBER))
  #endif
-@@ -70,6 +74,12 @@ static lang_statement_list_type *stat_save[10];
+@@ -69,6 +73,12 @@ static lang_statement_list_type *stat_save[10];
  static lang_statement_list_type **stat_save_ptr = &stat_save[0];
  static struct unique_sections *unique_section_list;
  static bfd_boolean ldlang_sysrooted_script = FALSE;
@@ -784,7 +882,7 @@ index 097c390..5c71f02 100644
  
  /* Forward declarations.  */
  static void exp_init_os (etree_type *);
-@@ -90,6 +100,12 @@ static void lang_record_phdrs (void);
+@@ -89,8 +99,16 @@ static void lang_record_phdrs (void);
  static void lang_do_version_exports_section (void);
  static void lang_finalize_version_expr_head
    (struct bfd_elf_version_expr_head *);
@@ -794,10 +892,14 @@ index 097c390..5c71f02 100644
 +static void print_cmdline_list (cmdline_union_type *);
 +static bfd_boolean cmdline_claimed_archive_member_p (bfd *);
 +static bfd_boolean cmdline_on_object_only_archive_list_p (bfd *);
++static void cmdline_option_prepend (cmdline_enum_type, void *);
  
  /* Exported variables.  */
++unsigned int cmdline_linker_script;
  const char *output_target;
-@@ -1057,6 +1073,7 @@ new_afile (const char *name,
+ lang_output_section_statement_type *abs_output_section;
+ lang_statement_list_type lang_output_section_statement;
+@@ -1056,6 +1074,7 @@ new_afile (const char *name,
    lang_has_input_file = TRUE;
    p->target = target;
    p->sysrooted = FALSE;
@@ -805,7 +907,7 @@ index 097c390..5c71f02 100644
  
    if (file_type == lang_input_file_is_l_enum
        && name[0] == ':' && name[1] != '\0')
-@@ -1223,14 +1240,17 @@ output_section_statement_table_free (void)
+@@ -1222,14 +1241,17 @@ output_section_statement_table_free (void)
  /* Build enough state so that the parser can build its tree.  */
  
  void
@@ -825,7 +927,7 @@ index 097c390..5c71f02 100644
    lang_list_init (stat_ptr);
  
    lang_list_init (&input_file_chain);
-@@ -1249,10 +1269,11 @@ lang_init (void)
+@@ -1248,10 +1270,11 @@ lang_init (void)
       simpler to re-use working machinery than using a linked list in terms
       of code-complexity here in ld, besides the initialization which just
       looks like other code here.  */
@@ -841,7 +943,7 @@ index 097c390..5c71f02 100644
      einfo (_("%P%F: can not create hash table: %E\n"));
  }
  
-@@ -2771,6 +2792,14 @@ load_symbols (lang_input_statement_type *entry,
+@@ -2770,6 +2793,14 @@ load_symbols (lang_input_statement_type *entry,
  		  loaded = FALSE;
  		}
  
@@ -856,7 +958,7 @@ index 097c390..5c71f02 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6247,10 +6276,15 @@ lang_gc_sections (void)
+@@ -6246,10 +6277,15 @@ lang_gc_sections (void)
      {
        LANG_FOR_EACH_INPUT_STATEMENT (f)
  	{
@@ -876,7 +978,7 @@ index 097c390..5c71f02 100644
  	}
      }
  
-@@ -6415,23 +6449,113 @@ lang_process (void)
+@@ -6414,23 +6450,113 @@ lang_process (void)
    open_input_bfds (statement_list.head, FALSE);
  
  #ifdef ENABLE_PLUGINS
@@ -997,7 +1099,73 @@ index 097c390..5c71f02 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -7846,3 +7970,1162 @@ lang_append_dynamic_list_cpp_new (void)
+@@ -6711,6 +6837,8 @@ lang_startup (const char *name)
+   first_file->filename = name;
+   first_file->local_sym_name = name;
+   first_file->real = TRUE;
++  cmdline_option_prepend (cmdline_is_lang_input_statement_enum,
++			  first_file);
+ }
+ 
+ void
+@@ -6883,17 +7011,41 @@ lang_add_insert (const char *where, int is_before)
+   saved_script_handle = previous_script_handle;
+ }
+ 
++/* Enter an input.  */
++
++void
++lang_enter_input (void)
++{
++  if (cmdline_linker_script)
++    cmdline_linker_script++;
++}
++
++/* Leave an input.  */
++
++void
++lang_leave_input (void)
++{
++  if (cmdline_linker_script)
++    {
++      cmdline_linker_script--;
++      ASSERT (cmdline_linker_script);
++    }
++}
++
+ /* Enter a group.  This creates a new lang_group_statement, and sets
+    stat_ptr to build new statements within the group.  */
+ 
+ void
+-lang_enter_group (void)
++lang_enter_group (bfd_boolean cmdline)
+ {
+   lang_group_statement_type *g;
+ 
+   g = new_stat (lang_group_statement, stat_ptr);
+   lang_list_init (&g->children);
+   push_stat_ptr (&g->children);
++  lang_enter_input ();
++  if (cmdline)
++    cmdline_option_append (cmdline_is_enter_group_enum, NULL);
+ }
+ 
+ /* Leave a group.  This just resets stat_ptr to start writing to the
+@@ -6902,9 +7054,12 @@ lang_enter_group (void)
+    but currently they can't.  */
+ 
+ void
+-lang_leave_group (void)
++lang_leave_group (bfd_boolean cmdline)
+ {
+   pop_stat_ptr ();
++  lang_leave_input ();
++  if (cmdline)
++    cmdline_option_append (cmdline_is_leave_group_enum, NULL);
+ }
+ 
+ /* Add a new program header.  This is called for each entry in a PHDRS
+@@ -7843,3 +7998,1202 @@ lang_append_dynamic_list_cpp_new (void)
  
    lang_append_dynamic_list (dynamic);
  }
@@ -1016,19 +1184,15 @@ index 097c390..5c71f02 100644
 +    = &cmdline_claimed_archive_member_list.head;
 +}
 +
-+/* Append an item with TYPE and DATA to LIST.  */
++/* Allocate an item with TYPE and DATA.  */
 +
-+static void
-+cmdline_list_append (cmdline_list_type *list, cmdline_enum_type type,
-+		     void *data)
++static cmdline_union_type *
++cmdline_list_new (cmdline_enum_type type, void *data)
 +{
 +  cmdline_union_type *new_opt;
 +
 +  new_opt = (cmdline_union_type *) stat_alloc (sizeof (*new_opt));
 +  new_opt->header.type = type;
-+  new_opt->header.next = NULL;
-+  *list->tail = new_opt;
-+  list->tail = &new_opt->header.next;
 +  switch (type)
 +    {
 +    default:
@@ -1043,14 +1207,58 @@ index 097c390..5c71f02 100644
 +      new_opt->abfd.abfd = (bfd *) data;
 +      break;
 +    }
++  return new_opt;
 +}
 +
-+/* Append a cmmand line option to cmdline_options list.  */
++/* Append an item with TYPE and DATA to LIST.  */
++
++static void
++cmdline_list_append (cmdline_list_type *list, cmdline_enum_type type,
++		     void *data)
++{
++  cmdline_union_type *new_opt = cmdline_list_new (type, data);
++  new_opt->header.next = NULL;
++  *list->tail = new_opt;
++  list->tail = &new_opt->header.next;
++}
++
++/* Prepend an item with TYPE and DATA to LIST.  */
++
++static void
++cmdline_list_prepend (cmdline_list_type *list, cmdline_enum_type type,
++		      void *data)
++{
++  cmdline_union_type *new_opt = cmdline_list_new (type, data);
++  if (list->tail == &list->head)
++    list->tail = &new_opt->header.next;
++  new_opt->header.next = list->head;
++  list->head = new_opt;
++}
++
++/* Append a command line option to cmdline_options list.  */
 +
 +void
 +cmdline_option_append (cmdline_enum_type type, void *data)
 +{
 +  cmdline_list_append (&cmdline_options, type, data);
++}
++
++/* Append a lang_input_statement in linker script on command line to
++   cmdline_options list.  */
++
++void
++cmdline_option_append_lang_input (lang_input_statement_type *input)
++{
++  if (cmdline_linker_script == 2)
++    cmdline_option_append (cmdline_is_lang_input_statement_enum, input);
++}
++
++/* Prepend a command line option to cmdline_options list.  */
++
++static void
++cmdline_option_prepend (cmdline_enum_type type, void *data)
++{
++  cmdline_list_prepend (&cmdline_options, type, data);
 +}
 +
 +/* Set cmdline_next_claimed_output.  */
@@ -1141,18 +1349,18 @@ index 097c390..5c71f02 100644
 +			     lang_input_file_is_file_enum, NULL);
 +	break;
 +      case cmdline_is_enter_group_enum:
-+	lang_enter_group ();
++	lang_enter_group (FALSE);
 +	ingroup++;
 +	break;
 +      case cmdline_is_leave_group_enum:
-+	lang_leave_group ();
++	lang_leave_group (FALSE);
 +	ingroup--;
 +	break;
 +      }
 +
 +  while (ingroup)
 +    {
-+      lang_leave_group ();
++      lang_leave_group (FALSE);
 +      ingroup--;
 +    }
 +}
@@ -1905,7 +2113,7 @@ index 097c390..5c71f02 100644
 +
 +  lang_init (TRUE);
 +
-+  ld_parse_linker_script ();
++  ld_parse_linker_script (FALSE);
 +
 +  /* Set up the object-only output. */
 +  lang_final ();
@@ -2161,7 +2369,7 @@ index 097c390..5c71f02 100644
 +      }
 +}
 diff --git a/ld/ldlang.h b/ld/ldlang.h
-index 5850fcb..3a67354 100644
+index 5850fcb..bb572ac 100644
 --- a/ld/ldlang.h
 +++ b/ld/ldlang.h
 @@ -279,6 +279,9 @@ typedef struct lang_input_statement_struct
@@ -2183,7 +2391,24 @@ index 5850fcb..3a67354 100644
  extern void lang_finish
    (void);
  extern lang_memory_region_type * lang_memory_region_lookup
-@@ -651,4 +654,59 @@ extern bfd_boolean
+@@ -599,10 +602,14 @@ extern void one_lang_size_sections_pass
+   (bfd_boolean *, bfd_boolean);
+ extern void lang_add_insert
+   (const char *, int);
+-extern void lang_enter_group
++extern void lang_enter_input
+   (void);
+-extern void lang_leave_group
++extern void lang_leave_input
+   (void);
++extern void lang_enter_group
++  (bfd_boolean);
++extern void lang_leave_group
++  (bfd_boolean);
+ extern void lang_add_section
+   (lang_statement_list_type *, asection *,
+    lang_output_section_statement_type *);
+@@ -651,4 +658,61 @@ extern bfd_boolean
  ldlang_override_segment_assignment
    (struct bfd_link_info *, bfd *, asection *, asection *, bfd_boolean);
  
@@ -2234,7 +2459,9 @@ index 5850fcb..3a67354 100644
 +  cmdline_union_type **tail;
 +} cmdline_list_type;
 +
++extern unsigned int cmdline_linker_script;
 +extern void cmdline_option_append (cmdline_enum_type, void *);
++extern void cmdline_option_append_lang_input (lang_input_statement_type *);
 +extern void cmdline_option_insert_claimed_output (const char *);
 +extern void cmdline_set_next_claimed_output (bfd *);
 +extern void cmdline_claimed_archive_member_list_append (bfd *);
@@ -2244,7 +2471,7 @@ index 5850fcb..3a67354 100644
 +
  #endif
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index 5530dca..39363cd 100644
+index 5530dca..35cc36e 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
 @@ -213,6 +213,9 @@ main (int argc, char **argv)
@@ -2298,7 +2525,7 @@ index 5530dca..39363cd 100644
 -      yyparse ();
 -      lex_string = NULL;
 -    }
-+  ld_parse_linker_script ();
++  ld_parse_linker_script (TRUE);
  
    if (trace_file_tries)
      {
@@ -2423,15 +2650,16 @@ index 5530dca..39363cd 100644
  		 + strlen (bfd_get_filename (abfd))
  		 + 2);
  	}
-@@ -1477,3 +1485,38 @@ notice (struct bfd_link_info *info,
+@@ -1477,3 +1485,43 @@ notice (struct bfd_link_info *info,
  
    return TRUE;
  }
 +
-+/* Parse the linker script.  */
++/* Parse the linker script.  If CMDLINE is TRUE, treat it as if it is
++   on command line.  */
 +
 +void
-+ld_parse_linker_script (void)
++ld_parse_linker_script (bfd_boolean cmdline)
 +{
 +  /* If we have not already opened and parsed a linker script,
 +     try the default script from command line first.  */
@@ -2450,6 +2678,8 @@ index 5530dca..39363cd 100644
 +      int isfile;
 +      char *s = ldemul_get_script (&isfile);
 +
++      if (cmdline)
++	cmdline_linker_script = 1;
 +      if (isfile)
 +	ldfile_open_default_command_file (s);
 +      else
@@ -2460,21 +2690,23 @@ index 5530dca..39363cd 100644
 +      parser_input = input_script;
 +      yyparse ();
 +      lex_string = NULL;
++      if (cmdline)
++	cmdline_linker_script = 0;
 +    }
 +}
 diff --git a/ld/ldmain.h b/ld/ldmain.h
-index 57ce8d7..22f9885 100644
+index 57ce8d7..36c1080 100644
 --- a/ld/ldmain.h
 +++ b/ld/ldmain.h
 @@ -46,4 +46,6 @@ extern void add_ysym (const char *);
  extern void add_wrap (const char *);
  extern void add_keepsyms_file (const char *);
  
-+extern void ld_parse_linker_script (void);
++extern void ld_parse_linker_script (bfd_boolean);
 +
  #endif
 diff --git a/ld/lexsup.c b/ld/lexsup.c
-index acb63fb..30e36db 100644
+index acb63fb..4baef3c 100644
 --- a/ld/lexsup.c
 +++ b/ld/lexsup.c
 @@ -725,6 +725,7 @@ parse_args (unsigned argc, char **argv)
@@ -2524,21 +2756,45 @@ index acb63fb..30e36db 100644
  		break;
  	      }
  	  }
-@@ -1489,6 +1498,7 @@ parse_args (unsigned argc, char **argv)
+@@ -1244,11 +1253,13 @@ parse_args (unsigned argc, char **argv)
+ 	  trace_files = TRUE;
+ 	  break;
+ 	case 'T':
++	  cmdline_linker_script = 1;
+ 	  previous_script_handle = saved_script_handle;
+ 	  ldfile_open_command_file (optarg);
+ 	  parser_input = input_script;
+ 	  yyparse ();
+ 	  previous_script_handle = NULL;
++	  cmdline_linker_script = 0;
+ 	  break;
+ 	case OPTION_DEFAULT_SCRIPT:
+ 	  command_line.default_script = optarg;
+@@ -1488,14 +1499,14 @@ parse_args (unsigned argc, char **argv)
+ 	  command_line.accept_unknown_input_arch = FALSE;
  	  break;
  	case '(':
- 	  lang_enter_group ();
-+	  cmdline_option_append (cmdline_is_enter_group_enum, NULL);
+-	  lang_enter_group ();
++	  lang_enter_group (TRUE);
  	  ingroup++;
  	  break;
  	case ')':
-@@ -1496,6 +1506,7 @@ parse_args (unsigned argc, char **argv)
+ 	  if (! ingroup)
  	    einfo (_("%P%F: group ended before it began (--help for usage)\n"));
  
- 	  lang_leave_group ();
-+	  cmdline_option_append (cmdline_is_leave_group_enum, NULL);
+-	  lang_leave_group ();
++	  lang_leave_group (TRUE);
  	  ingroup--;
  	  break;
+ 
+@@ -1529,7 +1540,7 @@ parse_args (unsigned argc, char **argv)
+ 
+   while (ingroup)
+     {
+-      lang_leave_group ();
++      lang_leave_group (FALSE);
+       ingroup--;
+     }
  
 diff --git a/ld/plugin.c b/ld/plugin.c
 index 10314a4..377a840 100644
