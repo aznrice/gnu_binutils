@@ -130,10 +130,11 @@ ld/
 	linker script.  Update calls to lang_enter_group and
 	lang_leave_group.
 
-	* plugin.c (IRONLY_SUFFIX_LEN): Removed.
+	* plugin.c (IRONLY_SUFFIX): Removed.
+	(IRONLY_SUFFIX_LEN): Likewise.
 	(plugin_opt_plugin_arg): Ignore -pass-through=.
-	(plugin_get_ir_dummy_bfd): Set BFD_PLUGIN_DUMMY on dummy IR
-	input.
+	(plugin_get_ir_dummy_bfd): Don't use IRONLY_SUFFIX.  Set
+	BFD_PLUGIN_DUMMY on dummy IR input.
 	(is_ir_dummy_bfd): Check BFD_PLUGIN_DUMMY.
 	(get_symbols): Re-indent.
 	(add_input_file): Replace lang_add_input_file with
@@ -501,10 +502,10 @@ index ac176df..4c8b48b 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index b8ab55b..6d0a368 100644
+index a9f271d..98c961f 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
-@@ -2999,6 +2999,7 @@ get_section_type_name (unsigned int sh_type)
+@@ -3000,6 +3000,7 @@ get_section_type_name (unsigned int sh_type)
      case 0x7ffffffd:		return "AUXILIARY";
      case 0x7fffffff:		return "FILTER";
      case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
@@ -848,7 +849,7 @@ index ed0aaa7..f50e4a9 100644
  		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
  		     input_list ')'
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 5251804..0cfc5a7 100644
+index 4fe80a8..43edd12 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -37,6 +37,7 @@
@@ -958,7 +959,7 @@ index 5251804..0cfc5a7 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6246,10 +6277,15 @@ lang_gc_sections (void)
+@@ -6248,10 +6279,15 @@ lang_gc_sections (void)
      {
        LANG_FOR_EACH_INPUT_STATEMENT (f)
  	{
@@ -978,7 +979,7 @@ index 5251804..0cfc5a7 100644
  	}
      }
  
-@@ -6414,23 +6450,113 @@ lang_process (void)
+@@ -6416,23 +6452,113 @@ lang_process (void)
    open_input_bfds (statement_list.head, FALSE);
  
  #ifdef ENABLE_PLUGINS
@@ -1099,7 +1100,7 @@ index 5251804..0cfc5a7 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -6711,6 +6837,8 @@ lang_startup (const char *name)
+@@ -6713,6 +6839,8 @@ lang_startup (const char *name)
    first_file->filename = name;
    first_file->local_sym_name = name;
    first_file->real = TRUE;
@@ -1108,7 +1109,7 @@ index 5251804..0cfc5a7 100644
  }
  
  void
-@@ -6883,17 +7011,41 @@ lang_add_insert (const char *where, int is_before)
+@@ -6885,17 +7013,41 @@ lang_add_insert (const char *where, int is_before)
    saved_script_handle = previous_script_handle;
  }
  
@@ -1151,7 +1152,7 @@ index 5251804..0cfc5a7 100644
  }
  
  /* Leave a group.  This just resets stat_ptr to start writing to the
-@@ -6902,9 +7054,12 @@ lang_enter_group (void)
+@@ -6904,9 +7056,12 @@ lang_enter_group (void)
     but currently they can't.  */
  
  void
@@ -1165,7 +1166,7 @@ index 5251804..0cfc5a7 100644
  }
  
  /* Add a new program header.  This is called for each entry in a PHDRS
-@@ -7843,3 +7998,1202 @@ lang_append_dynamic_list_cpp_new (void)
+@@ -7845,3 +8000,1202 @@ lang_append_dynamic_list_cpp_new (void)
  
    lang_append_dynamic_list (dynamic);
  }
@@ -2797,13 +2798,18 @@ index acb63fb..4baef3c 100644
      }
  
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 10314a4..377a840 100644
+index 10314a4..cdabd8f 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
-@@ -41,10 +41,6 @@
-    plugin.  */
- #define IRONLY_SUFFIX		".ironly\004"
+@@ -36,15 +36,6 @@
+ #include <Windows.h>
+ #endif
  
+-/* The suffix to append to the name of the real (claimed) object file
+-   when generating a dummy BFD to hold the IR symbols sent from the
+-   plugin.  */
+-#define IRONLY_SUFFIX		".ironly\004"
+-
 -/* This is sizeof an array of chars, not sizeof a const char *.  We
 -   also have to avoid inadvertently counting the trailing NUL.  */
 -#define IRONLY_SUFFIX_LEN	(sizeof (IRONLY_SUFFIX) - 1)
@@ -2811,7 +2817,7 @@ index 10314a4..377a840 100644
  /* Stores a single argument passed to a plugin.  */
  typedef struct plugin_arg
  {
-@@ -214,6 +210,17 @@ plugin_opt_plugin_arg (const char *arg)
+@@ -214,6 +205,17 @@ plugin_opt_plugin_arg (const char *arg)
    if (!last_plugin)
      return set_plugin_error (_("<no plugin>"));
  
@@ -2829,15 +2835,20 @@ index 10314a4..377a840 100644
    newarg = xmalloc (sizeof *newarg);
    newarg->arg = arg;
    newarg->next = NULL;
-@@ -237,6 +244,7 @@ plugin_get_ir_dummy_bfd (const char *name, bfd *srctemplate)
- 		     srctemplate);
+@@ -233,10 +235,10 @@ plugin_get_ir_dummy_bfd (const char *name, bfd *srctemplate)
+   bfd *abfd;
+ 
+   bfd_use_reserved_id = 1;
+-  abfd = bfd_create (concat (name, IRONLY_SUFFIX, (const char *)NULL),
+-		     srctemplate);
++  abfd = bfd_create (name, srctemplate);
    bfd_set_arch_info (abfd, bfd_get_arch_info (srctemplate));
    bfd_make_writable (abfd);
 +  abfd->flags |= BFD_PLUGIN_DUMMY;
    /* Create a minimal set of sections to own the symbols.  */
    sec = bfd_make_section_old_way (abfd, ".text");
    bfd_set_section_flags (abfd, sec,
-@@ -251,14 +259,9 @@ plugin_get_ir_dummy_bfd (const char *name, bfd *srctemplate)
+@@ -251,14 +253,9 @@ plugin_get_ir_dummy_bfd (const char *name, bfd *srctemplate)
  static bfd_boolean
  is_ir_dummy_bfd (const bfd *abfd)
  {
@@ -2853,7 +2864,7 @@ index 10314a4..377a840 100644
  }
  
  /* Helpers to convert between BFD and GOLD symbol formats.  */
-@@ -533,9 +536,9 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms)
+@@ -533,9 +530,9 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms)
  	}
  
        /* Was originally def, weakdef, or common, but has been pre-empted.  */
@@ -2866,7 +2877,7 @@ index 10314a4..377a840 100644
      }
    return LDPS_OK;
  }
-@@ -545,9 +548,7 @@ static enum ld_plugin_status
+@@ -545,9 +542,7 @@ static enum ld_plugin_status
  add_input_file (const char *pathname)
  {
    ASSERT (called_plugin);
@@ -2877,7 +2888,7 @@ index 10314a4..377a840 100644
    return LDPS_OK;
  }
  
-@@ -556,9 +557,7 @@ static enum ld_plugin_status
+@@ -556,9 +551,7 @@ static enum ld_plugin_status
  add_input_library (const char *pathname)
  {
    ASSERT (called_plugin);
