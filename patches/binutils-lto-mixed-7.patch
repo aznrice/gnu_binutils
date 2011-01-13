@@ -141,6 +141,14 @@ ld/
 	cmdline_list_insert_claimed_output.
 	(add_input_library): Likewise
 
+	* emultempl/alphaelf.em (alpha_finish): Replace finish_default
+	with gld${EMULATION_NAME}_finish ().
+
+	* emultempl/armelf.em (gld${EMULATION_NAME}_finish): Reset
+	orphan_init_done if needed before calling finish_default.
+	* emultempl/ppc64elf.em (gld${EMULATION_NAME}_finish): Likwise.
+	* emultempl/spuelf.em (gld${EMULATION_NAME}_finish): Likwise.
+
 	* emultempl/elf32.em (orphan_init_done): Moved out of
 	gld${EMULATION_NAME}_place_orphan.
 	(gld${EMULATION_NAME}_place_orphan): Initialize hold.
@@ -562,20 +570,53 @@ index 01c519d..335420c 100644
  
  /* The next three section types are defined by Solaris, and are named
     SHT_SUNW*.  We use them in GNU code, so we also define SHT_GNU*
+diff --git a/ld/emultempl/alphaelf.em b/ld/emultempl/alphaelf.em
+index 21064ad..ec0965a 100644
+--- a/ld/emultempl/alphaelf.em
++++ b/ld/emultempl/alphaelf.em
+@@ -100,7 +100,7 @@ alpha_finish (void)
+   if (limit_32bit)
+     elf_elfheader (link_info.output_bfd)->e_flags |= EF_ALPHA_32BIT;
+ 
+-  finish_default ();
++  gld${EMULATION_NAME}_finish ();
+ }
+ EOF
+ 
+diff --git a/ld/emultempl/armelf.em b/ld/emultempl/armelf.em
+index 6c4c78d..6b8a3e2 100644
+--- a/ld/emultempl/armelf.em
++++ b/ld/emultempl/armelf.em
+@@ -387,6 +387,10 @@ gld${EMULATION_NAME}_finish (void)
+ 	}
+     }
+ 
++  /* Support the object-only output.  */
++  if (link_info.emit_gnu_object_only)
++    orphan_init_done = 0;
++
+   finish_default ();
+ 
+   if (thumb_entry_symbol)
 diff --git a/ld/emultempl/elf32.em b/ld/emultempl/elf32.em
-index 9120f85..bfbdc26 100644
+index 9120f85..5ccf27c 100644
 --- a/ld/emultempl/elf32.em
 +++ b/ld/emultempl/elf32.em
-@@ -1757,6 +1757,8 @@ output_rel_find (asection *sec, int isdyn)
-   return last;
- }
- 
+@@ -68,6 +68,13 @@ static void gld${EMULATION_NAME}_after_allocation (void);
+ static lang_output_section_statement_type *gld${EMULATION_NAME}_place_orphan
+   (asection *, const char *, int);
+ EOF
++if test x"$LDEMUL_PLACE_ORPHAN" != xgld"$EMULATION_NAME"_place_orphan; then
++fragment <<EOF
++static void gld${EMULATION_NAME}_finish (void);
 +static int orphan_init_done = 0;
 +
- /* Place an orphan section.  We use this to put random SHF_ALLOC
-    sections in the right segment.  */
++EOF
++fi
  
-@@ -1765,7 +1767,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+ if [ "x${USE_LIBPATH}" = xyes ] ; then
+   case ${target} in
+@@ -1765,7 +1772,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
  				   const char *secname,
  				   int constraint)
  {
@@ -584,7 +625,7 @@ index 9120f85..bfbdc26 100644
      {
        { ".text",
  	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE,
-@@ -1792,6 +1794,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1792,6 +1799,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
  	SEC_HAS_CONTENTS,
  	0, 0, 0, 0 },
      };
@@ -592,7 +633,7 @@ index 9120f85..bfbdc26 100644
    enum orphan_save_index
      {
        orphan_text = 0,
-@@ -1803,7 +1806,6 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1803,7 +1811,6 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
        orphan_sdata,
        orphan_nonalloc
      };
@@ -600,7 +641,7 @@ index 9120f85..bfbdc26 100644
    struct orphan_save *place;
    lang_output_section_statement_type *after;
    lang_output_section_statement_type *os;
-@@ -1881,15 +1883,21 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1881,15 +1888,21 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
    if (!orphan_init_done)
      {
        lang_output_section_statement_type *lookup;
@@ -630,10 +671,13 @@ index 9120f85..bfbdc26 100644
        lookup = hold[orphan_bss].os;
        if (lookup == NULL)
  	lookup = &lang_output_section_statement.head->output_section_statement;
-@@ -1966,7 +1974,21 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
- 
+@@ -1967,6 +1980,25 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
    return lang_insert_orphan (s, secname, constraint, after, place, NULL, NULL);
  }
+ EOF
++
++if test x"$LDEMUL_FINISH" != xgld"$EMULATION_NAME"_finish; then
++fragment <<EOF
 +
 +/* Final emulation specific call.  */
 +
@@ -646,13 +690,14 @@ index 9120f85..bfbdc26 100644
 +
 +  finish_default ();
 +}
- EOF
++EOF
++fi
 +elif test x"$LDEMUL_FINISH" != xgld"$EMULATION_NAME"_finish; then
 +  LDEMUL_FINISH=finish_default
  fi
  
  if test x"$LDEMUL_AFTER_ALLOCATION" != xgld"$EMULATION_NAME"_after_allocation; then
-@@ -2480,7 +2502,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
+@@ -2480,7 +2512,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
    ${LDEMUL_GET_SCRIPT-gld${EMULATION_NAME}_get_script},
    "${EMULATION_NAME}",
    "${OUTPUT_FORMAT}",
@@ -661,6 +706,37 @@ index 9120f85..bfbdc26 100644
    ${LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS-NULL},
    ${LDEMUL_OPEN_DYNAMIC_ARCHIVE-gld${EMULATION_NAME}_open_dynamic_archive},
    ${LDEMUL_PLACE_ORPHAN-gld${EMULATION_NAME}_place_orphan},
+diff --git a/ld/emultempl/ppc64elf.em b/ld/emultempl/ppc64elf.em
+index cb8e784..50c17b7 100644
+--- a/ld/emultempl/ppc64elf.em
++++ b/ld/emultempl/ppc64elf.em
+@@ -557,6 +557,11 @@ gld${EMULATION_NAME}_finish (void)
+     }
+ 
+   ppc64_elf_restore_symbols (&link_info);
++
++  /* Support the object-only output.  */
++  if (link_info.emit_gnu_object_only)
++    orphan_init_done = 0;
++
+   finish_default ();
+ }
+ 
+diff --git a/ld/emultempl/spuelf.em b/ld/emultempl/spuelf.em
+index ff6785c..4a7aa5e 100644
+--- a/ld/emultempl/spuelf.em
++++ b/ld/emultempl/spuelf.em
+@@ -420,6 +420,10 @@ gld${EMULATION_NAME}_finish (void)
+ 	einfo ("%P: --auto-overlay ignored with zero local store range\n");
+     }
+ 
++  /* Support the object-only output.  */
++  if (link_info.emit_gnu_object_only)
++    orphan_init_done = 0;
++
+   finish_default ();
+ }
+ 
 diff --git a/ld/ldfile.c b/ld/ldfile.c
 index a9a6954..e1568d6 100644
 --- a/ld/ldfile.c

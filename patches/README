@@ -22,7 +22,7 @@ patches="
 	binutils-signed-6.patch
 	binutils-weakdef-2.patch
 	bfd-64k-2.patch
-	binutils-lto-mixed-6.patch
+	binutils-lto-mixed-7.patch
 	binutils-pr12356-1.patch
 "
 
