@@ -108,7 +108,6 @@ bfd_boolean delete_output_file_on_failure = FALSE;
 struct lang_phdr *lang_phdr_list;
 struct lang_nocrossrefs *nocrossref_list;
 bfd_boolean missing_file = FALSE;
-int ld_compatibility;
 
  /* Functions that traverse the linker script and might evaluate
     DEFINED() need to increment this.  */
@@ -1809,7 +1808,7 @@ lang_insert_orphan (asection *s,
 	  sprintf (symname + (symname[0] != 0), "__start_%s", secname);
 	  e_align = exp_unop (ALIGN_K,
 			      exp_intop ((bfd_vma) 1 << s->alignment_power));
-	  lang_add_assignment (exp_assop ('=', ".", e_align));
+	  lang_add_assignment (exp_assign (".", e_align));
 	  lang_add_assignment (exp_provide (symname,
 					    exp_unop (ABSOLUTE,
 						      exp_nameop (NAME, ".")),
@@ -3250,7 +3249,9 @@ open_input_bfds (lang_statement_union_type *s, bfd_boolean force)
 	    }
 	  break;
 	case lang_assignment_statement_enum:
-	  exp_fold_tree_no_dot (s->assignment_statement.exp);
+	  if (s->assignment_statement.exp->assign.hidden)
+	    /* This is from a --defsym on the command line.  */
+	    exp_fold_tree_no_dot (s->assignment_statement.exp);
 	  break;
 	default:
 	  break;
@@ -7229,7 +7230,7 @@ lang_leave_overlay (etree_type *lma_expr,
      overlay region.  */
   if (overlay_list != NULL)
     overlay_list->os->update_dot_tree
-      = exp_assop ('=', ".", exp_binop ('+', overlay_vma, overlay_max));
+      = exp_assign (".", exp_binop ('+', overlay_vma, overlay_max));
 
   l = overlay_list;
   while (l != NULL)
@@ -7844,4 +7845,33 @@ lang_append_dynamic_list_cpp_new (void)
 				     FALSE);
 
   lang_append_dynamic_list (dynamic);
+}
+
+/* Scan a space and/or comma separated string of features.  */
+
+void
+lang_ld_feature (char *str)
+{
+  char *p, *q;
+
+  p = str;
+  while (*p)
+    {
+      char sep;
+      while (*p == ',' || ISSPACE (*p))
+	++p;
+      if (!*p)
+	break;
+      q = p + 1;
+      while (*q && *q != ',' && !ISSPACE (*q))
+	++q;
+      sep = *q;
+      *q = 0;
+      if (strcasecmp (p, "SANE_EXPR") == 0)
+	config.sane_expr = TRUE;
+      else
+	einfo (_("%X%P: unknown feature `%s'\n"), p);
+      *q = sep;
+      p = q;
+    }
 }

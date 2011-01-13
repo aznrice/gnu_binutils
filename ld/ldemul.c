@@ -1,6 +1,6 @@
 /* ldemul.c -- clearing house for ld emulation states
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2005, 2007, 2008, 2009
+   2001, 2002, 2003, 2005, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -226,16 +226,6 @@ after_parse_default (void)
 void
 after_open_default (void)
 {
-  struct bfd_link_hash_entry *h;
-
-  h = bfd_wrapped_link_hash_lookup (link_info.output_bfd,
-				    &link_info,
-				    "__ld_compatibility",
-				    FALSE, FALSE, TRUE);
-  if (h != NULL
-      && (h->type == bfd_link_hash_defined
-	  || h->type == bfd_link_hash_defweak))
-    ld_compatibility = h->u.def.value;
 }
 
 void

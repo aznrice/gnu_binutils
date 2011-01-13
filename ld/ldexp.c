@@ -512,7 +512,6 @@ fold_name (etree_type *tree)
       break;
 
     case DEFINED:
-      expld.uses_defined = TRUE;
       if (expld.phase == lang_first_phase_enum)
 	lang_track_definedness (tree->name.name);
       else
@@ -564,7 +563,7 @@ fold_name (etree_type *tree)
 		}
 	      else if (output_section == bfd_abs_section_ptr
 		       && (expld.section != bfd_abs_section_ptr
-			   || ld_compatibility >= 221))
+			   || config.sane_expr))
 		new_number (h->u.def.value + h->u.def.section->output_offset);
 	      else
 		new_rel (h->u.def.value + h->u.def.section->output_offset,
@@ -712,7 +711,7 @@ exp_fold_tree_1 (etree_type *tree)
     {
     case etree_value:
       if (expld.section == bfd_abs_section_ptr
-	  && ld_compatibility < 221)
+	  && !config.sane_expr)
 	new_abs (tree->value.value);
       else
 	new_number (tree->value.value);
@@ -819,7 +818,8 @@ exp_fold_tree_1 (etree_type *tree)
 	  exp_fold_tree_1 (tree->assign.src);
 	  if (expld.result.valid_p
 	      || (expld.phase == lang_first_phase_enum
-		  && !expld.uses_defined))
+		  && tree->type.node_class == etree_assign
+		  && tree->assign.hidden))
 	    {
 	      if (h == NULL)
 		{
@@ -883,7 +883,6 @@ exp_fold_tree (etree_type *tree, asection *current_section, bfd_vma *dotp)
   expld.dot = *dotp;
   expld.dotp = dotp;
   expld.section = current_section;
-  expld.uses_defined = FALSE;
   exp_fold_tree_1 (tree);
 }
 
@@ -893,7 +892,6 @@ exp_fold_tree_no_dot (etree_type *tree)
   expld.dot = 0;
   expld.dotp = NULL;
   expld.section = bfd_abs_section_ptr;
-  expld.uses_defined = FALSE;
   exp_fold_tree_1 (tree);
 }
 
@@ -974,18 +972,34 @@ exp_nameop (int code, const char *name)
 
 }
 
-etree_type *
-exp_assop (int code, const char *dst, etree_type *src)
+static etree_type *
+exp_assop (const char *dst,
+	   etree_type *src,
+	   enum node_tree_enum class,
+	   bfd_boolean hidden)
 {
-  etree_type *new_e;
+  etree_type *n;
 
-  new_e = (etree_type *) stat_alloc (sizeof (new_e->assign));
-  new_e->type.node_code = code;
-  new_e->type.lineno = src->type.lineno;
-  new_e->type.node_class = etree_assign;
-  new_e->assign.src = src;
-  new_e->assign.dst = dst;
-  return new_e;
+  n = (etree_type *) stat_alloc (sizeof (n->assign));
+  n->assign.type.node_code = '=';
+  n->assign.type.lineno = src->type.lineno;
+  n->assign.type.node_class = class;
+  n->assign.src = src;
+  n->assign.dst = dst;
+  n->assign.hidden = hidden;
+  return n;
+}
+
+etree_type *
+exp_assign (const char *dst, etree_type *src)
+{
+  return exp_assop (dst, src, etree_assign, FALSE);
+}
+
+etree_type *
+exp_defsym (const char *dst, etree_type *src)
+{
+  return exp_assop (dst, src, etree_assign, TRUE);
 }
 
 /* Handle PROVIDE.  */
@@ -993,16 +1007,7 @@ exp_assop (int code, const char *dst, etree_type *src)
 etree_type *
 exp_provide (const char *dst, etree_type *src, bfd_boolean hidden)
 {
-  etree_type *n;
-
-  n = (etree_type *) stat_alloc (sizeof (n->assign));
-  n->assign.type.node_code = '=';
-  n->assign.type.lineno = src->type.lineno;
-  n->assign.type.node_class = etree_provide;
-  n->assign.src = src;
-  n->assign.dst = dst;
-  n->assign.hidden = hidden;
-  return n;
+  return exp_assop (dst, src, etree_provide, hidden);
 }
 
 /* Handle ASSERT.  */

@@ -46,7 +46,7 @@ enum node_tree_enum {
 typedef struct {
   int node_code;
   unsigned int lineno;
-  enum  node_tree_enum node_class;
+  enum node_tree_enum node_class;
 } node_type;
 
 typedef union etree_union {
@@ -132,8 +132,6 @@ struct ldexp_control {
   /* Working results.  */
   etree_value_type result;
   bfd_vma dot;
-  /* Set if an expression contains DEFINED().  */
-  bfd_boolean uses_defined;
 
   /* Current dot and section passed to ldexp folder.  */
   bfd_vma *dotp;
@@ -190,8 +188,10 @@ etree_type *exp_unop
   (int, etree_type *);
 etree_type *exp_nameop
   (int, const char *);
-etree_type *exp_assop
-  (int, const char *, etree_type *);
+etree_type *exp_assign
+  (const char *, etree_type *);
+etree_type *exp_defsym
+  (const char *, etree_type *);
 etree_type *exp_provide
   (const char *, etree_type *, bfd_boolean);
 etree_type *exp_assert
