@@ -144,16 +144,29 @@ ld/
 	* emultempl/alphaelf.em (alpha_finish): Replace finish_default
 	with gld${EMULATION_NAME}_finish ().
 
-	* emultempl/armelf.em (gld${EMULATION_NAME}_finish): Reset
-	orphan_init_done if needed before calling finish_default.
-	* emultempl/ppc64elf.em (gld${EMULATION_NAME}_finish): Likwise.
-	* emultempl/spuelf.em (gld${EMULATION_NAME}_finish): Likwise.
+	* emultempl/armelf.em (gld${EMULATION_NAME}_finish): Renamed
+	to ...
+	(arm_finish): This.  Replace finish_default with
+	gld${EMULATION_NAME}_finish.
+	(LDEMUL_FINISH): Set to arm_finish.
 
 	* emultempl/elf32.em (orphan_init_done): Moved out of
 	gld${EMULATION_NAME}_place_orphan.
 	(gld${EMULATION_NAME}_place_orphan): Initialize hold.
 	(gld${EMULATION_NAME}_finish): New.
 	(ld_${EMULATION_NAME}_emulation): Use gld${EMULATION_NAME}_finish.
+
+	* emultempl/ppc64elf.em (gld${EMULATION_NAME}_finish): Renamed
+	to ...
+	(ppc_finish): This.  Replace finish_default with
+	gld${EMULATION_NAME}_finish.
+	(LDEMUL_FINISH): Set to ppc_finish.
+
+	* emultempl/spuelf.em (gld${EMULATION_NAME}_finish): Renamed
+	to ...
+	(spu_finish): This.  Replace finish_default with
+	gld${EMULATION_NAME}_finish.
+	(LDEMUL_FINISH): Set to spu_finish.
 
 	* scripttempl/armbpabi.sc: Also discard .gnu_object_only
 	sections.
@@ -584,39 +597,55 @@ index 21064ad..ec0965a 100644
  EOF
  
 diff --git a/ld/emultempl/armelf.em b/ld/emultempl/armelf.em
-index 6c4c78d..6b8a3e2 100644
+index 6c4c78d..6c66c95 100644
 --- a/ld/emultempl/armelf.em
 +++ b/ld/emultempl/armelf.em
-@@ -387,6 +387,10 @@ gld${EMULATION_NAME}_finish (void)
+@@ -364,7 +364,7 @@ gld${EMULATION_NAME}_after_allocation (void)
+ }
+ 
+ static void
+-gld${EMULATION_NAME}_finish (void)
++arm_finish (void)
+ {
+   struct bfd_link_hash_entry * h;
+ 
+@@ -387,7 +387,7 @@ gld${EMULATION_NAME}_finish (void)
  	}
      }
  
-+  /* Support the object-only output.  */
-+  if (link_info.emit_gnu_object_only)
-+    orphan_init_done = 0;
-+
-   finish_default ();
+-  finish_default ();
++  gld${EMULATION_NAME}_finish ();
  
    if (thumb_entry_symbol)
+     {
+@@ -675,4 +675,4 @@ LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=arm_elf_create_output_section_statements
+ LDEMUL_BEFORE_PARSE=gld"${EMULATION_NAME}"_before_parse
+ 
+ # Call the extra arm-elf function
+-LDEMUL_FINISH=gld${EMULATION_NAME}_finish
++LDEMUL_FINISH=arm_finish
 diff --git a/ld/emultempl/elf32.em b/ld/emultempl/elf32.em
-index 9120f85..5ccf27c 100644
+index 9120f85..49e62d3 100644
 --- a/ld/emultempl/elf32.em
 +++ b/ld/emultempl/elf32.em
-@@ -68,6 +68,13 @@ static void gld${EMULATION_NAME}_after_allocation (void);
+@@ -67,6 +67,7 @@ static void gld${EMULATION_NAME}_before_allocation (void);
+ static void gld${EMULATION_NAME}_after_allocation (void);
  static lang_output_section_statement_type *gld${EMULATION_NAME}_place_orphan
    (asection *, const char *, int);
- EOF
-+if test x"$LDEMUL_PLACE_ORPHAN" != xgld"$EMULATION_NAME"_place_orphan; then
-+fragment <<EOF
 +static void gld${EMULATION_NAME}_finish (void);
-+static int orphan_init_done = 0;
-+
-+EOF
-+fi
+ EOF
  
  if [ "x${USE_LIBPATH}" = xyes ] ; then
-   case ${target} in
-@@ -1765,7 +1772,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1757,6 +1758,8 @@ output_rel_find (asection *sec, int isdyn)
+   return last;
+ }
+ 
++static int orphan_init_done = 0;
++
+ /* Place an orphan section.  We use this to put random SHF_ALLOC
+    sections in the right segment.  */
+ 
+@@ -1765,7 +1768,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
  				   const char *secname,
  				   int constraint)
  {
@@ -625,7 +654,7 @@ index 9120f85..5ccf27c 100644
      {
        { ".text",
  	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE,
-@@ -1792,6 +1799,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1792,6 +1795,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
  	SEC_HAS_CONTENTS,
  	0, 0, 0, 0 },
      };
@@ -633,7 +662,7 @@ index 9120f85..5ccf27c 100644
    enum orphan_save_index
      {
        orphan_text = 0,
-@@ -1803,7 +1811,6 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1803,7 +1807,6 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
        orphan_sdata,
        orphan_nonalloc
      };
@@ -641,7 +670,7 @@ index 9120f85..5ccf27c 100644
    struct orphan_save *place;
    lang_output_section_statement_type *after;
    lang_output_section_statement_type *os;
-@@ -1881,15 +1888,21 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1881,15 +1884,21 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
    if (!orphan_init_done)
      {
        lang_output_section_statement_type *lookup;
@@ -671,12 +700,10 @@ index 9120f85..5ccf27c 100644
        lookup = hold[orphan_bss].os;
        if (lookup == NULL)
  	lookup = &lang_output_section_statement.head->output_section_statement;
-@@ -1967,6 +1980,25 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
-   return lang_insert_orphan (s, secname, constraint, after, place, NULL, NULL);
- }
+@@ -1969,6 +1978,27 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
  EOF
-+
-+if test x"$LDEMUL_FINISH" != xgld"$EMULATION_NAME"_finish; then
+ fi
+ 
 +fragment <<EOF
 +
 +/* Final emulation specific call.  */
@@ -684,20 +711,24 @@ index 9120f85..5ccf27c 100644
 +static void
 +gld${EMULATION_NAME}_finish (void)
 +{
++EOF
++if test x"$LDEMUL_PLACE_ORPHAN" != xgld"$EMULATION_NAME"_place_orphan; then
++fragment <<EOF
 +  /* Support the object-only output.  */
 +  if (link_info.emit_gnu_object_only)
 +    orphan_init_done = 0;
 +
++EOF
++fi
++fragment <<EOF
 +  finish_default ();
 +}
 +EOF
-+fi
-+elif test x"$LDEMUL_FINISH" != xgld"$EMULATION_NAME"_finish; then
-+  LDEMUL_FINISH=finish_default
- fi
- 
++
  if test x"$LDEMUL_AFTER_ALLOCATION" != xgld"$EMULATION_NAME"_after_allocation; then
-@@ -2480,7 +2512,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
+ fragment <<EOF
+ 
+@@ -2480,7 +2510,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
    ${LDEMUL_GET_SCRIPT-gld${EMULATION_NAME}_get_script},
    "${EMULATION_NAME}",
    "${OUTPUT_FORMAT}",
@@ -707,36 +738,64 @@ index 9120f85..5ccf27c 100644
    ${LDEMUL_OPEN_DYNAMIC_ARCHIVE-gld${EMULATION_NAME}_open_dynamic_archive},
    ${LDEMUL_PLACE_ORPHAN-gld${EMULATION_NAME}_place_orphan},
 diff --git a/ld/emultempl/ppc64elf.em b/ld/emultempl/ppc64elf.em
-index cb8e784..50c17b7 100644
+index cb8e784..52fb3e4 100644
 --- a/ld/emultempl/ppc64elf.em
 +++ b/ld/emultempl/ppc64elf.em
-@@ -557,6 +557,11 @@ gld${EMULATION_NAME}_finish (void)
+@@ -519,7 +519,7 @@ gld${EMULATION_NAME}_after_allocation (void)
+ /* Final emulation specific call.  */
+ 
+ static void
+-gld${EMULATION_NAME}_finish (void)
++ppc_finish (void)
+ {
+   /* e_entry on PowerPC64 points to the function descriptor for
+      _start.  If _start is missing, default to the first function
+@@ -557,7 +557,7 @@ gld${EMULATION_NAME}_finish (void)
      }
  
    ppc64_elf_restore_symbols (&link_info);
-+
-+  /* Support the object-only output.  */
-+  if (link_info.emit_gnu_object_only)
-+    orphan_init_done = 0;
-+
-   finish_default ();
+-  finish_default ();
++  gld${EMULATION_NAME}_finish ();
  }
  
+ 
+@@ -786,6 +786,6 @@ PARSE_AND_LIST_ARGS_CASES='
+ #
+ LDEMUL_BEFORE_ALLOCATION=ppc_before_allocation
+ LDEMUL_AFTER_ALLOCATION=gld${EMULATION_NAME}_after_allocation
+-LDEMUL_FINISH=gld${EMULATION_NAME}_finish
++LDEMUL_FINISH=ppc_finish
+ LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=ppc_create_output_section_statements
+ LDEMUL_NEW_VERS_PATTERN=gld${EMULATION_NAME}_new_vers_pattern
 diff --git a/ld/emultempl/spuelf.em b/ld/emultempl/spuelf.em
-index ff6785c..4a7aa5e 100644
+index ff6785c..751fa5b 100644
 --- a/ld/emultempl/spuelf.em
 +++ b/ld/emultempl/spuelf.em
-@@ -420,6 +420,10 @@ gld${EMULATION_NAME}_finish (void)
+@@ -404,7 +404,7 @@ spu_elf_relink (void)
+ /* Final emulation specific call.  */
+ 
+ static void
+-gld${EMULATION_NAME}_finish (void)
++spu_finish (void)
+ {
+   if (is_spu_target ())
+     {
+@@ -420,7 +420,7 @@ gld${EMULATION_NAME}_finish (void)
  	einfo ("%P: --auto-overlay ignored with zero local store range\n");
      }
  
-+  /* Support the object-only output.  */
-+  if (link_info.emit_gnu_object_only)
-+    orphan_init_done = 0;
-+
-   finish_default ();
+-  finish_default ();
++  gld${EMULATION_NAME}_finish ();
  }
  
+ static char *
+@@ -820,5 +820,5 @@ PARSE_AND_LIST_ARGS_CASES='
+ 
+ LDEMUL_AFTER_OPEN=spu_after_open
+ LDEMUL_BEFORE_ALLOCATION=spu_before_allocation
+-LDEMUL_FINISH=gld${EMULATION_NAME}_finish
++LDEMUL_FINISH=spu_finish
+ LDEMUL_CHOOSE_TARGET=gld${EMULATION_NAME}_choose_target
 diff --git a/ld/ldfile.c b/ld/ldfile.c
 index a9a6954..e1568d6 100644
 --- a/ld/ldfile.c
