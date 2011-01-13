@@ -768,10 +768,10 @@ index cb8e784..52fb3e4 100644
  LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=ppc_create_output_section_statements
  LDEMUL_NEW_VERS_PATTERN=gld${EMULATION_NAME}_new_vers_pattern
 diff --git a/ld/emultempl/spuelf.em b/ld/emultempl/spuelf.em
-index ff6785c..751fa5b 100644
+index 92f2d16..aa8585d 100644
 --- a/ld/emultempl/spuelf.em
 +++ b/ld/emultempl/spuelf.em
-@@ -404,7 +404,7 @@ spu_elf_relink (void)
+@@ -405,7 +405,7 @@ spu_elf_relink (void)
  /* Final emulation specific call.  */
  
  static void
@@ -780,7 +780,7 @@ index ff6785c..751fa5b 100644
  {
    if (is_spu_target ())
      {
-@@ -420,7 +420,7 @@ gld${EMULATION_NAME}_finish (void)
+@@ -421,7 +421,7 @@ gld${EMULATION_NAME}_finish (void)
  	einfo ("%P: --auto-overlay ignored with zero local store range\n");
      }
  
@@ -789,7 +789,7 @@ index ff6785c..751fa5b 100644
  }
  
  static char *
-@@ -820,5 +820,5 @@ PARSE_AND_LIST_ARGS_CASES='
+@@ -821,5 +821,5 @@ PARSE_AND_LIST_ARGS_CASES='
  
  LDEMUL_AFTER_OPEN=spu_after_open
  LDEMUL_BEFORE_ALLOCATION=spu_before_allocation
@@ -902,10 +902,10 @@ index a9a6954..e1568d6 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldgram.y b/ld/ldgram.y
-index ed0aaa7..f50e4a9 100644
+index 3795ffe..0305303 100644
 --- a/ld/ldgram.y
 +++ b/ld/ldgram.y
-@@ -335,11 +335,14 @@ ifile_p1:
+@@ -336,11 +336,14 @@ ifile_p1:
  		{ command_line.force_common_definition = TRUE ; }
  	|	INHIBIT_COMMON_ALLOCATION
  		{ command_line.inhibit_common_definition = TRUE ; }
@@ -923,7 +923,7 @@ index ed0aaa7..f50e4a9 100644
       	|	MAP '(' filename ')'
  		{ lang_add_map($3); }
  	|	INCLUDE filename
-@@ -361,23 +364,47 @@ ifile_p1:
+@@ -364,23 +367,47 @@ ifile_p1:
  
  input_list:
  		NAME
@@ -984,7 +984,7 @@ index ed0aaa7..f50e4a9 100644
  		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
  		     input_list ')'
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 4fe80a8..43edd12 100644
+index c2a768e..bd87e8b 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -37,6 +37,7 @@
@@ -1035,7 +1035,7 @@ index 4fe80a8..43edd12 100644
  const char *output_target;
  lang_output_section_statement_type *abs_output_section;
  lang_statement_list_type lang_output_section_statement;
-@@ -1056,6 +1074,7 @@ new_afile (const char *name,
+@@ -1055,6 +1073,7 @@ new_afile (const char *name,
    lang_has_input_file = TRUE;
    p->target = target;
    p->sysrooted = FALSE;
@@ -1043,7 +1043,7 @@ index 4fe80a8..43edd12 100644
  
    if (file_type == lang_input_file_is_l_enum
        && name[0] == ':' && name[1] != '\0')
-@@ -1222,14 +1241,17 @@ output_section_statement_table_free (void)
+@@ -1221,14 +1240,17 @@ output_section_statement_table_free (void)
  /* Build enough state so that the parser can build its tree.  */
  
  void
@@ -1063,7 +1063,7 @@ index 4fe80a8..43edd12 100644
    lang_list_init (stat_ptr);
  
    lang_list_init (&input_file_chain);
-@@ -1248,10 +1270,11 @@ lang_init (void)
+@@ -1247,10 +1269,11 @@ lang_init (void)
       simpler to re-use working machinery than using a linked list in terms
       of code-complexity here in ld, besides the initialization which just
       looks like other code here.  */
@@ -1079,7 +1079,7 @@ index 4fe80a8..43edd12 100644
      einfo (_("%P%F: can not create hash table: %E\n"));
  }
  
-@@ -2770,6 +2793,14 @@ load_symbols (lang_input_statement_type *entry,
+@@ -2769,6 +2792,14 @@ load_symbols (lang_input_statement_type *entry,
  		  loaded = FALSE;
  		}
  
@@ -1094,7 +1094,7 @@ index 4fe80a8..43edd12 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6248,10 +6279,15 @@ lang_gc_sections (void)
+@@ -6249,10 +6280,15 @@ lang_gc_sections (void)
      {
        LANG_FOR_EACH_INPUT_STATEMENT (f)
  	{
@@ -1114,7 +1114,7 @@ index 4fe80a8..43edd12 100644
  	}
      }
  
-@@ -6416,23 +6452,113 @@ lang_process (void)
+@@ -6417,23 +6453,113 @@ lang_process (void)
    open_input_bfds (statement_list.head, FALSE);
  
  #ifdef ENABLE_PLUGINS
@@ -1235,7 +1235,7 @@ index 4fe80a8..43edd12 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -6713,6 +6839,8 @@ lang_startup (const char *name)
+@@ -6714,6 +6840,8 @@ lang_startup (const char *name)
    first_file->filename = name;
    first_file->local_sym_name = name;
    first_file->real = TRUE;
@@ -1244,7 +1244,7 @@ index 4fe80a8..43edd12 100644
  }
  
  void
-@@ -6885,17 +7013,41 @@ lang_add_insert (const char *where, int is_before)
+@@ -6886,17 +7014,41 @@ lang_add_insert (const char *where, int is_before)
    saved_script_handle = previous_script_handle;
  }
  
@@ -1287,7 +1287,7 @@ index 4fe80a8..43edd12 100644
  }
  
  /* Leave a group.  This just resets stat_ptr to start writing to the
-@@ -6904,9 +7056,12 @@ lang_enter_group (void)
+@@ -6905,9 +7057,12 @@ lang_enter_group (void)
     but currently they can't.  */
  
  void
@@ -1301,9 +1301,9 @@ index 4fe80a8..43edd12 100644
  }
  
  /* Add a new program header.  This is called for each entry in a PHDRS
-@@ -7845,3 +8000,1202 @@ lang_append_dynamic_list_cpp_new (void)
- 
-   lang_append_dynamic_list (dynamic);
+@@ -7875,3 +8030,1202 @@ lang_ld_feature (char *str)
+       p = q;
+     }
  }
 +
 +static void
@@ -2505,7 +2505,7 @@ index 4fe80a8..43edd12 100644
 +      }
 +}
 diff --git a/ld/ldlang.h b/ld/ldlang.h
-index 5850fcb..bb572ac 100644
+index 8aff0b3..e16fd0a 100644
 --- a/ld/ldlang.h
 +++ b/ld/ldlang.h
 @@ -279,6 +279,9 @@ typedef struct lang_input_statement_struct
@@ -2518,7 +2518,7 @@ index 5850fcb..bb572ac 100644
    /* Set when bfd opening is successful.  */
    unsigned int loaded : 1;
  
-@@ -474,7 +477,7 @@ extern int lang_statement_iteration;
+@@ -473,7 +476,7 @@ extern int lang_statement_iteration;
  extern bfd_boolean missing_file;
  
  extern void lang_init
@@ -2527,7 +2527,7 @@ index 5850fcb..bb572ac 100644
  extern void lang_finish
    (void);
  extern lang_memory_region_type * lang_memory_region_lookup
-@@ -599,10 +602,14 @@ extern void one_lang_size_sections_pass
+@@ -598,10 +601,14 @@ extern void one_lang_size_sections_pass
    (bfd_boolean *, bfd_boolean);
  extern void lang_add_insert
    (const char *, int);
@@ -2544,9 +2544,9 @@ index 5850fcb..bb572ac 100644
  extern void lang_add_section
    (lang_statement_list_type *, asection *,
     lang_output_section_statement_type *);
-@@ -651,4 +658,61 @@ extern bfd_boolean
- ldlang_override_segment_assignment
-   (struct bfd_link_info *, bfd *, asection *, asection *, bfd_boolean);
+@@ -653,4 +660,61 @@ ldlang_override_segment_assignment
+ extern void
+ lang_ld_feature (char *);
  
 +typedef enum
 +{
