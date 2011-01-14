@@ -192,6 +192,9 @@ ld/testsuite/
 	* ld-plugin/func2.c: Likewise.
 	* ld-plugin/func2i.c: Likewise.
 	* ld-plugin/func3h.c: Likewise.
+	* ld-plugin/lto-1a.c: Likewise.
+	* ld-plugin/lto-1b.c: Likewise.
+	* ld-plugin/lto.exp: Likewise.
 
 	* ld-plugin/plugin.exp: Add object files for symbols claimed
 	or created by testplugin.
@@ -283,7 +286,7 @@ index 84fc75d..1fdcb52 100644
  symindex bfd_get_next_mapent
     (bfd *abfd, symindex previous, carsym **sym);
 diff --git a/bfd/bfd.c b/bfd/bfd.c
-index a9ce7cc..7cf8a4e 100644
+index 77582ec..623d94a 100644
 --- a/bfd/bfd.c
 +++ b/bfd/bfd.c
 @@ -43,6 +43,14 @@ CODE_FRAGMENT
@@ -346,7 +349,7 @@ index a9ce7cc..7cf8a4e 100644
  .};
  .
  */
-@@ -1929,3 +1951,36 @@ bfd_demangle (bfd *abfd, const char *name, int options)
+@@ -1932,3 +1954,36 @@ bfd_demangle (bfd *abfd, const char *name, int options)
  
    return res;
  }
@@ -384,7 +387,7 @@ index a9ce7cc..7cf8a4e 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index de0ab61..c33d10a 100644
+index 257cc8c..aadd4ab 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2084,6 +2084,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -625,7 +628,7 @@ index 6c4c78d..6c66c95 100644
 -LDEMUL_FINISH=gld${EMULATION_NAME}_finish
 +LDEMUL_FINISH=arm_finish
 diff --git a/ld/emultempl/elf32.em b/ld/emultempl/elf32.em
-index 9120f85..49e62d3 100644
+index ddcd590..54bef1a 100644
 --- a/ld/emultempl/elf32.em
 +++ b/ld/emultempl/elf32.em
 @@ -67,6 +67,7 @@ static void gld${EMULATION_NAME}_before_allocation (void);
@@ -670,37 +673,31 @@ index 9120f85..49e62d3 100644
    struct orphan_save *place;
    lang_output_section_statement_type *after;
    lang_output_section_statement_type *os;
-@@ -1881,15 +1884,21 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1880,15 +1883,22 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+ 
    if (!orphan_init_done)
      {
-       lang_output_section_statement_type *lookup;
 -      struct orphan_save *ho;
 +      struct orphan_save *ho, *horig;
-+
+ 
+       for (ho = hold; ho < hold + sizeof (hold) / sizeof (hold[0]); ++ho)
 +      for (ho = hold, horig = orig_hold;
 +	   ho < hold + ARRAY_SIZE (hold);
 +	   ++ho, ++horig)
 +	{
 +	  *ho = *horig;
 +	  if (ho->name != NULL)
-+	    {
-+	      ho->os = lang_output_section_find (ho->name);
-+	      if (ho->os != NULL && ho->os->flags == 0)
-+		ho->os->flags = ho->flags;
-+	    }
+ 	if (ho->name != NULL)
+ 	  {
+ 	    ho->os = lang_output_section_find (ho->name);
+ 	    if (ho->os != NULL && ho->os->flags == 0)
+ 	      ho->os->flags = ho->flags;
+ 	  }
 +	}
+       orphan_init_done = 1;
+     }
  
--      for (ho = hold; ho < hold + sizeof (hold) / sizeof (hold[0]); ++ho)
--	if (ho->name != NULL)
--	  {
--	    ho->os = lang_output_section_find (ho->name);
--	    if (ho->os != NULL && ho->os->flags == 0)
--	      ho->os->flags = ho->flags;
--	  }
-       lookup = hold[orphan_bss].os;
-       if (lookup == NULL)
- 	lookup = &lang_output_section_statement.head->output_section_statement;
-@@ -1969,6 +1978,27 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1958,6 +1968,27 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
  EOF
  fi
  
@@ -728,7 +725,7 @@ index 9120f85..49e62d3 100644
  if test x"$LDEMUL_AFTER_ALLOCATION" != xgld"$EMULATION_NAME"_after_allocation; then
  fragment <<EOF
  
-@@ -2480,7 +2510,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
+@@ -2469,7 +2500,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
    ${LDEMUL_GET_SCRIPT-gld${EMULATION_NAME}_get_script},
    "${EMULATION_NAME}",
    "${OUTPUT_FORMAT}",
@@ -738,7 +735,7 @@ index 9120f85..49e62d3 100644
    ${LDEMUL_OPEN_DYNAMIC_ARCHIVE-gld${EMULATION_NAME}_open_dynamic_archive},
    ${LDEMUL_PLACE_ORPHAN-gld${EMULATION_NAME}_place_orphan},
 diff --git a/ld/emultempl/ppc64elf.em b/ld/emultempl/ppc64elf.em
-index cb8e784..52fb3e4 100644
+index 0c99592..bc860e1 100644
 --- a/ld/emultempl/ppc64elf.em
 +++ b/ld/emultempl/ppc64elf.em
 @@ -519,7 +519,7 @@ gld${EMULATION_NAME}_after_allocation (void)
@@ -750,7 +747,7 @@ index cb8e784..52fb3e4 100644
  {
    /* e_entry on PowerPC64 points to the function descriptor for
       _start.  If _start is missing, default to the first function
-@@ -557,7 +557,7 @@ gld${EMULATION_NAME}_finish (void)
+@@ -559,7 +559,7 @@ gld${EMULATION_NAME}_finish (void)
      }
  
    ppc64_elf_restore_symbols (&link_info);
@@ -759,7 +756,7 @@ index cb8e784..52fb3e4 100644
  }
  
  
-@@ -786,6 +786,6 @@ PARSE_AND_LIST_ARGS_CASES='
+@@ -788,6 +788,6 @@ PARSE_AND_LIST_ARGS_CASES='
  #
  LDEMUL_BEFORE_ALLOCATION=ppc_before_allocation
  LDEMUL_AFTER_ALLOCATION=gld${EMULATION_NAME}_after_allocation
@@ -984,7 +981,7 @@ index 3795ffe..0305303 100644
  		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
  		     input_list ')'
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index c2a768e..bd87e8b 100644
+index 7ffe760..d9ec992 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -37,6 +37,7 @@
@@ -1079,7 +1076,7 @@ index c2a768e..bd87e8b 100644
      einfo (_("%P%F: can not create hash table: %E\n"));
  }
  
-@@ -2769,6 +2792,14 @@ load_symbols (lang_input_statement_type *entry,
+@@ -2772,6 +2795,14 @@ load_symbols (lang_input_statement_type *entry,
  		  loaded = FALSE;
  		}
  
@@ -1094,7 +1091,7 @@ index c2a768e..bd87e8b 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6249,10 +6280,15 @@ lang_gc_sections (void)
+@@ -6252,10 +6283,15 @@ lang_gc_sections (void)
      {
        LANG_FOR_EACH_INPUT_STATEMENT (f)
  	{
@@ -1114,7 +1111,7 @@ index c2a768e..bd87e8b 100644
  	}
      }
  
-@@ -6417,23 +6453,113 @@ lang_process (void)
+@@ -6420,23 +6456,113 @@ lang_process (void)
    open_input_bfds (statement_list.head, FALSE);
  
  #ifdef ENABLE_PLUGINS
@@ -1235,7 +1232,7 @@ index c2a768e..bd87e8b 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -6714,6 +6840,8 @@ lang_startup (const char *name)
+@@ -6717,6 +6843,8 @@ lang_startup (const char *name)
    first_file->filename = name;
    first_file->local_sym_name = name;
    first_file->real = TRUE;
@@ -1244,7 +1241,7 @@ index c2a768e..bd87e8b 100644
  }
  
  void
-@@ -6886,17 +7014,41 @@ lang_add_insert (const char *where, int is_before)
+@@ -6889,17 +7017,41 @@ lang_add_insert (const char *where, int is_before)
    saved_script_handle = previous_script_handle;
  }
  
@@ -1287,7 +1284,7 @@ index c2a768e..bd87e8b 100644
  }
  
  /* Leave a group.  This just resets stat_ptr to start writing to the
-@@ -6905,9 +7057,12 @@ lang_enter_group (void)
+@@ -6908,9 +7060,12 @@ lang_enter_group (void)
     but currently they can't.  */
  
  void
@@ -1301,7 +1298,7 @@ index c2a768e..bd87e8b 100644
  }
  
  /* Add a new program header.  This is called for each entry in a PHDRS
-@@ -7875,3 +8030,1202 @@ lang_ld_feature (char *str)
+@@ -7878,3 +8033,1202 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -2607,7 +2604,7 @@ index 8aff0b3..e16fd0a 100644
 +
  #endif
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index 5530dca..35cc36e 100644
+index 19c42d9..bd5f6bf 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
 @@ -213,6 +213,9 @@ main (int argc, char **argv)
@@ -2684,7 +2681,7 @@ index 5530dca..35cc36e 100644
    END_PROGRESS (program_name);
  
    if (config.stats)
-@@ -791,6 +772,7 @@ add_archive_element (struct bfd_link_info *info,
+@@ -793,6 +774,7 @@ add_archive_element (struct bfd_link_info *info,
  {
    lang_input_statement_type *input;
    lang_input_statement_type orig_input;
@@ -2692,7 +2689,7 @@ index 5530dca..35cc36e 100644
  
    input = (lang_input_statement_type *)
        xcalloc (1, sizeof (lang_input_statement_type));
-@@ -802,20 +784,31 @@ add_archive_element (struct bfd_link_info *info,
+@@ -804,20 +786,31 @@ add_archive_element (struct bfd_link_info *info,
       (if enabled) may possibly alter it to point to a replacement
       BFD, but we still want to output the original BFD filename.  */
    orig_input = *input;
@@ -2729,7 +2726,7 @@ index 5530dca..35cc36e 100644
  	  file.offset = abfd->origin;
  	  file.filesize = arelt_size (abfd);
  	  file.fd = fd;
-@@ -829,21 +822,36 @@ add_archive_element (struct bfd_link_info *info,
+@@ -831,21 +824,36 @@ add_archive_element (struct bfd_link_info *info,
  	  close (fd);
  	  if (claimed)
  	    {
@@ -2766,7 +2763,7 @@ index 5530dca..35cc36e 100644
  
    ldlang_add_file (input);
  
-@@ -891,16 +899,16 @@ add_archive_element (struct bfd_link_info *info,
+@@ -893,16 +901,16 @@ add_archive_element (struct bfd_link_info *info,
  	  header_printed = TRUE;
  	}
  
@@ -2786,7 +2783,7 @@ index 5530dca..35cc36e 100644
  		 + strlen (bfd_get_filename (abfd))
  		 + 2);
  	}
-@@ -1477,3 +1485,43 @@ notice (struct bfd_link_info *info,
+@@ -1479,3 +1487,43 @@ notice (struct bfd_link_info *info,
  
    return TRUE;
  }
@@ -2933,7 +2930,7 @@ index acb63fb..4baef3c 100644
      }
  
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 10314a4..cdabd8f 100644
+index 05379b8..59182a1 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -36,15 +36,6 @@
@@ -3191,6 +3188,70 @@ index 0000000..525de63
 +{
 +  return retval;
 +}
+diff --git a/ld/testsuite/ld-plugin/lto-1a.c b/ld/testsuite/ld-plugin/lto-1a.c
+new file mode 100644
+index 0000000..b775d0a
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-1a.c
+@@ -0,0 +1,4 @@
++unsigned long long bar (unsigned long long y)
++{
++  return 30 / y;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-1b.c b/ld/testsuite/ld-plugin/lto-1b.c
+new file mode 100644
+index 0000000..8a961ef
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-1b.c
+@@ -0,0 +1,8 @@
++extern unsigned long long bar (unsigned long long);
++
++int
++main (int argc, char **argv)
++{
++  unsigned long long d = bar ((unsigned long long) (argc + 1));
++  return d;
++}
+diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
+new file mode 100644
+index 0000000..8a8f533
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto.exp
+@@ -0,0 +1,34 @@
++# Expect script for ld-plugin LTO tests
++#   Copyright 2011
++#   Free Software Foundation, Inc.
++#
++# This file is part of the GNU Binutils.
++#
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program; if not, write to the Free Software
++# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
++# MA 02110-1301, USA.
++
++# These tests require plugin and LTO.
++if { ![check_plugin_api_available]
++     || ![check_lto_available] } {
++    return
++}
++
++set lto_tests {
++  {"LTO 1"
++   "-O2 -flto -fuse-linker-plugin" "-flto -fuse-linker-plugin"
++   {lto-1a.c lto-1b.c} {} "lto-1.exe"}
++}
++
++run_cc_link_tests $lto_tests
 diff --git a/ld/testsuite/ld-plugin/plugin-7.d b/ld/testsuite/ld-plugin/plugin-7.d
 index 75f25e0..ee7a6eb 100644
 --- a/ld/testsuite/ld-plugin/plugin-7.d
@@ -3293,3 +3354,41 @@ index 8952f1d..fd0f939 100644
      run_ld_link_tests $plugin_extra_elf_tests
  }
  
+diff --git a/ld/testsuite/lib/ld-lib.exp b/ld/testsuite/lib/ld-lib.exp
+index 48e9635..c0b9c28 100644
+--- a/ld/testsuite/lib/ld-lib.exp
++++ b/ld/testsuite/lib/ld-lib.exp
+@@ -1461,6 +1461,33 @@ proc check_plugin_api_available { } {
+     return $plugin_api_available_saved
+ }
+ 
++# Returns true if the target compiler supports LTO
++proc check_lto_available { } {
++    global lto_available_saved
++    global CC
++    if {![info exists lto_available_saved]} {
++	# Check if gcc supports -flto -fuse-linker-plugin
++	if { [which $CC] == 0 } {
++	    set lto_available_saved 0
++	    return 0
++	}
++	set basename "lto"
++	set src ${basename}[pid].c
++	set output ${basename}[pid].s
++	set f [open $src "w"]
++	puts $f ""
++	close $f
++	if [ld_compile "$CC -S -flto -fuse-linker-plugin" $src $output] {
++	    set lto_available_saved 1
++	} else {
++	    set lto_available_saved 0
++	}
++	file delete $src
++	file delete $output
++    }
++    return $lto_available_saved
++}
++
+ # Check if the assembler supports CFI statements.
+ 
+ proc check_as_cfi { } {
