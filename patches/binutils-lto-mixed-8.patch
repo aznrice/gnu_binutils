@@ -3355,10 +3355,10 @@ index 8952f1d..fd0f939 100644
  }
  
 diff --git a/ld/testsuite/lib/ld-lib.exp b/ld/testsuite/lib/ld-lib.exp
-index 48e9635..c0b9c28 100644
+index 48e9635..74bad74 100644
 --- a/ld/testsuite/lib/ld-lib.exp
 +++ b/ld/testsuite/lib/ld-lib.exp
-@@ -1461,6 +1461,33 @@ proc check_plugin_api_available { } {
+@@ -1461,6 +1461,34 @@ proc check_plugin_api_available { } {
      return $plugin_api_available_saved
  }
  
@@ -3378,7 +3378,8 @@ index 48e9635..c0b9c28 100644
 +	set f [open $src "w"]
 +	puts $f ""
 +	close $f
-+	if [ld_compile "$CC -S -flto -fuse-linker-plugin" $src $output] {
++	set status [remote_exec host $CC "-S -flto -fuse-linker-plugin $src -o $output"]
++	if { [lindex $status 0] == 0 } {
 +	    set lto_available_saved 1
 +	} else {
 +	    set lto_available_saved 0
