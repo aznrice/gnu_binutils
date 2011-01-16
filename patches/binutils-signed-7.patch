@@ -122,10 +122,10 @@ index c54b7d3..a48c502 100644
 -[0-9a-f]+[ 	]+R_X86_64_PLT32[ 	]+xtrn\+0xf+c[ 	]*
 +[0-9a-f]+[ 	]+R_X86_64_PLT32[ 	]+xtrn-0x0*4[ 	]*
 diff --git a/gas/testsuite/gas/i386/ilp32/reloc64.d b/gas/testsuite/gas/i386/ilp32/reloc64.d
-index ef70d57..a060707 100644
+index e9e1b4d..26b4a21 100644
 --- a/gas/testsuite/gas/i386/ilp32/reloc64.d
 +++ b/gas/testsuite/gas/i386/ilp32/reloc64.d
-@@ -17,33 +17,33 @@ Disassembly of section \.text:
+@@ -14,31 +14,31 @@ Disassembly of section \.text:
  .*[ 	]+R_X86_64_PC32[ 	]+xtrn\+0x0*2
  .*[ 	]+R_X86_64_PC16[ 	]+xtrn\+0x0*2
  .*[ 	]+R_X86_64_PC8[ 	]+xtrn\+0x0*1
@@ -137,10 +137,8 @@ index ef70d57..a060707 100644
 +.*[ 	]+R_X86_64_PC32[ 	]+xtrn-0x0*4
 +.*[ 	]+R_X86_64_PC32[ 	]+xtrn-0x0*4
 +.*[ 	]+R_X86_64_PC8[ 	]+xtrn-0x0*1
- .*[ 	]+R_X86_64_GOT64[ 	]+xtrn
  .*[ 	]+R_X86_64_GOT32[ 	]+xtrn
  .*[ 	]+R_X86_64_GOT32[ 	]+xtrn
- .*[ 	]+R_X86_64_GOTOFF64[ 	]+xtrn
  .*[ 	]+R_X86_64_GOTPCREL[ 	]+xtrn
  .*[ 	]+R_X86_64_GOTPCREL[ 	]+xtrn
 -.*[ 	]+R_X86_64_GOTPCREL[ 	]+xtrn\+0xf+c
@@ -167,9 +165,9 @@ index ef70d57..a060707 100644
  .*[ 	]+R_X86_64_TLSLD[ 	]+xtrn
 -.*[ 	]+R_X86_64_TLSLD[ 	]+xtrn\+0xf+c
 +.*[ 	]+R_X86_64_TLSLD[ 	]+xtrn-0x0*4
- .*[ 	]+R_X86_64_DTPOFF64[ 	]+xtrn
  .*[ 	]+R_X86_64_DTPOFF32[ 	]+xtrn
  .*[ 	]+R_X86_64_DTPOFF32[ 	]+xtrn
+ .*[ 	]+R_X86_64_TPOFF32[ 	]+xtrn
 diff --git a/gas/testsuite/gas/i386/mixed-mode-reloc64.d b/gas/testsuite/gas/i386/mixed-mode-reloc64.d
 index dc50e43..9b82cb5 100644
 --- a/gas/testsuite/gas/i386/mixed-mode-reloc64.d
