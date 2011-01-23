@@ -1,3 +1,9 @@
+2011-01-22  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-lto-mixed-9.patch: New file. Replace ...
+	* binutils-lto-mixed-8.patch: This. Removed.
+	* README: Likewise.
+
 2011-01-16  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-signed-6.patch: New file. Replace ...
@@ -6,8 +12,8 @@
 
 2011-01-14  H.J. Lu  <hjl.tools@gmail.com>
 
-	* binutils-lto-mixed-7.patch: New file. Replace ...
-	* binutils-lto-mixed-6.patch: This. Removed.
+	* binutils-lto-mixed-8.patch: New file. Replace ...
+	* binutils-lto-mixed-7.patch: This. Removed.
 	* README: Likewise.
 
 2011-01-13  H.J. Lu  <hjl.tools@gmail.com>

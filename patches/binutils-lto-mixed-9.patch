@@ -1,6 +1,6 @@
 bfd/
 
-2011-01-05  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -8,6 +8,7 @@ bfd/
 	PR ld/12323
 	PR ld/12365
 	PR ld/12369
+	PR ld/12430
 	* bfd.c (bfd_lto_object_type): New.
 	(BFD_PLUGIN): Likewise.
 	(BFD_PLUGIN_DUMMY): Likewise.
@@ -27,7 +28,7 @@ bfd/
 
 binutils/
 
-2011-01-05  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -35,6 +36,7 @@ binutils/
 	PR ld/12323
 	PR ld/12365
 	PR ld/12369
+	PR ld/12430
 	* objcopy.c (group_signature): Removed.
 	(is_strip_section): Replace group_signature with
 	bfd_group_signature.
@@ -44,7 +46,7 @@ binutils/
 
 gas/testsuite/
 
-2011-01-05  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -57,14 +59,14 @@ gas/testsuite/
 
 include/
 
-2010-12-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* bfdlink.h (bfd_link_info): Add emit_gnu_object_only and
 	emitting_gnu_object_only.
 
 include/elf/
 
-2011-01-05  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -72,11 +74,12 @@ include/elf/
 	PR ld/12323
 	PR ld/12365
 	PR ld/12369
+	PR ld/12430
 	* common.h (SHT_GNU_OBJECT_ONLY): New.
 
 ld/
 
-2011-01-05  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -84,6 +87,7 @@ ld/
 	PR ld/12323
 	PR ld/12365
 	PR ld/12369
+	PR ld/12430
 	* ldfile.c: Updated for 2 stage linking and support for mixed
 	IR/non-IR objects.
 	* ldlang.c: Likewise.
@@ -180,7 +184,7 @@ ld/
 
 ld/testsuite/
 
-2011-01-05  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -188,19 +192,60 @@ ld/testsuite/
 	PR ld/12323
 	PR ld/12365
 	PR ld/12369
+	PR ld/12430
 	* ld-plugin/func1p.c: New.
 	* ld-plugin/func2.c: Likewise.
 	* ld-plugin/func2i.c: Likewise.
 	* ld-plugin/func3h.c: Likewise.
+	* ld-plugin/lto-10a.c: Likewise.
+	* ld-plugin/lto-10b.c: Likewise.
+	* ld-plugin/lto-10.out: Likewise.
+	* ld-plugin/lto-10r.d: Likewise.
 	* ld-plugin/lto-1a.c: Likewise.
 	* ld-plugin/lto-1b.c: Likewise.
+	* ld-plugin/lto-2.c: Likewise.
+	* ld-plugin/lto-3a.c: Likewise.
+	* ld-plugin/lto-3b.c: Likewise.
+	* ld-plugin/lto-3c.c: Likewise.
+	* ld-plugin/lto-3.d: Likewise.
+	* ld-plugin/lto-3.out: Likewise.
+	* ld-plugin/lto-3r.d: Likewise.
+	* ld-plugin/lto-4a.c: Likewise.
+	* ld-plugin/lto-4b.c: Likewise.
+	* ld-plugin/lto-4c.c: Likewise.
+	* ld-plugin/lto-4.out: Likewise.
+	* ld-plugin/lto-4r-a.d: Likewise.
+	* ld-plugin/lto-4r-b.d: Likewise.
+	* ld-plugin/lto-4r-c.d: Likewise.
+	* ld-plugin/lto-4r-d.d: Likewise.
+	* ld-plugin/lto-5a.c: Likewise.
+	* ld-plugin/lto-5b.c: Likewise.
+	* ld-plugin/lto-5.d: Likewise.
+	* ld-plugin/lto-5.out: Likewise.
+	* ld-plugin/lto-5r.d: Likewise.
+	* ld-plugin/lto-6.c: Likewise.
+	* ld-plugin/lto-7a.c: Likewise.
+	* ld-plugin/lto-7b.c: Likewise.
+	* ld-plugin/lto-7c.c: Likewise.
+	* ld-plugin/lto-7d.c: Likewise.
+	* ld-plugin/lto-7.out: Likewise.
+	* ld-plugin/lto-8a.c: Likewise.
+	* ld-plugin/lto-8b.c: Likewise.
+	* ld-plugin/lto-8.out: Likewise.
+	* ld-plugin/lto-9.cc: Likewise.
+	* ld-plugin/lto-9.d: Likewise.
 	* ld-plugin/lto.exp: Likewise.
+	* ld-plugin/pr12365a.c: Likewise.
+	* ld-plugin/pr12365b.c: Likewise.
+	* ld-plugin/pr12365c.c: Likewise.
 
 	* ld-plugin/plugin.exp: Add object files for symbols claimed
 	or created by testplugin.
 	* ld-plugin/plugin-7.d: Updated.
 	* ld-plugin/plugin-8.d: Likewise.
 	* ld-plugin/plugin-9.d: Likewise.
+
+	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
 index 84fc75d..1fdcb52 100644
@@ -526,7 +571,7 @@ index ac176df..4c8b48b 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index a9f271d..98c961f 100644
+index af1a002..6ba3046 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
 @@ -3000,6 +3000,7 @@ get_section_type_name (unsigned int sh_type)
@@ -981,7 +1026,7 @@ index 3795ffe..0305303 100644
  		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
  		     input_list ')'
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 7ffe760..d9ec992 100644
+index 7ffe760..d2e2595 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -37,6 +37,7 @@
@@ -1298,7 +1343,7 @@ index 7ffe760..d9ec992 100644
  }
  
  /* Add a new program header.  This is called for each entry in a PHDRS
-@@ -7878,3 +8033,1202 @@ lang_ld_feature (char *str)
+@@ -7878,3 +8033,1205 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -2447,13 +2492,16 @@ index 7ffe760..d9ec992 100644
 +  if (lto)
 +    {
 +      /* For LTO link, we only need to extract object-only section
-+	 from the mixed object and put it on LTO claimed output.  */
++	 from the mixed object, add it to input, and put it on LTO
++	 claimed output.  */
 +      switch (abfd->lto_type)
 +	{
 +	default:
 +	  abort ();
 +	case lto_mixed_object:
 +	  filename = cmdline_extract_object_only_section (abfd);
++	  lang_add_input_file (filename,
++			       lang_input_file_is_file_enum, NULL);
 +	  cmdline_option_insert_claimed_output (filename);
 +	  break;
 +	case lto_non_ir_object:
@@ -2930,7 +2978,7 @@ index acb63fb..4baef3c 100644
      }
  
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 05379b8..59182a1 100644
+index b285787..6377273 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -36,15 +36,6 @@
@@ -2967,7 +3015,7 @@ index 05379b8..59182a1 100644
    newarg = xmalloc (sizeof *newarg);
    newarg->arg = arg;
    newarg->next = NULL;
-@@ -233,10 +235,10 @@ plugin_get_ir_dummy_bfd (const char *name, bfd *srctemplate)
+@@ -233,12 +235,12 @@ plugin_get_ir_dummy_bfd (const char *name, bfd *srctemplate)
    bfd *abfd;
  
    bfd_use_reserved_id = 1;
@@ -2976,11 +3024,13 @@ index 05379b8..59182a1 100644
 +  abfd = bfd_create (name, srctemplate);
    bfd_set_arch_info (abfd, bfd_get_arch_info (srctemplate));
    bfd_make_writable (abfd);
+   bfd_copy_private_bfd_data (srctemplate, abfd);
+   bfd_set_gp_size (abfd, bfd_get_gp_size (abfd));
 +  abfd->flags |= BFD_PLUGIN_DUMMY;
    /* Create a minimal set of sections to own the symbols.  */
    sec = bfd_make_section_old_way (abfd, ".text");
    bfd_set_section_flags (abfd, sec,
-@@ -251,14 +253,9 @@ plugin_get_ir_dummy_bfd (const char *name, bfd *srctemplate)
+@@ -253,14 +255,9 @@ plugin_get_ir_dummy_bfd (const char *name, bfd *srctemplate)
  static bfd_boolean
  is_ir_dummy_bfd (const bfd *abfd)
  {
@@ -2996,7 +3046,7 @@ index 05379b8..59182a1 100644
  }
  
  /* Helpers to convert between BFD and GOLD symbol formats.  */
-@@ -533,9 +530,9 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms)
+@@ -535,9 +532,9 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms)
  	}
  
        /* Was originally def, weakdef, or common, but has been pre-empted.  */
@@ -3009,7 +3059,7 @@ index 05379b8..59182a1 100644
      }
    return LDPS_OK;
  }
-@@ -545,9 +542,7 @@ static enum ld_plugin_status
+@@ -547,9 +544,7 @@ static enum ld_plugin_status
  add_input_file (const char *pathname)
  {
    ASSERT (called_plugin);
@@ -3020,7 +3070,7 @@ index 05379b8..59182a1 100644
    return LDPS_OK;
  }
  
-@@ -556,9 +551,7 @@ static enum ld_plugin_status
+@@ -558,9 +553,7 @@ static enum ld_plugin_status
  add_input_library (const char *pathname)
  {
    ASSERT (called_plugin);
@@ -3133,6 +3183,20 @@ index 8fa5f05..f69a5b8 100644
    }
  
    .idata ${RELOCATING+BLOCK(__section_alignment__)} :
+diff --git a/ld/testsuite/ld-plugin/dummy.c b/ld/testsuite/ld-plugin/dummy.c
+new file mode 100644
+index 0000000..5c03287
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/dummy.c
+@@ -0,0 +1 @@
++/* An empty file.  */
+diff --git a/ld/testsuite/ld-plugin/dummy.s b/ld/testsuite/ld-plugin/dummy.s
+new file mode 100644
+index 0000000..8b13789
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/dummy.s
+@@ -0,0 +1 @@
++
 diff --git a/ld/testsuite/ld-plugin/func1p.c b/ld/testsuite/ld-plugin/func1p.c
 new file mode 100644
 index 0000000..917dcbb
@@ -3188,6 +3252,51 @@ index 0000000..525de63
 +{
 +  return retval;
 +}
+diff --git a/ld/testsuite/ld-plugin/lto-10.out b/ld/testsuite/ld-plugin/lto-10.out
+new file mode 100644
+index 0000000..ce01362
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-10.out
+@@ -0,0 +1 @@
++hello
+diff --git a/ld/testsuite/ld-plugin/lto-10a.c b/ld/testsuite/ld-plugin/lto-10a.c
+new file mode 100644
+index 0000000..93d57b5
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-10a.c
+@@ -0,0 +1,6 @@
++extern int foo(void);
++
++int main(void)
++{
++  return foo();
++}
+diff --git a/ld/testsuite/ld-plugin/lto-10b.c b/ld/testsuite/ld-plugin/lto-10b.c
+new file mode 100644
+index 0000000..507055b
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-10b.c
+@@ -0,0 +1,7 @@
++#include <stdio.h>
++
++int foo(void)
++{
++  printf ("hello\n");
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-10r.d b/ld/testsuite/ld-plugin/lto-10r.d
+new file mode 100644
+index 0000000..689e6ec
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-10r.d
+@@ -0,0 +1,7 @@
++#ld: -r tmpdir/lto-10a.o tmpdir/lto-10b.o
++#source: dummy.s
++#nm: -p
++
++#...
++[0-9a-f]+ C __gnu_lto_v.*
++#pass
 diff --git a/ld/testsuite/ld-plugin/lto-1a.c b/ld/testsuite/ld-plugin/lto-1a.c
 new file mode 100644
 index 0000000..b775d0a
@@ -3212,12 +3321,412 @@ index 0000000..8a961ef
 +  unsigned long long d = bar ((unsigned long long) (argc + 1));
 +  return d;
 +}
+diff --git a/ld/testsuite/ld-plugin/lto-2.c b/ld/testsuite/ld-plugin/lto-2.c
+new file mode 100644
+index 0000000..f0eacf4
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-2.c
+@@ -0,0 +1,11 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <math.h>
++
++int
++main (int argc, char **argv)
++{
++  int d = atoi (argv[1]);
++  printf ("%f\n", sin (d));
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-3.d b/ld/testsuite/ld-plugin/lto-3.d
+new file mode 100644
+index 0000000..c3a9a16
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-3.d
+@@ -0,0 +1,4 @@
++#failif
++#...
++[0-9a-f]+ T foo
++#...
+diff --git a/ld/testsuite/ld-plugin/lto-3.out b/ld/testsuite/ld-plugin/lto-3.out
+new file mode 100644
+index 0000000..a69f8f3
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-3.out
+@@ -0,0 +1,2 @@
++hello foo
++hello bar
+diff --git a/ld/testsuite/ld-plugin/lto-3a.c b/ld/testsuite/ld-plugin/lto-3a.c
+new file mode 100644
+index 0000000..5193972
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-3a.c
+@@ -0,0 +1,9 @@
++extern void foo(void);
++extern void bar(void);
++
++int main(void)
++{
++  foo();
++  bar();
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-3b.c b/ld/testsuite/ld-plugin/lto-3b.c
+new file mode 100644
+index 0000000..c24f6d4
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-3b.c
+@@ -0,0 +1,6 @@
++#include <stdio.h>
++
++void foo(void)
++{
++  printf ("hello foo\n");
++}
+diff --git a/ld/testsuite/ld-plugin/lto-3c.c b/ld/testsuite/ld-plugin/lto-3c.c
+new file mode 100644
+index 0000000..95b3bc0
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-3c.c
+@@ -0,0 +1,6 @@
++#include <stdio.h>
++
++void bar(void)
++{
++  printf ("hello bar\n");
++}
+diff --git a/ld/testsuite/ld-plugin/lto-3r.d b/ld/testsuite/ld-plugin/lto-3r.d
+new file mode 100644
+index 0000000..1d1befe
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-3r.d
+@@ -0,0 +1,7 @@
++#ld: -r tmpdir/lto-3b.o
++#source: dummy.s
++#nm: -p
++
++#...
++[0-9a-f]+ C __gnu_lto_v.*
++#pass
+diff --git a/ld/testsuite/ld-plugin/lto-4.out b/ld/testsuite/ld-plugin/lto-4.out
+new file mode 100644
+index 0000000..8d8cc92
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-4.out
+@@ -0,0 +1,2 @@
++hello bar
++hello foo
+diff --git a/ld/testsuite/ld-plugin/lto-4a.c b/ld/testsuite/ld-plugin/lto-4a.c
+new file mode 100644
+index 0000000..2d07cf5
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-4a.c
+@@ -0,0 +1,7 @@
++extern void foo(void);
++
++int main(void)
++{
++  foo();
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-4b.c b/ld/testsuite/ld-plugin/lto-4b.c
+new file mode 100644
+index 0000000..bb4a68b
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-4b.c
+@@ -0,0 +1,9 @@
++#include <stdio.h>
++
++extern void bar (void);
++
++void foo(void)
++{
++  bar ();
++  printf ("hello foo\n");
++}
+diff --git a/ld/testsuite/ld-plugin/lto-4c.c b/ld/testsuite/ld-plugin/lto-4c.c
+new file mode 100644
+index 0000000..317e6fc
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-4c.c
+@@ -0,0 +1,6 @@
++#include <stdio.h>
++
++void bar (void)
++{
++  printf ("hello bar\n");
++}
+diff --git a/ld/testsuite/ld-plugin/lto-4r-a.d b/ld/testsuite/ld-plugin/lto-4r-a.d
+new file mode 100644
+index 0000000..c618cff
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-4r-a.d
+@@ -0,0 +1,7 @@
++#ld: -r tmpdir/lto-4a.o tmpdir/lto-4b.o tmpdir/lto-4c.o
++#source: dummy.s
++#objdump: -h
++
++#...
++.* .gnu_object_only.*
++#pass
+diff --git a/ld/testsuite/ld-plugin/lto-4r-b.d b/ld/testsuite/ld-plugin/lto-4r-b.d
+new file mode 100644
+index 0000000..07d71cb
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-4r-b.d
+@@ -0,0 +1,7 @@
++#ld: -r tmpdir/lto-4a.o tmpdir/lto-4b.o
++#source: dummy.s
++#objdump: -h
++
++#...
++.* .gnu_object_only.*
++#pass
+diff --git a/ld/testsuite/ld-plugin/lto-4r-c.d b/ld/testsuite/ld-plugin/lto-4r-c.d
+new file mode 100644
+index 0000000..ada50c0
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-4r-c.d
+@@ -0,0 +1,7 @@
++#ld: -r tmpdir/lto-4r-b.o tmpdir/lto-4c.o
++#source: dummy.s
++#objdump: -h
++
++#...
++.* .gnu_object_only.*
++#pass
+diff --git a/ld/testsuite/ld-plugin/lto-4r-d.d b/ld/testsuite/ld-plugin/lto-4r-d.d
+new file mode 100644
+index 0000000..68e5f1f
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-4r-d.d
+@@ -0,0 +1,7 @@
++#ld: -r --whole-archive tmpdir/liblto-4a.a
++#source: dummy.s
++#objdump: -h
++
++#...
++.* .gnu_object_only.*
++#pass
+diff --git a/ld/testsuite/ld-plugin/lto-5.d b/ld/testsuite/ld-plugin/lto-5.d
+new file mode 100644
+index 0000000..c3a9a16
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-5.d
+@@ -0,0 +1,4 @@
++#failif
++#...
++[0-9a-f]+ T foo
++#...
+diff --git a/ld/testsuite/ld-plugin/lto-5.out b/ld/testsuite/ld-plugin/lto-5.out
+new file mode 100644
+index 0000000..dfbb215
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-5.out
+@@ -0,0 +1 @@
++hello foo
+diff --git a/ld/testsuite/ld-plugin/lto-5a.c b/ld/testsuite/ld-plugin/lto-5a.c
+new file mode 100644
+index 0000000..2d07cf5
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-5a.c
+@@ -0,0 +1,7 @@
++extern void foo(void);
++
++int main(void)
++{
++  foo();
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-5b.c b/ld/testsuite/ld-plugin/lto-5b.c
+new file mode 100644
+index 0000000..c24f6d4
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-5b.c
+@@ -0,0 +1,6 @@
++#include <stdio.h>
++
++void foo(void)
++{
++  printf ("hello foo\n");
++}
+diff --git a/ld/testsuite/ld-plugin/lto-5r.d b/ld/testsuite/ld-plugin/lto-5r.d
+new file mode 100644
+index 0000000..43e9a5c
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-5r.d
+@@ -0,0 +1,7 @@
++#ld: -r tmpdir/lto-5a.o tmpdir/lto-5b.o
++#source: dummy.s
++#nm: -p
++
++#...
++[0-9a-f]+ C __gnu_lto_v.*
++#pass
+diff --git a/ld/testsuite/ld-plugin/lto-6.c b/ld/testsuite/ld-plugin/lto-6.c
+new file mode 100644
+index 0000000..749e4e0
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-6.c
+@@ -0,0 +1,9 @@
++#include <stdio.h>
++
++extern char _etext[];
++
++int main(void)
++{
++  printf ("%p: %d\n", _etext, _etext[0]);
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-7.out b/ld/testsuite/ld-plugin/lto-7.out
+new file mode 100644
+index 0000000..d86bac9
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-7.out
+@@ -0,0 +1 @@
++OK
+diff --git a/ld/testsuite/ld-plugin/lto-7a.c b/ld/testsuite/ld-plugin/lto-7a.c
+new file mode 100644
+index 0000000..d277a43
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-7a.c
+@@ -0,0 +1,14 @@
++#include <stdlib.h>
++#include <stdio.h>
++
++int foo = -1;
++
++extern void bar ();
++
++int
++main (int argc, char **argv)
++{
++  bar ();
++  printf ("OK\n");
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-7b.c b/ld/testsuite/ld-plugin/lto-7b.c
+new file mode 100644
+index 0000000..1798130
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-7b.c
+@@ -0,0 +1,8 @@
++extern int foo;
++
++static void
++__attribute__ ((unused, constructor))
++set_foo (void)
++{
++  foo = 30;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-7c.c b/ld/testsuite/ld-plugin/lto-7c.c
+new file mode 100644
+index 0000000..5236f57
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-7c.c
+@@ -0,0 +1,9 @@
++extern int foo;
++extern int foo2;
++
++static void
++__attribute__ ((unused, constructor))
++set_foo (void)
++{
++  foo = foo2;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-7d.c b/ld/testsuite/ld-plugin/lto-7d.c
+new file mode 100644
+index 0000000..7fc1ff1
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-7d.c
+@@ -0,0 +1,11 @@
++#include <stdlib.h>
++
++extern int foo;
++int foo2 = 2;
++
++void
++bar (void)
++{
++  if (foo != 30)
++    abort ();
++}
+diff --git a/ld/testsuite/ld-plugin/lto-8.out b/ld/testsuite/ld-plugin/lto-8.out
+new file mode 100644
+index 0000000..35c5d69
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-8.out
+@@ -0,0 +1 @@
++baz: 42
+diff --git a/ld/testsuite/ld-plugin/lto-8a.c b/ld/testsuite/ld-plugin/lto-8a.c
+new file mode 100644
+index 0000000..6901fb3
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-8a.c
+@@ -0,0 +1,12 @@
++#include <stdio.h>
++
++void baz(int i)
++{ 
++  printf ("baz: %d\n", i);
++}
++
++int main(void)
++{
++  foo(42);
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-8b.c b/ld/testsuite/ld-plugin/lto-8b.c
+new file mode 100644
+index 0000000..3b6db5f
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-8b.c
+@@ -0,0 +1,14 @@
++extern int bar(void) __attribute__((__visibility__("hidden"), __const__));
++extern void baz(int);
++
++void foo(char c)
++{
++  int i;
++
++  if (bar())
++    i = c;
++  else
++    i = c;
++
++  baz(i);
++}
+diff --git a/ld/testsuite/ld-plugin/lto-9.cc b/ld/testsuite/ld-plugin/lto-9.cc
+new file mode 100644
+index 0000000..2a4dcde
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-9.cc
+@@ -0,0 +1,9 @@
++struct Foooo {
++  virtual ~Foooo () { }
++};
++
++int main(void)
++{
++  Foooo t;
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-9.d b/ld/testsuite/ld-plugin/lto-9.d
+new file mode 100644
+index 0000000..4b5bcf8
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-9.d
+@@ -0,0 +1,4 @@
++#failif
++#...
++[0-9a-f]+ . .*Foooo::Foooo.*
++#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..8a8f533
+index 0000000..38cb971
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
-@@ -0,0 +1,34 @@
+@@ -0,0 +1,192 @@
 +# Expect script for ld-plugin LTO tests
 +#   Copyright 2011
 +#   Free Software Foundation, Inc.
@@ -3245,13 +3754,171 @@ index 0000000..8a8f533
 +    return
 +}
 +
-+set lto_tests {
++# Simple LTO tests and generate input files for complex LTO tests.
++set lto_link_tests {
 +  {"LTO 1"
 +   "-O2 -flto -fuse-linker-plugin" "-flto -fuse-linker-plugin"
 +   {lto-1a.c lto-1b.c} {} "lto-1.exe"}
++  {"Build libdummy.a 2"
++   "" "-O2 -flto -fuse-linker-plugin"
++   {lto-2.c} {} "libdummy.a"}
++  {"LTO 2"
++   "-static -O2 -flto -fuse-linker-plugin tmpdir/lto-2.o -lm" ""
++   {dummy.c} {} "lto-2.exe"}
++  {"Build libdummy.a 3a"
++   "" "-flto"
++   {lto-3a.c} {} "libdummy.a"}
++  {"Build libdummy.a 3c"
++   "" "-O2"
++   {lto-3c.c} {} "libdummy.a"}
++  {"Build liblto-3.a"
++   "" "-flto"
++   {lto-3b.c} {} "liblto-3.a"}
++  {"Build libdummy.a 4a"
++   "" "-flto"
++   {lto-4a.c} {} "libdummy.a"}
++  {"Build libdummy.a 4b"
++   "" "-O2"
++   {lto-4b.c} {} "libdummy.a"}
++  {"Build libdummy.a 4c"
++   "" "-O2"
++   {lto-4c.c} {} "libdummy.a"}
++  {"Build libdummy.a 5a"
++   "" "-flto"
++   {lto-5a.c} {} "libdummy.a"}
++  {"Build libdummy.a 5b"
++   "" "-flto"
++   {lto-5b.c} {} "libdummy.a"}
++  {"LTO 6"
++   "-O2 -flto -fuse-linker-plugin" ""
++   {lto-6.c} {} "lto-6.exe" "c"}
++  {"Build libdummy.a PR ld/12365"
++   "" "-flto -O2"
++   {pr12365a.c pr12365b.c pr12365c.c} {} "libdummy.a"}
++  {"Build libdummy.a 9"
++   "" "-O2 -flto"
++   {lto-9.cc} {} "libdummy.a"}
++  {"Build libdummy.a 10a"
++   "" "-O2"
++   {lto-10a.c} {} "libdummy.a"}
++  {"Build libdummy.a 10b"
++   "" "-O2 -flto"
++   {lto-10b.c} {} "libdummy.a"}
 +}
 +
-+run_cc_link_tests $lto_tests
++# Generate input files for complex LTO tests for ELF.
++set lto_link_elf_tests {
++  {"Build libdummy.a 7"
++   "" "-flto -O2"
++   {lto-7a.c lto-7b.c lto-7c.c} {} "libdummy.a"}
++  {"Build liblto-7.so"
++   "-shared" "-O2 -fpic"
++   {lto-7d.c} {} "liblto-7.so" "c"}
++  {"Build libdummy.a 8a"
++   "" "-O2"
++   {lto-8a.c} {} "libdummy.a"}
++  {"Build libdummy.a 8b"
++   "" "-flto -O2"
++   {lto-8b.c} {} "libdummy.a"}
++}
++
++# Check final symbols in executables.
++set lto_link_symbol_tests {
++  {"LTO 3 symbol"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-3a.o tmpdir/lto-3c.o tmpdir/liblto-3.a" ""
++   {dummy.c} {{"nm" {} "lto-3.d"}} "lto-3.exe" "c"}
++  {"LTO 5 symbol"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-5.o" ""
++   {dummy.c} {{"nm" {} "lto-5.d"}} "lto-5.exe" "c"}
++  {"LTO 9 symbol"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-9.o" ""
++   {dummy.c} {{"nm" {-C} "lto-9.d"}} "lto-9.exe" "c++"}
++}
++
++# LTO run-time tests.
++set lto_run_tests {
++  {"LTO 3a"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-3a.o tmpdir/lto-3c.o tmpdir/liblto-3.a" ""
++   {dummy.c} "lto-3b.exe" "lto-3.out" "" "c"}
++  {"LTO 3b"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-3a.o tmpdir/lto-3c.o tmpdir/lto-3.o" ""
++   {dummy.c} "lto-3c.exe" "lto-3.out" "" "c"}
++  {"LTO 3c"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-3a.o tmpdir/lto-3c.o -Wl,--whole-archive tmpdir/liblto-3.a -Wl,--no-whole-archive tmpdir/liblto-3.a" ""
++   {dummy.c} "lto-3d.exe" "lto-3.out" "" "c"}
++  {"LTO 4a"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-4r-a.o" ""
++   {dummy.c} "lto-4a.exe" "lto-4.out" "" "c"}
++  {"LTO 4c"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-4r-c.o" ""
++   {dummy.c} "lto-4c.exe" "lto-4.out" "" "c"}
++  {"LTO 4d"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-4r-d.o" ""
++   {dummy.c} "lto-4d.exe" "lto-4.out" "" "c"}
++  {"LTO 5"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-5.o" ""
++   {dummy.c} "lto-5.exe" "lto-5.out" "" "c"}
++  {"LTO 10"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-10.o" ""
++   {dummy.c} "lto-10.exe" "lto-10.out" "" "c"}
++}
++
++# LTO run-time tests for ELF
++set lto_run_elf_tests {
++  {"LTO 7"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-7b.o tmpdir/lto-7c.o tmpdir/lto-7a.o tmpdir/liblto-7.so" ""
++   {dummy.c} "lto-7.exe" "lto-7.out" "" "c"}
++  {"LTO 8"
++   "-O2 -flto -fuse-linker-plugin tmpdir/lto-8b.o tmpdir/lto-8a.o" ""
++   {dummy.c} "lto-8.exe" "lto-8.out" "" "c"}
++}
++
++run_cc_link_tests $lto_link_tests
++
++if { [is_elf_format] } {
++    run_cc_link_tests $lto_link_elf_tests
++}
++
++set testname "Build liblto-4a.a"
++remote_file host delete "tmpdir/liblto-4a.a"
++set catch_output [run_host_cmd "$ar" "rc tmpdir/liblto-4a.a tmpdir/lto-4a.o tmpdir/lto-4b.o tmpdir/lto-4c.o"]
++if {![string match "" $catch_output]} {
++    unresolved $testname
++    return
++}
++
++# Check exported LTO linker errors.
++set testname "PR ld/12365"
++set exec_output [run_host_cmd "$CC" "-O2 -flto -fuse-linker-plugin tmpdir/pr12365a.o tmpdir/pr12365b.o tmpdir/pr12365c.o"]
++if { [ regexp "undefined reference to `my_bcopy'" $exec_output ] } {
++    pass $testname
++} {
++    fail $testname
++}
++
++# Run "ld -r" to generate inputs for complex LTO tests.
++run_dump_test "lto-3r"
++remote_exec host "mv" "tmpdir/dump tmpdir/lto-3.o"
++run_dump_test "lto-4r-a"
++remote_exec host "mv" "tmpdir/dump tmpdir/lto-4r-a.o"
++run_dump_test "lto-4r-b"
++remote_exec host "mv" "tmpdir/dump tmpdir/lto-4r-b.o"
++run_dump_test "lto-4r-c"
++remote_exec host "mv" "tmpdir/dump tmpdir/lto-4r-c.o"
++run_dump_test "lto-4r-d"
++remote_exec host "mv" "tmpdir/dump tmpdir/lto-4r-d.o"
++run_dump_test "lto-5r"
++remote_exec host "mv" "tmpdir/dump tmpdir/lto-5.o"
++run_dump_test "lto-10r"
++remote_exec host "mv" "tmpdir/dump tmpdir/lto-10.o"
++
++run_cc_link_tests $lto_link_symbol_tests
++
++run_ld_link_exec_tests [] $lto_run_tests
++
++if { [is_elf_format] } {
++    run_ld_link_exec_tests [] $lto_run_elf_tests
++}
 diff --git a/ld/testsuite/ld-plugin/plugin-7.d b/ld/testsuite/ld-plugin/plugin-7.d
 index 75f25e0..ee7a6eb 100644
 --- a/ld/testsuite/ld-plugin/plugin-7.d
@@ -3354,6 +4021,175 @@ index 8952f1d..fd0f939 100644
      run_ld_link_tests $plugin_extra_elf_tests
  }
  
+diff --git a/ld/testsuite/ld-plugin/pr12365a.c b/ld/testsuite/ld-plugin/pr12365a.c
+new file mode 100644
+index 0000000..a9bb6c6
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr12365a.c
+@@ -0,0 +1,25 @@
++extern void abort(void);
++extern void main_test (void);
++extern void abort (void);
++int inside_main;
++
++int
++main ()
++{
++  inside_main = 1;
++  main_test ();
++  inside_main = 0;
++  return 0;
++}
++
++/* When optimizing, all the constant cases should have been
++   constant folded, so no calls to link_error should remain.
++   In any case, link_error should not be called.  */
++
++#ifndef __OPTIMIZE__
++void
++link_error (void)
++{
++  abort ();
++}
++#endif
+diff --git a/ld/testsuite/ld-plugin/pr12365b.c b/ld/testsuite/ld-plugin/pr12365b.c
+new file mode 100644
+index 0000000..3e86e06
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr12365b.c
+@@ -0,0 +1,47 @@
++#define ASMNAME(cname)  ASMNAME2 (__USER_LABEL_PREFIX__, cname)
++#define ASMNAME2(prefix, cname) STRING (prefix) cname
++#define STRING(x)    #x
++
++typedef __SIZE_TYPE__ size_t;
++extern void abort (void);
++extern void *memcpy (void *, const void *, size_t)
++  __asm (ASMNAME ("my_memcpy"));
++extern void bcopy (const void *, void *, size_t)
++  __asm (ASMNAME ("my_bcopy"));
++extern void *memset (void *, int, size_t)
++  __asm (ASMNAME ("my_memset"));
++extern void bzero (void *, size_t)
++  __asm (ASMNAME ("my_bzero"));
++extern int memcmp (const void *, const void *, size_t);
++
++struct A { char c[32]; } a = { "foobar" };
++char x[64] = "foobar", y[64];
++int i = 39, j = 6, k = 4;
++
++extern int inside_main;
++
++void
++main_test (void)
++{
++  struct A b = a;
++  struct A c = { { 'x' } };
++
++  inside_main = 1;
++  
++  if (memcmp (b.c, x, 32) || c.c[0] != 'x' || memcmp (c.c + 1, x + 32, 31))
++    abort ();
++  if (__builtin_memcpy (y, x, i) != y || memcmp (x, y, 64))
++    abort ();
++  if (memcpy (y + 6, x, j) != y + 6
++      || memcmp (x, y, 6) || memcmp (x, y + 6, 58))
++    abort ();
++  if (__builtin_memset (y + 2, 'X', k) != y + 2
++      || memcmp (y, "foXXXXfoobar", 13))
++    abort ();
++  bcopy (y + 1, y + 2, 6);
++  if (memcmp (y, "fooXXXXfobar", 13))
++    abort ();
++  __builtin_bzero (y + 4, 2);
++  if (memcmp (y, "fooX\0\0Xfobar", 13))
++    abort ();
++}
+diff --git a/ld/testsuite/ld-plugin/pr12365c.c b/ld/testsuite/ld-plugin/pr12365c.c
+new file mode 100644
+index 0000000..2edd0ff
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr12365c.c
+@@ -0,0 +1,79 @@
++extern void abort (void);
++extern int inside_main;
++typedef __SIZE_TYPE__ size_t;
++
++#define TEST_ABORT if (inside_main) abort()
++
++void *
++my_memcpy (void *d, const void *s, size_t n)
++{
++  char *dst = (char *) d;
++  const char *src = (const char *) s;
++  while (n--)
++    *dst++ = *src++;
++  return (char *) d;
++}
++
++void
++my_bcopy (const void *s, void *d, size_t n)
++{
++  char *dst = (char *) d;
++  const char *src = (const char *) s;
++  if (src >= dst)
++    while (n--)
++      *dst++ = *src++;
++  else
++    {
++      dst += n;
++      src += n;
++      while (n--)
++        *--dst = *--src;
++    }
++}
++
++void *
++my_memset (void *d, int c, size_t n)
++{
++  char *dst = (char *) d;
++  while (n--)
++    *dst++ = c;
++  return (char *) d;
++}
++
++void
++my_bzero (void *d, size_t n)
++{
++  char *dst = (char *) d;
++  while (n--)
++    *dst++ = '\0';
++}
++
++void *
++memcpy (void *d, const void *s, size_t n)
++{
++  void *result = my_memcpy (d, s, n);
++  TEST_ABORT;
++  return result;
++}
++
++void
++bcopy (const void *s, void *d, size_t n)
++{
++  my_bcopy (s, d, n);
++  TEST_ABORT;
++}
++
++void *
++memset (void *d, int c, size_t n)
++{
++  void *result = my_memset (d, c, n);
++  TEST_ABORT;
++  return result;
++}
++
++void
++bzero (void *d, size_t n)
++{
++  my_bzero (d, n);
++  TEST_ABORT;
++}
 diff --git a/ld/testsuite/lib/ld-lib.exp b/ld/testsuite/lib/ld-lib.exp
 index 48e9635..74bad74 100644
 --- a/ld/testsuite/lib/ld-lib.exp
