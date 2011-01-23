@@ -5,6 +5,7 @@ bfd/
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
+	PR ld/12314
 	PR ld/12323
 	PR ld/12365
 	PR ld/12369
@@ -33,6 +34,7 @@ binutils/
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
+	PR ld/12314
 	PR ld/12323
 	PR ld/12365
 	PR ld/12369
@@ -51,6 +53,7 @@ gas/testsuite/
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
+	PR ld/12314
 	PR ld/12323
 	PR ld/12365
 	PR ld/12369
@@ -71,6 +74,7 @@ include/elf/
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
+	PR ld/12314
 	PR ld/12323
 	PR ld/12365
 	PR ld/12369
@@ -84,6 +88,7 @@ ld/
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
+	PR ld/12314
 	PR ld/12323
 	PR ld/12365
 	PR ld/12369
@@ -189,6 +194,7 @@ ld/testsuite/
 	PR ld/12248
 	PR ld/12277
 	PR ld/12291
+	PR ld/12314
 	PR ld/12323
 	PR ld/12365
 	PR ld/12369
@@ -201,6 +207,14 @@ ld/testsuite/
 	* ld-plugin/lto-10b.c: Likewise.
 	* ld-plugin/lto-10.out: Likewise.
 	* ld-plugin/lto-10r.d: Likewise.
+	* ld-plugin/lto-11a.c: Likewise.
+	* ld-plugin/lto-11b.c: Likewise.
+	* ld-plugin/lto-11c.c: Likewise.
+	* ld-plugin/lto-11.out: Likewise.
+	* ld-plugin/lto-12a.c: Likewise.
+	* ld-plugin/lto-12b.c: Likewise.
+	* ld-plugin/lto-12c.c: Likewise.
+	* ld-plugin/lto-11.out: Likewise.
 	* ld-plugin/lto-1a.c: Likewise.
 	* ld-plugin/lto-1b.c: Likewise.
 	* ld-plugin/lto-2.c: Likewise.
@@ -1026,7 +1040,7 @@ index 3795ffe..0305303 100644
  		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
  		     input_list ')'
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 7ffe760..d2e2595 100644
+index 7ffe760..44cc31b 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -37,6 +37,7 @@
@@ -1060,11 +1074,12 @@ index 7ffe760..d2e2595 100644
  
  /* Forward declarations.  */
  static void exp_init_os (etree_type *);
-@@ -89,8 +99,16 @@ static void lang_record_phdrs (void);
+@@ -89,8 +99,17 @@ static void lang_record_phdrs (void);
  static void lang_do_version_exports_section (void);
  static void lang_finalize_version_expr_head
    (struct bfd_elf_version_expr_head *);
 +static void cmdline_lists_init (void);
++static void cmdline_prune_input_archives (void);
 +static void cmdline_get_stage2_input_files (void);
 +static void cmdline_get_object_only_input_files (void);
 +static void print_cmdline_list (cmdline_union_type *);
@@ -1077,7 +1092,7 @@ index 7ffe760..d2e2595 100644
  const char *output_target;
  lang_output_section_statement_type *abs_output_section;
  lang_statement_list_type lang_output_section_statement;
-@@ -1055,6 +1073,7 @@ new_afile (const char *name,
+@@ -1055,6 +1074,7 @@ new_afile (const char *name,
    lang_has_input_file = TRUE;
    p->target = target;
    p->sysrooted = FALSE;
@@ -1085,7 +1100,7 @@ index 7ffe760..d2e2595 100644
  
    if (file_type == lang_input_file_is_l_enum
        && name[0] == ':' && name[1] != '\0')
-@@ -1221,14 +1240,17 @@ output_section_statement_table_free (void)
+@@ -1221,14 +1241,17 @@ output_section_statement_table_free (void)
  /* Build enough state so that the parser can build its tree.  */
  
  void
@@ -1105,7 +1120,7 @@ index 7ffe760..d2e2595 100644
    lang_list_init (stat_ptr);
  
    lang_list_init (&input_file_chain);
-@@ -1247,10 +1269,11 @@ lang_init (void)
+@@ -1247,10 +1270,11 @@ lang_init (void)
       simpler to re-use working machinery than using a linked list in terms
       of code-complexity here in ld, besides the initialization which just
       looks like other code here.  */
@@ -1121,7 +1136,7 @@ index 7ffe760..d2e2595 100644
      einfo (_("%P%F: can not create hash table: %E\n"));
  }
  
-@@ -2772,6 +2795,14 @@ load_symbols (lang_input_statement_type *entry,
+@@ -2772,6 +2796,14 @@ load_symbols (lang_input_statement_type *entry,
  		  loaded = FALSE;
  		}
  
@@ -1136,7 +1151,7 @@ index 7ffe760..d2e2595 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6252,10 +6283,15 @@ lang_gc_sections (void)
+@@ -6252,10 +6284,15 @@ lang_gc_sections (void)
      {
        LANG_FOR_EACH_INPUT_STATEMENT (f)
  	{
@@ -1156,7 +1171,7 @@ index 7ffe760..d2e2595 100644
  	}
      }
  
-@@ -6420,23 +6456,113 @@ lang_process (void)
+@@ -6420,23 +6457,117 @@ lang_process (void)
    open_input_bfds (statement_list.head, FALSE);
  
  #ifdef ENABLE_PLUGINS
@@ -1184,6 +1199,10 @@ index 7ffe760..d2e2595 100644
 +
 +      if (cmdline_next_claimed_output)
 +	{
++	  /* Prune archives between the fist and last claimed
++	     inputs.  */
++	  cmdline_prune_input_archives ();
++
 +	  if (trace_file_tries)
 +	    {
 +	      info_msg (_("Stage 2 command line:\n "));
@@ -1277,7 +1296,7 @@ index 7ffe760..d2e2595 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -6717,6 +6843,8 @@ lang_startup (const char *name)
+@@ -6717,6 +6848,8 @@ lang_startup (const char *name)
    first_file->filename = name;
    first_file->local_sym_name = name;
    first_file->real = TRUE;
@@ -1286,7 +1305,7 @@ index 7ffe760..d2e2595 100644
  }
  
  void
-@@ -6889,17 +7017,41 @@ lang_add_insert (const char *where, int is_before)
+@@ -6889,17 +7022,41 @@ lang_add_insert (const char *where, int is_before)
    saved_script_handle = previous_script_handle;
  }
  
@@ -1329,7 +1348,7 @@ index 7ffe760..d2e2595 100644
  }
  
  /* Leave a group.  This just resets stat_ptr to start writing to the
-@@ -6908,9 +7060,12 @@ lang_enter_group (void)
+@@ -6908,9 +7065,12 @@ lang_enter_group (void)
     but currently they can't.  */
  
  void
@@ -1343,7 +1362,7 @@ index 7ffe760..d2e2595 100644
  }
  
  /* Add a new program header.  This is called for each entry in a PHDRS
-@@ -7878,3 +8033,1205 @@ lang_ld_feature (char *str)
+@@ -7878,3 +8038,1270 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -1379,6 +1398,7 @@ index 7ffe760..d2e2595 100644
 +      new_opt->input_statement.input = (lang_input_statement_type *) data;
 +      break;
 +    case cmdline_is_file_enum:
++    case cmdline_is_claimed_file_enum:
 +      new_opt->file.filename = (const char *) data;
 +      break;
 +    case cmdline_is_bfd_enum:
@@ -1479,7 +1499,7 @@ index 7ffe760..d2e2595 100644
 +    info_msg (_("insert plugin claimed output: %s\n"), filename);
 +
 +  new_opt = (cmdline_union_type *) stat_alloc (sizeof (*new_opt));
-+  new_opt->header.type = cmdline_is_file_enum;
++  new_opt->header.type = cmdline_is_claimed_file_enum;
 +  new_opt->file.filename = filename;
 +
 +  next = *cmdline_next_claimed_output;
@@ -1492,6 +1512,68 @@ index 7ffe760..d2e2595 100644
 +    }
 +  else
 +    cmdline_next_claimed_output = &new_opt->header.next;
++}
++
++/* Prune archives between the fist and last claimed inputs.  */
++
++static void
++cmdline_prune_input_archives (void)
++{
++  cmdline_union_type *c;
++  unsigned int i;
++  unsigned int first_claimed = (unsigned int) -1;
++  unsigned int last_claimed = (unsigned int) -1;
++
++  /* Record the first and last claimed inputs.  */
++  c = cmdline_options.head;
++  for (i = 0; c != NULL; i++, c = c->header.next)
++    switch (c->header.type)
++      {
++      default:
++	abort ();
++      case cmdline_is_lang_input_statement_enum:
++	if (c->input_statement.input->claimed)
++	  {
++	    if (first_claimed == (unsigned int) -1) 
++	      first_claimed = i;
++	    last_claimed = i;
++	  }
++	break;
++      case cmdline_is_claimed_file_enum:
++	if (first_claimed == (unsigned int) -1) 
++	  first_claimed = i;
++	last_claimed = i;
++	break;
++      case cmdline_is_file_enum:
++      case cmdline_is_enter_group_enum:
++      case cmdline_is_leave_group_enum:
++	break;
++      }
++
++  ASSERT (first_claimed != (unsigned int) -1
++	  && last_claimed != (unsigned int) -1);
++
++  c = cmdline_options.head;
++  for (i = 0; c != NULL; i++, c = c->header.next)
++    switch (c->header.type)
++      {
++      default:
++	abort ();
++      case cmdline_is_lang_input_statement_enum:
++	/* Ignore archives between the fist and last claimed inputs.  */
++	if (!c->input_statement.input->claimed
++	    && c->input_statement.input->the_bfd
++	    && c->input_statement.input->the_bfd->format == bfd_archive
++	    && i > first_claimed
++	    && i < last_claimed)
++	  c->input_statement.input->claimed = TRUE;
++	break;
++      case cmdline_is_file_enum:
++      case cmdline_is_claimed_file_enum:
++      case cmdline_is_enter_group_enum:
++      case cmdline_is_leave_group_enum:
++	break;
++      }
 +}
 +
 +/* Get stage 2 input files.  */
@@ -1523,6 +1605,7 @@ index 7ffe760..d2e2595 100644
 +	  }
 +	break;
 +      case cmdline_is_file_enum:
++      case cmdline_is_claimed_file_enum:
 +	lang_add_input_file (c->file.filename,
 +			     lang_input_file_is_file_enum, NULL);
 +	break;
@@ -1563,6 +1646,7 @@ index 7ffe760..d2e2595 100644
 +	  }
 +	break;
 +      case cmdline_is_file_enum:
++      case cmdline_is_claimed_file_enum:
 +	info_msg (" %s", c->file.filename);
 +	break;
 +      case cmdline_is_enter_group_enum:
@@ -2550,7 +2634,7 @@ index 7ffe760..d2e2595 100644
 +      }
 +}
 diff --git a/ld/ldlang.h b/ld/ldlang.h
-index 8aff0b3..e16fd0a 100644
+index 8aff0b3..ab1f4f4 100644
 --- a/ld/ldlang.h
 +++ b/ld/ldlang.h
 @@ -279,6 +279,9 @@ typedef struct lang_input_statement_struct
@@ -2589,7 +2673,7 @@ index 8aff0b3..e16fd0a 100644
  extern void lang_add_section
    (lang_statement_list_type *, asection *,
     lang_output_section_statement_type *);
-@@ -653,4 +660,61 @@ ldlang_override_segment_assignment
+@@ -653,4 +660,62 @@ ldlang_override_segment_assignment
  extern void
  lang_ld_feature (char *);
  
@@ -2597,6 +2681,7 @@ index 8aff0b3..e16fd0a 100644
 +{
 +  cmdline_is_lang_input_statement_enum,
 +  cmdline_is_file_enum,
++  cmdline_is_claimed_file_enum,
 +  cmdline_is_enter_group_enum,
 +  cmdline_is_leave_group_enum,
 +  cmdline_is_bfd_enum
@@ -2652,7 +2737,7 @@ index 8aff0b3..e16fd0a 100644
 +
  #endif
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index 19c42d9..bd5f6bf 100644
+index 19c42d9..7b1a2b8 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
 @@ -213,6 +213,9 @@ main (int argc, char **argv)
@@ -2774,7 +2859,7 @@ index 19c42d9..bd5f6bf 100644
  	  file.offset = abfd->origin;
  	  file.filesize = arelt_size (abfd);
  	  file.fd = fd;
-@@ -831,21 +824,36 @@ add_archive_element (struct bfd_link_info *info,
+@@ -831,21 +824,44 @@ add_archive_element (struct bfd_link_info *info,
  	  close (fd);
  	  if (claimed)
  	    {
@@ -2792,13 +2877,24 @@ index 19c42d9..bd5f6bf 100644
  	    }
  	  else
  	    {
- 	      /* Abandon the dummy BFD.  */
- 	      bfd_close_all_done (file.handle);
- 	      input->claimed = FALSE;
-+	      /* Warn about the unclaimed archive member with IR.  */
-+	      if (abfd->lto_type != lto_non_ir_object)
-+		info_msg ("%P: LTO IR sections in %B aren't used in stage 2 linking\n",
-+			  abfd);
+-	      /* Abandon the dummy BFD.  */
+-	      bfd_close_all_done (file.handle);
+-	      input->claimed = FALSE;
++	      if (abfd->lto_type == lto_non_ir_object)
++		{
++		  /* Abandon the dummy BFD.  */
++		  bfd_close_all_done (file.handle);
++		  input->claimed = FALSE;
++		}
++	      else
++		{
++		  /* Substitute the dummy BFD.  */
++		  input->the_bfd = file.handle;
++		  input->claimed = TRUE;
++		  bfd_make_readable (input->the_bfd);
++		  input->the_bfd->flags |= BFD_PLUGIN_DUMMY;
++		  *subsbfd = input->the_bfd;
++		}
  	    }
 +
 +	  /* Mark this input has been processed by plugin.  */
@@ -2811,7 +2907,7 @@ index 19c42d9..bd5f6bf 100644
  
    ldlang_add_file (input);
  
-@@ -893,16 +901,16 @@ add_archive_element (struct bfd_link_info *info,
+@@ -893,16 +909,16 @@ add_archive_element (struct bfd_link_info *info,
  	  header_printed = TRUE;
  	}
  
@@ -2831,7 +2927,7 @@ index 19c42d9..bd5f6bf 100644
  		 + strlen (bfd_get_filename (abfd))
  		 + 2);
  	}
-@@ -1479,3 +1487,43 @@ notice (struct bfd_link_info *info,
+@@ -1479,3 +1495,43 @@ notice (struct bfd_link_info *info,
  
    return TRUE;
  }
@@ -3297,6 +3393,110 @@ index 0000000..689e6ec
 +#...
 +[0-9a-f]+ C __gnu_lto_v.*
 +#pass
+diff --git a/ld/testsuite/ld-plugin/lto-11.out b/ld/testsuite/ld-plugin/lto-11.out
+new file mode 100644
+index 0000000..899682a
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-11.out
+@@ -0,0 +1,2 @@
++Hello from foo!
++Hello from bar!
+diff --git a/ld/testsuite/ld-plugin/lto-11a.c b/ld/testsuite/ld-plugin/lto-11a.c
+new file mode 100644
+index 0000000..5193972
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-11a.c
+@@ -0,0 +1,9 @@
++extern void foo(void);
++extern void bar(void);
++
++int main(void)
++{
++  foo();
++  bar();
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-11b.c b/ld/testsuite/ld-plugin/lto-11b.c
+new file mode 100644
+index 0000000..62d61ec
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-11b.c
+@@ -0,0 +1,6 @@
++extern int printf(const char *, ...);
++
++void foo(void)
++{
++  printf("Hello from %s!\n", __FUNCTION__);
++}
+diff --git a/ld/testsuite/ld-plugin/lto-11c.c b/ld/testsuite/ld-plugin/lto-11c.c
+new file mode 100644
+index 0000000..8cd40b9
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-11c.c
+@@ -0,0 +1,6 @@
++extern int printf(const char *, ...);
++
++void bar(void)
++{
++  printf("Hello from %s!\n", __FUNCTION__);
++}
+diff --git a/ld/testsuite/ld-plugin/lto-12.out b/ld/testsuite/ld-plugin/lto-12.out
+new file mode 100644
+index 0000000..d86bac9
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-12.out
+@@ -0,0 +1 @@
++OK
+diff --git a/ld/testsuite/ld-plugin/lto-12a.c b/ld/testsuite/ld-plugin/lto-12a.c
+new file mode 100644
+index 0000000..30ff3d9
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-12a.c
+@@ -0,0 +1,16 @@
++#include <stdio.h>
++#include <stdlib.h>
++
++extern int value;
++
++int
++main (int argc, char **argv)
++{
++  int n = 10 * (argc + 1);
++  char *p = malloc (n);
++  __builtin_memcpy (p, argv[0], n);
++  if (value != -1)
++    abort ();
++  printf ("OK\n");
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/lto-12b.c b/ld/testsuite/ld-plugin/lto-12b.c
+new file mode 100644
+index 0000000..c2b00e4
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-12b.c
+@@ -0,0 +1 @@
++int value = -1;
+diff --git a/ld/testsuite/ld-plugin/lto-12c.c b/ld/testsuite/ld-plugin/lto-12c.c
+new file mode 100644
+index 0000000..ecd1bd4
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-12c.c
+@@ -0,0 +1,15 @@
++#include <string.h>
++
++extern int value;
++
++void *memcpy(void *dest, const void *src, size_t n)
++{
++  char *d = (char *) dest;
++  const char *s = (const char *) src;
++
++  while (n--)
++    *d++ = *s++;
++
++  value = 1;
++  return dest;
++}
 diff --git a/ld/testsuite/ld-plugin/lto-1a.c b/ld/testsuite/ld-plugin/lto-1a.c
 new file mode 100644
 index 0000000..b775d0a
@@ -3497,11 +3697,11 @@ index 0000000..ada50c0
 +#pass
 diff --git a/ld/testsuite/ld-plugin/lto-4r-d.d b/ld/testsuite/ld-plugin/lto-4r-d.d
 new file mode 100644
-index 0000000..68e5f1f
+index 0000000..d4c5852
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto-4r-d.d
 @@ -0,0 +1,7 @@
-+#ld: -r --whole-archive tmpdir/liblto-4a.a
++#ld: -r --whole-archive tmpdir/liblto-4.a
 +#source: dummy.s
 +#objdump: -h
 +
@@ -3723,10 +3923,10 @@ index 0000000..4b5bcf8
 +#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..38cb971
+index 0000000..fae7e65
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
-@@ -0,0 +1,192 @@
+@@ -0,0 +1,224 @@
 +# Expect script for ld-plugin LTO tests
 +#   Copyright 2011
 +#   Free Software Foundation, Inc.
@@ -3804,6 +4004,21 @@ index 0000000..38cb971
 +  {"Build libdummy.a 10b"
 +   "" "-O2 -flto"
 +   {lto-10b.c} {} "libdummy.a"}
++  {"Build libdummy.a 11a"
++   "" "-O -flto"
++   {lto-11a.c} {} "libdummy.a"}
++  {"Build libdummy.a 11b"
++   "" "-O -flto"
++   {lto-11b.c} {} "libdummy.a"}
++  {"Build libdummy.a 11c"
++   "" "-O"
++   {lto-11c.c} {} "libdummy.a"}
++  {"Build liblto-12.a"
++   "" "-O2 -flto"
++   {lto-12c.c} {} "liblto-12.a"}
++  {"Build libdummy.a 12"
++   "" "-O2 -flto"
++   {lto-12a.c lto-12b.c} {} "libdummy.a"}
 +}
 +
 +# Generate input files for complex LTO tests for ELF.
@@ -3861,6 +4076,15 @@ index 0000000..38cb971
 +  {"LTO 10"
 +   "-O2 -flto -fuse-linker-plugin tmpdir/lto-10.o" ""
 +   {dummy.c} "lto-10.exe" "lto-10.out" "" "c"}
++  {"LTO 11"
++   "-O -flto -fuse-linker-plugin tmpdir/liblto-11.a" ""
++   {dummy.c} "lto-11.exe" "lto-11.out" "" "c"}
++  {"LTO 12a"
++   "-O -flto -fuse-linker-plugin tmpdir/lto-12a.o tmpdir/liblto-12.a tmpdir/lto-12b.o" ""
++   {dummy.c} "lto-12a.exe" "lto-12.out" "" "c"}
++  {"LTO 12b"
++   "-O -flto -fuse-linker-plugin tmpdir/lto-12a.o tmpdir/lto-12b.o tmpdir/liblto-12.a" ""
++   {dummy.c} "lto-12b.exe" "lto-12.out" "" "c"}
 +}
 +
 +# LTO run-time tests for ELF
@@ -3879,9 +4103,17 @@ index 0000000..38cb971
 +    run_cc_link_tests $lto_link_elf_tests
 +}
 +
-+set testname "Build liblto-4a.a"
-+remote_file host delete "tmpdir/liblto-4a.a"
-+set catch_output [run_host_cmd "$ar" "rc tmpdir/liblto-4a.a tmpdir/lto-4a.o tmpdir/lto-4b.o tmpdir/lto-4c.o"]
++set testname "Build liblto-4.a"
++remote_file host delete "tmpdir/liblto-4.a"
++set catch_output [run_host_cmd "$ar" "rc tmpdir/liblto-4.a tmpdir/lto-4a.o tmpdir/lto-4b.o tmpdir/lto-4c.o"]
++if {![string match "" $catch_output]} {
++    unresolved $testname
++    return
++}
++
++set testname "Build liblto-11.a"
++remote_file host delete "tmpdir/liblto-11.a"
++set catch_output [run_host_cmd "$ar" "rc tmpdir/liblto-11.a tmpdir/lto-11a.o tmpdir/lto-11b.o tmpdir/lto-11c.o"]
 +if {![string match "" $catch_output]} {
 +    unresolved $testname
 +    return
