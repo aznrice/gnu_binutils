@@ -548,7 +548,7 @@ const pseudo_typeS md_pseudo_table[] =
   /* The manual documents ".stk" but the compiler emits ".stack".  */
   { "stack",    rx_nop,         0 },
 
-  /* Theae are Renesas as100 assembler pseudo-ops that we do support.  */
+  /* These are Renesas as100 assembler pseudo-ops that we do support.  */
   { "addr",     rx_cons,        3 },
   { "align",    s_align_bytes,  2 },
   { "byte",     rx_cons,        1 },
@@ -1142,6 +1142,9 @@ static unsigned char *nops[] = { NULL, nop_1, nop_2, nop_3, nop_4, nop_5, nop_6,
 void
 rx_handle_align (fragS * frag)
 {
+  /* If handling an alignment frag, use an optimal NOP pattern.
+     Only do this if a fill value has not already been provided.
+     FIXME: This test fails if the provided fill value is zero.  */
   if ((frag->fr_type == rs_align
        || frag->fr_type == rs_align_code)
       && subseg_text_p (now_seg))
@@ -1151,16 +1154,19 @@ rx_handle_align (fragS * frag)
 		   - frag->fr_fix);
       unsigned char *base = (unsigned char *)frag->fr_literal + frag->fr_fix;
 
-      if (count > BIGGEST_NOP)
+      if (* base == 0)
 	{
-	  base[0] = 0x2e;
-	  base[1] = count;
-	  frag->fr_var = 2;
-	}
-      else if (count > 0)
-	{
-	  memcpy (base, nops[count], count);
-	  frag->fr_var = count;
+	  if (count > BIGGEST_NOP)
+	    {
+	      base[0] = 0x2e;
+	      base[1] = count;
+	      frag->fr_var = 2;
+	    }
+	  else if (count > 0)
+	    {
+	      memcpy (base, nops[count], count);
+	      frag->fr_var = count;
+	    }
 	}
     }
 
@@ -1603,19 +1609,28 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
       && fragP->tc_frag_data->relax[0].type == RX_RELAX_DISP)
     ri = 1;
 
+  /* We used a new frag for this opcode, so the opcode address should
+     be the frag address.  */
+  mypc = fragP->fr_address + (fragP->fr_opcode - fragP->fr_literal);
+
   /* Try to get the target address.  If we fail here, we just use the
      largest format.  */
   if (rx_frag_fix_value (fragP, segment, 0, & addr0,
 			 fragP->tc_frag_data->relax[ri].type != RX_RELAX_BRANCH, 0))
-    keep_reloc = 1;
+    {
+      /* We don't know the target address.  */
+      keep_reloc = 1;
+      addr0 = 0;
+      disp = 0;
+    }
+  else
+    {
+      /* We know the target address, and it's in addr0.  */
+      disp = (int) addr0 - (int) mypc;
+    }
 
   if (linkrelax)
     keep_reloc = 1;
-
-  /* We used a new frag for this opcode, so the opcode address should
-     be the frag address.  */
-  mypc = fragP->fr_address + (fragP->fr_opcode - fragP->fr_literal);
-  disp = (int) addr0 - (int) mypc;
 
   reloc_type = BFD_RELOC_NONE;
   reloc_adjust = 0;

@@ -1,3 +1,53 @@
+2011-02-15  Kai Tietz  <kai.tietz@onevision.com>
+
+	* pe-dll.c (process_def_file_and_drectve): Don't strip
+	leading underscore from symbol by calling bfd_find_version_for_sym.
+
+2011-02-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* ldlang.c (lang_vers_match): Declare a new c_sym, assign it to
+	the bfd_demangle of sym, change users of sym to c_sym when not
+	already demangling, and free when done.  Change callers of
+	cplus_demangle to bfd_demangle.
+
+2011-02-14  Alan Modra  <amodra@gmail.com>
+
+	* ldmain.c (remove_output): Rename to..
+	(ld_cleanup): ..this. Call bfd_cache_close_all and plugin_call_cleanup.
+	(main): Adjust.
+	* plugin.c (plugin_call_cleanup): Make global.
+	(plugin_load_plugins): Don't register plugin_call_cleanup with xatexit.
+	* plugin.h (plugin_call_cleanup): Declare.
+
+2011-02-13  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* configure: Regenerate.
+
+2011-02-10  Alan Modra  <amodra@gmail.com>
+
+	* scripttempl/armbpabi.sc: Revert 2010-11-02  H.J. Lu.
+	* scripttempl/avr.sc: Likewise.
+	* scripttempl/elf32cr16.sc: Likewise.
+	* scripttempl/elf32crx.sc: Likewise.
+	* scripttempl/elf32msp430.sc: Likewise.
+	* scripttempl/elf32msp430_3.sc: Likewise.
+	* scripttempl/elf32sh-symbian.sc: Likewise.
+	* scripttempl/elf64hppa.sc: Likewise.
+	* scripttempl/elf_chaos.sc: Likewise.
+	* scripttempl/elfd10v.sc: Likewise.
+	* scripttempl/elfd30v.sc: Likewise.
+	* scripttempl/elfi370.sc: Likewise.
+	* scripttempl/elfm68hc11.sc: Likewise.
+	* scripttempl/elfm68hc12.sc: Likewise.
+	* scripttempl/elfxtensa.sc: Likewise.
+	* scripttempl/ip2k.sc: Likewise.
+	* scripttempl/iq2000.sc: Likewise.
+	* scripttempl/mep.sc: Likewise.
+	* scripttempl/mmo.sc: Likewise.
+	* scripttempl/v850.sc: Likewise.
+	* scripttempl/xstormy16.sc: Likewise.
+	* scripttempl/elf.sc: Revert 2010-10-29  H.J. Lu.
+
 2011-01-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* Makefile.am (CXX): Removed.
@@ -17,19 +67,6 @@
 	* ldexp.c (fold_binary): Set result section for arithmetic and
 	logical operations to NULL when both operands are in same section.
 	* ld.texinfo (Expression Section): Describe this.
-
-2011-01-14  Alan Modra  <amodra@gmail.com>
-
-	* ldmain.c (main): Flush stdout before and stderr after printing
-	message.
-	* ldmisc.c (einfo): Similarly.
-	* plugin.c (message): Likewise.
-	* emultempl/ppc64elf.em: Likewise.
-	* emultempl/xtensaelf.em: Likewise.
-	* emulparams/elf32mcore.sh: Use einfo rather than printf.
-	* emultempl/beos.em: Likewise.
-	* emultempl/pe.em: Likewise.
-	* emultempl/pep.em: Likewise.
 
 2011-01-14  Alan Modra  <amodra@gmail.com>
 
