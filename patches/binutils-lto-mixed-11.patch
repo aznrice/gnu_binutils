@@ -1,6 +1,6 @@
 bfd/
 
-2011-02-16  H.J. Lu  <hongjiu.lu@intel.com>
+2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -11,6 +11,7 @@ bfd/
 	PR ld/12369
 	PR ld/12430
 	PR ld/12439
+	PR ld/12496
 	* bfd.c (bfd_lto_object_type): New.
 	(BFD_PLUGIN): Likewise.
 	(BFD_PLUGIN_DUMMY): Likewise.
@@ -21,6 +22,9 @@ bfd/
 
 	* elf.c (special_sections_g): Add ".gnu_object_only".
 
+	* elflink.c (elf_link_add_archive_symbols): Don't load the IR
+	archive member twice.
+
 	* format.c (bfd_set_lto_type): New.
 	(bfd_check_format_matches): Use it.
 
@@ -30,7 +34,7 @@ bfd/
 
 binutils/
 
-2011-02-16  H.J. Lu  <hongjiu.lu@intel.com>
+2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -41,6 +45,7 @@ binutils/
 	PR ld/12369
 	PR ld/12430
 	PR ld/12439
+	PR ld/12496
 	* objcopy.c (group_signature): Removed.
 	(is_strip_section): Replace group_signature with
 	bfd_group_signature.
@@ -50,7 +55,7 @@ binutils/
 
 gas/testsuite/
 
-2011-02-16  H.J. Lu  <hongjiu.lu@intel.com>
+2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -61,19 +66,20 @@ gas/testsuite/
 	PR ld/12369
 	PR ld/12430
 	PR ld/12439
+	PR ld/12496
 	* gas/elf/section9.s: Add the .gnu_object_only test.
 	* gas/elf/section9.d: Updated.
 
 include/
 
-2011-02-16  H.J. Lu  <hongjiu.lu@intel.com>
+2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* bfdlink.h (bfd_link_info): Add emit_gnu_object_only and
 	emitting_gnu_object_only.
 
 include/elf/
 
-2011-02-16  H.J. Lu  <hongjiu.lu@intel.com>
+2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -84,11 +90,12 @@ include/elf/
 	PR ld/12369
 	PR ld/12430
 	PR ld/12439
+	PR ld/12496
 	* common.h (SHT_GNU_OBJECT_ONLY): New.
 
 ld/
 
-2011-02-16  H.J. Lu  <hongjiu.lu@intel.com>
+2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -99,6 +106,7 @@ ld/
 	PR ld/12369
 	PR ld/12430
 	PR ld/12439
+	PR ld/12496
 	* ld.h (cref_hash_table_free): New.
 
 	* ldcref.c (cref_hash_table_free): New
@@ -199,7 +207,7 @@ ld/
 
 ld/testsuite/
 
-2011-02-16  H.J. Lu  <hongjiu.lu@intel.com>
+2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -210,6 +218,7 @@ ld/testsuite/
 	PR ld/12369
 	PR ld/12430
 	PR ld/12439
+	PR ld/12496
 	* ld-plugin/func1p.c: New.
 	* ld-plugin/func2.c: Likewise.
 	* ld-plugin/func2i.c: Likewise.
@@ -234,6 +243,9 @@ ld/testsuite/
 	* ld-plugin/lto-14b.c: Likewise.
 	* ld-plugin/lto-14c.c: Likewise.
 	* ld-plugin/lto-14.out: Likewise.
+	* ld-plugin/lto-15a.c: Likewise.
+	* ld-plugin/lto-15b.c: Likewise.
+	* ld-plugin/lto-15.out: Likewise.
 	* ld-plugin/lto-1a.c: Likewise.
 	* ld-plugin/lto-1b.c: Likewise.
 	* ld-plugin/lto-2.c: Likewise.
@@ -476,6 +488,20 @@ index c77dced..f384ae9 100644
    { STRING_COMMA_LEN (".gnu.version"),     0, SHT_GNU_versym,  0 },
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
+diff --git a/bfd/elflink.c b/bfd/elflink.c
+index dffe0ae..10bb680 100644
+--- a/bfd/elflink.c
++++ b/bfd/elflink.c
+@@ -5066,6 +5066,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
+ 	     something wrong with the archive.  */
+ 	  if (element->archive_pass != 0)
+ 	    {
++	      /* Don't load the IR archive member twice.  */
++	      if (element->lto_type == lto_ir_object)
++		continue;
+ 	      bfd_set_error (bfd_error_bad_value);
+ 	      goto error_return;
+ 	    }
 diff --git a/bfd/format.c b/bfd/format.c
 index 4d89a85..6feac37 100644
 --- a/bfd/format.c
@@ -3588,6 +3614,39 @@ index 0000000..a01e0f9
 +{
 +  return 0x1234;
 +}
+diff --git a/ld/testsuite/ld-plugin/lto-15.out b/ld/testsuite/ld-plugin/lto-15.out
+new file mode 100644
+index 0000000..7ef22e9
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-15.out
+@@ -0,0 +1 @@
++PASS
+diff --git a/ld/testsuite/ld-plugin/lto-15a.c b/ld/testsuite/ld-plugin/lto-15a.c
+new file mode 100644
+index 0000000..c4ce5e9
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-15a.c
+@@ -0,0 +1,7 @@
++#include <stdio.h>
++
++int main(int argc, char **argv)
++{
++  printf ("PASS\n");
++  return (int) ((unsigned long long) argc / argv[0][0]);
++}
+diff --git a/ld/testsuite/ld-plugin/lto-15b.c b/ld/testsuite/ld-plugin/lto-15b.c
+new file mode 100644
+index 0000000..0ae748d
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-15b.c
+@@ -0,0 +1,7 @@
++extern void abort (void);
++unsigned long long
++__udivdi3(unsigned long long n, unsigned long long d)
++{
++  abort ();
++  return n + d;
++}
 diff --git a/ld/testsuite/ld-plugin/lto-1a.c b/ld/testsuite/ld-plugin/lto-1a.c
 new file mode 100644
 index 0000000..b775d0a
@@ -4014,10 +4073,10 @@ index 0000000..4b5bcf8
 +#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..b996e8b
+index 0000000..c62b015
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
-@@ -0,0 +1,242 @@
+@@ -0,0 +1,251 @@
 +# Expect script for ld-plugin LTO tests
 +#   Copyright 2011
 +#   Free Software Foundation, Inc.
@@ -4122,6 +4181,12 @@ index 0000000..b996e8b
 +  {"Build liblto-14.a"
 +   "" "-flto"
 +   {lto-14c.c} {} "liblto-14.a"}
++  {"Build libdummy.a 15a"
++   "" "-flto"
++   {lto-15a.c} {} "libdummy.a"}
++  {"Build liblto-15.a"
++   "" "-flto"
++   {lto-15b.c} {} "liblto-15.a"}
 +}
 +
 +# Generate input files for complex LTO tests for ELF.
@@ -4194,6 +4259,9 @@ index 0000000..b996e8b
 +  {"LTO 14"
 +   "-O2 -flto -fuse-linker-plugin tmpdir/lto-14a.o -Wl,--whole-archive tmpdir/liblto-14.a -Wl,--no-whole-archive tmpdir/lto-14b.o" ""
 +   {dummy.c} "lto-14.exe" "lto-14.out" "" "c"}
++  {"LTO 15"
++   "-O2 -flto -fuse-linker-plugin -Wl,--start-group tmpdir/lto-15a.o tmpdir/liblto-15.a -Wl,--end-group" ""
++   {dummy.c} "lto-15.exe" "lto-15.out" "" "c"}
 +}
 +
 +# LTO run-time tests for ELF
