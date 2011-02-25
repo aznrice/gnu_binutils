@@ -1,3 +1,13 @@
+2011-02-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (reloc): Don't sign-check 4-byte relocations
+	if 64bit relocations aren't allowed.
+
+2011-02-25  Alan Modra  <amodra@gmail.com>
+
+	PR gas/12519
+	* config/obj-elf.c (elf_frob_symbol): Properly handle size expression.
+
 2011-02-21  Maciej W. Rozycki  <macro@codesourcery.com>
 
 	* config/tc-mips.c (mips_ip) <'o'>: Remove duplicate
