@@ -12,6 +12,7 @@ bfd/
 	PR ld/12430
 	PR ld/12439
 	PR ld/12496
+	PR ld/12507
 	* bfd.c (bfd_lto_object_type): New.
 	(BFD_PLUGIN): Likewise.
 	(BFD_PLUGIN_DUMMY): Likewise.
@@ -46,6 +47,7 @@ binutils/
 	PR ld/12430
 	PR ld/12439
 	PR ld/12496
+	PR ld/12507
 	* objcopy.c (group_signature): Removed.
 	(is_strip_section): Replace group_signature with
 	bfd_group_signature.
@@ -67,6 +69,7 @@ gas/testsuite/
 	PR ld/12430
 	PR ld/12439
 	PR ld/12496
+	PR ld/12507
 	* gas/elf/section9.s: Add the .gnu_object_only test.
 	* gas/elf/section9.d: Updated.
 
@@ -91,6 +94,7 @@ include/elf/
 	PR ld/12430
 	PR ld/12439
 	PR ld/12496
+	PR ld/12507
 	* common.h (SHT_GNU_OBJECT_ONLY): New.
 
 ld/
@@ -107,6 +111,7 @@ ld/
 	PR ld/12430
 	PR ld/12439
 	PR ld/12496
+	PR ld/12507
 	* ld.h (cref_hash_table_free): New.
 
 	* ldcref.c (cref_hash_table_free): New
@@ -219,6 +224,7 @@ ld/testsuite/
 	PR ld/12430
 	PR ld/12439
 	PR ld/12496
+	PR ld/12507
 	* ld-plugin/func1p.c: New.
 	* ld-plugin/func2.c: Likewise.
 	* ld-plugin/func2i.c: Likewise.
@@ -246,6 +252,10 @@ ld/testsuite/
 	* ld-plugin/lto-15a.c: Likewise.
 	* ld-plugin/lto-15b.c: Likewise.
 	* ld-plugin/lto-15.out: Likewise.
+	* ld-plugin/lto-16a.c: Likewise.
+	* ld-plugin/lto-16a.d: Likewise.
+	* ld-plugin/lto-16b.c: Likewise.
+	* ld-plugin/lto-16b.d: Likewise.
 	* ld-plugin/lto-1a.c: Likewise.
 	* ld-plugin/lto-1b.c: Likewise.
 	* ld-plugin/lto-2.c: Likewise.
@@ -630,10 +640,10 @@ index ac176df..4c8b48b 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index 0607d89..018d796 100644
+index d17537a..9978c8b 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
-@@ -3000,6 +3000,7 @@ get_section_type_name (unsigned int sh_type)
+@@ -3003,6 +3003,7 @@ get_section_type_name (unsigned int sh_type)
      case 0x7ffffffd:		return "AUXILIARY";
      case 0x7fffffff:		return "FILTER";
      case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
@@ -3092,7 +3102,7 @@ index acb63fb..4baef3c 100644
      }
  
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 86d80ca..628db41 100644
+index 7ac2cb8..40acbdb 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -36,15 +36,6 @@
@@ -3160,7 +3170,7 @@ index 86d80ca..628db41 100644
  }
  
  /* Helpers to convert between BFD and GOLD symbol formats.  */
-@@ -532,9 +529,9 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms)
+@@ -533,9 +530,9 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms)
  	}
  
        /* Was originally def, weakdef, or common, but has been pre-empted.  */
@@ -3173,7 +3183,7 @@ index 86d80ca..628db41 100644
      }
    return LDPS_OK;
  }
-@@ -544,9 +541,7 @@ static enum ld_plugin_status
+@@ -545,9 +542,7 @@ static enum ld_plugin_status
  add_input_file (const char *pathname)
  {
    ASSERT (called_plugin);
@@ -3184,7 +3194,7 @@ index 86d80ca..628db41 100644
    return LDPS_OK;
  }
  
-@@ -555,9 +550,7 @@ static enum ld_plugin_status
+@@ -556,9 +551,7 @@ static enum ld_plugin_status
  add_input_library (const char *pathname)
  {
    ASSERT (called_plugin);
@@ -3647,6 +3657,41 @@ index 0000000..0ae748d
 +  abort ();
 +  return n + d;
 +}
+diff --git a/ld/testsuite/ld-plugin/lto-16a.c b/ld/testsuite/ld-plugin/lto-16a.c
+new file mode 100644
+index 0000000..aa1cbe2
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-16a.c
+@@ -0,0 +1 @@
++void foo (void) { }
+diff --git a/ld/testsuite/ld-plugin/lto-16a.d b/ld/testsuite/ld-plugin/lto-16a.d
+new file mode 100644
+index 0000000..76ff1f6
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-16a.d
+@@ -0,0 +1,3 @@
++#...
++[0-9a-f]+ T foo
++#...
+diff --git a/ld/testsuite/ld-plugin/lto-16b.c b/ld/testsuite/ld-plugin/lto-16b.c
+new file mode 100644
+index 0000000..31781e8
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-16b.c
+@@ -0,0 +1,4 @@
++void
++bar ()
++{
++}
+diff --git a/ld/testsuite/ld-plugin/lto-16b.d b/ld/testsuite/ld-plugin/lto-16b.d
+new file mode 100644
+index 0000000..5c0e148
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/lto-16b.d
+@@ -0,0 +1,3 @@
++#...
++[0-9a-f]+ T bar
++#...
 diff --git a/ld/testsuite/ld-plugin/lto-1a.c b/ld/testsuite/ld-plugin/lto-1a.c
 new file mode 100644
 index 0000000..b775d0a
@@ -4073,10 +4118,10 @@ index 0000000..4b5bcf8
 +#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..c62b015
+index 0000000..74c2641
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
-@@ -0,0 +1,251 @@
+@@ -0,0 +1,257 @@
 +# Expect script for ld-plugin LTO tests
 +#   Copyright 2011
 +#   Free Software Foundation, Inc.
@@ -4216,6 +4261,12 @@ index 0000000..c62b015
 +  {"LTO 9 symbol"
 +   "-O2 -flto -fuse-linker-plugin tmpdir/lto-9.o" ""
 +   {dummy.c} {{"nm" {-C} "lto-9.d"}} "lto-9.exe" "c++"}
++  {"LTO 16a symbol"
++   "-O2 -e foo -nostdlib -flto -fuse-linker-plugin" "-flto"
++   {lto-16a.c} {{"nm" {} "lto-16a.d"}} "lto-16.exe" "c"}
++  {"LTO 16b symbol"
++   "-O2 -e foo -u bar -nostdlib -flto -fuse-linker-plugin" "-flto"
++   {lto-16a.c lto-16b.c} {{"nm" {} "lto-16b.d"}} "lto-16b.exe" "c"}
 +}
 +
 +# LTO run-time tests.
