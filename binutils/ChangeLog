@@ -1,3 +1,27 @@
+2011-03-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* objdump.c (usage): Fix single typo.
+	* po/bg.po, po/binutils.pot, po/da.po, po/es.po, po/fi.po,
+	po/fr.po, po/id.po, po/ja.po, po/ru.po, po/vi.po: Likewise.
+
+2011-03-01  Akos Pasztory  <akos.pasztory@gmail.com>
+
+	PR binutils/12523
+	* readelf.c (process_object): Clear dynamic_info_DT_GNU_HASH.
+
+2011-02-28  Kai Tietz  <kai.tietz@onevision.com>
+
+	* debug.c (debug_start_source): Use filename_(n)cmp.
+	* ieee.c (ieee_finish_compilation_unit): Likewise.
+	(ieee_lineno): Likewise.
+	* nlmconv.c (main): Likewise.
+	* objcopy.c (strip_main): Likewise.
+	(copy_main): Likewise.
+	* objdump.c (show_line): Likewise.
+	(dump_reloc_set): Likewise.
+	* srconv.c (main): Likewise.
+	* wrstabs.c (stab_lineno): Likewise.
+
 2011-02-24  Zachary T Welch  <zwelch@codesourcery.com>
 
 	* readelf.c (decode_arm_unwind): Implement decoding of remaining
