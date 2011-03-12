@@ -1,3 +1,39 @@
+2011-03-10  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	* plugin.c (get_symbols): Use wrapped lookup for undefined symbols.
+
+2011-03-10  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	* ldlang.c (lang_check): Don't run checks on dummy IR BFDs.
+
+2011-03-10  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	* ldlang.h (lang_input_statement_type): Add new 'claim_archive' flag,
+	wrapping both it and 'claim' flag in #ifdef ENABLE_PLUGINS.
+	* ldmain.c (add_archive_element): Set it if the member is claimed.
+	* ldlang.c (new_afile): Initialise claim_archive and claimed members.
+	(find_replacements_insert_point): New helper function.
+	(lang_process): After adding and opening replacement files passed
+	from plugin, splice them into correct place in statement list and
+	file chains to preserve critical link order.
+	(lang_list_insert_after): New helper function.
+	(lang_list_remove_tail): Likewise.
+
+2011-03-10  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	* plugin.c (IRONLY_SUFFIX): Revise to nicely human-readable form.
+	(IRONLY_SUFFIX_LEN): Delete.
+	(plugin_get_ir_dummy_bfd): Don't append IRONLY_SUFFIX.
+	(is_ir_dummy_bfd): Don't look for suffix; check claimed flag of
+	enclosing lang input statement instead.
+
+2011-03-10  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	* emultempl/pe.em (gld_${EMULATION_NAME}_place_orphan): Preserve
+	alignment of input sections when creating orphan output sections
+	during relocatable link.
+	* emultempl/pep.em (gld_${EMULATION_NAME}_place_orphan): Likewise.
+
 2011-03-04  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ld.texinfo: Document --verbose[=NUMBER].
