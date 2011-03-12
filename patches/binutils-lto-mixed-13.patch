@@ -1,6 +1,6 @@
 bfd/
 
-2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -15,9 +15,8 @@ bfd/
 	PR ld/12507
 	* bfd.c (bfd_lto_object_type): New.
 	(BFD_PLUGIN): Likewise.
-	(BFD_PLUGIN_DUMMY): Likewise.
 	(bfd_group_signature): Likewise.
-	(BFD_FLAGS_SAVED): Add BFD_PLUGIN and BFD_PLUGIN_DUMMY.
+	(BFD_FLAGS_SAVED): Add BFD_PLUGIN.
 	(BFD_FLAGS_FOR_BFD_USE_MASK): Likewise.
 	(bfd): Add object_only_section and lto_type.
 
@@ -35,7 +34,7 @@ bfd/
 
 binutils/
 
-2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -57,7 +56,7 @@ binutils/
 
 gas/testsuite/
 
-2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -75,14 +74,14 @@ gas/testsuite/
 
 include/
 
-2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* bfdlink.h (bfd_link_info): Add emit_gnu_object_only and
 	emitting_gnu_object_only.
 
 include/elf/
 
-2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -99,7 +98,7 @@ include/elf/
 
 ld/
 
-2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -162,13 +161,7 @@ ld/
 	linker script.  Update calls to lang_enter_group and
 	lang_leave_group.
 
-	* plugin.c (IRONLY_SUFFIX): Removed.
-	(IRONLY_SUFFIX_LEN): Likewise.
-	(plugin_opt_plugin_arg): Ignore -pass-through=.
-	(plugin_get_ir_dummy_bfd): Don't use IRONLY_SUFFIX.  Set
-	BFD_PLUGIN_DUMMY on dummy IR input.
-	(is_ir_dummy_bfd): Check BFD_PLUGIN_DUMMY.
-	(get_symbols): Re-indent.
+	* plugin.c (plugin_opt_plugin_arg): Ignore -pass-through=.
 	(add_input_file): Replace lang_add_input_file with
 	cmdline_list_insert_claimed_output.
 	(add_input_library): Likewise
@@ -212,7 +205,7 @@ ld/
 
 ld/testsuite/
 
-2011-02-23  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -303,7 +296,7 @@ ld/testsuite/
 	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index 84fc75d..1fdcb52 100644
+index 84fc75d..281de5a 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
 @@ -1539,6 +1539,9 @@ struct relax_table {
@@ -331,32 +324,27 @@ index 84fc75d..1fdcb52 100644
  struct bfd
  {
    /* A unique identifier of the BFD  */
-@@ -5096,14 +5107,22 @@ struct bfd
+@@ -5096,14 +5107,17 @@ struct bfd
    /* Decompress sections in this BFD.  */
  #define BFD_DECOMPRESS 0x10000
  
 +  /* This BFD has been processed by the linker plugin.  */
 +#define BFD_PLUGIN 0x20000
 +
-+  /* This BFD is a dummy bfd used by the linker plugin.  */
-+#define BFD_PLUGIN_DUMMY 0x40000
-+
    /* Flags bits to be saved in bfd_preserve_save.  */
  #define BFD_FLAGS_SAVED \
 -  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS)
-+  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN \
-+   | BFD_PLUGIN_DUMMY)
++  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN)
  
    /* Flags bits which are for BFD use only.  */
  #define BFD_FLAGS_FOR_BFD_USE_MASK \
    (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
 -   | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT)
-+   | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT | BFD_PLUGIN \
-+   | BFD_PLUGIN_DUMMY)
++   | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT | BFD_PLUGIN)
  
    /* Currently my_archive is tested before adding origin to
       anything. I believe that this can become always an add of
-@@ -5126,6 +5145,9 @@ struct bfd
+@@ -5126,6 +5140,9 @@ struct bfd
    /* The last section on the section list.  */
    struct bfd_section *section_last;
  
@@ -366,7 +354,7 @@ index 84fc75d..1fdcb52 100644
    /* The number of sections.  */
    unsigned int section_count;
  
-@@ -5244,6 +5266,9 @@ struct bfd
+@@ -5244,6 +5261,9 @@ struct bfd
    /* Set if only required symbols should be added in the link hash table for
       this object.  Used by VMS linkers.  */
    unsigned int selective_search : 1;
@@ -376,7 +364,7 @@ index 84fc75d..1fdcb52 100644
  };
  
  typedef enum bfd_error
-@@ -5448,6 +5473,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
+@@ -5448,6 +5468,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
  
  char *bfd_demangle (bfd *, const char *, int);
  
@@ -386,7 +374,7 @@ index 84fc75d..1fdcb52 100644
  symindex bfd_get_next_mapent
     (bfd *abfd, symindex previous, carsym **sym);
 diff --git a/bfd/bfd.c b/bfd/bfd.c
-index 77582ec..623d94a 100644
+index 77582ec..78dcbeb 100644
 --- a/bfd/bfd.c
 +++ b/bfd/bfd.c
 @@ -43,6 +43,14 @@ CODE_FRAGMENT
@@ -404,32 +392,27 @@ index 77582ec..623d94a 100644
  .struct bfd
  .{
  .  {* A unique identifier of the BFD  *}
-@@ -157,14 +165,22 @@ CODE_FRAGMENT
+@@ -157,14 +165,17 @@ CODE_FRAGMENT
  .  {* Decompress sections in this BFD.  *}
  .#define BFD_DECOMPRESS 0x10000
  .
 +.  {* This BFD has been processed by the linker plugin.  *}
 +.#define BFD_PLUGIN 0x20000
 +.
-+.  {* This BFD is a dummy bfd used by the linker plugin.  *}
-+.#define BFD_PLUGIN_DUMMY 0x40000
-+.
  .  {* Flags bits to be saved in bfd_preserve_save.  *}
  .#define BFD_FLAGS_SAVED \
 -.  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS)
-+.  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN \
-+.   | BFD_PLUGIN_DUMMY)
++.  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN)
  .
  .  {* Flags bits which are for BFD use only.  *}
  .#define BFD_FLAGS_FOR_BFD_USE_MASK \
  .  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
 -.   | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT)
-+.   | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT | BFD_PLUGIN \
-+.   | BFD_PLUGIN_DUMMY)
++.   | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT | BFD_PLUGIN)
  .
  .  {* Currently my_archive is tested before adding origin to
  .     anything. I believe that this can become always an add of
-@@ -187,6 +203,9 @@ CODE_FRAGMENT
+@@ -187,6 +198,9 @@ CODE_FRAGMENT
  .  {* The last section on the section list.  *}
  .  struct bfd_section *section_last;
  .
@@ -439,7 +422,7 @@ index 77582ec..623d94a 100644
  .  {* The number of sections.  *}
  .  unsigned int section_count;
  .
-@@ -305,6 +324,9 @@ CODE_FRAGMENT
+@@ -305,6 +319,9 @@ CODE_FRAGMENT
  .  {* Set if only required symbols should be added in the link hash table for
  .     this object.  Used by VMS linkers.  *}
  .  unsigned int selective_search : 1;
@@ -449,7 +432,7 @@ index 77582ec..623d94a 100644
  .};
  .
  */
-@@ -1932,3 +1954,36 @@ bfd_demangle (bfd *abfd, const char *name, int options)
+@@ -1932,3 +1949,36 @@ bfd_demangle (bfd *abfd, const char *name, int options)
  
    return res;
  }
@@ -640,7 +623,7 @@ index 51ea732f..e10b0ca 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index fedf771..221389f 100644
+index 71f0501..3896b14 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
 @@ -3003,6 +3003,7 @@ get_section_type_name (unsigned int sh_type)
@@ -689,7 +672,7 @@ index 0d6e9f8..8be47df 100644
    char *emit_note_gnu_build_id;
  
 diff --git a/include/elf/common.h b/include/elf/common.h
-index 01c519d..335420c 100644
+index 52ce9a5..8386406 100644
 --- a/include/elf/common.h
 +++ b/include/elf/common.h
 @@ -467,6 +467,7 @@
@@ -949,10 +932,10 @@ index 2f6a46c..889b38a 100644
     the cref hash table, and after we have loaded or found that the
     library was not needed.  */
 diff --git a/ld/ldfile.c b/ld/ldfile.c
-index 5bbe1d8..7b1369c 100644
+index 5bbe1d8..7525e5c 100644
 --- a/ld/ldfile.c
 +++ b/ld/ldfile.c
-@@ -312,45 +312,68 @@ success:
+@@ -312,45 +312,67 @@ success:
       bfd_object that it sets the bfd's arch and mach, which
       will be needed when and if we want to bfd_create a new
       one using this one as a template.  */
@@ -1022,7 +1005,6 @@ index 5bbe1d8..7b1369c 100644
 +		  entry->the_bfd = file.handle;
 +		  entry->claimed = TRUE;
 +		  bfd_make_readable (entry->the_bfd);
-+		  entry->the_bfd->flags |= BFD_PLUGIN_DUMMY;
 +		}
 +	      else
 +		{
@@ -1136,7 +1118,7 @@ index 3795ffe..0305303 100644
  		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
  		     input_list ')'
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 0caa452..be16e4d 100644
+index 76b02f4..93bddea 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -1170,7 +1152,7 @@ index 0caa452..be16e4d 100644
  
  /* Forward declarations.  */
  static void exp_init_os (etree_type *);
-@@ -90,8 +100,16 @@ static void lang_record_phdrs (void);
+@@ -97,8 +107,16 @@ static void lang_record_phdrs (void);
  static void lang_do_version_exports_section (void);
  static void lang_finalize_version_expr_head
    (struct bfd_elf_version_expr_head *);
@@ -1187,7 +1169,7 @@ index 0caa452..be16e4d 100644
  const char *output_target;
  lang_output_section_statement_type *abs_output_section;
  lang_statement_list_type lang_output_section_statement;
-@@ -1056,6 +1074,7 @@ new_afile (const char *name,
+@@ -1063,6 +1081,7 @@ new_afile (const char *name,
    lang_has_input_file = TRUE;
    p->target = target;
    p->sysrooted = FALSE;
@@ -1195,7 +1177,7 @@ index 0caa452..be16e4d 100644
  
    if (file_type == lang_input_file_is_l_enum
        && name[0] == ':' && name[1] != '\0')
-@@ -1222,14 +1241,17 @@ output_section_statement_table_free (void)
+@@ -1233,14 +1252,17 @@ output_section_statement_table_free (void)
  /* Build enough state so that the parser can build its tree.  */
  
  void
@@ -1215,7 +1197,7 @@ index 0caa452..be16e4d 100644
    lang_list_init (stat_ptr);
  
    lang_list_init (&input_file_chain);
-@@ -1248,10 +1270,11 @@ lang_init (void)
+@@ -1259,10 +1281,11 @@ lang_init (void)
       simpler to re-use working machinery than using a linked list in terms
       of code-complexity here in ld, besides the initialization which just
       looks like other code here.  */
@@ -1231,7 +1213,7 @@ index 0caa452..be16e4d 100644
      einfo (_("%P%F: can not create hash table: %E\n"));
  }
  
-@@ -2773,6 +2796,14 @@ load_symbols (lang_input_statement_type *entry,
+@@ -2784,6 +2807,14 @@ load_symbols (lang_input_statement_type *entry,
  		  loaded = FALSE;
  		}
  
@@ -1246,7 +1228,7 @@ index 0caa452..be16e4d 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6253,10 +6284,15 @@ lang_gc_sections (void)
+@@ -6269,10 +6300,15 @@ lang_gc_sections (void)
      {
        LANG_FOR_EACH_INPUT_STATEMENT (f)
  	{
@@ -1266,34 +1248,30 @@ index 0caa452..be16e4d 100644
  	}
      }
  
-@@ -6421,23 +6457,116 @@ lang_process (void)
+@@ -6471,10 +6507,14 @@ lang_process (void)
    open_input_bfds (statement_list.head, FALSE);
  
  #ifdef ENABLE_PLUGINS
 +  /* We call plugin_active_plugins_p () to check any plugin errors
 +     from plugin_call_all_symbols_read ().  */
-+  if (plugin_active_plugins_p ())
+   if (plugin_active_plugins_p ())
      {
-+      bfd *p;
-       union lang_statement_union **listend;
--      /* Now all files are read, let the plugin(s) decide if there
--	 are any more to be added to the link before we call the
-+      /* Now all files are read, get outputs from input files claimed
-+	 by plugin(s) and prepare for stage 2 linking before we call the
- 	 emulation's after_open hook.  */
-       listend = statement_list.tail;
-       ASSERT (!*listend);
-       if (plugin_call_all_symbols_read ())
- 	einfo (_("%P%F: %s: plugin reported error after all symbols read\n"),
- 	       plugin_error_plugin ());
--      /* If any new files were added, they will be on the end of the
--	 statement list, and we can open them now by getting open_input_bfds
--	 to carry on from where it ended last time.  */
--      if (*listend)
--	open_input_bfds (*listend, FALSE);
+       lang_statement_list_type added;
+       lang_statement_list_type files, inputfiles;
++      union lang_statement_union **listend;
++      listend = statement_list.tail;
+       /* Now all files are read, let the plugin(s) decide if there
+ 	 are any more to be added to the link before we call the
+ 	 emulation's after_open hook.  We create a private list of
+@@ -6519,8 +6559,104 @@ lang_process (void)
+ 	  else
+ 	    lang_list_insert_after (&file_chain, &files, &file_chain.head);
+ 	}
 +
 +      if (cmdline_next_claimed_output)
 +	{
++	  bfd *p;
++
 +	  if (trace_file_tries)
 +	    {
 +	      info_msg (_("Stage 2 command line:\n "));
@@ -1390,7 +1368,7 @@ index 0caa452..be16e4d 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -6718,6 +6847,8 @@ lang_startup (const char *name)
+@@ -6801,6 +6937,8 @@ lang_startup (const char *name)
    first_file->filename = name;
    first_file->local_sym_name = name;
    first_file->real = TRUE;
@@ -1399,7 +1377,7 @@ index 0caa452..be16e4d 100644
  }
  
  void
-@@ -6890,17 +7021,41 @@ lang_add_insert (const char *where, int is_before)
+@@ -7007,17 +7145,41 @@ lang_add_insert (const char *where, int is_before)
    saved_script_handle = previous_script_handle;
  }
  
@@ -1442,7 +1420,7 @@ index 0caa452..be16e4d 100644
  }
  
  /* Leave a group.  This just resets stat_ptr to start writing to the
-@@ -6909,9 +7064,12 @@ lang_enter_group (void)
+@@ -7026,9 +7188,12 @@ lang_enter_group (void)
     but currently they can't.  */
  
  void
@@ -1456,7 +1434,7 @@ index 0caa452..be16e4d 100644
  }
  
  /* Add a new program header.  This is called for each entry in a PHDRS
-@@ -7891,3 +8049,1205 @@ lang_ld_feature (char *str)
+@@ -8008,3 +8173,1205 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -2663,7 +2641,7 @@ index 0caa452..be16e4d 100644
 +      }
 +}
 diff --git a/ld/ldlang.h b/ld/ldlang.h
-index 8aff0b3..e16fd0a 100644
+index db47af8..683056a 100644
 --- a/ld/ldlang.h
 +++ b/ld/ldlang.h
 @@ -279,6 +279,9 @@ typedef struct lang_input_statement_struct
@@ -2676,7 +2654,7 @@ index 8aff0b3..e16fd0a 100644
    /* Set when bfd opening is successful.  */
    unsigned int loaded : 1;
  
-@@ -473,7 +476,7 @@ extern int lang_statement_iteration;
+@@ -478,7 +481,7 @@ extern int lang_statement_iteration;
  extern bfd_boolean missing_file;
  
  extern void lang_init
@@ -2685,7 +2663,7 @@ index 8aff0b3..e16fd0a 100644
  extern void lang_finish
    (void);
  extern lang_memory_region_type * lang_memory_region_lookup
-@@ -598,10 +601,14 @@ extern void one_lang_size_sections_pass
+@@ -603,10 +606,14 @@ extern void one_lang_size_sections_pass
    (bfd_boolean *, bfd_boolean);
  extern void lang_add_insert
    (const char *, int);
@@ -2702,7 +2680,7 @@ index 8aff0b3..e16fd0a 100644
  extern void lang_add_section
    (lang_statement_list_type *, asection *,
     lang_output_section_statement_type *);
-@@ -653,4 +660,61 @@ ldlang_override_segment_assignment
+@@ -658,4 +665,61 @@ ldlang_override_segment_assignment
  extern void
  lang_ld_feature (char *);
  
@@ -2765,7 +2743,7 @@ index 8aff0b3..e16fd0a 100644
 +
  #endif
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index 6e86c3d..da94256 100644
+index 005a894..3fc7515 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
 @@ -212,6 +212,9 @@ main (int argc, char **argv)
@@ -2887,7 +2865,7 @@ index 6e86c3d..da94256 100644
  	  file.offset = abfd->origin;
  	  file.filesize = arelt_size (abfd);
  	  file.fd = fd;
-@@ -830,21 +823,44 @@ add_archive_element (struct bfd_link_info *info,
+@@ -830,22 +823,43 @@ add_archive_element (struct bfd_link_info *info,
  	  close (fd);
  	  if (claimed)
  	    {
@@ -2898,8 +2876,8 @@ index 6e86c3d..da94256 100644
  	      /* Substitute the dummy BFD.  */
  	      input->the_bfd = file.handle;
  	      input->claimed = TRUE;
+ 	      input->claim_archive = TRUE;
  	      bfd_make_readable (input->the_bfd);
-+	      input->the_bfd->flags |= BFD_PLUGIN_DUMMY;
  	      *subsbfd = input->the_bfd;
 +	      cmdline_claimed_archive_member_list_append (abfd);
  	    }
@@ -2920,7 +2898,6 @@ index 6e86c3d..da94256 100644
 +		  input->the_bfd = file.handle;
 +		  input->claimed = TRUE;
 +		  bfd_make_readable (input->the_bfd);
-+		  input->the_bfd->flags |= BFD_PLUGIN_DUMMY;
 +		  *subsbfd = input->the_bfd;
 +		}
  	    }
@@ -2935,7 +2912,7 @@ index 6e86c3d..da94256 100644
  
    ldlang_add_file (input);
  
-@@ -892,16 +908,16 @@ add_archive_element (struct bfd_link_info *info,
+@@ -893,16 +907,16 @@ add_archive_element (struct bfd_link_info *info,
  	  header_printed = TRUE;
  	}
  
@@ -2955,7 +2932,7 @@ index 6e86c3d..da94256 100644
  		 + strlen (bfd_get_filename (abfd))
  		 + 2);
  	}
-@@ -1478,3 +1494,43 @@ notice (struct bfd_link_info *info,
+@@ -1479,3 +1493,43 @@ notice (struct bfd_link_info *info,
  
    return TRUE;
  }
@@ -3102,26 +3079,10 @@ index 8cf96eb..f6ddbe4 100644
      }
  
 diff --git a/ld/plugin.c b/ld/plugin.c
-index a68aea3..9d712fe 100644
+index d4bbfe78..f4139dd 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
-@@ -39,15 +39,6 @@
- /* Report plugin symbols.  */
- bfd_boolean report_plugin_symbols;
- 
--/* The suffix to append to the name of the real (claimed) object file
--   when generating a dummy BFD to hold the IR symbols sent from the
--   plugin.  */
--#define IRONLY_SUFFIX		".ironly\004"
--
--/* This is sizeof an array of chars, not sizeof a const char *.  We
--   also have to avoid inadvertently counting the trailing NUL.  */
--#define IRONLY_SUFFIX_LEN	(sizeof (IRONLY_SUFFIX) - 1)
--
- /* Stores a single argument passed to a plugin.  */
- typedef struct plugin_arg
- {
-@@ -214,6 +205,17 @@ plugin_opt_plugin_arg (const char *arg)
+@@ -210,6 +210,17 @@ plugin_opt_plugin_arg (const char *arg)
    if (!last_plugin)
      return set_plugin_error (_("<no plugin>"));
  
@@ -3139,38 +3100,7 @@ index a68aea3..9d712fe 100644
    newarg = xmalloc (sizeof *newarg);
    newarg->arg = arg;
    newarg->next = NULL;
-@@ -233,12 +235,12 @@ plugin_get_ir_dummy_bfd (const char *name, bfd *srctemplate)
-   bfd *abfd;
- 
-   bfd_use_reserved_id = 1;
--  abfd = bfd_create (concat (name, IRONLY_SUFFIX, (const char *)NULL),
--		     srctemplate);
-+  abfd = bfd_create (name, srctemplate);
-   bfd_set_arch_info (abfd, bfd_get_arch_info (srctemplate));
-   bfd_make_writable (abfd);
-   bfd_copy_private_bfd_data (srctemplate, abfd);
-   bfd_set_gp_size (abfd, bfd_get_gp_size (abfd));
-+  abfd->flags |= BFD_PLUGIN_DUMMY;
-   /* Create a minimal set of sections to own the symbols.  */
-   sec = bfd_make_section_old_way (abfd, ".text");
-   bfd_set_section_flags (abfd, sec,
-@@ -253,14 +255,9 @@ plugin_get_ir_dummy_bfd (const char *name, bfd *srctemplate)
- static bfd_boolean
- is_ir_dummy_bfd (const bfd *abfd)
- {
--  size_t namlen;
--
-   if (abfd == NULL)
-     return FALSE;
--  namlen = strlen (abfd->filename);
--  if (namlen < IRONLY_SUFFIX_LEN)
--    return FALSE;
--  return !strcmp (abfd->filename + namlen - IRONLY_SUFFIX_LEN, IRONLY_SUFFIX);
-+  return (abfd->flags & BFD_PLUGIN_DUMMY) != 0;
- }
- 
- /* Helpers to convert between BFD and GOLD symbol formats.  */
-@@ -553,9 +550,7 @@ static enum ld_plugin_status
+@@ -552,9 +563,7 @@ static enum ld_plugin_status
  add_input_file (const char *pathname)
  {
    ASSERT (called_plugin);
@@ -3181,7 +3111,7 @@ index a68aea3..9d712fe 100644
    return LDPS_OK;
  }
  
-@@ -564,9 +559,7 @@ static enum ld_plugin_status
+@@ -563,9 +572,7 @@ static enum ld_plugin_status
  add_input_library (const char *pathname)
  {
    ASSERT (called_plugin);
