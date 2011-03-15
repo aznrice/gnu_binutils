@@ -1,6 +1,6 @@
 bfd/
 
-2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -13,6 +13,7 @@ bfd/
 	PR ld/12439
 	PR ld/12496
 	PR ld/12507
+	PR ld/12557
 	* bfd.c (bfd_lto_object_type): New.
 	(BFD_PLUGIN): Likewise.
 	(bfd_group_signature): Likewise.
@@ -34,7 +35,7 @@ bfd/
 
 binutils/
 
-2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -47,6 +48,7 @@ binutils/
 	PR ld/12439
 	PR ld/12496
 	PR ld/12507
+	PR ld/12557
 	* objcopy.c (group_signature): Removed.
 	(is_strip_section): Replace group_signature with
 	bfd_group_signature.
@@ -56,7 +58,7 @@ binutils/
 
 gas/testsuite/
 
-2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -69,19 +71,20 @@ gas/testsuite/
 	PR ld/12439
 	PR ld/12496
 	PR ld/12507
+	PR ld/12557
 	* gas/elf/section9.s: Add the .gnu_object_only test.
 	* gas/elf/section9.d: Updated.
 
 include/
 
-2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* bfdlink.h (bfd_link_info): Add emit_gnu_object_only and
 	emitting_gnu_object_only.
 
 include/elf/
 
-2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -94,11 +97,12 @@ include/elf/
 	PR ld/12439
 	PR ld/12496
 	PR ld/12507
+	PR ld/12557
 	* common.h (SHT_GNU_OBJECT_ONLY): New.
 
 ld/
 
-2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -111,6 +115,7 @@ ld/
 	PR ld/12439
 	PR ld/12496
 	PR ld/12507
+	PR ld/12557
 	* ld.h (cref_hash_table_free): New.
 
 	* ldcref.c (cref_hash_table_free): New
@@ -205,7 +210,7 @@ ld/
 
 ld/testsuite/
 
-2011-03-12  H.J. Lu  <hongjiu.lu@intel.com>
+2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12248
 	PR ld/12277
@@ -218,6 +223,7 @@ ld/testsuite/
 	PR ld/12439
 	PR ld/12496
 	PR ld/12507
+	PR ld/12557
 	* ld-plugin/func1p.c: New.
 	* ld-plugin/func2.c: Likewise.
 	* ld-plugin/func2i.c: Likewise.
@@ -296,7 +302,7 @@ ld/testsuite/
 	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index 84fc75d..281de5a 100644
+index 5f3a31f..0f8b7db 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
 @@ -1539,6 +1539,9 @@ struct relax_table {
@@ -309,7 +315,7 @@ index 84fc75d..281de5a 100644
  /* The absolute section.  */
  extern asection bfd_abs_section;
  #define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
-@@ -4982,6 +4985,14 @@ enum bfd_direction
+@@ -4985,6 +4988,14 @@ enum bfd_direction
      both_direction = 3
    };
  
@@ -324,7 +330,7 @@ index 84fc75d..281de5a 100644
  struct bfd
  {
    /* A unique identifier of the BFD  */
-@@ -5096,14 +5107,17 @@ struct bfd
+@@ -5099,14 +5110,17 @@ struct bfd
    /* Decompress sections in this BFD.  */
  #define BFD_DECOMPRESS 0x10000
  
@@ -344,7 +350,7 @@ index 84fc75d..281de5a 100644
  
    /* Currently my_archive is tested before adding origin to
       anything. I believe that this can become always an add of
-@@ -5126,6 +5140,9 @@ struct bfd
+@@ -5129,6 +5143,9 @@ struct bfd
    /* The last section on the section list.  */
    struct bfd_section *section_last;
  
@@ -354,7 +360,7 @@ index 84fc75d..281de5a 100644
    /* The number of sections.  */
    unsigned int section_count;
  
-@@ -5244,6 +5261,9 @@ struct bfd
+@@ -5247,6 +5264,9 @@ struct bfd
    /* Set if only required symbols should be added in the link hash table for
       this object.  Used by VMS linkers.  */
    unsigned int selective_search : 1;
@@ -364,7 +370,7 @@ index 84fc75d..281de5a 100644
  };
  
  typedef enum bfd_error
-@@ -5448,6 +5468,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
+@@ -5451,6 +5471,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
  
  char *bfd_demangle (bfd *, const char *, int);
  
@@ -470,7 +476,7 @@ index 77582ec..78dcbeb 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index c77dced..f384ae9 100644
+index f69abf2..419853d 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2084,6 +2084,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -482,10 +488,10 @@ index c77dced..f384ae9 100644
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 983d5e0..9b45b2e 100644
+index 9ccc841..75b2b2f 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
-@@ -5066,6 +5066,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
+@@ -5069,6 +5069,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
  	     something wrong with the archive.  */
  	  if (element->archive_pass != 0)
  	    {
@@ -570,7 +576,7 @@ index bff8adf..940e89e 100644
  .extern asection bfd_abs_section;
  .#define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
-index 51ea732f..e10b0ca 100644
+index 77eaa34..2d413ef 100644
 --- a/binutils/objcopy.c
 +++ b/binutils/objcopy.c
 @@ -901,30 +901,6 @@ is_specified_symbol (const char *name, htab_t htab)
@@ -623,7 +629,7 @@ index 51ea732f..e10b0ca 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index 71f0501..3896b14 100644
+index 6a4a6e8..6e37232 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
 @@ -3003,6 +3003,7 @@ get_section_type_name (unsigned int sh_type)
@@ -697,7 +703,7 @@ index 21064ad..ec0965a 100644
  EOF
  
 diff --git a/ld/emultempl/armelf.em b/ld/emultempl/armelf.em
-index 6c4c78d..6c66c95 100644
+index 948bf8d..69f7c19 100644
 --- a/ld/emultempl/armelf.em
 +++ b/ld/emultempl/armelf.em
 @@ -364,7 +364,7 @@ gld${EMULATION_NAME}_after_allocation (void)
@@ -1118,7 +1124,7 @@ index 3795ffe..0305303 100644
  		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
  		     input_list ')'
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 76b02f4..93bddea 100644
+index 76b02f4..8aa9594 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -1263,7 +1269,7 @@ index 76b02f4..93bddea 100644
        /* Now all files are read, let the plugin(s) decide if there
  	 are any more to be added to the link before we call the
  	 emulation's after_open hook.  We create a private list of
-@@ -6519,8 +6559,104 @@ lang_process (void)
+@@ -6519,8 +6559,107 @@ lang_process (void)
  	  else
  	    lang_list_insert_after (&file_chain, &files, &file_chain.head);
  	}
@@ -1326,6 +1332,9 @@ index 76b02f4..93bddea 100644
 +	  /* Free the old cref hash table.  */
 +	  cref_hash_table_free ();
 +
++	  /* Reset the input file chain.  */
++	  lang_list_init (&input_file_chain);
++
 +	  /* When stage 2 input files are added, they will be on the
 +	     end of the statement list, and we can open them now by
 +	     getting open_input_bfds to carry on from where it ended
@@ -1368,7 +1377,7 @@ index 76b02f4..93bddea 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -6801,6 +6937,8 @@ lang_startup (const char *name)
+@@ -6801,6 +6940,8 @@ lang_startup (const char *name)
    first_file->filename = name;
    first_file->local_sym_name = name;
    first_file->real = TRUE;
@@ -1377,7 +1386,7 @@ index 76b02f4..93bddea 100644
  }
  
  void
-@@ -7007,17 +7145,41 @@ lang_add_insert (const char *where, int is_before)
+@@ -7007,17 +7148,41 @@ lang_add_insert (const char *where, int is_before)
    saved_script_handle = previous_script_handle;
  }
  
@@ -1420,7 +1429,7 @@ index 76b02f4..93bddea 100644
  }
  
  /* Leave a group.  This just resets stat_ptr to start writing to the
-@@ -7026,9 +7188,12 @@ lang_enter_group (void)
+@@ -7026,9 +7191,12 @@ lang_enter_group (void)
     but currently they can't.  */
  
  void
@@ -1434,7 +1443,7 @@ index 76b02f4..93bddea 100644
  }
  
  /* Add a new program header.  This is called for each entry in a PHDRS
-@@ -8008,3 +8173,1205 @@ lang_ld_feature (char *str)
+@@ -8008,3 +8176,1205 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
