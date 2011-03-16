@@ -1,3 +1,13 @@
+2011-03-14  Michael Snyder  <msnyder@vmware.com>
+
+	* objcopy.c (set_pe_subsystem): Free subsystem.
+
+	* wrstabs.c (stab_start_struct_type): Close memory leak.
+
+	* readelf.c (process_version_sections): Free symbols.
+
+	* nm.c (display_rel_file): Free symsizes.
+
 2011-03-10  Nick Clifton  <nickc@redhat.com>
 
 	* readelf.c (get_machine_name): Update EM_V850 entry.
