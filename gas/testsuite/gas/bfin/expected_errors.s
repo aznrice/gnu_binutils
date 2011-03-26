@@ -113,3 +113,17 @@
 	R2 = B [ R0 ++ ] (X);
 	R2 = B [ I0 ++ ] (X);
 	P2 = B [ P0 ++ ] (X);
+
+	(R3, R3) = SEARCH R0 (GE);
+	BITMUX (R4, R4, A0) (ASR);
+
+	R0 = A0, R3 = A1;
+	R0.L = A0, R1.H = A1;
+	R0 = A0, R1.H = A1;
+
+	R0 = R1 +|+ R2, R0 = R1 -|- R2;
+	R0 = R4 +|+ R5, R1 = R6 -|- R7;
+	R1 = R3 +|- R7, R1 = R3 -|+ R7;
+	R7 = R3 +|- R4, R1 = R1 -|+ R2;
+
+	R0 = R3 + R4, R1 = R5 - R6;

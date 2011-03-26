@@ -1,3 +1,31 @@
+2011-03-25  Eric B. Weddington  <eric.weddington@atmel.com>
+
+	* Makefile.in: Regenerate.
+
+2011-03-23  Joseph Myers  <joseph@codesourcery.com>
+
+	* lexsup.c (parse_args): Only set report_plugin_symbols if plugins
+	are enabled.  Mark level as possibly unused.
+
+2011-03-22  Eric B. Weddington  <eric.weddington@atmel.com>
+
+	* Makefile.am (ALL_EMULATION_SOURCES): Add AVR XMEGA architectures.
+	(eavrxmega?.c): Likewise.
+	* configure.tgt (targ_extra_emuls): Likewise.
+	* emulparams/avrxmega1.sh: New file.
+	* emulparams/avrxmega2.sh: Likewise.
+	* emulparams/avrxmega3.sh: Likewise.
+	* emulparams/avrxmega4.sh: Likewise.
+	* emulparams/avrxmega5.sh: Likewise.
+	* emulparams/avrxmega6.sh: Likewise.
+	* emulparams/avrxmega7.sh: Likewise.
+	* emultempl/avrelf.em (avr_elf_${EMULATION_NAME}_before_allocation):
+	Add avrxmega6, avrxmega7 to list of architectures for no stubs.
+
+2011-03-21  Eric B. Weddington  <eric.weddington@atmel.com>
+
+	* scripttempl/avr.sc: Add fuse, lock, and signature memory regions.
+
 2011-03-14  Richard Sandiford  <richard.sandiford@linaro.org>
 
 	* emultempl/armelf.em (gld${EMULATION_NAME}_finish): Check

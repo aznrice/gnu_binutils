@@ -1,3 +1,77 @@
+2011-03-24  Eric B. Weddington  <eric.weddington@atmel.com>
+
+	* config/tc-avr.c (mcu_types): Add new devices: atmega325pa,
+	atmega3250pa, atmega3290pa, atmega16hvbrevb, atmega32hvbrevb,
+	at90pwm161.
+	* doc/c-avr.texi: Document new device names.
+
+2011-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* config/bfin-parse.y (dual 32bit add/sub): Return yyerror when dest
+	reg $1 is the same as dest reg $7.
+	(quad 16bit add/sub): Return yyerror when dest reg $1 is the same as
+	dest reg $7.
+
+2011-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* config/bfin-parse.y (check_macfuncs): Clarify error message when
+	P is mismatched.  Check destination regno are off by one when P is
+	set, or are equal when P is not set.
+
+2011-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* config/bfin-parse.y (SEARCH): Return yyerror when dest reg $2 is
+	the same as dest reg $4.
+	(BITMUX): Return yyerror when dest reg $3 is the same as dest reg $5.
+
+2011-03-23  Eric B. Weddington  <eric.weddington@atmel.com>
+
+	* config/tc-avr.c (mcu_types): Add new xmega devices: atxmega64a1u,
+	atxmega128a1u, atxmega16x1, atxmega32x1, atxmega128b1, atxmega256a3bu.
+	* doc/c-avr.texi: Document new device names.
+
+2011-03-22  Eric B. Weddington  <eric.weddington@atmel.com>
+
+	* config/tc-avr.c (struct avr_opcodes_s): Add opcode field.
+	(AVR_INSN): Change definition to match.
+	(avr_opcodes): Likewise, change to match.
+	(mcu_types): Add XMEGA architecture names and new XMEGA device names.
+	(md_show_usage): Add XMEGA architecture names.
+	(avr_operand): Add 'E' constraint for DES instruction of XMEGA devices.
+	Add support for SPM Z+ instruction.
+	* doc/c-avr.texi: Add documentation for XMEGA architectures and
+	devices.
+
+2011-03-21  Eric B. Weddington  <eric.weddington@atmel.com>
+
+	* config/tc-avr.c (md_show_usage): Add "Assembler" text to output.
+
+2011-03-18  Alan Modra  <amodra@gmail.com>
+
+	* config/obj-elf.c (elf_frob_symbol): Report S_SET_SIZE symbol
+	on .size expression errors rather than symbols in the size expression.
+
+2011-03-18  Alan Modra  <amodra@gmail.com>
+
+	* input-scrub.c (line_numberT): Delete.
+	(input_scrub_close): Reset line counters.
+	* messages.c (as_show_where): Don't print invalid line number.
+	(as_warn_internal, as_bad_internal): Likewise.
+
+2011-03-18  Alan Modra  <amodra@gmail.com>
+
+	* read.c (read_a_source_file): Remove md_after_pass_hook.
+	Move "quit" label before set of dot_symbol.
+	* config/tc-d10v.h (md_after_pass_hook): Don't define.
+	* config/tc-d30v.h (md_after_pass_hook): Likewise.
+	* config/tc-m32r.h (md_after_pass_hook): Likewise.
+	(md_cleanup): Define to call m32r_fill_insn.
+
+2011-03-18  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* config/tc-s390.c (md_parse_option): Add -march=all option which
+	switches to the highest available CPU.
+
 2011-03-17  Alan Modra  <amodra@gmail.com>
 
 	PR 12569
