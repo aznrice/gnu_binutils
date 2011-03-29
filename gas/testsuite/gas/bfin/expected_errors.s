@@ -127,3 +127,11 @@
 	R7 = R3 +|- R4, R1 = R1 -|+ R2;
 
 	R0 = R3 + R4, R1 = R5 - R6;
+
+	R7 = A1.L + A1.H, R7 = A0.L + A0.H;
+
+	(R0, R0) = BYTEOP16P (R1:0, R3:2);
+	(R7, R7) = BYTEOP16P (R1:0, R3:2);
+	(R1, R1) = BYTEOP16M (R1:0, R3:2);
+	(R4, R4) = BYTEOP16M (R1:0, R3:2);
+	(R5, R5) = BYTEUNPACK R3:2;
