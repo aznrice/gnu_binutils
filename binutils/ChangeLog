@@ -1,3 +1,44 @@
+2011-04-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/12632
+	* objcopy.c (copy_unknown_object): Make the archive element
+	readable.
+
+2011-04-03  David S. Miller  <davem@davemloft.net>
+
+	* objdump.c (dump_reloc_set): Output R_SPARC_OLO10 relocations
+	accurately, rather than how they are represented internally.
+
+2011-03-31  Tristan Gingold  <gingold@adacore.com>
+
+	* makefile.vms (readelf.exe): New target.
+
+2011-03-31  Tristan Gingold  <gingold@adacore.com>
+
+	* makefile.vms (DEBUG_OBJS): Add elfcomm.obj.
+
+2011-03-31  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* readelf.c (get_symbol_index_type): Handle SCOM for TIC6X.
+	(dump_relocations): Likewise.
+
+2011-03-31  Tristan Gingold  <gingold@adacore.com>
+
+	* readelf.c (get_ia64_vms_note_type): New function.
+	(print_ia64_vms_note): Ditto.
+	(process_note): Recognize VMS/ia64 specific notes.
+	Display them.
+	(process_corefile_note_segment): Decode VMS notes.
+
+2011-03-30  Catherine Moore  <clm@codesourcery.com>
+
+	* addr2line.c (translate_addresses): Sign extend the pc
+	if sign_extend_vma is enabled.
+
+2011-03-30  Michael Snyder  <msnyder@msnyder-server.eng.vmware.com>
+
+	* readelf.c (process_gnu_liblist): Stop memory leak.
+
 2011-03-29  Alan Modra  <amodra@gmail.com>
 
 	* coffdump.c: Include bfd_stdint.h

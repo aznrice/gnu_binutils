@@ -1,3 +1,114 @@
+2011-03-30 Cary Coutant  <ccoutant@google.com>
+
+	* archive.cc (Archive::include_member): Adjust call to report_object.
+	(Add_archive_symbols::run): Add script_info to call to
+	report_archive_begin.
+	(Lib_group::include_member): Adjust call to report_object.
+	(Add_lib_group_symbols::run): Adjust call to report_object.
+	* incremental-dump.cc (dump_incremental_inputs): Remove unnecessary
+	blocks.  Add object count for script input files.
+	* incremental.cc (Incremental_inputs::report_archive_begin): Add
+	script_info parameter; change all callers.
+	(Incremental_inputs::report_object): Add script_info parameter;
+	change all callers.
+	(Incremental_inputs::report_script): Store backpointer to
+	incremental info entry.
+	(Output_section_incremental_inputs::set_final_data_size): Record
+	additional information for scripts.
+	(Output_section_incremental_inputs::write_info_blocks): Likewise.
+	* incremental.h (Incremental_script_entry::add_object): New function.
+	(Incremental_script_entry::get_object_count): New function.
+	(Incremental_script_entry::get_object): New function.
+	(Incremental_script_entry::objects_): New data member; adjust
+	constructor.
+	(Incremental_inputs::report_archive_begin): Add script_info parameter.
+	(Incremental_inputs::report_object): Add script_info parameter.
+	(Incremental_inputs_reader::get_object_count): New function.
+	(Incremental_inputs_reader::get_object_offset): New function.
+	* options.cc (Input_arguments::add_file): Return reference to
+	new input argument.
+	* options.h (Input_argument::set_script_info): New function.
+	(Input_argument::script_info): New function.
+	(Input_argument::script_info_): New data member; adjust all
+	constructors.
+	(Input_file_group::add_file): Return reference to new input argument.
+	(Input_file_lib::add_file): Likewise.
+	(Input_arguments::add_file): Likewise.
+	* readsyms.cc (Add_symbols::run): Adjust call to report_object.
+	* script.cc (Parser_closure::Parser_closure): Add script_info
+	parameter; adjust all callers.
+	(Parser_closure::script_info): New function.
+	(Parser_closure::script_info_): New data member.
+	(read_input_script): Report scripts earlier to incremental info.
+	(script_add_file): Set script_info in Input_argument.
+	(script_add_library): Likewise.
+	* script.h (Script_options::Script_info): Rewrite class.
+
+2011-03-29 Cary Coutant  <ccoutant@google.com>
+
+	* archive.cc (Library_base::should_include_member): Move
+	method here from class Archive.
+	(Archive::Archive): Initialize base class.
+	(Archive::should_include_member): Move to base class.
+	(Archive::do_for_all_unused_symbols): New function.
+	(Add_archive_symbols::run): Remove redundant access to
+	incremental_inputs.
+	(Lib_group::Lib_group): Initialize base class.
+	(Lib_group::do_filename): New function.
+	(Lib_group::include_member): Pass pointer to Lib_group to
+	report_object.
+	(Lib_group::do_for_all_unused_symbols): New function.
+	(Add_lib_group_symbols::run): Report archive information for
+	incremental links.
+	* archive.h (class Library_base): New base class.
+	(class Archive): Derive from Library_base.
+	(Archive::filename): Move to base class.
+	(Archive::set_incremental_info): Likewise.
+	(Archive::incremental_info): Likewise.
+	(Archive::Should_include): Likewise.
+	(Archive::should_include_member): Likewise.
+	(Archive::Armap_entry): Remove.
+	(Archive::Unused_symbol_iterator): Remove.
+	(Archive::unused_symbols_begin): Remove.
+	(Archive::unused_symbols_end): Remove.
+	(Archive::do_filename): New function.
+	(Archive::do_get_mtime): New function.
+	(Archive::do_for_all_unused_symbols): New function.
+	(Archive::task_): Move to base class.
+	(Archive::incremental_info_): Likewise.
+	(class Lib_group): Derive from Library_base.
+	(Lib_group::do_filename): New function.
+	(Lib_group::do_get_mtime): New function.
+	(Lib_group::do_for_all_unused_symbols): New function.
+	(Lib_group::task_): Move to base class.
+	* dynobj.cc (Sized_dynobj::do_for_all_global_symbols): New
+	function.
+	* dynobj.h (Sized_dynobj::do_for_all_global_symbols): New
+	function.
+	* incremental.cc (Incremental_inputs::report_archive_begin):
+	Use Library_base; call library's get_mtime; add incremental inputs
+	entry before members.
+	(class Unused_symbol_visitor): New class.
+	(Incremental_inputs::report_archive_end): Use Library_base; use
+	visitor class to record unused symbols; don't add incremental inputs
+	entry after members.
+	(Incremental_inputs::report_object): Use Library_base.
+	* incremental.h
+	(Incremental_archive_entry::Incremental_archive_entry): Remove
+	unused Archive parameter.
+	(Incremental_inputs::report_archive_begin): Use Library_base.
+	(Incremental_inputs::report_archive_end): Likewise.
+	(Incremental_inputs::report_object): Likewise.
+	* object.cc (Sized_relobj::do_for_all_global_symbols): New
+	function.
+	* object.h (Object::for_all_global_symbols): New function.
+	(Object::do_for_all_global_symbols): New function.
+	(Sized_relobj::do_for_all_global_symbols): New function.
+	* plugin.cc (Sized_pluginobj::do_for_all_global_symbols):  New
+	function.
+	* plugin.h (Sized_pluginobj::do_for_all_global_symbols):  New
+	function.
+
 2011-03-27  Ian Lance Taylor  <iant@google.com>
 
 	* archive.cc (Archive::interpret_header): Return -1 if something

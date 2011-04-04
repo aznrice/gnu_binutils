@@ -1,3 +1,45 @@
+2011-04-01  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-ia64.c (md_apply_fix): Add a cast to avoid a warning.
+
+2011-03-31  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* config/tc-tic6x.c (sbss_section, scom_section, scom_symbol): New
+	static variables.
+	(md_begin): Initialize them.
+	(s_tic6x_scomm): New static function.
+	(md_pseudo_table): Add "scomm".
+	(tc_gen_reloc): Really undo all adjustments made by
+	bfd_install_relocation.
+	* doc/c-tic6x.texi: Document the .scomm directive.
+
+2011-03-31  Tristan Gingold  <gingold@adacore.com>
+
+	* dwarf2dbg.c (DWARF2_VERSION): Define.
+	(out_debug_line): Use it.
+	(out_debug_aranges): Ditto.
+	(out_debug_info): Ditto.
+	* config/tc-ia64.h (DWARF2_VERSION): Override it.
+
+2011-03-30  Michael Snyder  <msnyder@vmware.com>
+
+	* obj-elf.c (obj_elf_section): Free malloced name.
+	* macro.c (get_any_string): Free malloced br_buf.
+	(do_formals): Free 'formal'.
+
+2011-03-30  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-ppc.c (ppc_frob_symbol): Convert stsym symbols value
+	to offset only if within is set.
+	(ppc_stabx): Reformat.  For stsym stabs, add a check and set
+	within only for symbols.
+
+2011-03-29  Richard Henderson  <rth@redhat.com>
+
+	PR 12610
+	* config/tc-alpha.c (s_alpha_align): Don't auto-align a previous
+	label; zap alpha_insn_label.
+
 2011-03-29  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* config/tc-i386.c (handle_quad): Properly handle multiple
