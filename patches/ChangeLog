@@ -1,5 +1,10 @@
 2011-04-08  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-pr12639-2.patch: New.
+	* README: Apply it.
+
+2011-04-08  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-shr-97.patch: New file. Replace ...
 	* binutils-shr-96.patch: This. Removed.
 	* README: Likewise.
