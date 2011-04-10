@@ -1,3 +1,33 @@
+2011-04-10  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	PR ld/12637
+	* elfxx-mips.c (mips_elf_merge_got_with): Use arg->global_count
+	as the number of global entries when merging with the primary GOT.
+
+2011-04-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-i386.c: Update copyright year.
+	* elf64-x86-64.c: Likewise.
+
+2011-04-09  Kai Tietz  <ktietz@redhat.com>
+
+	* peXXigen.c (_bfd_XXi_final_link_postscripte): Sort pdata in temporary
+	buffer and use rawsize for sorting.
+	* coffcode.h (coff_compute_section_file_positions): Set rawsize
+	before doing alignment.
+
+2011-04-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-i386.c (elf_i386_relocate_section): Return relocation
+	error on unsupported relocation.
+	* elf64-x86-64.c (elf_x86_64_relocate_section): Likewise.
+
+2011-04-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/12657
+	* hosts/x86-64linux.h (elf_prstatus32): Replace __pid_t with
+	pid_t.
+
 2011-04-08  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12654
