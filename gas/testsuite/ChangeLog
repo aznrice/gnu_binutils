@@ -1,3 +1,109 @@
+2011-04-19  Nick Clifton  <nickc@redhat.com>
+
+	* gas/arm/mrs-msr-thumb-v7e-m.s: Restore name of basepri_max
+	register.
+	* gas/arm/mrs-msr-thumb-v7e-m.d: Likewise.
+	* gas/arm/arch7.d: Likewise.
+	* gas/arm/arch7.s: Likewise.
+
+2011-04-18  Nick Clifton  <nickc@redhat.com>
+
+	* gas/arm/arch7.s: Fix typo basepri_max should be basepri_mask.
+	* gas/arm/mrs-msr-thumb-v7e-m.s: Likewise.
+	* gas/arm/arch7.d: Update expected disassembly.
+	* gas/arm/attr-march-armv7.d: Remove Microcontroller tag.
+	* gas/arm/blx-bad.d: Only run for ELF based targets.
+	* gas/arm/mrs-msr-thumb-v6t2.d: Likewise.
+	* gas/arm/vldm-arm.d: Likewise.
+	* gas/arm/mrs-msr-thumb-v7-m.d: Likewise.
+	Remove qualifiers from PSR and IAPSR regsiter names.
+	* gas/arm/mrs-msr-thumb-v7e-m.d: Likewise.
+	* gas/arm/thumb2_bcond.d: Update expected disassembly to allow for
+	relaxing of branch insns.
+	* gas/arm/thumb32.d: Fix whitespace problems in disassembly.
+
+2011-04-18  Tristan Gingold  <gingold@adacore.com>
+
+	* gas/macros/app1.s: Export symbol
+	* gas/macros/app2.s: Ditto
+	* gas/macros/app3.s: Ditto
+	* gas/macros/app4.s: Ditto
+	* gas/macros/app4b.s: Ditto
+	* gas/macros/app1.d: Adjust.
+	* gas/macros/app2.d: Ditto.
+	* gas/macros/app3.d: Ditto.
+	* gas/macros/app4.d: Ditto.
+
+2011-04-18  Tristan Gingold  <gingold@adacore.com>
+
+	* lib/gas-defs.exp (get_standard_section_names): Add names for
+	alpha vms.
+	* gas/all/gas.exp: Do not test diff1.s on alpha-vms.
+
+2011-04-14  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* gas/s390/zarch-machine.s: New testcase.
+	* gas/s390/zarch-machine.d: New testcase output.
+	* gas/s390/s390.exp: Execute the new testcase.
+
+2011-04-13  Nick Clifton  <nickc@redhat.com>
+
+	* gas/v850/v850e1.s: Add a insn using reg+offset addressing.
+	* gas/v850/v850e1.d: Add expected disassembly.
+
+2011-04-12  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/12534
+	* gas/arm/thumb32.s: Add PC relative LDRD and STRD insns.
+	* gas/arm/thumb32.l: Update expected output.
+	* gas/arm/thumb32.d: Update expected disassembly.
+
+	PR gas/12532
+	* gas/arm/plt-1.d: Update expected disassembly.
+	* gas/arm/thumb2_bcond.d: Likewise.
+	* gas/arm/weakdef-1.d: Likewise.
+
+2011-04-12  Alan Modra  <amodra@gmail.com>
+
+	* gas/all/gas.exp (do_930509a): Don't xfail h8300 and mn10200.
+
+2011-04-11  Julian Brown  <julian@codesourcery.com>
+
+	* gas/arm/mrs-msr-thumb-v7-m.s: New.
+	* gas/arm/mrs-msr-thumb-v7-m.d: New.
+	* gas/arm/mrs-msr-thumb-v7-m-bad.d: New.
+	* gas/arm/mrs-msr-thumb-v7-m-bad.l: New.
+	* gas/arm/mrs-msr-thumb-v7-m-bad.s: New.
+	* gas/arm/mrs-msr-thumb-v7e-m.d: New.
+	* gas/arm/mrs-msr-thumb-v7e-m.s: New.
+	* gas/arm/mrs-msr-arm-v7-a-bad.d: New.
+	* gas/arm/mrs-msr-arm-v7-a-bad.l: New.
+	* gas/arm/mrs-msr-arm-v7-a-bad.s: New.
+	* gas/arm/mrs-msr-arm-v7-a.d: New.
+	* gas/arm/mrs-msr-arm-v7-a.s: New.
+	* gas/arm/mrs-msr-arm-v6.d: New.
+	* gas/arm/mrs-msr-arm-v6.s: New.
+	* gas/arm/mrs-msr-thumb-v6t2.d: New.
+	* gas/arm/mrs-msr-thumb-v6t2.s: New.
+	* gas/arm/arch7.d: Fix typo in disassembly for BASEPRI_MAX,
+	bitmasks for IAPSR etc.
+	* gas/arm/arch7.s: Specify bitmask for APSR writes.
+	* gas/arm/archv6m.s: Likewise.
+	* msr-imm-bad.l: Tweak expected disassembly in error message.
+	* msr-reg-bad.l: Likewise.
+	* msr-imm.d: Tweak expected disassembly.
+	* msr-reg.d: Likewise.
+	* msr-reg-thumb.d: Likewise.
+	* msr-imm.s: Specify bitmask on APSR writes.
+	* msr-reg.s: Add comment about deprecated usage.
+
+2011-04-11  Dan McDonald  <dan@wellkeeper.com>
+
+	PR gas/12296
+	* gas/arm/arch7.s: Add SVC insn.
+	* gas/arm/arch7.d: Add disassembly of SVC insn.
+	* gas/arm/attr-march-armv7.d: Add arch profile tag.
+
 2011-04-06  Joseph Myers  <joseph@codesourcery.com>
 
 	* gas/all/gas.exp (*arm*-*-coff): Change to arm*-*-coff.

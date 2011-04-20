@@ -1,3 +1,127 @@
+2011-04-20  Tristan Gingold  <gingold@adacore.com>
+
+	* emultempl/aix.em (_add_options): Ignore -bbigtoc switch.
+
+2011-04-20  Alan Modra  <amodra@gmail.com>
+
+	* ld.h (ld_config_type <hash_table_size>): Make it an unsigned long.
+
+2011-04-20  Alan Modra  <amodra@gmail.com>
+
+	PR ld/12365
+	* ldfile.c (ldfile_try_open_bfd): Move code creating and switching
+	to plugin IR BFD..
+	* ldmain.c (add_archive_element): ..and similar code here..
+	* plugin.c (plugin_maybe_claim): ..to here.  New function.
+	(plugin_call_claim_file): Make static.
+	(asymbol_from_plugin_symbol): Set ELF st_shndx for common syms.
+	(plugin_multiple_common): New function.
+	(plugin_call_all_symbols_read): Hook in plugin_multiple_common.
+	* plugin.h (plugin_call_claim_file): Don't declare.
+	(plugin_maybe_claim): Declare.
+
+2011-04-20  Alan Modra  <amodra@gmail.com>
+
+	PR ld/12365
+	* ldmain.c (multiple_definition): Take a bfd_link_hash_entry
+	pointer arg rather than "name", "obfd", "osec", "oval".  Add code
+	removed from linker.c.  Hack around xcofflink.c oddity in
+	passing NULL nbfd.
+	(multiple_common): Similarly.
+	* plugin.c (orig_allow_multiple_defs): Delete.
+	(plugin_call_all_symbols_read): Don't twiddle allow_multiple_definition.
+	(plugin_multiple_definition): Update.
+
+2011-04-18  Kai Tietz  <ktietz@redhat.com>
+
+	* deffilep.y (def_aligncomm): Avoid duplets.
+
+	* deffilep.y (def_pool_str): New type.
+	(pool_strs): Local static.
+	(def_pool_alloc): Local function.
+	(def_pool_strdup): Likewise.
+	(def_pool_free): Likewise.
+	(opt_name): Replace xmalloc/xstrdup by
+	def_pool_alloc/def_pool_strdup.
+	(dot_name): Likewise.
+	(anylang_id): Likewise.
+	(def_lex): Likewise.
+	(def_file_parse): Call def_pool_free on
+	exit and cleanup directives elements.
+	(def_file_add_directive): Call def_pool_free.
+
+2011-04-18  Paul Brook  <paul@codesourcery.com>
+
+	* emulparams/elf32_tic6x_le.sh: Define OTHER_READONLY_SECTIONS
+	for unwinding tables.
+
+2011-04-18  Alan Modra  <amodra@gmail.com>
+
+	PR ld/12365
+	PR ld/12672
+	* ldfile.c (ldfile_try_open_bfd): Don't attempt any plugin action
+	when no_more_claiming.
+	* ldmain.c (add_archive_element): Likewise.
+	(multiple_definition): Remove plugin_multiple_definition call.
+	(notice): Remove plugin_notice call.
+	* ldlang.c (lang_list_insert_after, void lang_list_remove_tail): Move.
+	Delete prototype.
+	(plugin_insert): New static var.
+	(open_input_bfds): Only rescan libs after plugin insert point.
+	(lang_gc_sections): Omit plugin claimed files.
+	(lang_process): Set plugin_insert.  Only rescan when plugin adds
+	objects.
+	* plugin.h (no_more_claiming): Declare.
+	(plugin_notice, plugin_multiple_definition): Don't declare.
+	* plugin.c: Formatting.
+	(orig_notice_all, orig_allow_multiple_defs, orig_callbacks,
+	plugin_callbacks): New static vars.
+	(no_more_claiming): Make global.
+	(plugin_cached_allow_multiple_defs): Delete.
+	(plugin_get_ir_dummy_bfd): Set SEC_EXCLUDE on dummy .text section,
+	use newer bfd_make_section variant.  Make COMMON section too.
+	Error handling.  Correct setting of gp size.
+	(asymbol_from_plugin_symbol): Properly cast last arg of concat.
+	(message): Likewise for ACONCAT.
+	(asymbol_from_plugin_symbol): Use our COMMON section.
+	(get_symbols): When report_plugin_symbols, show visibility too.
+	(init_non_ironly_hash): Move.  Don't test non_ironly_hash.
+	(plugin_load_plugins): Save state of linker callbacks, set up to
+	call plugin_notice instead.  Call init_non_ironly_hash here.
+	(plugin_call_all_symbols_read): Set plugin_multiple_definition in
+	plugin callbacks.
+	(plugin_notice): Rewrite.
+	(plugin_multiple_definition): Make static, call original callback.
+
+2011-04-15  Alan Modra  <amodra@gmail.com>
+
+	PR ld/12672
+	* ldlang.c (enum open_bfd_mode): New.
+	(open_input_bfds): Replace "force" param with "mode".  Reload
+	archives for rescan.  Update all callers.
+	(lang_process): Make another open_input_bfds pass for plugins.
+
+2011-04-13  Kai Tietz  <ktietz@redhat.com>
+
+	PR binutils/12658
+	* deffile.h (def_file_add_export): Add is_dup argument.
+	(def_file_add_import): Likewise.
+	* deffilep.y (are_names_equal): New helper.
+	(cmp_export_elem): New helper.
+	(find_export_in_list): Add search routine for exports.
+	(def_file_add_export): Check for duplicates.
+	(cmp_import_elem): New helper.
+	(find_import_in_list): Add search routine for imports.
+	(def_file_add_import): Check for duplicates.
+	(def_exports): Handle duplicates.
+	(def_imports): Likewise.
+	* pe-dll.c (process_def_file_and_drectve): Likewise.
+	(pe_implied_import_dll): Likewise.
+
+2011-04-11  Chris Quenelle  <chris.quenelle@oracle.com>
+
+	* scripttempl/elf.sc (.exception_ranges): Add new section.
+
 2011-04-08  Hector Oron  <hector.oron@gmail.com>
 
 	PR ld/12643
@@ -204,6 +328,15 @@
 	the bfd_demangle of sym, change users of sym to c_sym when not
 	already demangling, and free when done.  Change callers of
 	cplus_demangle to bfd_demangle.
+
+2011-02-14  Alan Modra  <amodra@gmail.com>
+
+	* plugin.c (plugin_get_ir_dummy_bfd): Set SEC_EXCLUDE on dummy
+	.text section, use newer bfd_make_section variant.  Error handling.
+	Correct setting of gp size.
+	(asymbol_from_plugin_symbol): Properly cast last arg of concat.
+	(message): Likewise for ACONCAT.
+	(get_symbols): Formatting.
 
 2011-02-14  Alan Modra  <amodra@gmail.com>
 

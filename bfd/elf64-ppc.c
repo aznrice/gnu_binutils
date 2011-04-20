@@ -3317,8 +3317,9 @@ ppc64_elf_get_synthetic_symtab (bfd *abfd,
 		{
 		  if (sec->vma > ent)
 		    break;
-		  if ((sec->flags & SEC_ALLOC) == 0
-		      || (sec->flags & SEC_LOAD) == 0)
+		  /* SEC_LOAD may not be set if SEC is from a separate debug
+		     info file.  */
+		  if ((sec->flags & SEC_ALLOC) == 0)
 		    break;
 		  if ((sec->flags & SEC_CODE) != 0)
 		    s->section = sec;
@@ -4569,10 +4570,14 @@ ppc64_elf_add_symbol_hook (bfd *ibfd,
 			   asection **sec,
 			   bfd_vma *value ATTRIBUTE_UNUSED)
 {
+  if ((ibfd->flags & DYNAMIC) == 0
+      && ELF_ST_BIND (isym->st_info) == STB_GNU_UNIQUE)
+    elf_tdata (info->output_bfd)->has_gnu_symbols = TRUE;
+
   if (ELF_ST_TYPE (isym->st_info) == STT_GNU_IFUNC)
     {
       if ((ibfd->flags & DYNAMIC) == 0)
-	elf_tdata (info->output_bfd)->has_ifunc_symbols = TRUE;
+	elf_tdata (info->output_bfd)->has_gnu_symbols = TRUE;
     }
   else if (ELF_ST_TYPE (isym->st_info) == STT_FUNC)
     ;
