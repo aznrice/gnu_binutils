@@ -1,3 +1,34 @@
+2011-04-24  Alan Modra  <amodra@gmail.com>
+
+	PR ld/12365
+	PR ld/12696
+	* coff-aux.c (coff_m68k_aux_link_add_one_symbol): Update "notice" call.
+	* linker.c (_bfd_link_hash_newfunc): Clear bitfields.
+	(_bfd_generic_link_add_one_symbol): Update "notice" call.
+	* elflink.c (_bfd_elf_merge_symbol): Don't skip weak redefs when
+	it is a redef of an IR symbol in a real BFD.
+
+2011-04-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-i386.c (elf_i386_readonly_dynrelocs): Warn relocation
+	in readonly section in a shared object.
+	(elf_i386_size_dynamic_sections): Likewise.
+	* elf64-x86-64.c (elf_x86_64_readonly_dynrelocs): Likewise.
+	(elf_x86_64_size_dynamic_sections): Likewise.
+
+2011-04-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12694
+	* elf32-i386.c (elf_i386_readonly_dynrelocs): Skip local IFUNC
+	symbols.
+	* elf64-x86-64.c (elf_x86_64_readonly_dynrelocs): Likewise.
+
+2011-04-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-i386.c (elf_i386_finish_dynamic_symbol): Return false
+	on dynamic symbol error.
+	* elf64-x86-64.c (elf_x86_64_finish_dynamic_symbol): Likewise.
+
 2011-04-20  Tristan Gingold  <gingold@adacore.com>
 
 	* config.bfd (alpha*-*-*vms*, ia64*-*-*vms*): Define targ_selvecs.
