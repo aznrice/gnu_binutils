@@ -1,30 +1,12 @@
 bfd/
 
-2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
+2011-04-19  H.J. Lu  <hongjiu.lu@intel.com>
 
-	PR ld/12248
-	PR ld/12277
-	PR ld/12291
-	PR ld/12314
-	PR ld/12323
-	PR ld/12365
-	PR ld/12369
-	PR ld/12430
-	PR ld/12439
-	PR ld/12496
-	PR ld/12507
-	PR ld/12557
 	* bfd.c (bfd_lto_object_type): New.
-	(BFD_PLUGIN): Likewise.
-	(bfd_group_signature): Likewise.
-	(BFD_FLAGS_SAVED): Add BFD_PLUGIN.
-	(BFD_FLAGS_FOR_BFD_USE_MASK): Likewise.
 	(bfd): Add object_only_section and lto_type.
+	(bfd_group_signature): New.
 
-	* elf.c (special_sections_g): Add ".gnu_object_only".
-
-	* elflink.c (elf_link_add_archive_symbols): Don't load the IR
-	archive member twice.
+	* elf.c (special_sections_g): Add .gnu_object_only.
 
 	* format.c (bfd_set_lto_type): New.
 	(bfd_check_format_matches): Use it.
@@ -35,20 +17,8 @@ bfd/
 
 binutils/
 
-2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
+2011-04-19  H.J. Lu  <hongjiu.lu@intel.com>
 
-	PR ld/12248
-	PR ld/12277
-	PR ld/12291
-	PR ld/12314
-	PR ld/12323
-	PR ld/12365
-	PR ld/12369
-	PR ld/12430
-	PR ld/12439
-	PR ld/12496
-	PR ld/12507
-	PR ld/12557
 	* objcopy.c (group_signature): Removed.
 	(is_strip_section): Replace group_signature with
 	bfd_group_signature.
@@ -58,121 +28,30 @@ binutils/
 
 gas/testsuite/
 
-2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
+2011-04-19  H.J. Lu  <hongjiu.lu@intel.com>
 
-	PR ld/12248
-	PR ld/12277
-	PR ld/12291
-	PR ld/12314
-	PR ld/12323
-	PR ld/12365
-	PR ld/12369
-	PR ld/12430
-	PR ld/12439
-	PR ld/12496
-	PR ld/12507
-	PR ld/12557
 	* gas/elf/section9.s: Add the .gnu_object_only test.
 	* gas/elf/section9.d: Updated.
 
 include/
 
-2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
+2011-04-19  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* bfdlink.h (bfd_link_info): Add emit_gnu_object_only and
 	emitting_gnu_object_only.
 
 include/elf/
 
-2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
+2011-04-19  H.J. Lu  <hongjiu.lu@intel.com>
 
-	PR ld/12248
-	PR ld/12277
-	PR ld/12291
-	PR ld/12314
-	PR ld/12323
-	PR ld/12365
-	PR ld/12369
-	PR ld/12430
-	PR ld/12439
-	PR ld/12496
-	PR ld/12507
-	PR ld/12557
 	* common.h (SHT_GNU_OBJECT_ONLY): New.
 
 ld/
 
-2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/12248
-	PR ld/12277
-	PR ld/12291
-	PR ld/12314
-	PR ld/12323
-	PR ld/12365
-	PR ld/12369
-	PR ld/12430
-	PR ld/12439
-	PR ld/12496
-	PR ld/12507
-	PR ld/12557
-	* ld.h (cref_hash_table_free): New.
-
-	* ldcref.c (cref_hash_table_free): New
-
-	* ldfile.c: Updated for 2 stage linking and support for mixed
-	IR/non-IR objects.
-	* ldlang.c: Likewise.
-
-	* ldgram.y (INPUT): Call lang_enter_input and lang_leave_input.
-	(GROUP): Update calls to lang_enter_group and
-	lang_leave_group.
-	(input_list): Call cmdline_option_append_lang_input.
-
-	* ldlang.h (lang_input_statement_struct): Add stage1.
-	(lang_init): Take a bfd_boolean argument.
-	(lang_enter_group): Updated to take a boolean argument.
-	(lang_leave_group): Likewise.
-	(lang_enter_input): New.
-	(lang_leave_input): Likewise.
-	(cmdline_enum_type): Likewise.
-	(cmdline_header_type): Likewise.
-	(cmdline_input_statement_type): Likewise.
-	(cmdline_file_type): Likewise.
-	(cmdline_bfd_type): Likewise.
-	(cmdline_union_type): Likewise.
-	(cmdline_list_type): Likewise.
-	(cmdline_linker_script): Likewise.
-	(cmdline_option_append): Likewise.
-	(cmdline_option_append_lang_input): Likewise.
-	(cmdline_option_insert_claimed_output): Likewise.
-	(cmdline_set_next_claimed_output): Likewise.
-	(cmdline_claimed_archive_member_list_append): Likewise.
-	(cmdline_emit_object_only_section): Likewise.
-	(cmdline_check_object_only_section): Likewise.
-	(cmdline_remove_object_only_files): Likewise.
-
-	* ldmain.c (main): Pass FALSE to lang_init.  Use
-	ld_parse_linker_script.  Set link_info.output_bfd to NULL
-	after close.  Call cmdline_emit_object_only_section if needed.
-	(ld_parse_linker_script): New.
-	(add_archive_element): Updated for 2 stage linking and support
-	for mixed IR/non-IR objects.
-
-	* ldmain.h (ld_parse_linker_script): New.
-
-	* lexsup.c (parse_args): Call cmdline_option_append if needed.
-	Set and clear cmdline_linker_script before and after parsing
-	linker script.  Update calls to lang_enter_group and
-	lang_leave_group.
-
-	* plugin.c (plugin_opt_plugin_arg): Ignore -pass-through=.
-	(add_input_file): Replace lang_add_input_file with
-	cmdline_list_insert_claimed_output.
-	(add_input_library): Likewise
+2011-04-19  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* emultempl/alphaelf.em (alpha_finish): Replace finish_default
-	with gld${EMULATION_NAME}_finish ().
+	with gld${EMULATION_NAME}_finish.
 
 	* emultempl/armelf.em (gld${EMULATION_NAME}_finish): Renamed
 	to ...
@@ -180,11 +59,10 @@ ld/
 	gld${EMULATION_NAME}_finish.
 	(LDEMUL_FINISH): Set to arm_finish.
 
-	* emultempl/elf32.em (orphan_init_done): Moved out of
-	gld${EMULATION_NAME}_place_orphan.
-	(gld${EMULATION_NAME}_place_orphan): Initialize hold.
-	(gld${EMULATION_NAME}_finish): New.
+	* emultempl/elf32.em (gld${EMULATION_NAME}_finish): New.
+	(orphan_init_done): Likewise.
 	(ld_${EMULATION_NAME}_emulation): Use gld${EMULATION_NAME}_finish.
+	(gld${EMULATION_NAME}_place_orphan): Initialize hold.
 
 	* emultempl/ppc64elf.em (gld${EMULATION_NAME}_finish): Renamed
 	to ...
@@ -198,6 +76,59 @@ ld/
 	gld${EMULATION_NAME}_finish.
 	(LDEMUL_FINISH): Set to spu_finish.
 
+	* ldfile.c (ldfile_try_open_bfd): Call
+	cmdline_check_object_only_section.
+
+	* ldlang.c: Include "ldwrite.h" and elf-bfd.h.
+	* ldlang.c (cmdline_object_only_file_list): New.
+	(cmdline_object_only_archive_list): Likewise.
+	(cmdline_temp_object_only_list): Likewise.
+	(cmdline_lists_init): Likewise.
+	(cmdline_list_new): Likewise.
+	(cmdline_list_append): Likewise.
+	(print_cmdline_list): Likewise.
+	(cmdline_on_object_only_archive_list_p): Likewise.
+	(cmdline_object_only_list_append): Likewise.
+	(cmdline_get_object_only_input_files): Likewise.
+	(cmdline_arg): Likewise.
+	(setup_section): Likewise.
+	(copy_section): Likewise.
+	(cmdline_fopen_temp): Likewise.
+	(cmdline_add_object_only_section): Likewise.
+	(cmdline_emit_object_only_section): Likewise.
+	(cmdline_extract_object_only_section): Likewise.
+	(cmdline_check_object_only_section): Likewise.
+	(cmdline_remove_object_only_files): Likewise.
+	(lang_init): Take a bfd_boolean argument to supprt object-only
+	output.  Call cmdline_lists_init.
+	(load_symbols): Call cmdline_on_object_only_archive_list_p
+	to check if an archive member should be loaded.
+	(lang_process): Handle object-only link.
+
+	* ldlang.h (lang_init): Take a bfd_boolean argument.
+	(cmdline_enum_type): New.
+	(cmdline_header_type): Likewise.
+	(cmdline_file_type): Likewise.
+	(cmdline_bfd_type): Likewise.
+	(cmdline_union_type): Likewise.
+	(cmdline_list_type): Likewise.
+	(cmdline_emit_object_only_section): Likewise.
+	(cmdline_check_object_only_section): Likewise.
+	(cmdline_remove_object_only_files): Likewise.
+
+	* ldmain.c (main): Call xatexit with
+	cmdline_remove_object_only_files.  Pass FALSE to lang_init.
+	Use ld_parse_linker_script.  Set link_info.output_bfd to NULL
+	after close.  Call cmdline_emit_object_only_section if needed.
+	(add_archive_element): Call cmdline_check_object_only_section.
+	(ld_parse_linker_script): New.
+
+	* ldmain.h (ld_parse_linker_script): New.
+
+	* plugin.c (plugin_opt_plugin_arg): Ignore -pass-through=.
+	(plugin_maybe_claim): Call cmdline_check_object_only_section
+	on claimed IR files.
+
 	* scripttempl/armbpabi.sc: Also discard .gnu_object_only
 	sections.
 	* scripttempl/elf.sc: Likewise.
@@ -210,47 +141,36 @@ ld/
 
 ld/testsuite/
 
-2011-03-15  H.J. Lu  <hongjiu.lu@intel.com>
+2011-04-19  H.J. Lu  <hongjiu.lu@intel.com>
 
-	PR ld/12248
-	PR ld/12277
-	PR ld/12291
-	PR ld/12314
-	PR ld/12323
-	PR ld/12365
-	PR ld/12369
-	PR ld/12430
-	PR ld/12439
-	PR ld/12496
-	PR ld/12507
-	PR ld/12557
-	* ld-plugin/func1p.c: New.
-	* ld-plugin/func2.c: Likewise.
+	* ld-plugin/dummy.c: New.
+	* ld-plugin/dummy.s: Likewise.
+	* ld-plugin/func1p.c: Likewise.
 	* ld-plugin/func2i.c: Likewise.
 	* ld-plugin/func3h.c: Likewise.
+	* ld-plugin/lto-10.out: Likewise.
 	* ld-plugin/lto-10a.c: Likewise.
 	* ld-plugin/lto-10b.c: Likewise.
-	* ld-plugin/lto-10.out: Likewise.
 	* ld-plugin/lto-10r.d: Likewise.
+	* ld-plugin/lto-11.out: Likewise.
 	* ld-plugin/lto-11a.c: Likewise.
 	* ld-plugin/lto-11b.c: Likewise.
 	* ld-plugin/lto-11c.c: Likewise.
-	* ld-plugin/lto-11.out: Likewise.
+	* ld-plugin/lto-12.out: Likewise.
 	* ld-plugin/lto-12a.c: Likewise.
 	* ld-plugin/lto-12b.c: Likewise.
 	* ld-plugin/lto-12c.c: Likewise.
-	* ld-plugin/lto-12.out: Likewise.
+	* ld-plugin/lto-13.out: Likewise.
 	* ld-plugin/lto-13a.c: Likewise.
 	* ld-plugin/lto-13b.c: Likewise.
 	* ld-plugin/lto-13c.c: Likewise.
-	* ld-plugin/lto-13.out: Likewise.
+	* ld-plugin/lto-14.out: Likewise.
 	* ld-plugin/lto-14a.c: Likewise.
 	* ld-plugin/lto-14b.c: Likewise.
 	* ld-plugin/lto-14c.c: Likewise.
-	* ld-plugin/lto-14.out: Likewise.
+	* ld-plugin/lto-15.out: Likewise.
 	* ld-plugin/lto-15a.c: Likewise.
 	* ld-plugin/lto-15b.c: Likewise.
-	* ld-plugin/lto-15.out: Likewise.
 	* ld-plugin/lto-16a.c: Likewise.
 	* ld-plugin/lto-16a.d: Likewise.
 	* ld-plugin/lto-16b.c: Likewise.
@@ -258,34 +178,34 @@ ld/testsuite/
 	* ld-plugin/lto-1a.c: Likewise.
 	* ld-plugin/lto-1b.c: Likewise.
 	* ld-plugin/lto-2.c: Likewise.
+	* ld-plugin/lto-3.d: Likewise.
+	* ld-plugin/lto-3.out: Likewise.
 	* ld-plugin/lto-3a.c: Likewise.
 	* ld-plugin/lto-3b.c: Likewise.
 	* ld-plugin/lto-3c.c: Likewise.
-	* ld-plugin/lto-3.d: Likewise.
-	* ld-plugin/lto-3.out: Likewise.
 	* ld-plugin/lto-3r.d: Likewise.
+	* ld-plugin/lto-4.out: Likewise.
 	* ld-plugin/lto-4a.c: Likewise.
 	* ld-plugin/lto-4b.c: Likewise.
 	* ld-plugin/lto-4c.c: Likewise.
-	* ld-plugin/lto-4.out: Likewise.
 	* ld-plugin/lto-4r-a.d: Likewise.
 	* ld-plugin/lto-4r-b.d: Likewise.
 	* ld-plugin/lto-4r-c.d: Likewise.
 	* ld-plugin/lto-4r-d.d: Likewise.
-	* ld-plugin/lto-5a.c: Likewise.
-	* ld-plugin/lto-5b.c: Likewise.
 	* ld-plugin/lto-5.d: Likewise.
 	* ld-plugin/lto-5.out: Likewise.
+	* ld-plugin/lto-5a.c: Likewise.
+	* ld-plugin/lto-5b.c: Likewise.
 	* ld-plugin/lto-5r.d: Likewise.
 	* ld-plugin/lto-6.c: Likewise.
+	* ld-plugin/lto-7.out: Likewise.
 	* ld-plugin/lto-7a.c: Likewise.
 	* ld-plugin/lto-7b.c: Likewise.
 	* ld-plugin/lto-7c.c: Likewise.
 	* ld-plugin/lto-7d.c: Likewise.
-	* ld-plugin/lto-7.out: Likewise.
+	* ld-plugin/lto-8.out: Likewise.
 	* ld-plugin/lto-8a.c: Likewise.
 	* ld-plugin/lto-8b.c: Likewise.
-	* ld-plugin/lto-8.out: Likewise.
 	* ld-plugin/lto-9.cc: Likewise.
 	* ld-plugin/lto-9.d: Likewise.
 	* ld-plugin/lto.exp: Likewise.
@@ -295,14 +215,11 @@ ld/testsuite/
 
 	* ld-plugin/plugin.exp: Add object files for symbols claimed
 	or created by testplugin.
-	* ld-plugin/plugin-7.d: Updated.
-	* ld-plugin/plugin-8.d: Likewise.
-	* ld-plugin/plugin-9.d: Likewise.
 
 	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index 5f3a31f..0f8b7db 100644
+index 76836b1..27cad88 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
 @@ -1539,6 +1539,9 @@ struct relax_table {
@@ -315,7 +232,7 @@ index 5f3a31f..0f8b7db 100644
  /* The absolute section.  */
  extern asection bfd_abs_section;
  #define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
-@@ -4985,6 +4988,14 @@ enum bfd_direction
+@@ -4996,6 +4999,14 @@ enum bfd_direction
      both_direction = 3
    };
  
@@ -330,27 +247,7 @@ index 5f3a31f..0f8b7db 100644
  struct bfd
  {
    /* A unique identifier of the BFD  */
-@@ -5099,14 +5110,17 @@ struct bfd
-   /* Decompress sections in this BFD.  */
- #define BFD_DECOMPRESS 0x10000
- 
-+  /* This BFD has been processed by the linker plugin.  */
-+#define BFD_PLUGIN 0x20000
-+
-   /* Flags bits to be saved in bfd_preserve_save.  */
- #define BFD_FLAGS_SAVED \
--  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS)
-+  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN)
- 
-   /* Flags bits which are for BFD use only.  */
- #define BFD_FLAGS_FOR_BFD_USE_MASK \
-   (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
--   | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT)
-+   | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT | BFD_PLUGIN)
- 
-   /* Currently my_archive is tested before adding origin to
-      anything. I believe that this can become always an add of
-@@ -5129,6 +5143,9 @@ struct bfd
+@@ -5143,6 +5154,9 @@ struct bfd
    /* The last section on the section list.  */
    struct bfd_section *section_last;
  
@@ -360,7 +257,7 @@ index 5f3a31f..0f8b7db 100644
    /* The number of sections.  */
    unsigned int section_count;
  
-@@ -5247,6 +5264,9 @@ struct bfd
+@@ -5261,6 +5275,9 @@ struct bfd
    /* Set if only required symbols should be added in the link hash table for
       this object.  Used by VMS linkers.  */
    unsigned int selective_search : 1;
@@ -370,7 +267,7 @@ index 5f3a31f..0f8b7db 100644
  };
  
  typedef enum bfd_error
-@@ -5451,6 +5471,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
+@@ -5465,6 +5482,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
  
  char *bfd_demangle (bfd *, const char *, int);
  
@@ -380,7 +277,7 @@ index 5f3a31f..0f8b7db 100644
  symindex bfd_get_next_mapent
     (bfd *abfd, symindex previous, carsym **sym);
 diff --git a/bfd/bfd.c b/bfd/bfd.c
-index 77582ec..78dcbeb 100644
+index c729d63..2eab743 100644
 --- a/bfd/bfd.c
 +++ b/bfd/bfd.c
 @@ -43,6 +43,14 @@ CODE_FRAGMENT
@@ -398,27 +295,7 @@ index 77582ec..78dcbeb 100644
  .struct bfd
  .{
  .  {* A unique identifier of the BFD  *}
-@@ -157,14 +165,17 @@ CODE_FRAGMENT
- .  {* Decompress sections in this BFD.  *}
- .#define BFD_DECOMPRESS 0x10000
- .
-+.  {* This BFD has been processed by the linker plugin.  *}
-+.#define BFD_PLUGIN 0x20000
-+.
- .  {* Flags bits to be saved in bfd_preserve_save.  *}
- .#define BFD_FLAGS_SAVED \
--.  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS)
-+.  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN)
- .
- .  {* Flags bits which are for BFD use only.  *}
- .#define BFD_FLAGS_FOR_BFD_USE_MASK \
- .  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
--.   | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT)
-+.   | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT | BFD_PLUGIN)
- .
- .  {* Currently my_archive is tested before adding origin to
- .     anything. I believe that this can become always an add of
-@@ -187,6 +198,9 @@ CODE_FRAGMENT
+@@ -190,6 +198,9 @@ CODE_FRAGMENT
  .  {* The last section on the section list.  *}
  .  struct bfd_section *section_last;
  .
@@ -428,7 +305,7 @@ index 77582ec..78dcbeb 100644
  .  {* The number of sections.  *}
  .  unsigned int section_count;
  .
-@@ -305,6 +319,9 @@ CODE_FRAGMENT
+@@ -308,6 +319,9 @@ CODE_FRAGMENT
  .  {* Set if only required symbols should be added in the link hash table for
  .     this object.  Used by VMS linkers.  *}
  .  unsigned int selective_search : 1;
@@ -438,7 +315,7 @@ index 77582ec..78dcbeb 100644
  .};
  .
  */
-@@ -1932,3 +1949,36 @@ bfd_demangle (bfd *abfd, const char *name, int options)
+@@ -1935,3 +1949,36 @@ bfd_demangle (bfd *abfd, const char *name, int options)
  
    return res;
  }
@@ -476,7 +353,7 @@ index 77582ec..78dcbeb 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index f69abf2..419853d 100644
+index 71de844..26dfef7 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2084,6 +2084,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -487,20 +364,6 @@ index f69abf2..419853d 100644
    { STRING_COMMA_LEN (".gnu.version"),     0, SHT_GNU_versym,  0 },
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
-diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 9ccc841..75b2b2f 100644
---- a/bfd/elflink.c
-+++ b/bfd/elflink.c
-@@ -5069,6 +5069,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
- 	     something wrong with the archive.  */
- 	  if (element->archive_pass != 0)
- 	    {
-+	      /* Don't load the IR archive member twice.  */
-+	      if (element->lto_type == lto_ir_object)
-+		continue;
- 	      bfd_set_error (bfd_error_bad_value);
- 	      goto error_return;
- 	    }
 diff --git a/bfd/format.c b/bfd/format.c
 index 4d89a85..6feac37 100644
 --- a/bfd/format.c
@@ -562,7 +425,7 @@ index 4d89a85..6feac37 100644
      }
  
 diff --git a/bfd/section.c b/bfd/section.c
-index bff8adf..940e89e 100644
+index 65ac5e6..a45cbd6 100644
 --- a/bfd/section.c
 +++ b/bfd/section.c
 @@ -546,6 +546,9 @@ CODE_FRAGMENT
@@ -576,7 +439,7 @@ index bff8adf..940e89e 100644
  .extern asection bfd_abs_section;
  .#define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
-index 77eaa34..2d413ef 100644
+index 15c4f95..b76ed38 100644
 --- a/binutils/objcopy.c
 +++ b/binutils/objcopy.c
 @@ -901,30 +901,6 @@ is_specified_symbol (const char *name, htab_t htab)
@@ -619,7 +482,7 @@ index 77eaa34..2d413ef 100644
        if (gsym != NULL)
  	gname = gsym->name;
        else
-@@ -2537,7 +2513,7 @@ setup_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
+@@ -2539,7 +2515,7 @@ setup_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
  
    if ((isection->flags & SEC_GROUP) != 0)
      {
@@ -629,10 +492,10 @@ index 77eaa34..2d413ef 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index 6a4a6e8..6e37232 100644
+index 7ac9914..f3c3394 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
-@@ -3003,6 +3003,7 @@ get_section_type_name (unsigned int sh_type)
+@@ -3005,6 +3005,7 @@ get_section_type_name (unsigned int sh_type)
      case 0x7ffffffd:		return "AUXILIARY";
      case 0x7fffffff:		return "FILTER";
      case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
@@ -661,10 +524,10 @@ index 6b8b107..abcdea1 100644
 +	.section .gnu_object_only
 +	.byte 0,0,0,0
 diff --git a/include/bfdlink.h b/include/bfdlink.h
-index 0d6e9f8..8be47df 100644
+index 7cfaea0..84e1dbb 100644
 --- a/include/bfdlink.h
 +++ b/include/bfdlink.h
-@@ -351,6 +351,12 @@ struct bfd_link_info
+@@ -352,6 +352,12 @@ struct bfd_link_info
       --dynamic-list command line options.  */
    unsigned int dynamic: 1;
  
@@ -678,7 +541,7 @@ index 0d6e9f8..8be47df 100644
    char *emit_note_gnu_build_id;
  
 diff --git a/include/elf/common.h b/include/elf/common.h
-index 52ce9a5..8386406 100644
+index d48c32c..b276f6f 100644
 --- a/include/elf/common.h
 +++ b/include/elf/common.h
 @@ -467,6 +467,7 @@
@@ -896,235 +759,22 @@ index 92f2d16..aa8585d 100644
 -LDEMUL_FINISH=gld${EMULATION_NAME}_finish
 +LDEMUL_FINISH=spu_finish
  LDEMUL_CHOOSE_TARGET=gld${EMULATION_NAME}_choose_target
-diff --git a/ld/ld.h b/ld/ld.h
-index 564cb73..5c372c2 100644
---- a/ld/ld.h
-+++ b/ld/ld.h
-@@ -330,6 +330,7 @@ extern void add_cref (const char *, bfd *, asection *, bfd_vma);
- extern bfd_boolean handle_asneeded_cref (bfd *, enum notice_asneeded_action);
- extern void output_cref (FILE *);
- extern void check_nocrossrefs (void);
-+extern void cref_hash_table_free (void);
- extern void ld_abort (const char *, int, const char *) ATTRIBUTE_NORETURN;
- 
- /* If gcc >= 2.6, we can give a function name, too.  */
-diff --git a/ld/ldcref.c b/ld/ldcref.c
-index 2f6a46c..889b38a 100644
---- a/ld/ldcref.c
-+++ b/ld/ldcref.c
-@@ -198,6 +198,24 @@ add_cref (const char *name,
-     r->def = TRUE;
- }
- 
-+/* Free the cref hash table.  */
-+
-+void
-+cref_hash_table_free (void)
-+{
-+  if (cref_initialized)
-+    {
-+      bfd_hash_table_free (&cref_table.root);
-+      cref_initialized = FALSE;
-+      cref_symcount = 0;
-+      old_table = NULL;
-+      old_size = 0;
-+      old_count = 0;
-+      old_symcount = 0;
-+      alloc_mark = NULL;
-+    }
-+}
-+
- /* Called before loading an as-needed library to take a snapshot of
-    the cref hash table, and after we have loaded or found that the
-    library was not needed.  */
 diff --git a/ld/ldfile.c b/ld/ldfile.c
-index 5bbe1d8..7525e5c 100644
+index c4b8912..10e8e89 100644
 --- a/ld/ldfile.c
 +++ b/ld/ldfile.c
-@@ -312,45 +312,67 @@ success:
-      bfd_object that it sets the bfd's arch and mach, which
-      will be needed when and if we want to bfd_create a new
-      one using this one as a template.  */
--  if (bfd_check_format (entry->the_bfd, bfd_object)
--      && plugin_active_plugins_p ())
-+  if (plugin_active_plugins_p ())
-     {
--      int fd = open (attempt, O_RDONLY | O_BINARY);
--      if (fd >= 0)
-+      if (bfd_check_format (entry->the_bfd, bfd_object))
- 	{
--	  struct ld_plugin_input_file file;
--	  int claimed = 0;
--
--	  file.name = attempt;
--	  file.offset = 0;
--	  file.filesize = lseek (fd, 0, SEEK_END);
--	  file.fd = fd;
--	  /* We create a dummy BFD, initially empty, to house
--	     whatever symbols the plugin may want to add.  */
--	  file.handle = plugin_get_ir_dummy_bfd (attempt, entry->the_bfd);
--	  if (plugin_call_claim_file (&file, &claimed))
--	    einfo (_("%P%F: %s: plugin reported error claiming file\n"),
--		   plugin_error_plugin ());
--	  /* fd belongs to us, not the plugin; but we don't need it.  */
--	  close (fd);
--	  if (claimed)
-+	  int fd = open (attempt, O_RDONLY | O_BINARY);
-+	  if (fd >= 0)
- 	    {
--	      /* Discard the real file's BFD and substitute the dummy one.  */
--	      bfd_close (entry->the_bfd);
--	      entry->the_bfd = file.handle;
--	      entry->claimed = TRUE;
--	      bfd_make_readable (entry->the_bfd);
--	    }
--	  else
--	    {
--	      /* If plugin didn't claim the file, we don't need the dummy
--		 bfd.  Can't avoid speculatively creating it, alas.  */
--	      bfd_close_all_done (file.handle);
--	      entry->claimed = FALSE;
-+	      struct ld_plugin_input_file file;
-+	      int claimed = 0;
-+
-+	      file.name = attempt;
-+	      file.offset = 0;
-+	      file.filesize = lseek (fd, 0, SEEK_END);
-+	      file.fd = fd;
-+	      /* We create a dummy BFD, initially empty, to house
-+		 whatever symbols the plugin may want to add.  */
-+	      file.handle = plugin_get_ir_dummy_bfd (attempt,
-+						     entry->the_bfd);
-+	      if (plugin_call_claim_file (&file, &claimed))
-+		einfo (_("%P%F: %s: plugin reported error claiming file\n"),
-+		       plugin_error_plugin ());
-+	      /* fd belongs to us, not the plugin; but we don't need it.  */
-+	      close (fd);
-+	      if (claimed)
-+		{
-+		  cmdline_set_next_claimed_output (NULL);
-+		  cmdline_check_object_only_section (entry->the_bfd,
-+						     TRUE);
-+		  /* Discard the real file's BFD and substitute the
-+		    dummy one.  */
-+		  bfd_close (entry->the_bfd);
-+		  entry->the_bfd = file.handle;
-+		  entry->claimed = TRUE;
-+		  bfd_make_readable (entry->the_bfd);
-+		}
-+	      else
-+		{
-+		  /* If plugin didn't claim the file, we don't need the
-+		     dummy bfd.  Can't avoid speculatively creating it,
-+		     alas.  */
-+		  bfd_close_all_done (file.handle);
-+		  entry->claimed = FALSE;
-+		}
-+
-+	      /* Mark this input has been processed by plugin.  */
-+	      entry->the_bfd->flags |= BFD_PLUGIN;
- 	    }
+@@ -329,7 +329,9 @@ success:
+ 	  plugin_maybe_claim (&file, entry);
  	}
-+      else 
-+	{
-+	  /* Mark this input has been processed by plugin.  */
-+	  entry->the_bfd->flags |= BFD_PLUGIN;
-+	  entry->claimed = FALSE;
-+	}
      }
 +  else
  #endif /* ENABLE_PLUGINS */
 +    cmdline_check_object_only_section (entry->the_bfd, FALSE);
-+
-+  /* Stage 1 is done.  */
-+  entry->stage1 = TRUE;
  
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
-diff --git a/ld/ldgram.y b/ld/ldgram.y
-index 3795ffe..0305303 100644
---- a/ld/ldgram.y
-+++ b/ld/ldgram.y
-@@ -336,11 +336,14 @@ ifile_p1:
- 		{ command_line.force_common_definition = TRUE ; }
- 	|	INHIBIT_COMMON_ALLOCATION
- 		{ command_line.inhibit_common_definition = TRUE ; }
--	|	INPUT '(' input_list ')'
-+	|	INPUT
-+		  { lang_enter_input (); }
-+		    '(' input_list ')'
-+		  { lang_leave_input (); }
- 	|	GROUP
--		  { lang_enter_group (); }
-+		  { lang_enter_group (cmdline_linker_script == 1); }
- 		    '(' input_list ')'
--		  { lang_leave_group (); }
-+		  { lang_leave_group (cmdline_linker_script == 2); }
-      	|	MAP '(' filename ')'
- 		{ lang_add_map($3); }
- 	|	INCLUDE filename
-@@ -364,23 +367,47 @@ ifile_p1:
- 
- input_list:
- 		NAME
--		{ lang_add_input_file($1,lang_input_file_is_search_file_enum,
--				 (char *)NULL); }
-+		{
-+		  lang_input_statement_type *input;
-+		  input = lang_add_input_file($1,lang_input_file_is_search_file_enum,
-+					      (char *)NULL);
-+		  cmdline_option_append_lang_input(input);
-+		}
- 	|	input_list ',' NAME
--		{ lang_add_input_file($3,lang_input_file_is_search_file_enum,
--				 (char *)NULL); }
-+		{
-+		  lang_input_statement_type *input;
-+		  input = lang_add_input_file($3,lang_input_file_is_search_file_enum,
-+					      (char *)NULL);
-+		  cmdline_option_append_lang_input(input);
-+		}
- 	|	input_list NAME
--		{ lang_add_input_file($2,lang_input_file_is_search_file_enum,
--				 (char *)NULL); }
-+		{
-+		  lang_input_statement_type *input;
-+		  input = lang_add_input_file($2,lang_input_file_is_search_file_enum,
-+					      (char *)NULL);
-+		  cmdline_option_append_lang_input(input);
-+		}
- 	|	LNAME
--		{ lang_add_input_file($1,lang_input_file_is_l_enum,
--				 (char *)NULL); }
-+		{
-+		  lang_input_statement_type *input;
-+		  input = lang_add_input_file($1,lang_input_file_is_l_enum,
-+					      (char *)NULL);
-+		  cmdline_option_append_lang_input(input);
-+		}
- 	|	input_list ',' LNAME
--		{ lang_add_input_file($3,lang_input_file_is_l_enum,
--				 (char *)NULL); }
-+		{
-+		  lang_input_statement_type *input;
-+		  input = lang_add_input_file($3,lang_input_file_is_l_enum,
-+					      (char *)NULL);
-+		  cmdline_option_append_lang_input(input);
-+		}
- 	|	input_list LNAME
--		{ lang_add_input_file($2,lang_input_file_is_l_enum,
--				 (char *)NULL); }
-+		{
-+		  lang_input_statement_type *input;
-+		  input = lang_add_input_file($2,lang_input_file_is_l_enum,
-+					      (char *)NULL);
-+		  cmdline_option_append_lang_input(input);
-+		}
- 	|	AS_NEEDED '('
- 		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
- 		     input_list ')'
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 76b02f4..8aa9594 100644
+index 2c07fa4..318f13e 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -1145,45 +795,28 @@ index 76b02f4..8aa9594 100644
  #ifndef offsetof
  #define offsetof(TYPE, MEMBER) ((size_t) & (((TYPE*) 0)->MEMBER))
  #endif
-@@ -70,6 +74,12 @@ static lang_statement_list_type *stat_save[10];
+@@ -70,6 +74,9 @@ static lang_statement_list_type *stat_save[10];
  static lang_statement_list_type **stat_save_ptr = &stat_save[0];
  static struct unique_sections *unique_section_list;
  static bfd_boolean ldlang_sysrooted_script = FALSE;
-+static cmdline_list_type cmdline_options;
 +static cmdline_list_type cmdline_object_only_file_list;
 +static cmdline_list_type cmdline_object_only_archive_list;
 +static cmdline_list_type cmdline_temp_object_only_list;
-+static cmdline_list_type cmdline_claimed_archive_member_list;
-+static cmdline_union_type **cmdline_next_claimed_output;
  
  /* Forward declarations.  */
  static void exp_init_os (etree_type *);
-@@ -97,8 +107,16 @@ static void lang_record_phdrs (void);
+@@ -90,6 +97,10 @@ static void lang_record_phdrs (void);
  static void lang_do_version_exports_section (void);
  static void lang_finalize_version_expr_head
    (struct bfd_elf_version_expr_head *);
 +static void cmdline_lists_init (void);
-+static void cmdline_get_stage2_input_files (void);
 +static void cmdline_get_object_only_input_files (void);
 +static void print_cmdline_list (cmdline_union_type *);
-+static bfd_boolean cmdline_claimed_archive_member_p (bfd *);
 +static bfd_boolean cmdline_on_object_only_archive_list_p (bfd *);
-+static void cmdline_option_prepend (cmdline_enum_type, void *);
  
  /* Exported variables.  */
-+unsigned int cmdline_linker_script;
  const char *output_target;
- lang_output_section_statement_type *abs_output_section;
- lang_statement_list_type lang_output_section_statement;
-@@ -1063,6 +1081,7 @@ new_afile (const char *name,
-   lang_has_input_file = TRUE;
-   p->target = target;
-   p->sysrooted = FALSE;
-+  p->stage1 = FALSE;
- 
-   if (file_type == lang_input_file_is_l_enum
-       && name[0] == ':' && name[1] != '\0')
-@@ -1233,14 +1252,17 @@ output_section_statement_table_free (void)
+@@ -1226,14 +1237,17 @@ output_section_statement_table_free (void)
  /* Build enough state so that the parser can build its tree.  */
  
  void
@@ -1203,7 +836,7 @@ index 76b02f4..8aa9594 100644
    lang_list_init (stat_ptr);
  
    lang_list_init (&input_file_chain);
-@@ -1259,10 +1281,11 @@ lang_init (void)
+@@ -1252,10 +1266,11 @@ lang_init (void)
       simpler to re-use working machinery than using a linked list in terms
       of code-complexity here in ld, besides the initialization which just
       looks like other code here.  */
@@ -1219,128 +852,22 @@ index 76b02f4..8aa9594 100644
      einfo (_("%P%F: can not create hash table: %E\n"));
  }
  
-@@ -2784,6 +2807,14 @@ load_symbols (lang_input_statement_type *entry,
+@@ -2777,6 +2792,12 @@ load_symbols (lang_input_statement_type *entry,
  		  loaded = FALSE;
  		}
  
 +	      if (link_info.emitting_gnu_object_only)
 +		{
 +		  if (!cmdline_on_object_only_archive_list_p (member))
-+		      continue;
++		    continue;
 +		}
-+	      else if (cmdline_claimed_archive_member_p (member))
-+		continue;
 +
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6269,10 +6300,15 @@ lang_gc_sections (void)
-     {
-       LANG_FOR_EACH_INPUT_STATEMENT (f)
- 	{
--	  asection *sec;
--	  for (sec = f->the_bfd->sections; sec != NULL; sec = sec->next)
--	    if ((sec->flags & SEC_DEBUGGING) == 0)
--	      sec->flags &= ~SEC_EXCLUDE;
-+	  /* Don't clear SEC_EXCLUDE if BFD_PLUGIN is set.  */
-+	  if ((f->the_bfd->flags & BFD_PLUGIN) == 0)
-+	    {
-+	      asection *sec;
-+	      for (sec = f->the_bfd->sections; sec != NULL;
-+		   sec = sec->next)
-+		if ((sec->flags & SEC_DEBUGGING) == 0)
-+		  sec->flags &= ~SEC_EXCLUDE;
-+	    }
+@@ -6576,7 +6597,38 @@ lang_process (void)
+ 	  open_input_bfds (statement_list.head, OPEN_BFD_RESCAN);
  	}
-     }
- 
-@@ -6471,10 +6507,14 @@ lang_process (void)
-   open_input_bfds (statement_list.head, FALSE);
- 
- #ifdef ENABLE_PLUGINS
-+  /* We call plugin_active_plugins_p () to check any plugin errors
-+     from plugin_call_all_symbols_read ().  */
-   if (plugin_active_plugins_p ())
-     {
-       lang_statement_list_type added;
-       lang_statement_list_type files, inputfiles;
-+      union lang_statement_union **listend;
-+      listend = statement_list.tail;
-       /* Now all files are read, let the plugin(s) decide if there
- 	 are any more to be added to the link before we call the
- 	 emulation's after_open hook.  We create a private list of
-@@ -6519,8 +6559,107 @@ lang_process (void)
- 	  else
- 	    lang_list_insert_after (&file_chain, &files, &file_chain.head);
- 	}
-+
-+      if (cmdline_next_claimed_output)
-+	{
-+	  bfd *p;
-+
-+	  if (trace_file_tries)
-+	    {
-+	      info_msg (_("Stage 2 command line:\n "));
-+	      print_cmdline_list (cmdline_options.head);
-+	    }
-+
-+	  /* Get stage 2 input files.  */
-+	  cmdline_get_stage2_input_files ();
-+
-+	  /* Must have stage 2 inputs.  */
-+	  ASSERT (*listend);
-+
-+	  /* Exclude all sections in input bfd files processed by the
-+	     plugin.  */
-+	  for (p = link_info.input_bfds; p != (bfd *) NULL;
-+	       p = p->link_next)
-+	    {
-+	      bfd_boolean exclude = (p->flags & BFD_PLUGIN) != 0;
-+	      if (!exclude)
-+		{
-+		  bfd *abfd = bfd_my_archive (p);
-+		  if (abfd)
-+		    exclude = (abfd->flags & BFD_PLUGIN) != 0;
-+		}
-+	      if (exclude)
-+		{
-+		  asection *sec;
-+
-+		  if (trace_files || trace_file_tries)
-+		    info_msg (_("exclude stage 1 input: %B\n"), p);
-+
-+		  for (sec = p->sections; sec != NULL; sec = sec->next)
-+		    sec->flags |= SEC_EXCLUDE;
-+		}
-+	      else if (trace_files || trace_file_tries)
-+		info_msg (_("keep stage 1 input: %B\n"), p);
-+	    }
-+
-+	  /* Free the old already linked table and create a new one.  */
-+	  bfd_section_already_linked_table_free ();
-+	  if (!bfd_section_already_linked_table_init ())
-+	    einfo (_("%P%F: Failed to create hash table\n"));
-+
-+	  /* Free the old hash table and create a new one.  */
-+	  bfd_link_hash_table_free (link_info.output_bfd,
-+				    link_info.hash);
-+	  link_info.hash
-+	    = bfd_link_hash_table_create (link_info.output_bfd);
-+	  if (link_info.hash == NULL)
-+	    einfo (_("%P%F: can not create hash table: %E\n"));
-+
-+	  /* Free the old cref hash table.  */
-+	  cref_hash_table_free ();
-+
-+	  /* Reset the input file chain.  */
-+	  lang_list_init (&input_file_chain);
-+
-+	  /* When stage 2 input files are added, they will be on the
-+	     end of the statement list, and we can open them now by
-+	     getting open_input_bfds to carry on from where it ended
-+	     last time.  */
-+	  open_input_bfds (*listend, FALSE);
-+	}
      }
 +  else
  #endif /* ENABLE_PLUGINS */
@@ -1377,73 +904,7 @@ index 76b02f4..8aa9594 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -6801,6 +6940,8 @@ lang_startup (const char *name)
-   first_file->filename = name;
-   first_file->local_sym_name = name;
-   first_file->real = TRUE;
-+  cmdline_option_prepend (cmdline_is_lang_input_statement_enum,
-+			  first_file);
- }
- 
- void
-@@ -7007,17 +7148,41 @@ lang_add_insert (const char *where, int is_before)
-   saved_script_handle = previous_script_handle;
- }
- 
-+/* Enter an input.  */
-+
-+void
-+lang_enter_input (void)
-+{
-+  if (cmdline_linker_script)
-+    cmdline_linker_script++;
-+}
-+
-+/* Leave an input.  */
-+
-+void
-+lang_leave_input (void)
-+{
-+  if (cmdline_linker_script)
-+    {
-+      cmdline_linker_script--;
-+      ASSERT (cmdline_linker_script);
-+    }
-+}
-+
- /* Enter a group.  This creates a new lang_group_statement, and sets
-    stat_ptr to build new statements within the group.  */
- 
- void
--lang_enter_group (void)
-+lang_enter_group (bfd_boolean cmdline)
- {
-   lang_group_statement_type *g;
- 
-   g = new_stat (lang_group_statement, stat_ptr);
-   lang_list_init (&g->children);
-   push_stat_ptr (&g->children);
-+  lang_enter_input ();
-+  if (cmdline)
-+    cmdline_option_append (cmdline_is_enter_group_enum, NULL);
- }
- 
- /* Leave a group.  This just resets stat_ptr to start writing to the
-@@ -7026,9 +7191,12 @@ lang_enter_group (void)
-    but currently they can't.  */
- 
- void
--lang_leave_group (void)
-+lang_leave_group (bfd_boolean cmdline)
- {
-   pop_stat_ptr ();
-+  lang_leave_input ();
-+  if (cmdline)
-+    cmdline_option_append (cmdline_is_leave_group_enum, NULL);
- }
- 
- /* Add a new program header.  This is called for each entry in a PHDRS
-@@ -8008,3 +8176,1205 @@ lang_ld_feature (char *str)
+@@ -8030,3 +8082,1000 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -1451,15 +912,12 @@ index 76b02f4..8aa9594 100644
 +static void
 +cmdline_lists_init (void)
 +{
-+  cmdline_options.tail = &cmdline_options.head;
 +  cmdline_object_only_file_list.tail
 +    = &cmdline_object_only_file_list.head;
 +  cmdline_object_only_archive_list.tail
 +    = &cmdline_object_only_archive_list.head;
 +  cmdline_temp_object_only_list.tail
 +    = &cmdline_temp_object_only_list.head;
-+  cmdline_claimed_archive_member_list.tail
-+    = &cmdline_claimed_archive_member_list.head;
 +}
 +
 +/* Allocate an item with TYPE and DATA.  */
@@ -1474,9 +932,6 @@ index 76b02f4..8aa9594 100644
 +  switch (type)
 +    {
 +    default:
-+      break;
-+    case cmdline_is_lang_input_statement_enum:
-+      new_opt->input_statement.input = (lang_input_statement_type *) data;
 +      break;
 +    case cmdline_is_file_enum:
 +      new_opt->file.filename = (const char *) data;
@@ -1500,149 +955,6 @@ index 76b02f4..8aa9594 100644
 +  list->tail = &new_opt->header.next;
 +}
 +
-+/* Prepend an item with TYPE and DATA to LIST.  */
-+
-+static void
-+cmdline_list_prepend (cmdline_list_type *list, cmdline_enum_type type,
-+		      void *data)
-+{
-+  cmdline_union_type *new_opt = cmdline_list_new (type, data);
-+  if (list->tail == &list->head)
-+    list->tail = &new_opt->header.next;
-+  new_opt->header.next = list->head;
-+  list->head = new_opt;
-+}
-+
-+/* Append a command line option to cmdline_options list.  */
-+
-+void
-+cmdline_option_append (cmdline_enum_type type, void *data)
-+{
-+  cmdline_list_append (&cmdline_options, type, data);
-+}
-+
-+/* Append a lang_input_statement in linker script on command line to
-+   cmdline_options list.  */
-+
-+void
-+cmdline_option_append_lang_input (lang_input_statement_type *input)
-+{
-+  if (cmdline_linker_script == 2)
-+    cmdline_option_append (cmdline_is_lang_input_statement_enum, input);
-+}
-+
-+/* Prepend a command line option to cmdline_options list.  */
-+
-+static void
-+cmdline_option_prepend (cmdline_enum_type type, void *data)
-+{
-+  cmdline_list_prepend (&cmdline_options, type, data);
-+}
-+
-+/* Set cmdline_next_claimed_output.  */
-+
-+void
-+cmdline_set_next_claimed_output (bfd *archive)
-+{
-+  if (!cmdline_next_claimed_output)
-+    {
-+      cmdline_union_type *c, *next;
-+      cmdline_next_claimed_output = &cmdline_options.head;
-+      for (c = cmdline_options.head; c != NULL; c = next)
-+	{
-+	  next = c->header.next;
-+	  /* We must put object files generated by plugin before
-+	     the archive containing the IR object.  */
-+	  if ((next
-+	       && archive
-+	       && (next->header.type
-+		   == cmdline_is_lang_input_statement_enum)
-+	       && archive == next->input_statement.input->the_bfd)
-+	      || (c->header.type == cmdline_is_lang_input_statement_enum
-+		  && !c->input_statement.input->stage1))
-+	    {
-+	      cmdline_next_claimed_output = &c->header.next;
-+	      break;
-+	    }
-+	}
-+    }
-+}
-+
-+/* Insert FILENAME after cmdline_next_claimed_output.  */
-+
-+void
-+cmdline_option_insert_claimed_output (const char *filename)
-+{
-+  cmdline_union_type *new_opt, *next;
-+
-+  if (trace_files || trace_file_tries)
-+    info_msg (_("insert plugin claimed output: %s\n"), filename);
-+
-+  new_opt = (cmdline_union_type *) stat_alloc (sizeof (*new_opt));
-+  new_opt->header.type = cmdline_is_file_enum;
-+  new_opt->file.filename = filename;
-+
-+  next = *cmdline_next_claimed_output;
-+  *cmdline_next_claimed_output = new_opt;
-+  new_opt->header.next = next;
-+  if (cmdline_options.tail == cmdline_next_claimed_output)
-+    {
-+      cmdline_next_claimed_output = &new_opt->header.next;
-+      cmdline_options.tail = cmdline_next_claimed_output;
-+    }
-+  else
-+    cmdline_next_claimed_output = &new_opt->header.next;
-+}
-+
-+/* Get stage 2 input files.  */
-+
-+static void
-+cmdline_get_stage2_input_files (void)
-+{
-+  cmdline_union_type *c;
-+  int ingroup = 0;
-+
-+  for (c = cmdline_options.head; c != NULL; c = c->header.next)
-+    switch (c->header.type)
-+      {
-+      default:
-+	abort ();
-+      case cmdline_is_lang_input_statement_enum:
-+	if (!c->input_statement.input->claimed)
-+	  {
-+	    lang_input_statement_type *input;
-+	    input = lang_add_input_file (c->input_statement.input->filename,
-+					 lang_input_file_is_file_enum,
-+					 NULL);
-+	    input->add_DT_NEEDED_for_dynamic
-+	      = c->input_statement.input->add_DT_NEEDED_for_dynamic;
-+	    input->add_DT_NEEDED_for_regular
-+	      = c->input_statement.input->add_DT_NEEDED_for_regular;
-+	    input->whole_archive
-+	      = c->input_statement.input->whole_archive;
-+	  }
-+	break;
-+      case cmdline_is_file_enum:
-+	lang_add_input_file (c->file.filename,
-+			     lang_input_file_is_file_enum, NULL);
-+	break;
-+      case cmdline_is_enter_group_enum:
-+	lang_enter_group (FALSE);
-+	ingroup++;
-+	break;
-+      case cmdline_is_leave_group_enum:
-+	lang_leave_group (FALSE);
-+	ingroup--;
-+	break;
-+      }
-+
-+  while (ingroup)
-+    {
-+      lang_leave_group (FALSE);
-+      ingroup--;
-+    }
-+}
-+
 +static void
 +print_cmdline_list (cmdline_union_type *c)
 +{
@@ -1651,25 +963,8 @@ index 76b02f4..8aa9594 100644
 +      {
 +      default:
 +	abort ();
-+      case cmdline_is_lang_input_statement_enum:
-+	if (!c->input_statement.input->claimed)
-+	  {
-+	    if (c->input_statement.input->the_bfd
-+		&& (bfd_get_format (c->input_statement.input->the_bfd)
-+		    == bfd_archive))
-+	      info_msg (" %s", (c->input_statement.input->whole_archive
-+			      ? "--whole-archive" : "--no-whole-archive"));
-+	    info_msg (" %s", c->input_statement.input->filename);
-+	  }
-+	break;
 +      case cmdline_is_file_enum:
 +	info_msg (" %s", c->file.filename);
-+	break;
-+      case cmdline_is_enter_group_enum:
-+	info_msg (" --start-group");
-+	break;
-+      case cmdline_is_leave_group_enum:
-+	info_msg (" --end-group");
 +	break;
 +      case cmdline_is_bfd_enum:
 +	info_msg (" [%B]", c->abfd.abfd);
@@ -1677,44 +972,6 @@ index 76b02f4..8aa9594 100644
 +      }
 +
 +  info_msg ("\n");
-+}
-+
-+/* Append a BFD to cmdline_claimed_archive_member_list.  */
-+
-+void
-+cmdline_claimed_archive_member_list_append (bfd *abfd)
-+{
-+  cmdline_list_append (&cmdline_claimed_archive_member_list,
-+		       cmdline_is_bfd_enum, abfd);
-+}
-+
-+/* Return TRUE if ABFD has been claimed by plugin.  */
-+
-+static bfd_boolean
-+cmdline_claimed_archive_member_p (bfd *abfd)
-+{
-+  cmdline_union_type *c = cmdline_claimed_archive_member_list.head;
-+  bfd *archive = bfd_my_archive (abfd);
-+  bfd *calimed, *claimed_archive;
-+
-+  if (!archive)
-+    return FALSE;
-+
-+  for (; c != NULL; c = c->header.next)
-+    switch (c->header.type)
-+      {
-+      default:
-+	abort ();
-+      case cmdline_is_bfd_enum:
-+	calimed = c->abfd.abfd;
-+	claimed_archive = bfd_my_archive (calimed);
-+	if (strcmp (archive->filename, claimed_archive->filename) == 0
-+	    && abfd->origin == calimed->origin)
-+	  return TRUE;
-+	break;
-+      }
-+
-+  return FALSE;
 +}
 +
 +/* Return TRUE if ABFD is on cmdline_object_only_archive_list.  */
@@ -2391,7 +1648,7 @@ index 76b02f4..8aa9594 100644
 +
 +  lang_init (TRUE);
 +
-+  ld_parse_linker_script (FALSE);
++  ld_parse_linker_script ();
 +
 +  /* Set up the object-only output. */
 +  lang_final ();
@@ -2602,7 +1859,6 @@ index 76b02f4..8aa9594 100644
 +	  filename = cmdline_extract_object_only_section (abfd);
 +	  lang_add_input_file (filename,
 +			       lang_input_file_is_file_enum, NULL);
-+	  cmdline_option_insert_claimed_output (filename);
 +	  break;
 +	case lto_non_ir_object:
 +	case lto_ir_object:
@@ -2650,20 +1906,10 @@ index 76b02f4..8aa9594 100644
 +      }
 +}
 diff --git a/ld/ldlang.h b/ld/ldlang.h
-index db47af8..683056a 100644
+index db47af8..0bdc95e 100644
 --- a/ld/ldlang.h
 +++ b/ld/ldlang.h
-@@ -279,6 +279,9 @@ typedef struct lang_input_statement_struct
-   /* Whether to include the entire contents of an archive.  */
-   unsigned int whole_archive : 1;
- 
-+  /* Set if the file has been processed in stage 1 .  */
-+  unsigned int stage1 : 1;
-+
-   /* Set when bfd opening is successful.  */
-   unsigned int loaded : 1;
- 
-@@ -478,7 +481,7 @@ extern int lang_statement_iteration;
+@@ -478,7 +478,7 @@ extern int lang_statement_iteration;
  extern bfd_boolean missing_file;
  
  extern void lang_init
@@ -2672,33 +1918,13 @@ index db47af8..683056a 100644
  extern void lang_finish
    (void);
  extern lang_memory_region_type * lang_memory_region_lookup
-@@ -603,10 +606,14 @@ extern void one_lang_size_sections_pass
-   (bfd_boolean *, bfd_boolean);
- extern void lang_add_insert
-   (const char *, int);
--extern void lang_enter_group
-+extern void lang_enter_input
-   (void);
--extern void lang_leave_group
-+extern void lang_leave_input
-   (void);
-+extern void lang_enter_group
-+  (bfd_boolean);
-+extern void lang_leave_group
-+  (bfd_boolean);
- extern void lang_add_section
-   (lang_statement_list_type *, asection *,
-    lang_output_section_statement_type *);
-@@ -658,4 +665,61 @@ ldlang_override_segment_assignment
+@@ -658,4 +658,45 @@ ldlang_override_segment_assignment
  extern void
  lang_ld_feature (char *);
  
 +typedef enum
 +{
-+  cmdline_is_lang_input_statement_enum,
 +  cmdline_is_file_enum,
-+  cmdline_is_enter_group_enum,
-+  cmdline_is_leave_group_enum,
 +  cmdline_is_bfd_enum
 +} cmdline_enum_type;
 +
@@ -2707,12 +1933,6 @@ index db47af8..683056a 100644
 +  union cmdline_union *next;
 +  cmdline_enum_type type;
 +} cmdline_header_type;
-+
-+typedef struct cmdline_input_statement_struct
-+{
-+  cmdline_header_type header;
-+  lang_input_statement_type *input;
-+} cmdline_input_statement_type;
 +
 +typedef struct cmdline_file_struct
 +{
@@ -2729,7 +1949,6 @@ index db47af8..683056a 100644
 +typedef union cmdline_union
 +{
 +  cmdline_header_type header;
-+  cmdline_input_statement_type input_statement;
 +  cmdline_file_type file;
 +  cmdline_bfd_type abfd;
 +} cmdline_union_type;
@@ -2740,19 +1959,13 @@ index db47af8..683056a 100644
 +  cmdline_union_type **tail;
 +} cmdline_list_type;
 +
-+extern unsigned int cmdline_linker_script;
-+extern void cmdline_option_append (cmdline_enum_type, void *);
-+extern void cmdline_option_append_lang_input (lang_input_statement_type *);
-+extern void cmdline_option_insert_claimed_output (const char *);
-+extern void cmdline_set_next_claimed_output (bfd *);
-+extern void cmdline_claimed_archive_member_list_append (bfd *);
 +extern void cmdline_emit_object_only_section (void);
 +extern void cmdline_check_object_only_section (bfd *, bfd_boolean);
 +extern void cmdline_remove_object_only_files (void);
 +
  #endif
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index 005a894..3fc7515 100644
+index 0de7890..fe8ad01 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
 @@ -212,6 +212,9 @@ main (int argc, char **argv)
@@ -2806,7 +2019,7 @@ index 005a894..3fc7515 100644
 -      yyparse ();
 -      lex_string = NULL;
 -    }
-+  ld_parse_linker_script (TRUE);
++  ld_parse_linker_script ();
  
    if (trace_file_tries)
      {
@@ -2829,90 +2042,8 @@ index 005a894..3fc7515 100644
    END_PROGRESS (program_name);
  
    if (config.stats)
-@@ -792,6 +773,7 @@ add_archive_element (struct bfd_link_info *info,
- {
-   lang_input_statement_type *input;
-   lang_input_statement_type orig_input;
-+  bfd *archive;
- 
-   input = (lang_input_statement_type *)
-       xcalloc (1, sizeof (lang_input_statement_type));
-@@ -803,20 +785,31 @@ add_archive_element (struct bfd_link_info *info,
-      (if enabled) may possibly alter it to point to a replacement
-      BFD, but we still want to output the original BFD filename.  */
-   orig_input = *input;
-+  archive = bfd_my_archive (abfd);
- #ifdef ENABLE_PLUGINS
--  if (bfd_my_archive (abfd) != NULL && plugin_active_plugins_p ())
-+  if (plugin_active_plugins_p ())
-     {
--      /* We must offer this archive member to the plugins to claim.  */
--      int fd = open (bfd_my_archive (abfd)->filename, O_RDONLY | O_BINARY);
--      if (fd >= 0)
-+      if (archive == NULL)
-+	info_msg (_("plugin ignored non-archive member: %B\n"), abfd);
-+      else
- 	{
-+	  /* We must offer this archive member to the plugins to claim.  */
-+	  int fd = open (archive->filename, O_RDONLY | O_BINARY);
- 	  struct ld_plugin_input_file file;
- 	  int claimed = 0;
-+
-+	  if (fd < 0)
-+	    {
-+	      bfd_set_error (bfd_error_system_call);
-+	      einfo (_("%P%F: plugin cannot open archive %B: %E\n"),
-+		     archive);
-+	    }
-+
- 	  /* Offset and filesize must refer to the individual archive
- 	     member, not the whole file, and must exclude the header.
- 	     Fortunately for us, that is how the data is stored in the
- 	     origin field of the bfd and in the arelt_data.  */
--	  file.name = bfd_my_archive (abfd)->filename;
-+	  file.name = archive->filename;
- 	  file.offset = abfd->origin;
- 	  file.filesize = arelt_size (abfd);
- 	  file.fd = fd;
-@@ -830,22 +823,43 @@ add_archive_element (struct bfd_link_info *info,
- 	  close (fd);
- 	  if (claimed)
- 	    {
-+	      /* Need to put object files generated by plugin before
-+		 the archive.  */
-+	      cmdline_set_next_claimed_output (archive);
-+	      cmdline_check_object_only_section (abfd, TRUE);
- 	      /* Substitute the dummy BFD.  */
- 	      input->the_bfd = file.handle;
- 	      input->claimed = TRUE;
- 	      input->claim_archive = TRUE;
- 	      bfd_make_readable (input->the_bfd);
- 	      *subsbfd = input->the_bfd;
-+	      cmdline_claimed_archive_member_list_append (abfd);
+@@ -830,7 +811,9 @@ add_archive_element (struct bfd_link_info *info,
  	    }
- 	  else
- 	    {
--	      /* Abandon the dummy BFD.  */
--	      bfd_close_all_done (file.handle);
--	      input->claimed = FALSE;
-+	      if (abfd->lto_type == lto_non_ir_object)
-+		{
-+		  /* Abandon the dummy BFD.  */
-+		  bfd_close_all_done (file.handle);
-+		  input->claimed = FALSE;
-+		}
-+	      else
-+		{
-+		  /* Substitute the dummy BFD.  */
-+		  input->the_bfd = file.handle;
-+		  input->claimed = TRUE;
-+		  bfd_make_readable (input->the_bfd);
-+		  *subsbfd = input->the_bfd;
-+		}
- 	    }
-+
-+	  /* Mark this input has been processed by plugin.  */
-+	  input->the_bfd->flags |= BFD_PLUGIN;
  	}
      }
 +  else
@@ -2921,36 +2052,15 @@ index 005a894..3fc7515 100644
  
    ldlang_add_file (input);
  
-@@ -893,16 +907,16 @@ add_archive_element (struct bfd_link_info *info,
- 	  header_printed = TRUE;
- 	}
- 
--      if (bfd_my_archive (abfd) == NULL)
-+      if (archive == NULL)
- 	{
- 	  minfo ("%s", bfd_get_filename (abfd));
- 	  len = strlen (bfd_get_filename (abfd));
- 	}
-       else
- 	{
--	  minfo ("%s(%s)", bfd_get_filename (bfd_my_archive (abfd)),
-+	  minfo ("%s(%s)", bfd_get_filename (archive),
- 		 bfd_get_filename (abfd));
--	  len = (strlen (bfd_get_filename (bfd_my_archive (abfd)))
-+	  len = (strlen (bfd_get_filename (archive))
- 		 + strlen (bfd_get_filename (abfd))
- 		 + 2);
- 	}
-@@ -1479,3 +1493,43 @@ notice (struct bfd_link_info *info,
+@@ -1505,3 +1488,38 @@ notice (struct bfd_link_info *info,
  
    return TRUE;
  }
 +
-+/* Parse the linker script.  If CMDLINE is TRUE, treat it as if it is
-+   on command line.  */
++/* Parse the linker script.   */
 +
 +void
-+ld_parse_linker_script (bfd_boolean cmdline)
++ld_parse_linker_script ()
 +{
 +  /* If we have not already opened and parsed a linker script,
 +     try the default script from command line first.  */
@@ -2969,8 +2079,6 @@ index 005a894..3fc7515 100644
 +      int isfile;
 +      char *s = ldemul_get_script (&isfile);
 +
-+      if (cmdline)
-+	cmdline_linker_script = 1;
 +      if (isfile)
 +	ldfile_open_default_command_file (s);
 +      else
@@ -2981,117 +2089,24 @@ index 005a894..3fc7515 100644
 +      parser_input = input_script;
 +      yyparse ();
 +      lex_string = NULL;
-+      if (cmdline)
-+	cmdline_linker_script = 0;
 +    }
 +}
 diff --git a/ld/ldmain.h b/ld/ldmain.h
-index 57ce8d7..36c1080 100644
+index 57ce8d7..22f9885 100644
 --- a/ld/ldmain.h
 +++ b/ld/ldmain.h
 @@ -46,4 +46,6 @@ extern void add_ysym (const char *);
  extern void add_wrap (const char *);
  extern void add_keepsyms_file (const char *);
  
-+extern void ld_parse_linker_script (bfd_boolean);
++extern void ld_parse_linker_script (void);
 +
  #endif
-diff --git a/ld/lexsup.c b/ld/lexsup.c
-index 8cf96eb..f6ddbe4 100644
---- a/ld/lexsup.c
-+++ b/ld/lexsup.c
-@@ -726,6 +726,7 @@ parse_args (unsigned argc, char **argv)
-     {
-       int longind;
-       int optc;
-+      lang_input_statement_type *input;
- 
-       /* Using last_optind lets us avoid calling ldemul_parse_args
- 	 multiple times on a single option, which would lead to
-@@ -764,7 +765,10 @@ parse_args (unsigned argc, char **argv)
- 	  einfo (_("%P%F: use the --help option for usage information\n"));
- 
- 	case 1:			/* File name.  */
--	  lang_add_input_file (optarg, lang_input_file_is_file_enum, NULL);
-+	  input = lang_add_input_file (optarg,
-+				       lang_input_file_is_file_enum, NULL);
-+	  cmdline_option_append (cmdline_is_lang_input_statement_enum,
-+				 input);
- 	  break;
- 
- 	case OPTION_IGNORE:
-@@ -921,7 +925,10 @@ parse_args (unsigned argc, char **argv)
- 	  ldfile_add_library_path (optarg, TRUE);
- 	  break;
- 	case 'l':
--	  lang_add_input_file (optarg, lang_input_file_is_l_enum, NULL);
-+	  input = lang_add_input_file (optarg,
-+				       lang_input_file_is_l_enum, NULL);
-+	  cmdline_option_append (cmdline_is_lang_input_statement_enum,
-+				 input);
- 	  break;
- 	case 'M':
- 	  config.map_filename = "-";
-@@ -1106,9 +1113,11 @@ parse_args (unsigned argc, char **argv)
- 	    if (stat (optarg, &s) >= 0
- 		&& ! S_ISDIR (s.st_mode))
- 	      {
--		lang_add_input_file (optarg,
--				     lang_input_file_is_symbols_only_enum,
--				     NULL);
-+		input = lang_add_input_file (optarg,
-+					     lang_input_file_is_symbols_only_enum,
-+					     NULL);
-+		cmdline_option_append (cmdline_is_lang_input_statement_enum,
-+				       input);
- 		break;
- 	      }
- 	  }
-@@ -1245,11 +1254,13 @@ parse_args (unsigned argc, char **argv)
- 	  trace_files = TRUE;
- 	  break;
- 	case 'T':
-+	  cmdline_linker_script = 1;
- 	  previous_script_handle = saved_script_handle;
- 	  ldfile_open_command_file (optarg);
- 	  parser_input = input_script;
- 	  yyparse ();
- 	  previous_script_handle = NULL;
-+	  cmdline_linker_script = 0;
- 	  break;
- 	case OPTION_DEFAULT_SCRIPT:
- 	  command_line.default_script = optarg;
-@@ -1497,14 +1508,14 @@ parse_args (unsigned argc, char **argv)
- 	  command_line.accept_unknown_input_arch = FALSE;
- 	  break;
- 	case '(':
--	  lang_enter_group ();
-+	  lang_enter_group (TRUE);
- 	  ingroup++;
- 	  break;
- 	case ')':
- 	  if (! ingroup)
- 	    einfo (_("%P%F: group ended before it began (--help for usage)\n"));
- 
--	  lang_leave_group ();
-+	  lang_leave_group (TRUE);
- 	  ingroup--;
- 	  break;
- 
-@@ -1538,7 +1549,7 @@ parse_args (unsigned argc, char **argv)
- 
-   while (ingroup)
-     {
--      lang_leave_group ();
-+      lang_leave_group (FALSE);
-       ingroup--;
-     }
- 
 diff --git a/ld/plugin.c b/ld/plugin.c
-index d4bbfe78..f4139dd 100644
+index f45064e..170a1ba 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
-@@ -210,6 +210,17 @@ plugin_opt_plugin_arg (const char *arg)
+@@ -226,6 +226,17 @@ plugin_opt_plugin_arg (const char *arg)
    if (!last_plugin)
      return set_plugin_error (_("<no plugin>"));
  
@@ -3109,28 +2124,16 @@ index d4bbfe78..f4139dd 100644
    newarg = xmalloc (sizeof *newarg);
    newarg->arg = arg;
    newarg->next = NULL;
-@@ -552,9 +563,7 @@ static enum ld_plugin_status
- add_input_file (const char *pathname)
- {
-   ASSERT (called_plugin);
--  if (!lang_add_input_file (xstrdup (pathname), lang_input_file_is_file_enum,
--			    NULL))
--    return LDPS_ERR;
-+  cmdline_option_insert_claimed_output (xstrdup (pathname));
-   return LDPS_OK;
- }
+@@ -860,6 +871,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
+   close (file->fd);
+   if (claimed)
+     {
++      /* Check object only section.  */
++      cmdline_check_object_only_section (entry->the_bfd, TRUE);
++
+       /* Discard the real file's BFD and substitute the dummy one.  */
  
-@@ -563,9 +572,7 @@ static enum ld_plugin_status
- add_input_library (const char *pathname)
- {
-   ASSERT (called_plugin);
--  if (!lang_add_input_file (xstrdup (pathname), lang_input_file_is_l_enum,
--			    NULL))
--    return LDPS_ERR;
-+  cmdline_option_insert_claimed_output (xstrdup (pathname));
-   return LDPS_OK;
- }
- 
+       /* BFD archive handling caches elements so we can't call
 diff --git a/ld/scripttempl/armbpabi.sc b/ld/scripttempl/armbpabi.sc
 index 8b3ea0a..88028f2 100644
 --- a/ld/scripttempl/armbpabi.sc
@@ -3145,7 +2148,7 @@ index 8b3ea0a..88028f2 100644
    SBSS=".sbss         ${RELOCATING-0} :
    {
 diff --git a/ld/scripttempl/elf.sc b/ld/scripttempl/elf.sc
-index 4f298a1..85f6f83 100644
+index 149eec7..2415fd4 100644
 --- a/ld/scripttempl/elf.sc
 +++ b/ld/scripttempl/elf.sc
 @@ -149,7 +149,7 @@ RELA_IPLT=".rela.iplt    ${RELOCATING-0} :
@@ -3258,19 +2261,6 @@ index 0000000..917dcbb
 +int
 +__attribute__ ((visibility ("protected")))
 +func1 (void)
-+{
-+  return retval;
-+}
-diff --git a/ld/testsuite/ld-plugin/func2.c b/ld/testsuite/ld-plugin/func2.c
-new file mode 100644
-index 0000000..d233fcf
---- /dev/null
-+++ b/ld/testsuite/ld-plugin/func2.c
-@@ -0,0 +1,7 @@
-+
-+extern int retval;
-+
-+int func2 (void)
 +{
 +  return retval;
 +}
@@ -4044,7 +3034,7 @@ index 0000000..4b5bcf8
 +#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..74c2641
+index 0000000..5cfdd70
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
 @@ -0,0 +1,257 @@
@@ -4273,10 +3263,10 @@ index 0000000..74c2641
 +    return
 +}
 +
-+# Check exported LTO linker errors.
++# Check expected LTO linker errors.
 +set testname "PR ld/12365"
 +set exec_output [run_host_cmd "$CC" "$gcc_gas_flag $gcc_ld_flag -O2 -flto -fuse-linker-plugin tmpdir/pr12365a.o tmpdir/pr12365b.o tmpdir/pr12365c.o"]
-+if { [ regexp "undefined reference to `my_bcopy'" $exec_output ] } {
++if { [ regexp "`my_bcopy' referenced in .* defined in discarded section" $exec_output ] } {
 +    pass $testname
 +} {
 +    fail $testname
@@ -4305,97 +3295,24 @@ index 0000000..74c2641
 +if { [is_elf_format] } {
 +    run_ld_link_exec_tests [] $lto_run_elf_tests
 +}
-diff --git a/ld/testsuite/ld-plugin/plugin-7.d b/ld/testsuite/ld-plugin/plugin-7.d
-index 75f25e0..ee7a6eb 100644
---- a/ld/testsuite/ld-plugin/plugin-7.d
-+++ b/ld/testsuite/ld-plugin/plugin-7.d
-@@ -19,7 +19,8 @@ tv\[16\]: LDPT_OPTION 'registerallsymbolsread'
- tv\[17\]: LDPT_OPTION 'registercleanup'
- tv\[18\]: LDPT_OPTION 'claim:tmpdir/func.o'
- tv\[19\]: LDPT_OPTION 'sym:_?func::0:0:0'
--tv\[20\]: LDPT_NULL value        0x0 \(0\)
-+tv\[20\]: LDPT_OPTION 'add:tmpdir/func.o'
-+tv\[21\]: LDPT_NULL value        0x0 \(0\)
- #...
- hook called: claim_file tmpdir/main.o \[@0/.* not claimed
- hook called: claim_file tmpdir/func.o \[@0/.* CLAIMED
-diff --git a/ld/testsuite/ld-plugin/plugin-8.d b/ld/testsuite/ld-plugin/plugin-8.d
-index e72b039..a4db899 100644
---- a/ld/testsuite/ld-plugin/plugin-8.d
-+++ b/ld/testsuite/ld-plugin/plugin-8.d
-@@ -21,7 +21,9 @@ tv\[18\]: LDPT_OPTION 'claim:tmpdir/func.o'
- tv\[19\]: LDPT_OPTION 'sym:_?func::0:0:0'
- tv\[20\]: LDPT_OPTION 'sym:_?func2::0:0:0'
- tv\[21\]: LDPT_OPTION 'dumpresolutions'
--tv\[22\]: LDPT_NULL value        0x0 \(0\)
-+tv\[22\]: LDPT_OPTION 'add:tmpdir/func.o'
-+tv\[23\]: LDPT_OPTION 'add:tmpdir/func2.o'
-+tv\[24\]: LDPT_NULL value        0x0 \(0\)
- #...
- hook called: claim_file tmpdir/main.o \[@0/.* not claimed
- hook called: claim_file tmpdir/func.o \[@0/.* CLAIMED
-diff --git a/ld/testsuite/ld-plugin/plugin-9.d b/ld/testsuite/ld-plugin/plugin-9.d
-index b74f4a6..a4db899 100644
---- a/ld/testsuite/ld-plugin/plugin-9.d
-+++ b/ld/testsuite/ld-plugin/plugin-9.d
-@@ -22,7 +22,8 @@ tv\[19\]: LDPT_OPTION 'sym:_?func::0:0:0'
- tv\[20\]: LDPT_OPTION 'sym:_?func2::0:0:0'
- tv\[21\]: LDPT_OPTION 'dumpresolutions'
- tv\[22\]: LDPT_OPTION 'add:tmpdir/func.o'
--tv\[23\]: LDPT_NULL value        0x0 \(0\)
-+tv\[23\]: LDPT_OPTION 'add:tmpdir/func2.o'
-+tv\[24\]: LDPT_NULL value        0x0 \(0\)
- #...
- hook called: claim_file tmpdir/main.o \[@0/.* not claimed
- hook called: claim_file tmpdir/func.o \[@0/.* CLAIMED
 diff --git a/ld/testsuite/ld-plugin/plugin.exp b/ld/testsuite/ld-plugin/plugin.exp
-index 8952f1d..fd0f939 100644
+index 02319bf..96459e7 100644
 --- a/ld/testsuite/ld-plugin/plugin.exp
 +++ b/ld/testsuite/ld-plugin/plugin.exp
-@@ -70,6 +70,7 @@ set plugin_nm_output ""
- if { $can_compile && \
- 	(![ld_compile "$CC $CFLAGS" $srcdir/$subdir/main.c tmpdir/main.o] \
- 	|| ![ld_compile "$CC $CFLAGS" $srcdir/$subdir/func.c tmpdir/func.o] \
-+	|| ![ld_compile "$CC $CFLAGS" $srcdir/$subdir/func2.c tmpdir/func2.o] \
- 	|| ![ld_compile "$CC $CFLAGS" $srcdir/$subdir/text.c tmpdir/text.o]) } {
-     # Defer fail until we have list of tests set.
-     set failed_compile 1
-@@ -108,12 +109,15 @@ set plugin_tests [list \
-     [list "plugin claimfile replace symbol" "-plugin $plugin_path $regclm \
- 			$regas $regcln -plugin-opt claim:tmpdir/func.o \
- 			-plugin-opt sym:${_}func::0:0:0 \
-+			-plugin-opt add:tmpdir/func.o \
-     $testobjfiles $libs" "" "" {{ld plugin-7.d}} "main.x" ] \
-     [list "plugin claimfile resolve symbol" "-plugin $plugin_path $regclm \
- 			$regas $regcln -plugin-opt claim:tmpdir/func.o \
- 			-plugin-opt sym:${_}func::0:0:0 \
- 			-plugin-opt sym:${_}func2::0:0:0 \
- 			-plugin-opt dumpresolutions \
-+			-plugin-opt add:tmpdir/func.o \
-+			-plugin-opt add:tmpdir/func2.o \
-     $testobjfiles $libs" "" "" {{ld plugin-8.d}} "main.x" ] \
-     [list "plugin claimfile replace file" "-plugin $plugin_path $regclm \
- 			$regas $regcln -plugin-opt claim:tmpdir/func.o \
-@@ -121,6 +125,7 @@ set plugin_tests [list \
- 			-plugin-opt sym:${_}func2::0:0:0 \
- 			-plugin-opt dumpresolutions \
- 			-plugin-opt add:tmpdir/func.o \
-+			-plugin-opt add:tmpdir/func2.o \
-     $testobjfiles $libs" "" "" {{ld plugin-9.d}} "main.x" ] \
- ]
- 
-@@ -152,6 +157,10 @@ set plugin_extra_elf_tests [list \
- 			-plugin-opt sym:${_}func2::0:2:0 \
+@@ -153,7 +153,11 @@ set plugin_extra_elf_tests [list \
  			-plugin-opt sym:${_}func3::0:3:0 \
  			-plugin-opt dumpresolutions \
-+			-plugin-opt add:tmpdir/func.o \
+ 			-plugin-opt add:tmpdir/func.o \
+-    $testobjfiles $libs --verbose=2" "" "" {{ld plugin-12.d}} "main.x" ] \
 +			-plugin-opt add:tmpdir/func1p.o \
 +			-plugin-opt add:tmpdir/func2i.o \
 +			-plugin-opt add:tmpdir/func3h.o \
-     $testobjfiles $libs" "" "" {{ld plugin-ignore.d} \
- 				{readelf -s plugin-vis-1.d}} "main.x" ] \
++    $testobjfiles $libs --verbose=2" "" "" {{ld plugin-12.d} \
++				{readelf -s plugin-vis-1.d}} "main.x" ] \
  ]
-@@ -170,7 +179,10 @@ if { !$can_compile || $failed_compile } {
+ 
+ if { !$can_compile || $failed_compile } {
+@@ -170,7 +174,10 @@ if { !$can_compile || $failed_compile } {
  
  run_ld_link_tests $plugin_tests
  
@@ -4577,10 +3494,10 @@ index 0000000..2edd0ff
 +  TEST_ABORT;
 +}
 diff --git a/ld/testsuite/lib/ld-lib.exp b/ld/testsuite/lib/ld-lib.exp
-index 48e9635..74bad74 100644
+index 0591e8b..8e0ec27 100644
 --- a/ld/testsuite/lib/ld-lib.exp
 +++ b/ld/testsuite/lib/ld-lib.exp
-@@ -1461,6 +1461,34 @@ proc check_plugin_api_available { } {
+@@ -1459,6 +1459,34 @@ proc check_plugin_api_available { } {
      return $plugin_api_available_saved
  }
  
