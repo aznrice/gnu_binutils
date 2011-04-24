@@ -212,6 +212,7 @@ ld/testsuite/
 	* ld-plugin/pr12365a.c: Likewise.
 	* ld-plugin/pr12365b.c: Likewise.
 	* ld-plugin/pr12365c.c: Likewise.
+	* ld-plugin/pr12696-1.cc: Likewise.
 
 	* ld-plugin/plugin.exp: Add object files for symbols claimed
 	or created by testplugin.
@@ -524,10 +525,10 @@ index 6b8b107..abcdea1 100644
 +	.section .gnu_object_only
 +	.byte 0,0,0,0
 diff --git a/include/bfdlink.h b/include/bfdlink.h
-index 7cfaea0..84e1dbb 100644
+index 4c649d9..ea3d4bb 100644
 --- a/include/bfdlink.h
 +++ b/include/bfdlink.h
-@@ -352,6 +352,12 @@ struct bfd_link_info
+@@ -360,6 +360,12 @@ struct bfd_link_info
       --dynamic-list command line options.  */
    unsigned int dynamic: 1;
  
@@ -1965,10 +1966,10 @@ index db47af8..0bdc95e 100644
 +
  #endif
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index 0de7890..fe8ad01 100644
+index bfa6066..8647e36 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
-@@ -212,6 +212,9 @@ main (int argc, char **argv)
+@@ -213,6 +213,9 @@ main (int argc, char **argv)
  
    xatexit (ld_cleanup);
  
@@ -1978,7 +1979,7 @@ index 0de7890..fe8ad01 100644
    /* Set up the sysroot directory.  */
    ld_sysroot = get_sysroot (argc, argv);
    if (*ld_sysroot)
-@@ -288,7 +291,7 @@ main (int argc, char **argv)
+@@ -289,7 +292,7 @@ main (int argc, char **argv)
    default_target = ldemul_choose_target (argc, argv);
    config.maxpagesize = bfd_emul_get_maxpagesize (default_target);
    config.commonpagesize = bfd_emul_get_commonpagesize (default_target);
@@ -1987,7 +1988,7 @@ index 0de7890..fe8ad01 100644
    ldemul_before_parse ();
    lang_has_input_file = FALSE;
    parse_args (argc, argv);
-@@ -364,34 +367,7 @@ main (int argc, char **argv)
+@@ -365,34 +368,7 @@ main (int argc, char **argv)
  	link_info.discard = discard_all;
      }
  
@@ -2023,7 +2024,7 @@ index 0de7890..fe8ad01 100644
  
    if (trace_file_tries)
      {
-@@ -495,6 +471,8 @@ main (int argc, char **argv)
+@@ -496,6 +472,8 @@ main (int argc, char **argv)
        if (! bfd_close (link_info.output_bfd))
  	einfo (_("%F%B: final close failed: %E\n"), link_info.output_bfd);
  
@@ -2032,7 +2033,7 @@ index 0de7890..fe8ad01 100644
        /* If the --force-exe-suffix is enabled, and we're making an
  	 executable file and it doesn't end in .exe, copy it to one
  	 which does.  */
-@@ -541,6 +519,9 @@ main (int argc, char **argv)
+@@ -542,6 +520,9 @@ main (int argc, char **argv)
  	}
      }
  
@@ -2042,7 +2043,7 @@ index 0de7890..fe8ad01 100644
    END_PROGRESS (program_name);
  
    if (config.stats)
-@@ -830,7 +811,9 @@ add_archive_element (struct bfd_link_info *info,
+@@ -831,7 +812,9 @@ add_archive_element (struct bfd_link_info *info,
  	    }
  	}
      }
@@ -2052,7 +2053,7 @@ index 0de7890..fe8ad01 100644
  
    ldlang_add_file (input);
  
-@@ -1505,3 +1488,38 @@ notice (struct bfd_link_info *info,
+@@ -1509,3 +1492,38 @@ notice (struct bfd_link_info *info,
  
    return TRUE;
  }
@@ -2103,10 +2104,10 @@ index 57ce8d7..22f9885 100644
 +
  #endif
 diff --git a/ld/plugin.c b/ld/plugin.c
-index f45064e..170a1ba 100644
+index 8d9603b..8425fa3 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
-@@ -226,6 +226,17 @@ plugin_opt_plugin_arg (const char *arg)
+@@ -209,6 +209,17 @@ plugin_opt_plugin_arg (const char *arg)
    if (!last_plugin)
      return set_plugin_error (_("<no plugin>"));
  
@@ -2124,7 +2125,7 @@ index f45064e..170a1ba 100644
    newarg = xmalloc (sizeof *newarg);
    newarg->arg = arg;
    newarg->next = NULL;
-@@ -860,6 +871,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
+@@ -828,6 +839,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
    close (file->fd);
    if (claimed)
      {
@@ -3034,10 +3035,10 @@ index 0000000..4b5bcf8
 +#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..5cfdd70
+index 0000000..d3daa58
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
-@@ -0,0 +1,257 @@
+@@ -0,0 +1,260 @@
 +# Expect script for ld-plugin LTO tests
 +#   Copyright 2011
 +#   Free Software Foundation, Inc.
@@ -3148,6 +3149,9 @@ index 0000000..5cfdd70
 +  {"Build liblto-15.a"
 +   "" "-flto"
 +   {lto-15b.c} {} "liblto-15.a"}
++  {"PR ld/12696"
++   "-O2 -flto -fuse-linker-plugin -r -nostdlib" "-O2 -flto"
++   {pr12696-1.cc} {} "pr12696-1r.o" "c"}
 +}
 +
 +# Generate input files for complex LTO tests for ELF.
@@ -3493,6 +3497,19 @@ index 0000000..2edd0ff
 +  my_bzero (d, n);
 +  TEST_ABORT;
 +}
+diff --git a/ld/testsuite/ld-plugin/pr12696-1.cc b/ld/testsuite/ld-plugin/pr12696-1.cc
+new file mode 100644
+index 0000000..084c07f
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr12696-1.cc
+@@ -0,0 +1,7 @@
++/* { dg-lto-do link } */
++/* { dg-lto-options {{-ftoplevel-reorder -flto -flto-partition=none} {-ftoplevel-reorder -flto -flto-partition=1to1}} } */
++/* { dg-extra-ld-options {-r -nostdlib} } */
++
++struct Foo { virtual ~Foo(); };
++struct Bar:public Foo { Bar() { } };
++void Func() { new Bar(); }
 diff --git a/ld/testsuite/lib/ld-lib.exp b/ld/testsuite/lib/ld-lib.exp
 index 0591e8b..8e0ec27 100644
 --- a/ld/testsuite/lib/ld-lib.exp
