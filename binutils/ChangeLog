@@ -1,3 +1,33 @@
+2011-04-27  Tristan Gingold  <gingold@adacore.com>
+
+	* dwarf.c (process_extended_line_op): Handle
+	DW_LNE_HP_source_file_correlation.
+
+2011-04-27  Nick Clifton  <nickc@redhat.com>
+
+	* po/da.po: Updated Danish translation.
+
+2011-04-21  Tom Tromey  <tromey@redhat.com>
+
+	* readelf.c (print_stapsdt_note): New function.
+	(process_note): Use it.
+
+2011-04-21  Tom Tromey  <tromey@redhat.com>
+
+	* readelf.c (get_stapsdt_note_type): New function.
+	(process_note): Recognize "stapsdt" notes.
+
+2011-04-21  Tom Tromey  <tromey@redhat.com>
+
+	* readelf.c (process_corefile_note_segment): Change header field
+	widths.
+	(process_note): Change field widths.
+
+2011-04-21  Tom Tromey  <tromey@redhat.com>
+
+	* readelf.c (print_gnu_note): New function.
+	(process_note): Use it.
+
 2011-04-21  Jie Zhang  <jzhang918@gmail.com>
 
 	* MAINTAINERS: Update my email address.

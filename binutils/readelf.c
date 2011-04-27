@@ -12231,6 +12231,63 @@ get_gnu_elf_note_type (unsigned e_type)
   return buff;
 }
 
+static int
+print_gnu_note (Elf_Internal_Note *pnote)
+{
+  switch (pnote->type)
+    {
+    case NT_GNU_BUILD_ID:
+      {
+	unsigned long i;
+
+	printf (_("    Build ID: "));
+	for (i = 0; i < pnote->descsz; ++i)
+	  printf ("%02x", pnote->descdata[i] & 0xff);
+	printf (_("\n"));
+      }
+      break;
+
+    case NT_GNU_ABI_TAG:
+      {
+	unsigned long os, major, minor, subminor;
+	const char *osname;
+
+	os = byte_get ((unsigned char *) pnote->descdata, 4);
+	major = byte_get ((unsigned char *) pnote->descdata + 4, 4);
+	minor = byte_get ((unsigned char *) pnote->descdata + 8, 4);
+	subminor = byte_get ((unsigned char *) pnote->descdata + 12, 4);
+
+	switch (os)
+	  {
+	  case GNU_ABI_TAG_LINUX:
+	    osname = "Linux";
+	    break;
+	  case GNU_ABI_TAG_HURD:
+	    osname = "Hurd";
+	    break;
+	  case GNU_ABI_TAG_SOLARIS:
+	    osname = "Solaris";
+	    break;
+	  case GNU_ABI_TAG_FREEBSD:
+	    osname = "FreeBSD";
+	    break;
+	  case GNU_ABI_TAG_NETBSD:
+	    osname = "NetBSD";
+	    break;
+	  default:
+	    osname = "Unknown";
+	    break;
+	  }
+
+	printf (_("    OS: %s, ABI: %ld.%ld.%ld\n"), osname,
+		major, minor, subminor);
+      }
+      break;
+    }
+
+  return 1;
+}
+
 static const char *
 get_netbsd_elfcore_note_type (unsigned e_type)
 {
@@ -12291,6 +12348,61 @@ get_netbsd_elfcore_note_type (unsigned e_type)
   snprintf (buff, sizeof (buff), _("PT_FIRSTMACH+%d"),
 	    e_type - NT_NETBSDCORE_FIRSTMACH);
   return buff;
+}
+
+static const char *
+get_stapsdt_note_type (unsigned e_type)
+{
+  static char buff[64];
+
+  switch (e_type)
+    {
+    case NT_STAPSDT:
+      return _("NT_STAPSDT (SystemTap probe descriptors)");
+
+    default:
+      break;
+    }
+
+  snprintf (buff, sizeof (buff), _("Unknown note type: (0x%08x)"), e_type);
+  return buff;
+}
+
+static int
+print_stapsdt_note (Elf_Internal_Note *pnote)
+{
+  int addr_size = is_32bit_elf ? 4 : 8;
+  char *data = pnote->descdata;
+  char *data_end = pnote->descdata + pnote->descsz;
+  bfd_vma pc, base_addr, semaphore;
+  char *provider, *probe, *arg_fmt;
+
+  pc = byte_get ((unsigned char *) data, addr_size);
+  data += addr_size;
+  base_addr = byte_get ((unsigned char *) data, addr_size);
+  data += addr_size;
+  semaphore = byte_get ((unsigned char *) data, addr_size);
+  data += addr_size;
+
+  provider = data;
+  data += strlen (data) + 1;
+  probe = data;
+  data += strlen (data) + 1;
+  arg_fmt = data;
+  data += strlen (data) + 1;
+
+  printf (_("    Provider: %s\n"), provider);
+  printf (_("    Name: %s\n"), probe);
+  printf (_("    Location: "));
+  print_vma (pc, FULL_HEX);
+  printf (_(", Base: "));
+  print_vma (base_addr, FULL_HEX);
+  printf (_(", Semaphore: "));
+  print_vma (semaphore, FULL_HEX);
+  printf (_("\n"));
+  printf (_("    Arguments: %s\n"), arg_fmt);
+
+  return data == data_end;
 }
 
 static const char *
@@ -12439,15 +12551,22 @@ process_note (Elf_Internal_Note * pnote)
     /* VMS/ia64-specific file notes.  */
     nt = get_ia64_vms_note_type (pnote->type);
 
+  else if (const_strneq (pnote->namedata, "stapsdt"))
+    nt = get_stapsdt_note_type (pnote->type);
+
   else
     /* Don't recognize this note name; just use the default set of
        note type strings.  */
     nt = get_note_type (pnote->type);
 
-  printf ("  %-10s\t0x%08lx\t%s\n", name, pnote->descsz, nt);
+  printf ("  %-20s 0x%08lx\t%s\n", name, pnote->descsz, nt);
 
   if (const_strneq (pnote->namedata, "IPF/VMS"))
     return print_ia64_vms_note (pnote);
+  else if (const_strneq (pnote->namedata, "GNU"))
+    return print_gnu_note (pnote);
+  else if (const_strneq (pnote->namedata, "stapsdt"))
+    return print_stapsdt_note (pnote);
   else
     return 1;
 }
@@ -12472,7 +12591,7 @@ process_corefile_note_segment (FILE * file, bfd_vma offset, bfd_vma length)
 
   printf (_("\nNotes at offset 0x%08lx with length 0x%08lx:\n"),
 	  (unsigned long) offset, (unsigned long) length);
-  printf (_("  Owner\t\tData size\tDescription\n"));
+  printf (_("  %-20s %10s\tDescription\n"), _("Owner"), _("Data size"));
 
   while (external < (Elf_External_Note *) ((char *) pnotes + length))
     {
