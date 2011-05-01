@@ -1,3 +1,26 @@
+2011-05-01  Alan Modra  <amodra@gmail.com>
+
+	PR ld/12718
+	* elf32-i386.c (elf_i386_check_relocs): Ensure dynobj set before
+	creating ifunc sections.
+	* elf64-x86-64.c (elf_x86_64_check_relocs): Likewise.
+
+2011-04-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf64-x86-64.c (elf_x86_64_merge_symbol): Correct parameter
+	names.
+
+2011-04-28  Tom Tromey  <tromey@redhat.com>
+
+	* bfdio.c (memory_bstat): Pass correct size to memset.
+
+2011-04-28  Mike Frysinger  <vapier@gentoo.org>
+
+	* dwarf2.c (dwarf_debug_sections): Mark const.
+	* elf.c (special_sections): Likewise.
+	* libbfd-in.h (dwarf_debug_sections): Likewise.
+	* libbfd.h: Regenerate.
+
 2011-04-26  Kai Tietz  <ktietz@redhat.com>
 
 	* coffcode.h (sec_to_styp_flags): Allow linkonce for
