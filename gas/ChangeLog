@@ -1,5 +1,34 @@
-2011-05-03  Paul Brook  <paul@codesourcery.com>
+2011-05-07  Alan Modra  <amodra@gmail.com>
 
+	* dw2gencfi.c (CUR_SEG, SET_CUR_SEG, HANDLED, SET_HANDLED): Define.
+	Use throughout in place of #if SUPPORT_FRAME_LINKONCE.
+	(struct fde_entry): Rename cseg to cur_seg.
+	(cfi_change_reg_numbers): Remove ATTRIBUTE_UNUSED.
+	(get_cfi_seg): Likewise.  Use if (SUPPORT_FRAME_LINKONCE) rather
+	that #if SUPPORT_FRAME_LINKONCE.
+	(cfi_finish): Likewise.
+
+2011-05-06  Tristan Gingold  <gingold@adacore.com>
+
+	* read.c (s_comm_internal): Remove code for OBJ_VMS.
+	(s_data): Ditto.
+	(s_text): Ditto.
+	* write.c (write_object_file): Ditto.
+	* symbols.c (define_sym_at_dot): Ditto.
+	(colon): Ditto.
+
+2011-05-05  Alan Modra  <amodra@gmail.com>
+
+	* dw2gencfi.c (SUPPORT_FRAME_LINKONCE): Define.  Use throughout
+	file to conditionally compile code added 2011-04-26.
+	(cfi_change_reg_numbers): Add ATTRIBUTE_UNUSED on params only used
+	when SUPPORT_FRAME_LINKONCE.
+	(get_cfi_seg): Likewise.  Reintroduce old code for when not
+	SUPPORT_FRAME_LINKONCE.
+	(cfi_finish): Move get_cfi_seg calls out of loop when not
+	SUPPORT_FRAME_LINKONCE.  Avoid unused var warning.
+
+2011-05-03  Paul Brook  <paul@codesourcery.com>
 
 	* config/tc-tic6x.c (s_ehtype): New function.
 	(md_pseudo_table): Add "ehtype".
