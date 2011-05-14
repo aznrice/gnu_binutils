@@ -1,5 +1,11 @@
 bfd/
 
+2011-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12758
+	* elflink.c (elf_link_add_archive_symbols): Don't load the IR
+	archive member twice.
+
 2011-04-19  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* bfd.c (bfd_lto_object_type): New.
@@ -47,6 +53,14 @@ include/elf/
 	* common.h (SHT_GNU_OBJECT_ONLY): New.
 
 ld/
+
+2011-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12760
+	* ldmain.c (warning_callback): Don't warn plugin dummy.
+
+	* plugin.c (plugin_notice): Set u.undef.abfd when undefining
+	symbols from plugin dummy.
 
 2011-04-19  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -141,6 +155,27 @@ ld/
 
 ld/testsuite/
 
+2011-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12760
+	* ld-plugin/lto.exp (lto_link_tests): Add tests for PR ld/12760.
+
+	* ld-plugin/pr12760a.s: New.
+	* ld-plugin/pr12760b.c: Likewise.
+
+2011-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12758
+	* ld-plugin/lto.exp (lto_link_tests): Add tests for PR ld/12758.
+
+	* ld-plugin/pr12758a.s: New.
+	* ld-plugin/pr12758b.c: Likewise.
+
+2011-05-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-plugin/lto.exp (lto_link_symbol_tests): Replace "-e foo"
+	with "-Wl,-e,foo".
+
 2011-04-19  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ld-plugin/dummy.c: New.
@@ -220,10 +255,10 @@ ld/testsuite/
 	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index 76836b1..27cad88 100644
+index 4fd71e6..8202bbd 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
-@@ -1539,6 +1539,9 @@ struct relax_table {
+@@ -1548,6 +1548,9 @@ struct relax_table {
  #define BFD_COM_SECTION_NAME "*COM*"
  #define BFD_IND_SECTION_NAME "*IND*"
  
@@ -233,7 +268,7 @@ index 76836b1..27cad88 100644
  /* The absolute section.  */
  extern asection bfd_abs_section;
  #define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
-@@ -4996,6 +4999,14 @@ enum bfd_direction
+@@ -5005,6 +5008,14 @@ enum bfd_direction
      both_direction = 3
    };
  
@@ -248,7 +283,7 @@ index 76836b1..27cad88 100644
  struct bfd
  {
    /* A unique identifier of the BFD  */
-@@ -5143,6 +5154,9 @@ struct bfd
+@@ -5152,6 +5163,9 @@ struct bfd
    /* The last section on the section list.  */
    struct bfd_section *section_last;
  
@@ -258,7 +293,7 @@ index 76836b1..27cad88 100644
    /* The number of sections.  */
    unsigned int section_count;
  
-@@ -5261,6 +5275,9 @@ struct bfd
+@@ -5270,6 +5284,9 @@ struct bfd
    /* Set if only required symbols should be added in the link hash table for
       this object.  Used by VMS linkers.  */
    unsigned int selective_search : 1;
@@ -268,7 +303,7 @@ index 76836b1..27cad88 100644
  };
  
  typedef enum bfd_error
-@@ -5465,6 +5482,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
+@@ -5474,6 +5491,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
  
  char *bfd_demangle (bfd *, const char *, int);
  
@@ -354,7 +389,7 @@ index c729d63..2eab743 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index 71de844..26dfef7 100644
+index 33a3a7d..8c73034 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2084,6 +2084,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -365,6 +400,20 @@ index 71de844..26dfef7 100644
    { STRING_COMMA_LEN (".gnu.version"),     0, SHT_GNU_versym,  0 },
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
+diff --git a/bfd/elflink.c b/bfd/elflink.c
+index e4f728d..787d93a 100644
+--- a/bfd/elflink.c
++++ b/bfd/elflink.c
+@@ -5080,6 +5080,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
+ 	     something wrong with the archive.  */
+ 	  if (element->archive_pass != 0)
+ 	    {
++	      /* Don't load the IR archive member twice.  */
++	      if (element->lto_type == lto_ir_object)
++		continue;
+ 	      bfd_set_error (bfd_error_bad_value);
+ 	      goto error_return;
+ 	    }
 diff --git a/bfd/format.c b/bfd/format.c
 index 4d89a85..6feac37 100644
 --- a/bfd/format.c
@@ -426,10 +475,10 @@ index 4d89a85..6feac37 100644
      }
  
 diff --git a/bfd/section.c b/bfd/section.c
-index 65ac5e6..a45cbd6 100644
+index 3cd7e65..3a124d8 100644
 --- a/bfd/section.c
 +++ b/bfd/section.c
-@@ -546,6 +546,9 @@ CODE_FRAGMENT
+@@ -551,6 +551,9 @@ CODE_FRAGMENT
  .#define BFD_COM_SECTION_NAME "*COM*"
  .#define BFD_IND_SECTION_NAME "*IND*"
  .
@@ -440,7 +489,7 @@ index 65ac5e6..a45cbd6 100644
  .extern asection bfd_abs_section;
  .#define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
-index 15c4f95..b76ed38 100644
+index b64f3d0..41f753b 100644
 --- a/binutils/objcopy.c
 +++ b/binutils/objcopy.c
 @@ -901,30 +901,6 @@ is_specified_symbol (const char *name, htab_t htab)
@@ -483,7 +532,7 @@ index 15c4f95..b76ed38 100644
        if (gsym != NULL)
  	gname = gsym->name;
        else
-@@ -2539,7 +2515,7 @@ setup_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
+@@ -2538,7 +2514,7 @@ setup_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
  
    if ((isection->flags & SEC_GROUP) != 0)
      {
@@ -493,7 +542,7 @@ index 15c4f95..b76ed38 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index 7ac9914..f3c3394 100644
+index 6c8b966..e4c609e 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
 @@ -3005,6 +3005,7 @@ get_section_type_name (unsigned int sh_type)
@@ -525,10 +574,10 @@ index 6b8b107..abcdea1 100644
 +	.section .gnu_object_only
 +	.byte 0,0,0,0
 diff --git a/include/bfdlink.h b/include/bfdlink.h
-index 4c649d9..ea3d4bb 100644
+index 50a1423..24f47c1 100644
 --- a/include/bfdlink.h
 +++ b/include/bfdlink.h
-@@ -360,6 +360,12 @@ struct bfd_link_info
+@@ -354,6 +354,12 @@ struct bfd_link_info
       --dynamic-list command line options.  */
    unsigned int dynamic: 1;
  
@@ -775,7 +824,7 @@ index c4b8912..10e8e89 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 2c07fa4..318f13e 100644
+index c291fd9..4e0a845 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -866,7 +915,7 @@ index 2c07fa4..318f13e 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6576,7 +6597,38 @@ lang_process (void)
+@@ -6577,7 +6598,38 @@ lang_process (void)
  	  open_input_bfds (statement_list.head, OPEN_BFD_RESCAN);
  	}
      }
@@ -1907,7 +1956,7 @@ index 2c07fa4..318f13e 100644
 +      }
 +}
 diff --git a/ld/ldlang.h b/ld/ldlang.h
-index db47af8..0bdc95e 100644
+index d172c34..ce51d33 100644
 --- a/ld/ldlang.h
 +++ b/ld/ldlang.h
 @@ -478,7 +478,7 @@ extern int lang_statement_iteration;
@@ -1966,7 +2015,7 @@ index db47af8..0bdc95e 100644
 +
  #endif
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index bfa6066..8647e36 100644
+index bfa6066..84ac2ae 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
 @@ -213,6 +213,9 @@ main (int argc, char **argv)
@@ -2053,6 +2102,15 @@ index bfa6066..8647e36 100644
  
    ldlang_add_file (input);
  
+@@ -1204,7 +1187,7 @@ warning_callback (struct bfd_link_info *info ATTRIBUTE_UNUSED,
+     einfo ("%P: %s%s\n", _("warning: "), warning);
+   else if (symbol == NULL)
+     einfo ("%B: %s%s\n", abfd, _("warning: "), warning);
+-  else
++  else if ((abfd->flags & BFD_PLUGIN) == 0)
+     {
+       struct warning_callback_info cinfo;
+ 
 @@ -1509,3 +1492,38 @@ notice (struct bfd_link_info *info,
  
    return TRUE;
@@ -2104,7 +2162,7 @@ index 57ce8d7..22f9885 100644
 +
  #endif
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 8d9603b..8425fa3 100644
+index 8d9603b..2cf1fc2 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -209,6 +209,17 @@ plugin_opt_plugin_arg (const char *arg)
@@ -2135,6 +2193,30 @@ index 8d9603b..8425fa3 100644
        /* Discard the real file's BFD and substitute the dummy one.  */
  
        /* BFD archive handling caches elements so we can't call
+@@ -926,12 +940,19 @@ plugin_notice (struct bfd_link_info *info,
+ 	 definition, and strong symbols will normally cause multiple
+ 	 definition errors.  Avoid this by making the symbol appear
+ 	 to be undefined.  */
+-      else if (((h->type == bfd_link_hash_defweak
++      else if ((h->type == bfd_link_hash_defweak
+ 		 || h->type == bfd_link_hash_defined)
+ 		&& is_ir_dummy_bfd (h->u.def.section->owner))
+-	       || (h->type == bfd_link_hash_common
+-		   && is_ir_dummy_bfd (h->u.c.p->section->owner)))
+-	h->type = bfd_link_hash_undefweak;
++	{
++	  h->u.undef.abfd = h->u.def.section->owner;
++	  h->type = bfd_link_hash_undefweak;
++	}
++      else if (h->type == bfd_link_hash_common
++	       && is_ir_dummy_bfd (h->u.c.p->section->owner))
++	{
++	  h->u.undef.abfd = h->u.c.p->section->owner;
++	  h->type = bfd_link_hash_undefweak;
++	}
+     }
+ 
+   /* Continue with cref/nocrossref/trace-sym processing.  */
 diff --git a/ld/scripttempl/armbpabi.sc b/ld/scripttempl/armbpabi.sc
 index 8b3ea0a..88028f2 100644
 --- a/ld/scripttempl/armbpabi.sc
@@ -2214,10 +2296,10 @@ index e61342d..6c7b451 100644
    SBSS=".sbss         ${RELOCATING-0} :
    {
 diff --git a/ld/scripttempl/pe.sc b/ld/scripttempl/pe.sc
-index 7d52cc5..2e2f2f2 100644
+index 126c1d4..5a62ce3 100644
 --- a/ld/scripttempl/pe.sc
 +++ b/ld/scripttempl/pe.sc
-@@ -144,6 +144,7 @@ SECTIONS
+@@ -147,6 +147,7 @@ SECTIONS
      *(.drectve)
      ${RELOCATING+ *(.note.GNU-stack)}
      ${RELOCATING+ *(.gnu.lto_*)}
@@ -2226,10 +2308,10 @@ index 7d52cc5..2e2f2f2 100644
  
    .idata ${RELOCATING+BLOCK(__section_alignment__)} :
 diff --git a/ld/scripttempl/pep.sc b/ld/scripttempl/pep.sc
-index 8fa5f05..f69a5b8 100644
+index a3e0cf3..ad8bab0 100644
 --- a/ld/scripttempl/pep.sc
 +++ b/ld/scripttempl/pep.sc
-@@ -150,6 +150,7 @@ SECTIONS
+@@ -153,6 +153,7 @@ SECTIONS
      *(.drectve)
      ${RELOCATING+ *(.note.GNU-stack)}
      ${RELOCATING+ *(.gnu.lto_*)}
@@ -3035,10 +3117,10 @@ index 0000000..4b5bcf8
 +#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..d3daa58
+index 0000000..7395d4c
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
-@@ -0,0 +1,260 @@
+@@ -0,0 +1,278 @@
 +# Expect script for ld-plugin LTO tests
 +#   Copyright 2011
 +#   Free Software Foundation, Inc.
@@ -3152,6 +3234,24 @@ index 0000000..d3daa58
 +  {"PR ld/12696"
 +   "-O2 -flto -fuse-linker-plugin -r -nostdlib" "-O2 -flto"
 +   {pr12696-1.cc} {} "pr12696-1r.o" "c"}
++  {"Build libdummy.a PR ld/12758"
++   "" ""
++   {pr12758a.s} {} "libdummy.a"}
++  {"Build libpr12758.a"
++   "" "-flto -O2"
++   {pr12758b.c} {} "libpr12758.a"}
++  {"PR ld/12758"
++   "-O2 -Wl,-e,foo -nostdlib -flto -fuse-linker-plugin tmpdir/pr12758a.o -Wl,--start-group tmpdir/libpr12758.a -Wl,--end-group" ""
++   {dummy.c} {} "pr12758.exe"}
++  {"Build libdummy.a PR ld/12760"
++   "" ""
++   {pr12760a.c} {} "libdummy.a"}
++  {"Build libpr12760.a"
++   "" "-flto -O2"
++   {pr12760b.c} {} "libpr12760.a"}
++  {"PR ld/12760"
++   "-O2 -Wl,-e,foo -nostdlib -flto -fuse-linker-plugin tmpdir/pr12760a.o -Wl,--start-group tmpdir/libpr12760.a -Wl,--end-group" ""
++   {dummy.c} {} "pr12760.exe"}
 +}
 +
 +# Generate input files for complex LTO tests for ELF.
@@ -3182,10 +3282,10 @@ index 0000000..d3daa58
 +   "-O2 -flto -fuse-linker-plugin tmpdir/lto-9.o" ""
 +   {dummy.c} {{"nm" {-C} "lto-9.d"}} "lto-9.exe" "c++"}
 +  {"LTO 16a symbol"
-+   "-O2 -e foo -nostdlib -flto -fuse-linker-plugin" "-flto"
++   "-O2 -Wl,-e,foo -nostdlib -flto -fuse-linker-plugin" "-flto"
 +   {lto-16a.c} {{"nm" {} "lto-16a.d"}} "lto-16.exe" "c"}
 +  {"LTO 16b symbol"
-+   "-O2 -e foo -u bar -nostdlib -flto -fuse-linker-plugin" "-flto"
++   "-O2 -Wl,-e,foo -u bar -nostdlib -flto -fuse-linker-plugin" "-flto"
 +   {lto-16a.c lto-16b.c} {{"nm" {} "lto-16b.d"}} "lto-16b.exe" "c"}
 +}
 +
@@ -3510,8 +3610,62 @@ index 0000000..084c07f
 +struct Foo { virtual ~Foo(); };
 +struct Bar:public Foo { Bar() { } };
 +void Func() { new Bar(); }
+diff --git a/ld/testsuite/ld-plugin/pr12758a.s b/ld/testsuite/ld-plugin/pr12758a.s
+new file mode 100644
+index 0000000..04409d0
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr12758a.s
+@@ -0,0 +1,4 @@
++	.text
++	.globl foo
++foo:
++	.dc.a  memcmp
+diff --git a/ld/testsuite/ld-plugin/pr12758b.c b/ld/testsuite/ld-plugin/pr12758b.c
+new file mode 100644
+index 0000000..5bcf116
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr12758b.c
+@@ -0,0 +1,12 @@
++#include <string.h>
++
++int memcmp(const void *cs, const void *ct, size_t count)
++{
++ const unsigned char *su1, *su2;
++ int res = 0;
++
++ for (su1 = cs, su2 = ct; 0 < count; ++su1, ++su2, count--)
++  if ((res = *su1 - *su2) != 0)
++   break;
++ return res;
++}
+diff --git a/ld/testsuite/ld-plugin/pr12760a.c b/ld/testsuite/ld-plugin/pr12760a.c
+new file mode 100644
+index 0000000..6169c26
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr12760a.c
+@@ -0,0 +1,7 @@
++extern void bar ();
++
++void
++foo ()
++{
++  bar ();
++}
+diff --git a/ld/testsuite/ld-plugin/pr12760b.c b/ld/testsuite/ld-plugin/pr12760b.c
+new file mode 100644
+index 0000000..29a9fd8
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr12760b.c
+@@ -0,0 +1,7 @@
++#define linker_warning(x, msg) \
++	static const char __warn_##x[] \
++	__attribute__((used, section(".gnu.warning." #x))) \
++	= msg
++
++void bar (void) {} 
++linker_warning(bar, "Bad bar"); 
 diff --git a/ld/testsuite/lib/ld-lib.exp b/ld/testsuite/lib/ld-lib.exp
-index 0591e8b..8e0ec27 100644
+index 2fb8c4a..66ddd73 100644
 --- a/ld/testsuite/lib/ld-lib.exp
 +++ b/ld/testsuite/lib/ld-lib.exp
 @@ -1459,6 +1459,34 @@ proc check_plugin_api_available { } {
