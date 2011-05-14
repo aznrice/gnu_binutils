@@ -1,3 +1,34 @@
+2011-05-13  Bernd Schmidt  <bernds@codesourcery.com>
+
+	(eelf32_tic6x_linux_be.c, eelf32_tic6x_linux_le.c,
+	eelf32_tic6x_elf_be.c, eelf32_tic6x_elf_le.c): New rules.
+	* Makefile.am (ALL_EMULATIONS): Add these files.
+	(eelf32_tic6x_be.c, eelf32_tic6x_le.c): Depend on tic6xdsbt.em.
+	* Makefile.in: Regenerated.
+	* emultempl/tic6xdsbt.em (is_tic6x_target): Allow more tic6x target
+	vectors.
+	* emulparams/elf32_tic6x_elf_be.sh: New file.
+	* emulparams/elf32_tic6x_elf_le.sh: New file.
+	* emulparams/elf32_tic6x_linux_be.sh: New file.
+	* emulparams/elf32_tic6x_linux_le.sh: New file.
+	* configure.tgt (tic6x-*-elf, tic6x-*-uclinux): New.
+	(tic6x-*-*): Replaced by these.
+
+2011-05-13  Jan Beulich  <jbeulich@novell.com>
+
+	* configure.tgt: Add targets x86_64-*-pe and x86_64-*-pep.
+
+2011-05-09  Paul Brook  <paul@codesourcery.com>
+
+	* emultempl/tic6xdsbt.em (merge_exidx_entries): New.
+	(compare_output_sec_vma): New function.
+	(gld${EMULATION_NAME}_after_allocation): New function.
+	(OPTION_NO_MERGE_EXIDX_ENTRIES): Define.
+	(PARSE_AND_LIST_OPTIONS): Add --no-merge-exidx-entries.
+	(PARSE_AND_LIST_ARGS_CASES): Add OPTION_NO_MERGE_EXIDX_ENTRIES.
+	(LDEMUL_AFTER_ALLOCATION): Set.
+	* ld.texinfo: Document c6x --no-merge-exidx-entries.
+
 2011-05-07  Dave Korn  <dave.korn.cygwin@gmail.com>
 
 	PR ld/12365

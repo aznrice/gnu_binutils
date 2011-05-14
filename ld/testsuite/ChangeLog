@@ -1,3 +1,57 @@
+2011-05-13  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* ld-tic6x/dsbt.ld (OUTPUT_FORMAT): Add.
+	* ld-tic6x/tic6x.exp: Add OSABI tests.
+
+2011-05-13  Alan Modra  <amodra@gmail.com>
+
+	* ld-elf/flags1.d: Don't xfail tic6x.
+	* ld-scripts/weak.exp: Correct comments.  Don't xfail sh-pe.  Remove
+	redundant xfail.
+	* ld-selective/sel-dump.exp: Don't xfail alpha.
+	* ld-selective/selective.exp: Run for alpha.
+	* ld-undefined/weak-undef.exp: Don't xfail hppa64.
+
+2011-05-12  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* config/default.exp (ld_assemble): Pass flags parameter to
+	default_ld_assemble.
+	(ld_assemble_flags): New function.
+	* ld-elf/frame.exp: Pass -mpic and -mpid flags to the assembler on
+	tic6x.
+	* ld-elf/exclude.exp: Likewise.
+	* lib/ld-lib.exp (default_ld_assemble): Take extra argument in_flags
+	and pass it to the assembler.
+
+2011-05-11  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* ld-mips-elf/mips-elf.exp: Add missing $has_newabi tests.
+
+2011-05-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/elf.exp (array_tests): Remove "pr12730".
+	(array_tests_pie): Remove "PIE pr12730".
+	(array_tests_static): Remove "static pr12730".
+
+	* ld-elf/pr12730.cc: Removed.
+	* ld-elf/pr12730.out: Likewise.
+
+2011-05-09  Paul Brook  <paul@codesourcery.com>
+
+	* ld-tic6x/discard-unwind.ld: New.
+	* ld-tic6x/unwind.ld: New.
+	* ld-tic6x/unwind-1.d: New test.
+	* ld-tic6x/unwind-1.s: New test.
+	* ld-tic6x/unwind-2.d: New test.
+	* ld-tic6x/unwind-2.s: New test.
+	* ld-tic6x/unwind-3.d: New test.
+	* ld-tic6x/unwind-3.s: New test.
+	* ld-tic6x/unwind-4.d: New test.
+	* ld-tic6x/unwind-4.s: New test.
+	* ld-tic6x/unwind-5.d: New test.
+	* ld-tic6x/unwind-5.s: New test.
+	* ld-tic6x/unwind-6.d: New test.
+
 2011-05-07  Dave Korn  <dave.korn.cygwin@gmail.com>
 
 	PR ld/12365
@@ -57,7 +111,6 @@
 	* ld-tic6x/got-reloc-inrange.d: Pass -mpic and -mpid options to gas.
 
 2011-05-03  Paul Brook  <paul@codesourcery.com>
-
 
 	* ld-tic6x/ehtype-reloc-1-rel.d: New test.
 	* ld-tic6x/ehtype-reloc-1.d: New test.

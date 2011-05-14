@@ -1,3 +1,68 @@
+2011-05-13  Frederic Marchal  <fmarchal@perso.be>
+
+	PR gas/12755
+	* config/tc-v850.c (parse_register_list): Correct error string.
+
+2011-05-12  Quentin Neill  <quentin.neill@amd.com>
+
+	* config/tc-i386.c (cpu_arch): Rename PROCESSOR_BDVER1 to PROCESSOR_BD.
+	(i386_align_code): Ditto
+
+2011-05-12  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	PR gas/12715
+	* config/tc-arm.c (parse_big_immediate):  Fix parsing of 64-bit
+	immediates on 32-bit hosts.
+
+2011-05-10  Quentin Neill  <quentin.neill@amd.com>
+
+	* config/tc-i386.c (cpu_arch): Add bdver2 and rename
+	PROCESSOR_BDVER1 to PROCESSOR_BDVER.
+	(i386_align_code): Rename PROCESSOR_BDVER1.
+	(processor_type): Ditto.
+	* doc/c-i386.texi: Add bdver2.
+
+2011-05-10  Alan Modra  <amodra@gmail.com>
+
+	* dw2gencfi.c (tc_cfi_endproc): Avoid "set but not used" error.
+
+2011-05-09  Paul Brook  <paul@codesourcery.com>
+
+	* config/tc-tic6x.c (streq): Define.
+	(tic6x_get_unwind): New.
+	(s_tic6x_cantunwind, s_tic6x_handlerdata, s_tic6x_endp,
+	s_tic6x_personalityindex, s_tic6x_personality): New functions.
+	(md_pseudo_table): Add "endp", "handlerdata", "personalityindex",
+	"personality" and "cantunwind".
+	(tic6x_regname_to_dw2regnum, tic6x_frame_initial_instructions,
+	tic6x_start_unwind_section, tic6x_unwind_frame_regs,
+	tic6x_pop_rts_offset_little, tic6x_pop_rts_offset_big,
+	tic6x_unwind_reg_from_dwarf, tic6x_flush_unwind_word,
+	tic6x_unwind_byte, tic6x_unwind_2byte, tic6x_unwind_uleb,
+	tic6x_cfi_startproc, output_exidx_entry, tic6x_output_unwinding,
+	tic6x_cfi_endproc): New.
+	* config/tc-tic6x.h (TIC6X_NUM_UNWIND_REGS): Define.
+	(tic6x_unwind_info): New.
+	(tic6x_segment_info_type): Add marked_pr_dependency, unwind and
+	text_unwind.
+	(TARGET_USE_CFIPOP, tc_regname_to_dw2regnum,
+	tc_cfi_frame_initial_instructions, DWARF2_DEFAULT_RETURN_COLUMN,
+	DWARF2_CIE_DATA_ALIGNMENT, tc_cfi_startproc, tc_cfi_endproc,
+	tc_cfi_section_name): Define.
+	* doc/c-tic6x.texi: Document new unwinding directives.
+	* dw2gencfi.c (tc_cfi_startproc, tc_cfi_endproc): Add default
+	definitions.
+	(cfi_insn_data, fde_entry, CFI_adjust_cfa_offset, CFI_return_column,
+	CFI_rel_offset, CFI_escape, CFI_signal_frame, CFI_val_encoded_addr):
+	Move to dw2gencfi.h.
+	(CFI_EMIT_target): Define.
+	(dot_cfi_sections): Check tc_cfi_section_name.
+	(dot_cfi_startproc): Use tc_cfi_startproc.
+	(dot_cfi_endproc): Use tc_cfi_endproc.
+	* dw2gencfi.h (cfi_insn_data, fde_entry, CFI_adjust_cfa_offset,
+	CFI_return_column, CFI_rel_offset, CFI_escape, CFI_signal_frame,
+	CFI_val_encoded_addr):  Move to here from dw2gencfi.c.
+
 2011-05-07  Alan Modra  <amodra@gmail.com>
 
 	* dw2gencfi.c (CUR_SEG, SET_CUR_SEG, HANDLED, SET_HANDLED): Define.
