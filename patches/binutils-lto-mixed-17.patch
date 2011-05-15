@@ -54,6 +54,12 @@ include/elf/
 
 ld/
 
+2011-05-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12760
+	* plugin.c (plugin_notice): Call bfd_link_repair_undef_list when
+	undefining symbols from plugin dummy.
+
 2011-05-14  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12760
@@ -2162,7 +2168,7 @@ index 57ce8d7..22f9885 100644
 +
  #endif
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 8d9603b..2cf1fc2 100644
+index 8d9603b..9c09387 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -209,6 +209,17 @@ plugin_opt_plugin_arg (const char *arg)
@@ -2193,7 +2199,7 @@ index 8d9603b..2cf1fc2 100644
        /* Discard the real file's BFD and substitute the dummy one.  */
  
        /* BFD archive handling caches elements so we can't call
-@@ -926,12 +940,19 @@ plugin_notice (struct bfd_link_info *info,
+@@ -926,12 +940,25 @@ plugin_notice (struct bfd_link_info *info,
  	 definition, and strong symbols will normally cause multiple
  	 definition errors.  Avoid this by making the symbol appear
  	 to be undefined.  */
@@ -2207,12 +2213,18 @@ index 8d9603b..2cf1fc2 100644
 +	{
 +	  h->u.undef.abfd = h->u.def.section->owner;
 +	  h->type = bfd_link_hash_undefweak;
++	  if (h->u.undef.next != NULL
++	      || link_info.hash->undefs_tail == h)
++	    bfd_link_repair_undef_list (link_info.hash);
 +	}
 +      else if (h->type == bfd_link_hash_common
 +	       && is_ir_dummy_bfd (h->u.c.p->section->owner))
 +	{
 +	  h->u.undef.abfd = h->u.c.p->section->owner;
 +	  h->type = bfd_link_hash_undefweak;
++	  if (h->u.undef.next != NULL
++	      || link_info.hash->undefs_tail == h)
++	    bfd_link_repair_undef_list (link_info.hash);
 +	}
      }
  
