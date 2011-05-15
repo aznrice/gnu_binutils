@@ -1,5 +1,10 @@
 2011-05-15  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-lto-save-1.patch: New.
+	* README: Apply it.
+
+2011-05-15  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-lto-mixed-17.patch: Call bfd_link_repair_undef_list
 	when undefining symbols from plugin dummy.
 
