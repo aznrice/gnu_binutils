@@ -1,7 +1,6 @@
-2011-05-15  H.J. Lu  <hjl.tools@gmail.com>
+2011-05-17  H.J. Lu  <hjl.tools@gmail.com>
 
-	* binutils-lto-save-1.patch: New.
-	* README: Apply it.
+	* binutils-lto-mixed-17.patch: Updated.  Add -plugin-save-temps.
 
 2011-05-15  H.J. Lu  <hjl.tools@gmail.com>
 
