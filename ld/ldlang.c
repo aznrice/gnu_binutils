@@ -4048,9 +4048,8 @@ print_assignment (lang_assignment_statement_type *assignment,
 	  if (h)
 	    {
 	      value = h->u.def.value;
-
-	      if (expld.result.section != NULL)
-		value += expld.result.section->vma;
+	      value += h->u.def.section->output_section->vma;
+	      value += h->u.def.section->output_offset;
 
 	      minfo ("[0x%V]", value);
 	    }
@@ -6912,11 +6911,13 @@ lang_leave_output_section_statement (fill_type *fill, const char *memspec,
 		    current_section->load_base != NULL,
 		    current_section->addr_tree != NULL);
 
-  /* If this section has no load region or base, but has the same
+  /* If this section has no load region or base, but uses the same
      region as the previous section, then propagate the previous
      section's load region.  */
 
-  if (!current_section->lma_region && !current_section->load_base
+  if (current_section->lma_region == NULL
+      && current_section->load_base == NULL
+      && current_section->addr_tree == NULL
       && current_section->region == current_section->prev->region)
     current_section->lma_region = current_section->prev->lma_region;
 
