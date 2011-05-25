@@ -1,3 +1,35 @@
+2011-05-24  Hans-Peter Nilsson  <hp@axis.com>
+
+	* ld-cris/tls-e-tpoffcomm1.d: Adjust for second PR12763 change,
+	setting TLS file offset.
+
+2011-05-23  Nick Clifton  <nickc@redhat.com>
+
+	* ld-elf/shared.exp: Revert previous delta.  Do not build
+	libraries in a non-native environment.
+
+2011-05-23  Alan Modra  <amodra@gmail.com>
+
+	PR 12763
+	* ld-elf/binutils.exp: Don't run tdata3 for hppa64.
+
+2011-05-21  Hans-Peter Nilsson  <hp@axis.com>
+
+	* ld-cris/tls-e-tpoffcomm1.d: Adjust for PR12763 change removing
+	empty program header.
+
+2011-05-21  Alan Modra  <amodra@gmail.com>
+
+	PR 12763
+	* ld-elf/tdata3.s: New test.
+	* ld-elf/tbss3.s: New test.
+	* ld-elf/binutils.exp: Consolidate tbss and tdata tests.
+
+2011-05-20  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* ld-tic6x/pcr-reloc.d: New test.
+	* ld-tic6x/pcr-reloc.s: New test.
+
 2011-05-18  Nick Clifton  <nickc@redhat.com>
 
 	PR ld/12761
