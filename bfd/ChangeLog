@@ -1,3 +1,24 @@
+2011-05-27  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/12710
+	* archive.c (_bfd_get_elt_at_filepos): Set correct error value if
+	unable to read a file pointed to by an entry in a thin archive.
+	(adjust_relative_path): Use lrealpath to canonicalize paths.
+	Handle the case where the reference path is above the current
+	path in the directory tree.
+
+2011-05-26  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12809
+	* elf64-x86-64.c (elf_x86_64_relocate_section): Handle
+	R_X86_64_TPOFF64 in executable.
+
+2011-05-26  Alan Modra  <amodra@gmail.com>
+
+	* elf-bfd.h (SYMBOL_REFERENCES_LOCAL): Remove most of comment.
+	* elflink.c (_bfd_elf_symbol_refs_local_p): Expand
+	local_protected comment.
+
 2011-05-25  Tristan Gingold  <gingold@adacore.com>
 
 	* configure.in (bfd_elf32_ia64_big_vec, bfd_elf32_ia64_hpux_big_vec)
