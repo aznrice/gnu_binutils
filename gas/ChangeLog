@@ -1,3 +1,26 @@
+2011-05-31  Paul Brook  <paul@codesourcery.com>
+
+	* config/tc-arm.c (arm_cpus): Add Cortex-R5.
+	(arm_extensions): Allow idiv on ARMv7-R.
+	* doc/c-arm.text: Update idiv extension restrictions.
+
+2011-05-31  Paul Brook  <paul@codesourcery.com>
+
+	* config/tc-arm.c (arm_force_relocation): Resolve all pc-relative
+	loads.
+
+2011-05-31  Paul Brook  <paul@codesourcery.com>
+
+	* config/tc-arm.c (do_t_branch): Avoid relaxing branches to constant
+	addresses.
+
+2011-05-31  Paul Brook  <paul@codesourcery.com>
+	Nathan Sidwell  <nathan@codesourcery.com>
+
+	* config/tc-arm.c (fix_new_arm): Create an absolute symbol for
+	pc-relative fixes to constants.
+	* config/tc-arm.h (TC_FORCE_RELOCATATION_ABS): Define.
+	
 2011-05-27  Nick Clifton  <nickc@redhat.com>
 
 	* config/tc-s390.c (md_begin): Remove unused variable dup_insn.

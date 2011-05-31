@@ -9845,7 +9845,9 @@ do_t_branch (void)
 
   if (unified_syntax
       && (inst.size_req == 4
-	  || (inst.size_req != 2 && inst.operands[0].hasreloc)))
+	  || (inst.size_req != 2
+	      && (inst.operands[0].hasreloc
+		  || inst.reloc.exp.X_op == O_constant))))
     {
       inst.instruction = THUMB_OP32(opcode);
       if (cond == COND_ALWAYS)
@@ -15434,6 +15436,29 @@ fix_new_arm (fragS *	   frag,
   switch (exp->X_op)
     {
     case O_constant:
+      if (pc_rel)
+	{
+	  /* Create an absolute valued symbol, so we have something to
+             refer to in the object file.  Unfortunately for us, gas's
+             generic expression parsing will already have folded out
+             any use of .set foo/.type foo %function that may have
+             been used to set type information of the target location,
+             that's being specified symbolically.  We have to presume
+             the user knows what they are doing.  */
+	  char name[16 + 8];
+	  symbolS *symbol;
+
+	  sprintf (name, "*ABS*0x%lx", (unsigned long)exp->X_add_number);
+
+	  symbol = symbol_find_or_make (name);
+	  S_SET_SEGMENT (symbol, absolute_section);
+	  symbol_set_frag (symbol, &zero_address_frag);
+	  S_SET_VALUE (symbol, exp->X_add_number);
+	  exp->X_op = O_symbol;
+	  exp->X_add_symbol = symbol;
+	  exp->X_add_number = 0;
+	}
+      /* FALLTHROUGH */
     case O_symbol:
     case O_add:
     case O_subtract:
@@ -21870,14 +21895,25 @@ arm_force_relocation (struct fix * fixp)
     }
 #endif
 
-  /* Resolve these relocations even if the symbol is extern or weak.  */
+  /* Resolve these relocations even if the symbol is extern or weak.
+     Technically this is probably wrong due to symbol preemption.
+     In practice these relocations do not have enough range to be useful
+     at dynamic link time, and some code (e.g. in the Linux kernel)
+     expects these references to be resolved.  */
   if (fixp->fx_r_type == BFD_RELOC_ARM_IMMEDIATE
       || fixp->fx_r_type == BFD_RELOC_ARM_OFFSET_IMM
+      || fixp->fx_r_type == BFD_RELOC_ARM_OFFSET_IMM8
       || fixp->fx_r_type == BFD_RELOC_ARM_ADRL_IMMEDIATE
+      || fixp->fx_r_type == BFD_RELOC_ARM_CP_OFF_IMM
+      || fixp->fx_r_type == BFD_RELOC_ARM_CP_OFF_IMM_S2
+      || fixp->fx_r_type == BFD_RELOC_ARM_THUMB_OFFSET
       || fixp->fx_r_type == BFD_RELOC_ARM_T32_ADD_IMM
       || fixp->fx_r_type == BFD_RELOC_ARM_T32_IMMEDIATE
       || fixp->fx_r_type == BFD_RELOC_ARM_T32_IMM12
-      || fixp->fx_r_type == BFD_RELOC_ARM_T32_ADD_PC12)
+      || fixp->fx_r_type == BFD_RELOC_ARM_T32_OFFSET_IMM
+      || fixp->fx_r_type == BFD_RELOC_ARM_T32_ADD_PC12
+      || fixp->fx_r_type == BFD_RELOC_ARM_T32_CP_OFF_IMM
+      || fixp->fx_r_type == BFD_RELOC_ARM_T32_CP_OFF_IMM_S2)
     return 0;
 
   /* Always leave these relocations for the linker.  */
@@ -22769,6 +22805,8 @@ static const struct arm_cpu_option_table arm_cpus[] =
   {"cortex-r4",		ARM_ARCH_V7R,	 FPU_NONE,	  "Cortex-R4"},
   {"cortex-r4f",	ARM_ARCH_V7R,	 FPU_ARCH_VFP_V3D16,
   							  "Cortex-R4F"},
+  {"cortex-r5",		ARM_ARCH_V7R_IDIV,
+					 FPU_NONE,	  "Cortex-R5"},
   {"cortex-m4",		ARM_ARCH_V7EM,	 FPU_NONE,	  "Cortex-M4"},
   {"cortex-m3",		ARM_ARCH_V7M,	 FPU_NONE,	  "Cortex-M3"},
   {"cortex-m1",		ARM_ARCH_V6SM,	 FPU_NONE,	  "Cortex-M1"},
@@ -22852,7 +22890,7 @@ struct arm_option_extension_value_table
 static const struct arm_option_extension_value_table arm_extensions[] =
 {
   {"idiv",	ARM_FEATURE (ARM_EXT_ADIV | ARM_EXT_DIV, 0),
-				   ARM_FEATURE (ARM_EXT_V7A, 0)},
+				   ARM_FEATURE (ARM_EXT_V7A | ARM_EXT_V7R, 0)},
   {"iwmmxt",	ARM_FEATURE (0, ARM_CEXT_IWMMXT),	ARM_ANY},
   {"iwmmxt2",	ARM_FEATURE (0, ARM_CEXT_IWMMXT2),	ARM_ANY},
   {"maverick",	ARM_FEATURE (0, ARM_CEXT_MAVERICK),	ARM_ANY},
