@@ -1,3 +1,16 @@
+2011-06-02  Nick Clifton  <nickc@redhat.com>
+
+	* resres.c: Fix spelling typo.
+	* windint.h: Likewise.
+	* windmc.c: Likewise.
+	* windres.c: Likewise.
+	* po/POTFILES.in: Regenerate.
+	* po/binutils.pot: Regenerate.
+
+2011-06-01  Daniel Jacobowitz  <drow@false.org>
+
+	* MAINTAINERS: Update my email address.
+
 2011-05-31  Matthias Klose  <doko@ubuntu.com>
 
 	* configure.in (BUILD_INSTALL_MISC): Only add embedspu once.

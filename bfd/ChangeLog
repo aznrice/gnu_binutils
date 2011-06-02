@@ -1,3 +1,39 @@
+2011-06-02  Nick Clifton  <nickc@redhat.com>
+
+	* coff-mcore.c: Fix spelling typo.
+	* coff-stgo32.c: Likewise.
+	* elf32-arm.c: Likewise.
+	* elf32-avr.c: Likewise.
+	* elf-m68hc1x.c: Likewise.
+	* elf32-mcore.c: Likewise.
+	* elf32-mep.c: Likewise.
+	* elf32-mt.c: Likewise.
+	* elf32-ppc.c: Likewise.
+	* elf32-xtensa.c: Likewise.
+	* elf64-ppc.c: Likewise.
+	* elfxx-mips.c: Likewise.
+	* netbsd.h: Likewise.
+	* nlmcode.h: Likewise.
+	* vms-alpha.c: Likewise.
+	* po/bfd.pot: Regenerate.
+	* po/SRC-POTFILES.in: Regenerate.
+
+2011-06-01  DJ Delorie  <dj@redhat.com>
+
+	* config.bfd: Add bfd_elf32_rx_be_ns_vec.
+	* target.c: Likewise.
+	* configure.in: Likewise.
+	* configure.in: Regenerate.
+	* elf32-rx.c: Add elf32-rx-be-ns target.
+	(rx_elf_object_p): Never allow the be-ns target by default,
+	only allow it if the user requests it.
+
+2011-06-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-i386.c (elf_i386_size_dynamic_sections): Properly warn
+	relocation in readonly section in a shared object.
+	* elf64-x86-64.c (elf_x86_64_size_dynamic_sections): Likewise.
+
 2011-05-31  Nick Clifton  <nickc@redhat.com>
 
 	* archive.c (adjust_relative_path): Fix comment to prevent it
