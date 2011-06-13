@@ -1,3 +1,26 @@
+2011-06-13  Walter Lee  <walt@tilera.com>
+
+	* gas/tilepro/t_constants.s: New file.
+	* gas/tilepro/t_constants.d: Likewise.
+	* gas/tilepro/t_insns.s: Likewise.
+	* gas/tilepro/tilepro.exp: Likewise.
+	* gas/tilepro/t_insns.d: Likewise.
+	* gas/tilegx/tilegx.exp: Likewise.
+	* gas/tilegx/t_insns.d: Likewise.
+	* gas/tilegx/t_insns.s: Likewise.
+
+2011-06-13  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/12854
+	* gas/arm/shift-bad.s: New test.
+	* gas/arm/shift-bad.l: Expcted error output.
+	* gas/arm/shift-bad.s: New control file.
+
+2011-06-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/arch-10-lzcnt.d: Updated.
+	* gas/i386/x86-64-arch-2-lzcnt.d: Likewise.
+
 2011-06-10  H.J. Lu  <hongjiu.lu@intel.com>
 
 	AVX Programming Reference (June, 2011)
