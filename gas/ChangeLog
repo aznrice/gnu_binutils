@@ -1,3 +1,35 @@
+2011-06-20  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure.tgt: Revert x32 change.
+
+2011-06-20  Nick Clifton  <nickc@redhat.com>
+
+	* doc/Makefile.am: (CPU_DOCS): Add c-xstormy16.texi.
+	* doc/Makefile.in: Regenerate.
+	* doc/all.texi: Set XSTORMY16.
+	* doc/c-xstormy16.texi: New file.
+
+2011-06-19  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure.tgt: Support x32.
+
+2011-06-15  Nick Clifton  <nickc@redhat.com>
+
+	* NEWS: Mention addition of TILEPRO and TIKE-Gx support.
+
+2011-06-14  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-ppc.h (struct ppc_tc_sy): Complete comment on within.
+	(tc_new_dot_label): Define.
+	(ppc_new_dot_label): Declare.
+	* config/tc-ppc.c (ppc_frob_label): Set within target field.
+	(ppc_fix_adjustable): Use this field to adjust the reloc.
+	(ppc_new_dot_label): New function.
+
+2011-06-14  Alan Modra  <amodra@gmail.com>
+
+	* po/POTFILES.in: Regenerate.
+
 2011-06-13  Walter Lee  <walt@tilera.com>
 
 	* Makefile.am (TARGET_CPU_CFILES): Add config/tc-tilegx.c and

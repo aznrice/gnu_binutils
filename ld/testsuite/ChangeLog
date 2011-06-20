@@ -1,3 +1,104 @@
+2011-06-20  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-ifunc/ifunc-1-local-x86.d: Adjusted.
+	* ld-ifunc/ifunc-1-x86.d: Likewise.
+	* ld-ifunc/ifunc-3a-x86.d: Likewise.
+
+2011-06-20  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/eh1.d: Revert x32 change.
+	* ld-elf/eh2.d: Likewise.
+	* ld-elf/eh3.d: Likewise.
+	* ld-elf/eh4.d: Likewise.
+
+2011-06-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR ld/12570
+	* ld-x86-64/x86-64.exp: Link some testcases with
+	--no-ld-generated-unwind-info.
+	* ld-x86-64/tlsbin.rd: Add --no-ld-generated-unwind-info to ld
+	comment.
+	* ld-x86-64/tlsdesc.dd: Likewise.
+	* ld-x86-64/tlspic.dd: Likewise.
+	* ld-x86-64/tlsdesc.sd: Likewise.
+	* ld-x86-64/tlspic.rd: Likewise.
+	* ld-x86-64/tlsbindesc.rd: Likewise.
+	* ld-x86-64/tlsbindesc.sd: Likewise.
+	* ld-x86-64/tlsbin.td: Likewise.
+	* ld-x86-64/tlsdesc.pd: Likewise.
+	* ld-x86-64/tlsdesc.td: Likewise.
+	* ld-x86-64/tlsbindesc.dd: Likewise.
+	* ld-x86-64/tlsbin.dd: Likewise.
+	* ld-x86-64/tlsgdesc.rd: Likewise.
+	* ld-x86-64/tlspic.sd: Likewise.
+	* ld-x86-64/tlsbindesc.td: Likewise.
+	* ld-x86-64/tlspic.td: Likewise.
+	* ld-x86-64/tlsbin.sd: Likewise.
+	* ld-x86-64/ilp32-4.d: Likewise.
+	* ld-x86-64/tlsgdesc.dd: Add --no-ld-generated-unwind-info to ld
+	comment.  Adjust.
+	* ld-x86-64/tlsdesc.rd: Likewise.
+	* ld-x86-64/tlsgd6.dd: Adjust.
+	* ld-x86-64/tlsgd5.dd: Likewise.
+	* ld-i386/i386.exp: Link some testcases with
+	--no-ld-generated-unwind-info.
+	* ld-i386/tlsbin.rd: Add --no-ld-generated-unwind-info to ld
+	comment..
+	* ld-i386/tlsdesc.dd: Likewise.
+	* ld-i386/tlspic.dd: Likewise.
+	* ld-i386/tlsdesc.sd: Likewise.
+	* ld-i386/tlsgdesc.dd: Likewise.
+	* ld-i386/tlsnopic.sd: Likewise.
+	* ld-i386/tlspic.rd: Likewise.
+	* ld-i386/tlsdesc.rd: Likewise.
+	* ld-i386/tlsbindesc.rd: Likewise.
+	* ld-i386/tlsbindesc.sd: Likewise.
+	* ld-i386/tlsbin.td: Likewise.
+	* ld-i386/tlsdesc.td: Likewise.
+	* ld-i386/tlsnopic.dd: Likewise.
+	* ld-i386/tlsbindesc.dd: Likewise.
+	* ld-i386/tlsbin.dd: Likewise.
+	* ld-i386/tlsgdesc.rd: Likewise.
+	* ld-i386/tlspic.sd: Likewise.
+	* ld-i386/tlsnopic.rd: Likewise.
+	* ld-i386/tlsbindesc.td: Likewise.
+	* ld-i386/tlspic.td: Likewise.
+	* ld-i386/tlsbin.sd: Likewise.
+
+2011-06-19  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/eh1.d: Skip x32.
+	* ld-elf/eh2.d: Likewise.
+	* ld-elf/eh3.d: Likewise.
+	* ld-elf/eh4.d: Likewise.
+
+	* ld-elfvsb/elfvsb.exp: Only xfail 64bit x86_64-*-linux*.
+	* ld-shared/shared.exp: Likewise. 
+
+	* ld-ifunc/ifunc-1-local-x86.d: Support x32.
+	* ld-ifunc/ifunc-1-x86.d: Likewise.
+	* ld-ifunc/ifunc-3a-x86.d: Likewise.
+	* ld-x86-64/pcrel16.d: Likewise.
+
+	* ld-x86-64/x86-64.exp (x86_64tests): Add missing -melf_x86_64.
+
+2011-06-16  Alan Modra  <amodra@gmail.com>
+
+	* ld-elfvers/vers2.ver: Don't assume any particular index for
+	version reference.
+	* ld-elfvers/vers3.ver: Likewise.
+	* ld-elfvers/vers19.ver: Likewise.
+	* ld-elfvers/vers22.ver: Likewise.
+	* ld-elfvers/vers27d4.ver: Likewise.
+	* ld-elfvers/vers28c.ver: Likewise.
+
+2011-06-14  Alan Modra  <amodra@gmail.com>
+
+	* ld-elf/elf.exp: Don't attempt to build symbol3.a for hppa64-hpux.
+	* ld-elf/warn3.d: Correct target selection and comment.
+
+	* ld-elf/pr12851.d: Correct target selection and comment.
+
 2011-06-13  Walter Lee  <walt@tilera.com>
 
 	* ld-elf/eh5.d: Don't run on tile*.

@@ -360,6 +360,7 @@ Layout::Layout(int number_of_input_files, Script_options* script_options)
     section_headers_(NULL),
     tls_segment_(NULL),
     relro_segment_(NULL),
+    interp_segment_(NULL),
     increase_relro_(0),
     symtab_section_(NULL),
     symtab_xindex_(NULL),
@@ -618,11 +619,8 @@ Layout::find_output_segment(elfcpp::PT type, elfcpp::Elf_Word set,
 
 // Return the output section to use for section NAME with type TYPE
 // and section flags FLAGS.  NAME must be canonicalized in the string
-// pool, and NAME_KEY is the key.  IS_INTERP is true if this is the
-// .interp section.  IS_DYNAMIC_LINKER_SECTION is true if this section
-// is used by the dynamic linker.  IS_RELRO is true for a relro
-// section.  IS_LAST_RELRO is true for the last relro section.
-// IS_FIRST_NON_RELRO is true for the first non-relro section.
+// pool, and NAME_KEY is the key.  ORDER is where this should appear
+// in the output sections.  IS_RELRO is true for a relro section.
 
 Output_section*
 Layout::get_output_section(const char* name, Stringpool::Key name_key,
@@ -687,12 +685,9 @@ Layout::get_output_section(const char* name, Stringpool::Key name_key,
 // RELOBJ, with type TYPE and flags FLAGS.  RELOBJ may be NULL for a
 // linker created section.  IS_INPUT_SECTION is true if we are
 // choosing an output section for an input section found in a input
-// file.  IS_INTERP is true if this is the .interp section.
-// IS_DYNAMIC_LINKER_SECTION is true if this section is used by the
-// dynamic linker.  IS_RELRO is true for a relro section.
-// IS_LAST_RELRO is true for the last relro section.
-// IS_FIRST_NON_RELRO is true for the first non-relro section.  This
-// will return NULL if the input section should be discarded.
+// file.  ORDER is where this section should appear in the output
+// sections.  IS_RELRO is true for a relro section.  This will return
+// NULL if the input section should be discarded.
 
 Output_section*
 Layout::choose_output_section(const Relobj* relobj, const char* name,
@@ -1145,6 +1140,8 @@ Layout::layout_eh_frame(Sized_relobj_file<size, big_endian>* object,
 
   gold_assert(this->eh_frame_section_ == os);
 
+  elfcpp::Elf_Xword orig_flags = os->flags();
+
   if (!parameters->incremental()
       && this->eh_frame_data_->add_ehframe_input_section(object,
 							 symbols,
@@ -1158,8 +1155,12 @@ Layout::layout_eh_frame(Sized_relobj_file<size, big_endian>* object,
       os->update_flags_for_input_section(shdr.get_sh_flags());
 
       // A writable .eh_frame section is a RELRO section.
-      if ((shdr.get_sh_flags() & elfcpp::SHF_WRITE) != 0)
-	os->set_is_relro();
+      if ((orig_flags & (elfcpp::SHF_WRITE | elfcpp::SHF_EXECINSTR))
+	  != (os->flags() & (elfcpp::SHF_WRITE | elfcpp::SHF_EXECINSTR)))
+	{
+	  os->set_is_relro();
+	  os->set_order(ORDER_RELRO);
+	}
 
       // We found a .eh_frame section we are going to optimize, so now
       // we can add the set of optimized sections to the output
@@ -1181,6 +1182,10 @@ Layout::layout_eh_frame(Sized_relobj_file<size, big_endian>* object,
       *off = os->add_input_section(this, object, shndx, name, shdr, reloc_shndx,
 				   saw_sections_clause);
       this->have_added_input_section_ = true;
+
+      if ((orig_flags & (elfcpp::SHF_WRITE | elfcpp::SHF_EXECINSTR))
+	  != (os->flags() & (elfcpp::SHF_WRITE | elfcpp::SHF_EXECINSTR)))
+	os->set_order(this->default_section_order(os, false));
     }
 
   return os;
@@ -1540,6 +1545,20 @@ Layout::attach_allocated_section_to_segment(Output_section* os)
       if (this->relro_segment_ == NULL)
 	this->make_output_segment(elfcpp::PT_GNU_RELRO, seg_flags);
       this->relro_segment_->add_output_section_to_nonload(os, seg_flags);
+    }
+
+  // If we see a section named .interp, put it into a PT_INTERP
+  // segment.  This seems broken to me, but this is what GNU ld does,
+  // and glibc expects it.
+  if (strcmp(os->name(), ".interp") == 0
+      && !this->script_options_->saw_phdrs_clause())
+    {
+      if (this->interp_segment_ == NULL)
+	this->make_output_segment(elfcpp::PT_INTERP, seg_flags);
+      else
+	gold_warning(_("multiple '.interp' sections in input files "
+		       "may cause confusing PT_INTERP segment"));
+      this->interp_segment_->add_output_section_to_nonload(os, seg_flags);
     }
 }
 
@@ -2163,8 +2182,11 @@ Layout::finalize(const Input_objects* input_objects, Symbol_table* symtab,
 				  &versions);
 
       // Create the .interp section to hold the name of the
-      // interpreter, and put it in a PT_INTERP segment.
-      if (!parameters->options().shared())
+      // interpreter, and put it in a PT_INTERP segment.  Don't do it
+      // if we saw a .interp section in an input file.
+      if ((!parameters->options().shared()
+	   || parameters->options().dynamic_linker() != NULL)
+	  && this->interp_segment_ == NULL)
         this->create_interp(target);
 
       // Finish the .dynamic section to hold the dynamic data, and put
@@ -3845,6 +3867,8 @@ Layout::sized_create_version_sections(
 void
 Layout::create_interp(const Target* target)
 {
+  gold_assert(this->interp_segment_ == NULL);
+
   const char* interp = parameters->options().dynamic_linker();
   if (interp == NULL)
     {
@@ -3862,13 +3886,6 @@ Layout::create_interp(const Target* target)
 						     false, ORDER_INTERP,
 						     false);
   osec->add_output_section_data(odata);
-
-  if (!this->script_options_->saw_phdrs_clause())
-    {
-      Output_segment* oseg = this->make_output_segment(elfcpp::PT_INTERP,
-						       elfcpp::PF_R);
-      oseg->add_output_section_to_nonload(osec, elfcpp::PF_R);
-    }
 }
 
 // Add dynamic tags for the PLT and the dynamic relocs.  This is
@@ -4072,7 +4089,8 @@ Layout::finish_dynamic_section(const Input_objects* input_objects,
            p != this->segment_list_.end();
            ++p)
         {
-          if (((*p)->flags() & elfcpp::PF_W) == 0
+          if ((*p)->type() == elfcpp::PT_LOAD
+	      && ((*p)->flags() & elfcpp::PF_W) == 0
               && (*p)->has_dynamic_reloc())
             {
               have_textrel = true;
@@ -4092,7 +4110,7 @@ Layout::finish_dynamic_section(const Input_objects* input_objects,
         {
           if (((*p)->flags() & elfcpp::SHF_ALLOC) != 0
               && ((*p)->flags() & elfcpp::SHF_WRITE) == 0
-              && ((*p)->has_dynamic_reloc()))
+              && (*p)->has_dynamic_reloc())
             {
               have_textrel = true;
               break;
@@ -4127,7 +4145,8 @@ Layout::finish_dynamic_section(const Input_objects* input_objects,
     }
   if (parameters->options().now())
     flags |= elfcpp::DF_BIND_NOW;
-  odyn->add_constant(elfcpp::DT_FLAGS, flags);
+  if (flags != 0)
+    odyn->add_constant(elfcpp::DT_FLAGS, flags);
 
   flags = 0;
   if (parameters->options().initfirst())
@@ -4152,7 +4171,7 @@ Layout::finish_dynamic_section(const Input_objects* input_objects,
     flags |= elfcpp::DF_1_ORIGIN;
   if (parameters->options().now())
     flags |= elfcpp::DF_1_NOW;
-  if (flags)
+  if (flags != 0)
     odyn->add_constant(elfcpp::DT_FLAGS_1, flags);
 }
 
@@ -4389,6 +4408,8 @@ Layout::make_output_segment(elfcpp::Elf_Word type, elfcpp::Elf_Word flags)
     this->tls_segment_ = oseg;
   else if (type == elfcpp::PT_GNU_RELRO)
     this->relro_segment_ = oseg;
+  else if (type == elfcpp::PT_INTERP)
+    this->interp_segment_ = oseg;
 
   return oseg;
 }

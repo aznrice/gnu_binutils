@@ -1,3 +1,127 @@
+2011-06-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR ld/12570
+	* elf-eh-frame.c (_bfd_elf_parse_eh_frame): Allow no relocations
+	at all for linker created .eh_frame sections.
+	(_bfd_elf_discard_section_eh_frame): Handle linker created
+	.eh_frame sections with no relocations.
+	* elf64-x86-64.c: Include dwarf2.h.
+	(elf_x86_64_eh_frame_plt): New variable.
+	(PLT_CIE_LENGTH, PLT_FDE_LENGTH, PLT_FDE_START_OFFSET,
+	PLT_FDE_LEN_OFFSET): Define.
+	(struct elf_x86_64_link_hash_table): Add plt_eh_frame field.
+	(elf_x86_64_create_dynamic_sections): Create and fill in
+	.eh_frame section for .plt section.
+	(elf_x86_64_size_dynamic_sections): Write .plt section size
+	into .eh_frame FDE covering .plt section.
+	(elf_x86_64_finish_dynamic_sections): Write .plt section
+	start into .eh_frame FDE covering .plt section.  Call
+	_bfd_elf_write_section_eh_frame on htab->plt_eh_frame section.
+	(elf_backend_plt_alignment): Define to 4.
+	* elf32-i386.c: Include dwarf2.h.
+	(elf_i386_eh_frame_plt): New variable.
+	(PLT_CIE_LENGTH, PLT_FDE_LENGTH, PLT_FDE_START_OFFSET,
+	PLT_FDE_LEN_OFFSET): Define.
+	(struct elf_i386_link_hash_table): Add plt_eh_frame field.
+	(elf_i386_create_dynamic_sections): Create and fill in
+	.eh_frame section for .plt section.
+	(elf_i386_size_dynamic_sections): Write .plt section size
+	into .eh_frame FDE covering .plt section.
+	(elf_i386_finish_dynamic_sections): Write .plt section
+	start into .eh_frame FDE covering .plt section.  Call
+	_bfd_elf_write_section_eh_frame on htab->plt_eh_frame section.
+	(elf_backend_plt_alignment): Define to 4.
+
+2011-06-19  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf64-x86-64.c (elf_backend_post_process_headers): Defined
+	for x32.
+
+2011-06-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf64-x86-64.c: Include <stdarg.h> and CORE_HEADER if
+	CORE_HEADER is defined.
+	(elf_x86_64_write_core_note): New.
+	(elf_backend_write_core_note): Likewise.
+
+	* hosts/x86-64linux.h (uint64_t): New.
+	(user_regsx32_struct): Likewise.
+	(elf_gregx32_t): Likewise.
+	(ELF_NGREGX32): Likewise.
+	(elf_gregsetx32_t): Likewise.
+	(elf_prstatusx32): Likewise.
+	(prstatusx32_t): Likewise.
+	(user_fpregs32_struct): Removed.
+	(user_fpxregs32_struct): Likewise.
+	(user32): Likewise.
+	(elf_fpregset32_t): Likewise.
+	(elf_fpxregset32_t): Likewise.
+	(prgregset32_t): Likewise.
+	(prfpregset32_t): Likewise.
+
+2011-06-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf64-x86-64.c (elf_x86_64_grok_prstatus): Support x32.
+	(elf_x86_64_grok_psinfo): Likewise.
+
+2011-06-16  Nick Clifton  <nickc@redhat.com>
+
+	* elf.c (elf_find_function): Fail if not provided with a symbol
+	table.
+
+2011-06-15  Ulrich Weigand  <ulrich.weigand@linaro.org>
+
+	* elf-bfd.h (elfcore_write_arm_vfp): Add prototype.
+	* elf.c (elfcore_grok_arm_vfp): New function.
+	(elfcore_grok_note): Call it to handle NT_ARM_VFP notes.
+	(elfcore_write_arm_vfp): New function.
+	(elfcore_write_register_note): Call it to handle .reg-arm-vfp.
+
+2011-06-14  Richard Henderson  <rth@redhat.com>
+
+	* elf64-alpha.c (elf64_alpha_copy_indirect_symbol): Rename from
+	elf64_alpha_merge_ind_symbols; adjust for the generic interface.
+	(elf64_alpha_always_size_sections): Don't call
+	elf64_alpha_merge_ind_symbols.
+	(elf_backend_copy_indirect_symbol): New.
+
+2011-06-14  Alan Modra  <amodra@gmail.com>
+
+	PR ld/12887
+	* elf-eh-frame.c (_bfd_elf_parse_eh_frame): Check sec_info_type
+	before doing anything.
+	(_bfd_elf_discard_section_eh_frame): Likewise.
+
+2011-06-14  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am: Formatting.
+	* Makefile.in: Regenerate.
+	* configure.in (bfd_elf64_tilegx_vec): Add elfxx-tilegx.lo.
+	* po/SRC-POTFILES.in: Regnerate.
+
+2011-06-14  Alan Modra  <amodra@gmail.com>
+
+	* elf32-tilepro.c (tilepro_elf_size_dynamic_sections): Don't use PTR.
+	(allocate_dynrelocs, readonly_dynrelocs): Replace PTR with void *.
+	Don't handle warning symbols here.
+	* elfxx-tilegx.c (tilegx_elf_size_dynamic_sections): As above.
+	(allocate_dynrelocs, readonly_dynrelocs): As above.
+
+2011-06-14  Alan Modra  <amodra@gmail.com>
+
+	PR ld/12851
+	* elflink.c (_bfd_elf_gc_mark_extra_sections): New function.
+	(elf_gc_sweep): Don't treat debug and sections like .comment
+	specially here.
+	(bfd_elf_gc_sections): Treat note sections as gc roots only when
+	not part of a group.  Always call gc_mark_extra_sections.
+	* elf-bfd.h (_bfd_elf_gc_mark_extra_sections): Declare.
+	* elfxx-target.h (elf_backend_gc_mark_extra_sections): Default to
+	_bfd_elf_gc_mark_extra_sections.
+	* elf32-arm.c (elf32_arm_gc_mark_extra_sections): Call
+	_bfd_elf_gc_mark_extra_sections.
+	* elf32-tic6x.c (elf32_tic6x_gc_mark_extra_sections): Likewise.
+
 2011-06-13  Nick Clifton  <nickc@redhat.com>
 
 	* elf32-tilepro.c (tilepro_elf_check_relocs): Delete unused local

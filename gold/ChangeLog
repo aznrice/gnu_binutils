@@ -1,3 +1,77 @@
+2011-06-19  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12880
+	* layout.cc (Layout::attach_allocated_section_to_segment): Add a
+	.interp section to a PT_INTERP segment even if we have seen a
+	--dynamic-linker option.  Don't do it if we have seen a PHDRS
+	clause in a linker script.
+	(Layout::finalize): Don't create a .interp section if we've
+	already create a PT_INTERP segment.
+	(Layout::create_interp): Always call choose_output_section (revert
+	patch of 2011-06-17).  Don't create PT_INTERP segment.
+	* script-sections.cc
+	(Script_sections::create_note_and_tls_segments): Add a .interp
+	section to a PT_INTERP segment even if we have seen a
+	--dynamic-linker option.
+
+2011-06-18  Ian Lance Taylor  <iant@google.com>
+
+	* layout.cc (Layout::finish_dynamic_section): Don't set DT_TEXTREL
+	merely because a non-PT_LOAD segment has a dynamic reloc.
+
+2011-06-18  Ian Lance Taylor  <iant@google.com>
+
+	* layout.cc (Layout::finish_dynamic_section): Don't create
+	DT_FLAGS entry if not needed.
+
+2011-06-18  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12745
+	* layout.cc (Layout::layout_eh_frame): Correct handling of
+	writable .eh_frame section.
+
+2011-06-17  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12893
+	* resolve.cc (Symbol_table::resolve): Don't give an error if a
+	symbol is redefined with the exact same object and value.
+
+2011-06-17  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12880
+	* layout.h (class Layout): Add interp_segment_ field.
+	* layout.cc (Layout::Layout): Initialize interp_segment_ field.
+	(Layout::attach_allocated_section_to_segment): If making shared
+	library, put .interp section in PT_INTERP segment.
+	(Layout::finalize): Also call create_interp if -dynamic-linker
+	option was used.
+	(Layout::create_interp): Assert that there is no PT_INTERP
+	segment.  If not using a SECTIONS clause, use make_output_section.
+	(Layout::make_output_segment): Set interp_segment_ if PT_INTERP.
+	* script-sections.cc
+	(Script_sections::create_note_and_tls_segments): If making shared
+	library, put .interp section in PT_INTERP segment.
+
+2011-06-17  Ian Lance Taylor  <iant@google.com>
+
+	* object.cc (Sized_relobj_file::do_layout): Keep warning sections
+	when making a shared library.
+
+2011-06-17  Ian Lance Taylor  <iant@google.com>
+
+	* x86_64.cc (Target_x86_64::Scan::check_non_pic): Add gsym
+	parameter.  Change all callers.  Don't issue warning about PC32
+	against locally defined symbol.
+
+2011-06-16  Ian Lance Taylor  <iant@google.com>
+
+	* symtab.cc (Warnings::issue_warning): Don't warn if relocation
+	occurs in same object.
+
+2011-06-14  Alan Modra  <amodra@gmail.com>
+
+	* po/POTFILES.in: Regenerate.
+
 2011-06-09  Ian Lance Taylor  <iant@google.com>
 
 	* script-sections.cc
