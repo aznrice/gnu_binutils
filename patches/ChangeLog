@@ -1,3 +1,8 @@
+2011-06-20  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-x32-1.patch: New.
+	* README: Apply it.
+
 2011-05-25  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-error-13.patch: New file. Replace ...
