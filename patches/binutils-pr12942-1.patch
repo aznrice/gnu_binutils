@@ -1,0 +1,1037 @@
+bfd/
+
+2011-07-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12942
+	* elf-bfd.h (_bfd_elf_section_already_linked): Replace
+	"asection *" with "struct already_linked *".
+	* libbfd-in.h (_bfd_nolink_section_already_linked): Likewise.
+	(_bfd_generic_section_already_linked): Likewise.
+	(bfd_section_already_linked_table_insert): Likewise.
+	(struct already_linked): New.
+	(struct bfd_section_already_linked): Use it.
+
+	* elf.c (_bfd_elf_make_section_from_shdr): Handle
+	GNU_LTO_COMDAT_SECTION_NAME.
+
+	* elflink.c (_bfd_elf_section_already_linked): Replace.
+	"asection *" with "struct already_linked *".  Replace the plugin
+	dummy with the LTO output.
+	* linker.c (_bfd_generic_section_already_linked): Likewise.
+
+	* section.c (SEC_LTO_COMDAT): New.
+	(GNU_LTO_COMDAT_SECTION_NAME): Likewise.
+
+	* targets.c (struct already_linked): Add forward declaration.
+	(bfd_target): Replace "struct bfd_section *" with
+	"struct already_linked *" in _section_already_linked.
+
+	* bfd-in2.h: Regenerated.
+	* libbfd.h: Likewise.
+
+include/
+
+2011-07-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12942
+	* bfdlink.h (bfd_link_info): Add loading_lto_outputs.
+
+ld/
+
+2011-07-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12942
+	* ldlang.c (section_already_linked): Pass "struct already_linked *"
+	to bfd_section_already_linked.
+	(lang_process): Set link_info.loading_lto_outputs before
+	loading LTO outputs.
+
+	* plugin.c: Include "libbfd.h".
+	(plugin_get_ir_dummy_bfd): Create GNU_LTO_COMDAT_SECTION_NAME
+	section.
+	(asymbol_from_plugin_symbol): Use GNU_LTO_COMDAT_SECTION_NAME
+	with comdat_key.
+	(add_symbols): Call bfd_section_already_linked with comdat_key.
+	(plugin_notice): Set non_ir_ref to TRUE if SEC_LTO_COMDAT is
+	set.
+
+diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
+index 69851be..43d4eda 100644
+--- a/bfd/bfd-in2.h
++++ b/bfd/bfd-in2.h
+@@ -1350,6 +1350,9 @@ typedef struct bfd_section
+      when memory read flag isn't set. */
+ #define SEC_COFF_NOREAD 0x40000000
+ 
++  /* Indicate that this is a special LTO COMDAT section.  */
++#define SEC_LTO_COMDAT 0x80000000
++
+   /*  End of section flags.  */
+ 
+   /* Some internal packed boolean fields.  */
+@@ -1549,6 +1552,9 @@ struct relax_table {
+ #define BFD_COM_SECTION_NAME "*COM*"
+ #define BFD_IND_SECTION_NAME "*IND*"
+ 
++/* GNU LTO COMDAT section name.  */
++#define GNU_LTO_COMDAT_SECTION_NAME ".text.gnu.lto_comdat"
++
+ /* GNU object-only section name.  */
+ #define GNU_OBJECT_ONLY_SECTION_NAME ".gnu_object_only"
+ 
+@@ -5745,6 +5751,7 @@ enum bfd_endian { BFD_ENDIAN_BIG, BFD_ENDIAN_LITTLE, BFD_ENDIAN_UNKNOWN };
+ 
+ /* Forward declaration.  */
+ typedef struct bfd_link_info _bfd_link_info;
++struct already_linked;
+ 
+ typedef struct bfd_target
+ {
+@@ -6070,7 +6077,7 @@ typedef struct bfd_target
+ 
+   /* Check if SEC has been already linked during a reloceatable or
+      final link.  */
+-  void (*_section_already_linked) (bfd *, struct bfd_section *,
++  void (*_section_already_linked) (bfd *, struct already_linked *,
+                                    struct bfd_link_info *);
+ 
+   /* Define a common symbol.  */
+@@ -6140,11 +6147,12 @@ bfd_boolean bfd_link_split_section (bfd *abfd, asection *sec);
+ #define bfd_link_split_section(abfd, sec) \
+        BFD_SEND (abfd, _bfd_link_split_section, (abfd, sec))
+ 
+-void bfd_section_already_linked (bfd *abfd, asection *sec,
++void bfd_section_already_linked (bfd *abfd,
++    struct already_linked *data,
+     struct bfd_link_info *info);
+ 
+-#define bfd_section_already_linked(abfd, sec, info) \
+-       BFD_SEND (abfd, _section_already_linked, (abfd, sec, info))
++#define bfd_section_already_linked(abfd, data, info) \
++       BFD_SEND (abfd, _section_already_linked, (abfd, data, info))
+ 
+ bfd_boolean bfd_generic_define_common_symbol
+    (bfd *output_bfd, struct bfd_link_info *info,
+diff --git a/bfd/elf-bfd.h b/bfd/elf-bfd.h
+index 64a9dc0..b2075a5 100644
+--- a/bfd/elf-bfd.h
++++ b/bfd/elf-bfd.h
+@@ -1793,7 +1793,7 @@ extern bfd_boolean _bfd_elf_match_sections_by_type
+ extern bfd_boolean bfd_elf_is_group_section
+   (bfd *, const struct bfd_section *);
+ extern void _bfd_elf_section_already_linked
+-  (bfd *, struct bfd_section *, struct bfd_link_info *);
++  (bfd *, struct already_linked *, struct bfd_link_info *);
+ extern void bfd_elf_set_group_contents
+   (bfd *, asection *, void *);
+ extern asection *_bfd_elf_check_kept_section
+diff --git a/bfd/elf.c b/bfd/elf.c
+index 98a1463..07994b4 100644
+--- a/bfd/elf.c
++++ b/bfd/elf.c
+@@ -933,6 +933,10 @@ _bfd_elf_make_section_from_shdr (bfd *abfd,
+       && elf_next_in_group (newsect) == NULL)
+     flags |= SEC_LINK_ONCE | SEC_LINK_DUPLICATES_DISCARD;
+ 
++  /* Check the LTO COMDAT section.  */
++  if (CONST_STRNEQ (name, GNU_LTO_COMDAT_SECTION_NAME))
++    flags |= SEC_LTO_COMDAT;
++
+   bed = get_elf_backend_data (abfd);
+   if (bed->elf_backend_section_flags)
+     if (! bed->elf_backend_section_flags (&flags, hdr))
+diff --git a/bfd/elflink.c b/bfd/elflink.c
+index 12fa714..42186db 100644
+--- a/bfd/elflink.c
++++ b/bfd/elflink.c
+@@ -12441,63 +12441,100 @@ section_signature (asection *sec)
+ }
+ 
+ void
+-_bfd_elf_section_already_linked (bfd *abfd, asection *sec,
++_bfd_elf_section_already_linked (bfd *abfd,
++				 struct already_linked *linked,
+ 				 struct bfd_link_info *info)
+ {
+   flagword flags;
+   const char *name, *p;
+   struct bfd_section_already_linked *l;
+   struct bfd_section_already_linked_hash_entry *already_linked_list;
++  asection *sec, *l_sec;
+ 
+-  if (sec->output_section == bfd_abs_section_ptr)
+-    return;
+-
+-  flags = sec->flags;
+-
+-  /* Return if it isn't a linkonce section.  A comdat group section
+-     also has SEC_LINK_ONCE set.  */
+-  if ((flags & SEC_LINK_ONCE) == 0)
+-    return;
+-
+-  /* Don't put group member sections on our list of already linked
+-     sections.  They are handled as a group via their group section.  */
+-  if (elf_sec_group (sec) != NULL)
+-    return;
+-
+-  /* FIXME: When doing a relocatable link, we may have trouble
+-     copying relocations in other sections that refer to local symbols
+-     in the section being discarded.  Those relocations will have to
+-     be converted somehow; as of this writing I'm not sure that any of
+-     the backends handle that correctly.
+-
+-     It is tempting to instead not discard link once sections when
+-     doing a relocatable link (technically, they should be discarded
+-     whenever we are building constructors).  However, that fails,
+-     because the linker winds up combining all the link once sections
+-     into a single large link once section, which defeats the purpose
+-     of having link once sections in the first place.
+-
+-     Also, not merging link once sections in a relocatable link
+-     causes trouble for MIPS ELF, which relies on link once semantics
+-     to handle the .reginfo section correctly.  */
+-
+-  name = section_signature (sec);
+-
+-  if (CONST_STRNEQ (name, ".gnu.linkonce.")
+-      && (p = strchr (name + sizeof (".gnu.linkonce.") - 1, '.')) != NULL)
+-    p++;
++  p = name = linked->comdat_key;
++  if (name)
++    {
++      sec = NULL;
++      flags = SEC_GROUP | SEC_LINK_ONCE | SEC_LINK_DUPLICATES_DISCARD;
++    }
+   else
+-    p = name;
++    {
++      sec = linked->u.sec;
++      if (sec->output_section == bfd_abs_section_ptr)
++	return;
++
++      flags = sec->flags;
++
++      /* Return if it isn't a linkonce section.  A comdat group section
++	 also has SEC_LINK_ONCE set.  */
++      if ((flags & SEC_LINK_ONCE) == 0)
++	return;
++
++      /* Don't put group member sections on our list of already linked
++	 sections.  They are handled as a group via their group section.
++	 */
++      if (elf_sec_group (sec) != NULL)
++	return;
++
++      /* FIXME: When doing a relocatable link, we may have trouble
++	 copying relocations in other sections that refer to local symbols
++	 in the section being discarded.  Those relocations will have to
++	 be converted somehow; as of this writing I'm not sure that any of
++	 the backends handle that correctly.
++
++	 It is tempting to instead not discard link once sections when
++	 doing a relocatable link (technically, they should be discarded
++	 whenever we are building constructors).  However, that fails,
++	 because the linker winds up combining all the link once sections
++	 into a single large link once section, which defeats the purpose
++	 of having link once sections in the first place.
++
++	 Also, not merging link once sections in a relocatable link
++	 causes trouble for MIPS ELF, which relies on link once semantics
++	 to handle the .reginfo section correctly.  */
++
++      name = section_signature (sec);
++
++      if (CONST_STRNEQ (name, ".gnu.linkonce.")
++	  && ((p = strchr (name + sizeof (".gnu.linkonce.") - 1, '.'))
++	      != NULL))
++	p++;
++      else
++	p = name;
++    }
+ 
+   already_linked_list = bfd_section_already_linked_table_lookup (p);
+ 
+   for (l = already_linked_list->entry; l != NULL; l = l->next)
+     {
++      bfd_boolean l_coff_comdat_sec;
++      flagword l_flags;
++      bfd *l_owner;
++      const char *l_name = l->linked.comdat_key;
++      if (l_name)
++	{
++	  l_owner = l->linked.u.abfd;
++	  l_sec = NULL;
++	  l_flags = (SEC_GROUP
++		     | SEC_LINK_ONCE
++		     | SEC_LINK_DUPLICATES_DISCARD);
++	  l_coff_comdat_sec = FALSE;
++	}
++      else
++	{
++	  l_sec = l->linked.u.sec;
++	  l_owner = l_sec->owner;
++	  l_name = section_signature (l_sec);
++	  l_flags = l_sec->flags;
++	  l_coff_comdat_sec
++	    = !!bfd_coff_get_comdat_section (l_sec->owner, l_sec);
++	}
++
+       /* We may have 2 different types of sections on the list: group
+ 	 sections and linkonce sections.  Match like sections.  */
+-      if ((flags & SEC_GROUP) == (l->sec->flags & SEC_GROUP)
+-	  && strcmp (name, section_signature (l->sec)) == 0
+-	  && bfd_coff_get_comdat_section (l->sec->owner, l->sec) == NULL)
++      if ((flags & SEC_GROUP) == (l_flags & SEC_GROUP)
++	  && strcmp (name, l_name) == 0
++	  && !l_coff_comdat_sec)
+ 	{
+ 	  /* The section has already been linked.  See if we should
+ 	     issue a warning.  */
+@@ -12507,6 +12544,13 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
+ 	      abort ();
+ 
+ 	    case SEC_LINK_DUPLICATES_DISCARD:
++	      if (info->loading_lto_outputs
++		  && (l_owner->flags & BFD_PLUGIN) != 0)
++		{
++		  /* Replace the plugin dummy with the LTO output.  */
++		  l->linked = *linked;
++		  return;
++		}
+ 	      break;
+ 
+ 	    case SEC_LINK_DUPLICATES_ONE_ONLY:
+@@ -12516,14 +12560,20 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
+ 	      break;
+ 
+ 	    case SEC_LINK_DUPLICATES_SAME_SIZE:
+-	      if (sec->size != l->sec->size)
++	      if (!sec || !l_sec)
++		abort ();
++
++	      if (sec->size != l_sec->size)
+ 		(*_bfd_error_handler)
+ 		  (_("%B: duplicate section `%A' has different size"),
+ 		   abfd, sec);
+ 	      break;
+ 
+ 	    case SEC_LINK_DUPLICATES_SAME_CONTENTS:
+-	      if (sec->size != l->sec->size)
++	      if (!sec || !l_sec)
++		abort ();
++
++	      if (sec->size != l_sec->size)
+ 		(*_bfd_error_handler)
+ 		  (_("%B: duplicate section `%A' has different size"),
+ 		   abfd, sec);
+@@ -12535,11 +12585,11 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
+ 		    (*_bfd_error_handler)
+ 		      (_("%B: warning: could not read contents of section `%A'"),
+ 		       abfd, sec);
+-		  else if (!bfd_malloc_and_get_section (l->sec->owner, l->sec,
++		  else if (!bfd_malloc_and_get_section (l_sec->owner, l_sec,
+ 							&l_sec_contents))
+ 		    (*_bfd_error_handler)
+ 		      (_("%B: warning: could not read contents of section `%A'"),
+-		       l->sec->owner, l->sec);
++		       l_sec->owner, l_sec);
+ 		  else if (memcmp (sec_contents, l_sec_contents, sec->size) != 0)
+ 		    (*_bfd_error_handler)
+ 		      (_("%B: warning: duplicate section `%A' has different contents"),
+@@ -12553,28 +12603,31 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
+ 	      break;
+ 	    }
+ 
+-	  /* Set the output_section field so that lang_add_section
+-	     does not create a lang_input_section structure for this
+-	     section.  Since there might be a symbol in the section
+-	     being discarded, we must retain a pointer to the section
+-	     which we are really going to use.  */
+-	  sec->output_section = bfd_abs_section_ptr;
+-	  sec->kept_section = l->sec;
+-
+-	  if (flags & SEC_GROUP)
++	  if (sec)
+ 	    {
+-	      asection *first = elf_next_in_group (sec);
+-	      asection *s = first;
++	      /* Set the output_section field so that lang_add_section
++		 does not create a lang_input_section structure for this
++		 section.  Since there might be a symbol in the section
++		 being discarded, we must retain a pointer to the section
++		 which we are really going to use.  */
++	      sec->output_section = bfd_abs_section_ptr;
++	      sec->kept_section = l_sec;
+ 
+-	      while (s != NULL)
++	      if (flags & SEC_GROUP)
+ 		{
+-		  s->output_section = bfd_abs_section_ptr;
+-		  /* Record which group discards it.  */
+-		  s->kept_section = l->sec;
+-		  s = elf_next_in_group (s);
+-		  /* These lists are circular.  */
+-		  if (s == first)
+-		    break;
++		  asection *first = elf_next_in_group (sec);
++		  asection *s = first;
++
++		  while (s != NULL)
++		    {
++		      s->output_section = bfd_abs_section_ptr;
++		      /* Record which group discards it.  */
++		      s->kept_section = l_sec;
++		      s = elf_next_in_group (s);
++		      /* These lists are circular.  */
++		      if (s == first)
++			break;
++		    }
+ 		}
+ 	    }
+ 
+@@ -12582,67 +12635,100 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
+ 	}
+     }
+ 
+-  /* A single member comdat group section may be discarded by a
+-     linkonce section and vice versa.  */
+-
+-  if ((flags & SEC_GROUP) != 0)
++  if (sec)
+     {
+-      asection *first = elf_next_in_group (sec);
++      /* A single member comdat group section may be discarded by a
++	 linkonce section and vice versa.  */
+ 
+-      if (first != NULL && elf_next_in_group (first) == first)
+-	/* Check this single member group against linkonce sections.  */
+-	for (l = already_linked_list->entry; l != NULL; l = l->next)
+-	  if ((l->sec->flags & SEC_GROUP) == 0
+-	      && bfd_coff_get_comdat_section (l->sec->owner, l->sec) == NULL
+-	      && bfd_elf_match_symbols_in_sections (l->sec, first, info))
+-	    {
+-	      first->output_section = bfd_abs_section_ptr;
+-	      first->kept_section = l->sec;
+-	      sec->output_section = bfd_abs_section_ptr;
+-	      break;
+-	    }
+-    }
+-  else
+-    /* Check this linkonce section against single member groups.  */
+-    for (l = already_linked_list->entry; l != NULL; l = l->next)
+-      if (l->sec->flags & SEC_GROUP)
++      if ((flags & SEC_GROUP) != 0)
+ 	{
+-	  asection *first = elf_next_in_group (l->sec);
++	  asection *first = elf_next_in_group (sec);
+ 
+-	  if (first != NULL
+-	      && elf_next_in_group (first) == first
+-	      && bfd_elf_match_symbols_in_sections (first, sec, info))
+-	    {
+-	      sec->output_section = bfd_abs_section_ptr;
+-	      sec->kept_section = first;
+-	      break;
+-	    }
++	  if (first != NULL && elf_next_in_group (first) == first)
++	    /* Check this single member group against linkonce sections.  */
++	    for (l = already_linked_list->entry; l != NULL; l = l->next)
++	      {
++		if (l->linked.comdat_key == NULL)
++		  {
++		    l_sec = l->linked.u.sec;
++
++		    if ((l_sec->flags & SEC_GROUP) == 0
++			&& bfd_coff_get_comdat_section (l_sec->owner,
++							l_sec) == NULL
++			&& bfd_elf_match_symbols_in_sections (l_sec,
++							      first,
++							      info))
++		      {
++			first->output_section = bfd_abs_section_ptr;
++			first->kept_section = l_sec;
++			sec->output_section = bfd_abs_section_ptr;
++			break;
++		      }
++		  }
++	      }
+ 	}
++      else
++	/* Check this linkonce section against single member groups.  */
++	for (l = already_linked_list->entry; l != NULL; l = l->next)
++	  {
++	    if (l->linked.comdat_key == NULL)
++	      {
++		l_sec = l->linked.u.sec;
+ 
+-  /* Do not complain on unresolved relocations in `.gnu.linkonce.r.F'
+-     referencing its discarded `.gnu.linkonce.t.F' counterpart - g++-3.4
+-     specific as g++-4.x is using COMDAT groups (without the `.gnu.linkonce'
+-     prefix) instead.  `.gnu.linkonce.r.*' were the `.rodata' part of its
+-     matching `.gnu.linkonce.t.*'.  If `.gnu.linkonce.r.F' is not discarded
+-     but its `.gnu.linkonce.t.F' is discarded means we chose one-only
+-     `.gnu.linkonce.t.F' section from a different bfd not requiring any
+-     `.gnu.linkonce.r.F'.  Thus `.gnu.linkonce.r.F' should be discarded.
+-     The reverse order cannot happen as there is never a bfd with only the
+-     `.gnu.linkonce.r.F' section.  The order of sections in a bfd does not
+-     matter as here were are looking only for cross-bfd sections.  */
+-
+-  if ((flags & SEC_GROUP) == 0 && CONST_STRNEQ (name, ".gnu.linkonce.r."))
+-    for (l = already_linked_list->entry; l != NULL; l = l->next)
+-      if ((l->sec->flags & SEC_GROUP) == 0
+-	  && CONST_STRNEQ (l->sec->name, ".gnu.linkonce.t."))
+-	{
+-	  if (abfd != l->sec->owner)
+-	    sec->output_section = bfd_abs_section_ptr;
+-	  break;
+-	}
++		if (l_sec->flags & SEC_GROUP)
++		  {
++		    asection *first = elf_next_in_group (l_sec);
++
++		    if (first != NULL
++			&& elf_next_in_group (first) == first
++			&& bfd_elf_match_symbols_in_sections (first,
++							      sec,
++							      info))
++		      {
++			sec->output_section = bfd_abs_section_ptr;
++			sec->kept_section = first;
++			break;
++		      }
++		  }
++	      }
++	  }
++
++      /* Do not complain on unresolved relocations in `.gnu.linkonce.r.F'
++	 referencing its discarded `.gnu.linkonce.t.F' counterpart -
++	 g++-3.4 specific as g++-4.x is using COMDAT groups (without the
++	 `.gnu.linkonce' prefix) instead.  `.gnu.linkonce.r.*' were the
++	 `.rodata' part of its matching `.gnu.linkonce.t.*'.  If
++	 `.gnu.linkonce.r.F' is not discarded but its `.gnu.linkonce.t.F'
++	 is discarded means we chose one-only `.gnu.linkonce.t.F' section
++	 from a different bfd not requiring any `.gnu.linkonce.r.F'.
++	 Thus `.gnu.linkonce.r.F' should be discarded.  The reverse order
++	 cannot happen as there is never a bfd with only the
++	 `.gnu.linkonce.r.F' section.  The order of sections in a bfd
++	 does not matter as here were are looking only for cross-bfd
++	 sections.  */
++
++      if ((flags & SEC_GROUP) == 0
++	  && CONST_STRNEQ (name, ".gnu.linkonce.r."))
++	for (l = already_linked_list->entry; l != NULL; l = l->next)
++	  {
++	    if (l->linked.comdat_key == NULL)
++	      {
++		l_sec = l->linked.u.sec;
++
++		if ((l_sec->flags & SEC_GROUP) == 0
++		    && CONST_STRNEQ (l_sec->name, ".gnu.linkonce.t."))
++		  {
++		    if (abfd != l_sec->owner)
++		      sec->output_section = bfd_abs_section_ptr;
++		    break;
++		  }
++	      }
++	  }
++    }
+ 
+   /* This is the first section with this name.  Record it.  */
+-  if (! bfd_section_already_linked_table_insert (already_linked_list, sec))
++  if (! bfd_section_already_linked_table_insert (already_linked_list,
++						 linked))
+     info->callbacks->einfo (_("%F%P: already_linked_table: %E\n"));
+ }
+ 
+diff --git a/bfd/libbfd-in.h b/bfd/libbfd-in.h
+index ad45ba3..a80687e 100644
+--- a/bfd/libbfd-in.h
++++ b/bfd/libbfd-in.h
+@@ -478,7 +478,8 @@ extern bfd_boolean _bfd_generic_set_section_contents
+ #define _bfd_nolink_bfd_link_split_section \
+   ((bfd_boolean (*) (bfd *, struct bfd_section *)) bfd_false)
+ #define _bfd_nolink_section_already_linked \
+-  ((void (*) (bfd *, struct bfd_section *, struct bfd_link_info *)) bfd_void)
++  ((void (*) (bfd *, struct already_linked*, \
++	      struct bfd_link_info *)) bfd_void)
+ #define _bfd_nolink_bfd_define_common_symbol \
+   ((bfd_boolean (*) (bfd *, struct bfd_link_info *, \
+ 		     struct bfd_link_hash_entry *)) bfd_false)
+@@ -599,7 +600,7 @@ extern bfd_boolean _bfd_generic_link_split_section
+   (bfd *, struct bfd_section *);
+ 
+ extern void _bfd_generic_section_already_linked
+-  (bfd *, struct bfd_section *, struct bfd_link_info *);
++  (bfd *, struct already_linked *, struct bfd_link_info *);
+ 
+ /* Generic reloc_link_order processing routine.  */
+ extern bfd_boolean _bfd_generic_reloc_link_order
+@@ -791,16 +792,26 @@ struct bfd_section_already_linked_hash_entry
+   struct bfd_section_already_linked *entry;
+ };
+ 
++struct already_linked
++{
++  const char *comdat_key;
++  union
++    {
++      asection *sec;
++      bfd *abfd;
++    } u;
++};
++
+ struct bfd_section_already_linked
+ {
+   struct bfd_section_already_linked *next;
+-  asection *sec;
++  struct already_linked linked;
+ };
+ 
+ extern struct bfd_section_already_linked_hash_entry *
+   bfd_section_already_linked_table_lookup (const char *);
+ extern bfd_boolean bfd_section_already_linked_table_insert
+-  (struct bfd_section_already_linked_hash_entry *, asection *);
++  (struct bfd_section_already_linked_hash_entry *, struct already_linked *);
+ extern void bfd_section_already_linked_table_traverse
+   (bfd_boolean (*) (struct bfd_section_already_linked_hash_entry *,
+ 		    void *), void *);
+diff --git a/bfd/libbfd.h b/bfd/libbfd.h
+index dd4cc94..d778f89 100644
+--- a/bfd/libbfd.h
++++ b/bfd/libbfd.h
+@@ -483,7 +483,8 @@ extern bfd_boolean _bfd_generic_set_section_contents
+ #define _bfd_nolink_bfd_link_split_section \
+   ((bfd_boolean (*) (bfd *, struct bfd_section *)) bfd_false)
+ #define _bfd_nolink_section_already_linked \
+-  ((void (*) (bfd *, struct bfd_section *, struct bfd_link_info *)) bfd_void)
++  ((void (*) (bfd *, struct already_linked*, \
++	      struct bfd_link_info *)) bfd_void)
+ #define _bfd_nolink_bfd_define_common_symbol \
+   ((bfd_boolean (*) (bfd *, struct bfd_link_info *, \
+ 		     struct bfd_link_hash_entry *)) bfd_false)
+@@ -604,7 +605,7 @@ extern bfd_boolean _bfd_generic_link_split_section
+   (bfd *, struct bfd_section *);
+ 
+ extern void _bfd_generic_section_already_linked
+-  (bfd *, struct bfd_section *, struct bfd_link_info *);
++  (bfd *, struct already_linked *, struct bfd_link_info *);
+ 
+ /* Generic reloc_link_order processing routine.  */
+ extern bfd_boolean _bfd_generic_reloc_link_order
+@@ -796,16 +797,26 @@ struct bfd_section_already_linked_hash_entry
+   struct bfd_section_already_linked *entry;
+ };
+ 
++struct already_linked
++{
++  const char *comdat_key;
++  union
++    {
++      asection *sec;
++      bfd *abfd;
++    } u;
++};
++
+ struct bfd_section_already_linked
+ {
+   struct bfd_section_already_linked *next;
+-  asection *sec;
++  struct already_linked linked;
+ };
+ 
+ extern struct bfd_section_already_linked_hash_entry *
+   bfd_section_already_linked_table_lookup (const char *);
+ extern bfd_boolean bfd_section_already_linked_table_insert
+-  (struct bfd_section_already_linked_hash_entry *, asection *);
++  (struct bfd_section_already_linked_hash_entry *, struct already_linked *);
+ extern void bfd_section_already_linked_table_traverse
+   (bfd_boolean (*) (struct bfd_section_already_linked_hash_entry *,
+ 		    void *), void *);
+diff --git a/bfd/linker.c b/bfd/linker.c
+index e472317..5951bc9 100644
+--- a/bfd/linker.c
++++ b/bfd/linker.c
+@@ -2888,15 +2888,16 @@ FUNCTION
+ 	bfd_section_already_linked
+ 
+ SYNOPSIS
+-        void bfd_section_already_linked (bfd *abfd, asection *sec,
++        void bfd_section_already_linked (bfd *abfd,
++					 struct already_linked *data,
+ 					 struct bfd_link_info *info);
+ 
+ DESCRIPTION
+-	Check if @var{sec} has been already linked during a reloceatable
++	Check if @var{data} has been already linked during a reloceatable
+ 	or final link.
+ 
+-.#define bfd_section_already_linked(abfd, sec, info) \
+-.       BFD_SEND (abfd, _section_already_linked, (abfd, sec, info))
++.#define bfd_section_already_linked(abfd, data, info) \
++.       BFD_SEND (abfd, _section_already_linked, (abfd, data, info))
+ .
+ 
+ */
+@@ -2939,7 +2940,7 @@ bfd_section_already_linked_table_lookup (const char *name)
+ bfd_boolean
+ bfd_section_already_linked_table_insert
+   (struct bfd_section_already_linked_hash_entry *already_linked_list,
+-   asection *sec)
++   struct already_linked *data)
+ {
+   struct bfd_section_already_linked *l;
+ 
+@@ -2949,7 +2950,7 @@ bfd_section_already_linked_table_insert
+       bfd_hash_allocate (&_bfd_section_already_linked_table, sizeof *l);
+   if (l == NULL)
+     return FALSE;
+-  l->sec = sec;
++  l->linked = *data;
+   l->next = already_linked_list->entry;
+   already_linked_list->entry = l;
+   return TRUE;
+@@ -2990,42 +2991,74 @@ bfd_section_already_linked_table_free (void)
+ /* This is used on non-ELF inputs.  */
+ 
+ void
+-_bfd_generic_section_already_linked (bfd *abfd, asection *sec,
++_bfd_generic_section_already_linked (bfd *abfd,
++				     struct already_linked *linked,
+ 				     struct bfd_link_info *info)
+ {
+   flagword flags;
+   const char *name;
+   struct bfd_section_already_linked *l;
+   struct bfd_section_already_linked_hash_entry *already_linked_list;
++  struct coff_comdat_info *s_comdat;
++  asection *sec;
+ 
+-  flags = sec->flags;
+-  if ((flags & SEC_LINK_ONCE) == 0)
+-    return;
+-
+-  /* FIXME: When doing a relocatable link, we may have trouble
+-     copying relocations in other sections that refer to local symbols
+-     in the section being discarded.  Those relocations will have to
+-     be converted somehow; as of this writing I'm not sure that any of
+-     the backends handle that correctly.
+-
+-     It is tempting to instead not discard link once sections when
+-     doing a relocatable link (technically, they should be discarded
+-     whenever we are building constructors).  However, that fails,
+-     because the linker winds up combining all the link once sections
+-     into a single large link once section, which defeats the purpose
+-     of having link once sections in the first place.  */
+-
+-  name = bfd_get_section_name (abfd, sec);
++  name = linked->comdat_key;
++  if (name)
++    {
++      sec = NULL;
++      flags = SEC_GROUP | SEC_LINK_ONCE | SEC_LINK_DUPLICATES_DISCARD;
++      s_comdat = NULL;
++    }
++  else
++    {
++      sec = linked->u.sec;
++      flags = sec->flags;
++      if ((flags & SEC_LINK_ONCE) == 0)
++	return;
++
++      s_comdat = bfd_coff_get_comdat_section (abfd, sec);
++
++      /* FIXME: When doing a relocatable link, we may have trouble
++	 copying relocations in other sections that refer to local symbols
++	 in the section being discarded.  Those relocations will have to
++	 be converted somehow; as of this writing I'm not sure that any of
++	 the backends handle that correctly.
++
++	 It is tempting to instead not discard link once sections when
++	 doing a relocatable link (technically, they should be discarded
++	 whenever we are building constructors).  However, that fails,
++	 because the linker winds up combining all the link once sections
++	 into a single large link once section, which defeats the purpose
++	 of having link once sections in the first place.  */
++
++      name = bfd_get_section_name (abfd, sec);
++    }
+ 
+   already_linked_list = bfd_section_already_linked_table_lookup (name);
+ 
+   for (l = already_linked_list->entry; l != NULL; l = l->next)
+     {
+       bfd_boolean skip = FALSE;
+-      struct coff_comdat_info *s_comdat
+-	= bfd_coff_get_comdat_section (abfd, sec);
+-      struct coff_comdat_info *l_comdat
+-	= bfd_coff_get_comdat_section (l->sec->owner, l->sec);
++      bfd *l_owner;
++      flagword l_flags;
++      struct coff_comdat_info *l_comdat;
++      asection *l_sec;
++
++      if (l->linked.comdat_key)
++	{
++	  l_owner = l->linked.u.abfd;
++	  l_flags = (SEC_GROUP
++		     | SEC_LINK_ONCE
++		     | SEC_LINK_DUPLICATES_DISCARD);
++	  l_sec = NULL;
++	  l_comdat = NULL;
++	}
++      else
++	{
++	  l_owner = l_sec->owner;
++	  l_sec = l->linked.u.sec;
++	  l_comdat = bfd_coff_get_comdat_section (l_sec->owner, l_sec);
++	}
+ 
+       /* We may have 3 different sections on the list: group section,
+ 	 comdat section and linkonce section. SEC may be a linkonce or
+@@ -3034,7 +3067,7 @@ _bfd_generic_section_already_linked (bfd *abfd, asection *sec,
+ 
+ 	 FIXME: Is that safe to match a linkonce section with a comdat
+ 	 section for COFF inputs?  */
+-      if ((l->sec->flags & SEC_GROUP) != 0)
++      if ((l_flags & SEC_GROUP) != 0)
+ 	skip = TRUE;
+       else if (bfd_get_flavour (abfd) == bfd_target_coff_flavour)
+ 	{
+@@ -3056,6 +3089,13 @@ _bfd_generic_section_already_linked (bfd *abfd, asection *sec,
+ 	      abort ();
+ 
+ 	    case SEC_LINK_DUPLICATES_DISCARD:
++	      if (info->loading_lto_outputs
++		  && (l_owner->flags & BFD_PLUGIN) != 0)
++		{
++		  /* Replace the plugin dummy with the LTO output.  */
++		  l->linked = *linked;
++		  return;
++		}
+ 	      break;
+ 
+ 	    case SEC_LINK_DUPLICATES_ONE_ONLY:
+@@ -3072,27 +3112,31 @@ _bfd_generic_section_already_linked (bfd *abfd, asection *sec,
+                  either.  */
+ 	      /* Fall through.  */
+ 	    case SEC_LINK_DUPLICATES_SAME_SIZE:
+-	      if (sec->size != l->sec->size)
++	      if (sec->size != l_sec->size)
+ 		(*_bfd_error_handler)
+ 		  (_("%B: warning: duplicate section `%A' has different size\n"),
+ 		   abfd, sec);
+ 	      break;
+ 	    }
+ 
+-	  /* Set the output_section field so that lang_add_section
+-	     does not create a lang_input_section structure for this
+-	     section.  Since there might be a symbol in the section
+-	     being discarded, we must retain a pointer to the section
+-	     which we are really going to use.  */
+-	  sec->output_section = bfd_abs_section_ptr;
+-	  sec->kept_section = l->sec;
++	  if (sec)
++	    {
++	      /* Set the output_section field so that lang_add_section
++		 does not create a lang_input_section structure for this
++		 section.  Since there might be a symbol in the section
++		 being discarded, we must retain a pointer to the section
++		 which we are really going to use.  */
++	      sec->output_section = bfd_abs_section_ptr;
++	      sec->kept_section = l_sec;
++	    }
+ 
+ 	  return;
+ 	}
+     }
+ 
+   /* This is the first section with this name.  Record it.  */
+-  if (! bfd_section_already_linked_table_insert (already_linked_list, sec))
++  if (! bfd_section_already_linked_table_insert (already_linked_list,
++						 linked))
+     info->callbacks->einfo (_("%F%P: already_linked_table: %E\n"));
+ }
+ 
+diff --git a/bfd/section.c b/bfd/section.c
+index 3a124d8..e93afd4 100644
+--- a/bfd/section.c
++++ b/bfd/section.c
+@@ -352,6 +352,9 @@ CODE_FRAGMENT
+ .     when memory read flag isn't set. *}
+ .#define SEC_COFF_NOREAD 0x40000000
+ .
++.  {* Indicate that this is a special LTO COMDAT section.  *}
++.#define SEC_LTO_COMDAT 0x80000000
++.
+ .  {*  End of section flags.  *}
+ .
+ .  {* Some internal packed boolean fields.  *}
+@@ -551,6 +554,9 @@ CODE_FRAGMENT
+ .#define BFD_COM_SECTION_NAME "*COM*"
+ .#define BFD_IND_SECTION_NAME "*IND*"
+ .
++.{* GNU LTO COMDAT section name.  *}
++.#define GNU_LTO_COMDAT_SECTION_NAME ".text.gnu.lto_comdat"
++.
+ .{* GNU object-only section name.  *}
+ .#define GNU_OBJECT_ONLY_SECTION_NAME ".gnu_object_only"
+ .
+diff --git a/bfd/targets.c b/bfd/targets.c
+index 52dcd6b..ac978a1 100644
+--- a/bfd/targets.c
++++ b/bfd/targets.c
+@@ -176,6 +176,7 @@ DESCRIPTION
+ .
+ .{* Forward declaration.  *}
+ .typedef struct bfd_link_info _bfd_link_info;
++.struct already_linked;
+ .
+ .typedef struct bfd_target
+ .{
+@@ -503,7 +504,7 @@ BFD_JUMP_TABLE macros.
+ .
+ .  {* Check if SEC has been already linked during a reloceatable or
+ .     final link.  *}
+-.  void (*_section_already_linked) (bfd *, struct bfd_section *,
++.  void (*_section_already_linked) (bfd *, struct already_linked *,
+ .				    struct bfd_link_info *);
+ .
+ .  {* Define a common symbol.  *}
+diff --git a/include/bfdlink.h b/include/bfdlink.h
+index 51d65d8..89deaee 100644
+--- a/include/bfdlink.h
++++ b/include/bfdlink.h
+@@ -357,6 +357,9 @@ struct bfd_link_info
+      linker created sections, TRUE if it should be omitted.  */
+   unsigned int no_ld_generated_unwind_info: 1;
+ 
++  /* TRUE if we are loading LTO outputs.  */
++  unsigned int loading_lto_outputs: 1;
++
+   /* TRUE if .gnu_object_only section should be created.  */
+   unsigned int emit_gnu_object_only: 1;
+ 
+diff --git a/ld/ldlang.c b/ld/ldlang.c
+index 3f45c37..50eccf3 100644
+--- a/ld/ldlang.c
++++ b/ld/ldlang.c
+@@ -2252,7 +2252,12 @@ section_already_linked (bfd *abfd, asection *sec, void *data)
+     }
+ 
+   if (!(abfd->flags & DYNAMIC))
+-    bfd_section_already_linked (abfd, sec, &link_info);
++    {
++      struct already_linked linked;
++      linked.comdat_key = NULL;
++      linked.u.sec = sec;
++      bfd_section_already_linked (abfd, &linked, &link_info);
++    }
+ }
+ 
+ /* The wild routines.
+@@ -6565,6 +6570,7 @@ lang_process (void)
+ 	einfo (_("%P%F: %s: plugin reported error after all symbols read\n"),
+ 	       plugin_error_plugin ());
+       /* Open any newly added files, updating the file chains.  */
++      link_info.loading_lto_outputs = TRUE;
+       open_input_bfds (added.head, OPEN_BFD_NORMAL);
+       /* Restore the global list pointer now they have all been added.  */
+       lang_list_remove_tail (stat_ptr, &added);
+diff --git a/ld/plugin.c b/ld/plugin.c
+index a9c2a95..4f96a07 100644
+--- a/ld/plugin.c
++++ b/ld/plugin.c
+@@ -32,6 +32,7 @@
+ #include "plugin.h"
+ #include "plugin-api.h"
+ #include "elf-bfd.h"
++#include "libbfd.h"
+ #if !defined (HAVE_DLFCN_H) && defined (HAVE_WINDOWS_H)
+ #include <windows.h>
+ #endif
+@@ -257,7 +258,13 @@ plugin_get_ir_dummy_bfd (const char *name, bfd *srctemplate)
+ 	  flags = (SEC_CODE | SEC_HAS_CONTENTS | SEC_READONLY
+ 		   | SEC_ALLOC | SEC_LOAD | SEC_KEEP | SEC_EXCLUDE);
+ 	  if (bfd_make_section_anyway_with_flags (abfd, ".text", flags))
+-	    return abfd;
++	    {
++	      flags |= SEC_LTO_COMDAT;
++	      if (bfd_make_section_anyway_with_flags (abfd,
++						      GNU_LTO_COMDAT_SECTION_NAME,
++						      flags))
++		return abfd;
++	    }
+ 	}
+     }
+   einfo (_("could not create dummy IR bfd: %F%E\n"));
+@@ -298,7 +305,11 @@ asymbol_from_plugin_symbol (bfd *abfd, asymbol *asym,
+       /* FALLTHRU */
+     case LDPK_DEF:
+       flags |= BSF_GLOBAL;
+-      section = bfd_get_section_by_name (abfd, ".text");
++      if (ldsym->comdat_key)
++	section = bfd_get_section_by_name (abfd,
++					   GNU_LTO_COMDAT_SECTION_NAME);
++      else
++	section = bfd_get_section_by_name (abfd, ".text");
+       break;
+ 
+     case LDPK_WEAKUNDEF:
+@@ -399,7 +410,15 @@ add_symbols (void *handle, int nsyms, const struct ld_plugin_symbol *syms)
+   for (n = 0; n < nsyms; n++)
+     {
+       enum ld_plugin_status rv;
+-      asymbol *bfdsym = bfd_make_empty_symbol (abfd);
++      asymbol *bfdsym;
++      if (syms[n].comdat_key)
++	{
++	  struct already_linked linked;
++	  linked.comdat_key = xstrdup (syms[n].comdat_key);
++	  linked.u.abfd = abfd;
++	  bfd_section_already_linked (abfd, &linked, &link_info);
++	}
++      bfdsym = bfd_make_empty_symbol (abfd);
+       symptrs[n] = bfdsym;
+       rv = asymbol_from_plugin_symbol (abfd, bfdsym, syms + n);
+       if (rv != LDPS_OK)
+@@ -934,8 +953,6 @@ plugin_notice (struct bfd_link_info *info,
+ {
+   if (h != NULL)
+     {
+-      bfd *sym_bfd;
+-
+       /* No further processing if this def/ref is from an IR dummy BFD.  */
+       if (is_ir_dummy_bfd (abfd))
+ 	return TRUE;
+@@ -975,14 +992,26 @@ plugin_notice (struct bfd_link_info *info,
+ 	 definition, and strong symbols will normally cause multiple
+ 	 definition errors.  Avoid this by making the symbol appear
+ 	 to be undefined.  */
+-      else if (((h->type == bfd_link_hash_defweak
++      else if ((h->type == bfd_link_hash_defweak
+ 		 || h->type == bfd_link_hash_defined)
+-		&& is_ir_dummy_bfd (sym_bfd = h->u.def.section->owner))
+-	       || (h->type == bfd_link_hash_common
+-		   && is_ir_dummy_bfd (sym_bfd = h->u.c.p->section->owner)))
++		&& is_ir_dummy_bfd (h->u.def.section->owner))
++	{
++	  /* A symbol with comdat key in IR dummy BFD may override
++	     the comdat symbol in a real BFD.  */
++	  if (link_info.loading_lto_outputs
++	      || (h->u.def.section->flags & SEC_LTO_COMDAT) == 0)
++	    {
++	      h->type = bfd_link_hash_undefweak;
++	      h->u.undef.abfd = h->u.def.section->owner;
++	    }
++	  else
++	    h->non_ir_ref = TRUE;
++	}
++      else if (h->type == bfd_link_hash_common
++	       && is_ir_dummy_bfd (h->u.c.p->section->owner))
+ 	{
+ 	  h->type = bfd_link_hash_undefweak;
+-	  h->u.undef.abfd = sym_bfd;
++	  h->u.undef.abfd = h->u.c.p->section->owner;
+ 	}
+     }
+ 
