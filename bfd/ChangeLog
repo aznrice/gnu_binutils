@@ -1,3 +1,75 @@
+2011-07-03  Samuel Thibault  <samuel.thibault@gnu.org>
+	    Thomas Schwinge  <thomas@schwinge.name>
+
+	PR binutils/12913
+	* elf.c (_bfd_elf_set_osabi): Use ELFOSABI_GNU name instead of
+	ELFOSABI_LINUX alias.
+	* elf32-hppa.c: Likewise.
+	* elf32-i370.c: Likewise.
+	* elf64-hppa.c: Likewise.
+
+2011-07-01  Ian Lance Taylor  <iant@google.com>
+
+	* elf32-i386.c (elf_i386_eh_frame_plt): Correct expression: change
+	DW_OP_lit3 to DW_OP_lit2.
+
+2011-07-01  Alan Modra  <amodra@gmail.com>
+
+	* elf32-ppc.c (ppc_elf_copy_indirect_symbol): Don't look at
+	dyn relocs when called to copy flags for a weak sym.
+	* elf64-ppc.c (ppc64_elf_copy_indirect_symbol): Likewise.
+	(ppc64_elf_merge_private_bfd_data): Delete.
+	(bfd_elf64_bfd_merge_private_bfd_data): Define as
+	_bfd_generic_verify_endian_match.
+
+2011-06-30  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* bfd/elf32-tic6x.c (elf32_tic6x_set_osabi): Also set it if
+	link_info is NULL.
+
+2011-06-28  Tristan Gingold  <gingold@adacore.com>
+
+	* vms-alpha.c (vms_private_data_struct): Make vms_linkage_index
+	unsigned int.
+	(_bfd_vms_write_etir): Write linkage index from reloc.
+
+2011-06-28  Fawzi Mohamed <fawzi.mohamed@nokia.com>
+
+	* mach-o.c (bfd_mach_o_read_command): Also ignore
+	BFD_MACH_O_LC_ROUTINES_64.
+
+2011-06-27  Tristan Gingold  <gingold@adacore.com>
+
+	* vms-alpha.c (_bfd_vms_write_etir): Use 'section' to get current
+	section target index.
+
+2011-06-27  Nick Clifton  <nickc@redhat.com>
+
+	* cisco-core.c (cisco_core_little_vec): Add initialization of
+	match_priority field.
+
+2011-06-27  Tristan Gingold  <gingold@adacore.com>
+
+	* cache.c: Include bfd_stdint.h.
+	(cache_bmmap): Change profile.  Return region start and size.
+	* bfdio.c (struct bfd_iovec): Change bmmap profile.
+	(bfd_mmap): Change profile and adjust.   Update comment.
+	(memory_bmmap): Change profile.
+	* opncls.c (opncls_bmmap): Change profile.
+	* vms-lib.c (vms_lib_bmmap): Likewise.
+	* libbfd.h: Regenerate.
+	* bfd-in2.h: Regenerate.
+
+2011-06-27  Tristan Gingold  <gingold@adacore.com>
+
+	* vms-misc.c (vms_time_to_time_t): Adjust overflow detection.
+	Add comment.
+
+2011-06-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf64-x86-64.c (elf_backend_post_process_headers): Don't
+	define for FreeBSD/x86-64 nor FreeBSD/L1OM.  Define for L1OM.
+
 2011-06-25  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	* elf64-x86-64.c (elf_x86_64_link_hash_table_create): Initialize
@@ -37,8 +109,8 @@
 
 2011-06-22  Ramana Radhakrishnan  <ramana.radhakrishnan@linaro.org>
 
-       * elf32-arm.c (elf32_arm_final_link_relocate): Allow R_ARM_TLS_LE32
-       for PIE.
+	* elf32-arm.c (elf32_arm_final_link_relocate): Allow R_ARM_TLS_LE32
+	for PIE.
 
 2011-06-22  Alan Modra  <amodra@gmail.com>
 

@@ -1,3 +1,131 @@
+2011-07-04  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (gpr_read_mask, gpr_write_mask): Fix handling
+	of register 0.
+
+2011-07-04  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (append_insn): Make sure DWARF-2 location
+	information is properly adjusted for branches that get swapped.
+
+2011-07-03  Samuel Thibault  <samuel.thibault@gnu.org>
+	    Thomas Schwinge  <thomas@schwinge.name>
+
+	PR binutils/12913
+	* config/obj-elf.c (obj_elf_type): Use ELFOSABI_GNU name instead of
+	ELFOSABI_LINUX alias.
+	* config/tc-ia64.c: Likewise.
+
+2011-06-30  Paul Carroll  <pcarroll@codesourcery.com>
+
+	* config/tc-arm.c (do_t_add_sub): Only allow LSL shifts of less
+	than 4 in Thumb mode.
+
+2011-06-30  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/12848
+	* config/tc-arm.c (BAD_RANGE): New error message define.
+	(md_apply_fix): Use it.
+	Fix range check for thumb branch instructions.
+
+2011-06-29  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (append_method): New enum.
+	(can_swap_branch_p, get_append_method): New functions.
+	(append_insn): Use get_append_method to decide how the instruction
+	should be added.
+
+2011-06-29  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (append_insn): Remove bogus goto.
+
+2011-06-29  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (append_insn): Always clear the history after an
+	unconditional branch.
+
+2011-06-29  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (find_altered_mips16_opcode): New function.
+	(append_insn): Use it.
+
+2011-06-29  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (insn_uses_reg): Delete.
+	(gpr_read_mask, gpr_write_mask): New functions.
+	(fpr_read_mask, fpr_write_mask): Likewise.
+	(insns_between, nops_for_vr4130, append_insn): Use them.
+
+2011-06-29  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (md_mips_end): Call mips_emit_delays.
+
+2011-06-29  Dave Martin  <dave.martin@linaro.org>
+
+	PR gas/12931
+	* config/tc-arm.c (mapping_state): When changing to ARM or THUMB
+	state set the minimum required alignment of the section.
+
+2011-06-29  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-i386.c (i386_mach): Convert to ISO-C.
+	(md_begin, pe_directive_secrel, md_estimate_size_before_relax): Ditto.
+	(md_convert_frag, md_apply_fix, md_undefined_symbol): Ditto.
+	(md_section_align, tc_gen_reloc): Ditto.
+
+2011-06-28  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-alpha.c (s_alpha_pdesc): Fix indentation. Do not
+	generate dummy fix.
+
+2011-06-28  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-alpha.c (load_expression): Use alloca instead of xmalloc.
+	(emit_jsrjmp): Ditto.
+	(tc_gen_reloc): Ditto.
+
+2011-06-28  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-alpha.c (alpha_evax_proc_hash): Remove.
+	(alpha_evax_proc_data): New variable.
+	(s_alpha_ent): Prevent nested function.  Remove has_insert call.
+	(s_alpha_pdesc): Do not call demand_empty_rest_of_line in case of
+	error.  Do not search in the hash table.  Check if match with .ent.
+	(s_alpha_name): Remove unused variable.
+	(md_begin): Remove initialization of alpha_evax_proc_hash.
+
+2011-06-27  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-alpha.c (add_to_link_pool): Remove basesym parameter.
+	Locally declare basesym.  Add comments.  Do not set literal_pool_size.
+	(load_expression): Adjust call to add_to_link_pool.
+	(s_alpha_pdesc): Define pdesc symbol using dot.
+	Do not set literal_pool_size.
+	(s_alpha_end): Use NULL instead of 0.
+
+2011-06-27  Tristan Gingold  <gingold@adacore.com>
+
+	* config/obj-evax.c (evax_frob_file_before_adjust): Add comments.
+	Fix style.
+	* config/obj-evax.h (struct alpha_linkage_fixups): Remove seg
+	field.  Add comments.
+	(obj_symbol_type, object_headers, OBJ_SYMFIELD_TYPE): Remove
+
+2011-06-26  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (fix_24k_record_store_info): If the previous
+	instruction was a store, and the next instructions are unknown,
+	assume the worst.
+
+2011-06-25  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	PR gas/12915
+	* config/tc-mips.c (nops_for_vr4130, nops_for_24k, nops_for_insn)
+	(nops_for_sequence, nops_for_insn_or_target): Add ignore parameters.
+	(mips_emit_delays, start_noreorder): Update accordingly.
+	(append_insn): Likewise.  Revert original fix for this PR
+	and use the ignore parameter instead.
+
 2011-06-24  Tristan Gingold  <gingold@adacore.com>
 
 	PR gas/11625

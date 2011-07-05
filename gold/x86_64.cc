@@ -1,6 +1,6 @@
 // x86_64.cc -- x86_64 target support for gold.
 
-// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -25,6 +25,7 @@
 #include <cstring>
 
 #include "elfcpp.h"
+#include "dwarf.h"
 #include "parameters.h"
 #include "reloc.h"
 #include "x86_64.h"
@@ -56,7 +57,7 @@ class Output_data_plt_x86_64 : public Output_section_data
   Output_data_plt_x86_64(Symbol_table* symtab, Layout* layout,
 			 Output_data_got<64, false>* got,
 			 Output_data_space* got_plt)
-    : Output_section_data(8), tlsdesc_rel_(NULL), got_(got), got_plt_(got_plt),
+    : Output_section_data(16), tlsdesc_rel_(NULL), got_(got), got_plt_(got_plt),
       count_(0), tlsdesc_got_offset_(-1U), free_list_()
   { this->init(symtab, layout); }
 
@@ -64,7 +65,7 @@ class Output_data_plt_x86_64 : public Output_section_data
 			 Output_data_got<64, false>* got,
 			 Output_data_space* got_plt,
 			 unsigned int plt_count)
-    : Output_section_data((plt_count + 1) * plt_entry_size, 8, false),
+    : Output_section_data((plt_count + 1) * plt_entry_size, 16, false),
       tlsdesc_rel_(NULL), got_(got), got_plt_(got_plt),
       count_(plt_count), tlsdesc_got_offset_(-1U), free_list_()
   {
@@ -160,13 +161,19 @@ class Output_data_plt_x86_64 : public Output_section_data
   // The first entry in the PLT.
   // From the AMD64 ABI: "Unlike Intel386 ABI, this ABI uses the same
   // procedure linkage table for both programs and shared objects."
-  static unsigned char first_plt_entry[plt_entry_size];
+  static const unsigned char first_plt_entry[plt_entry_size];
 
   // Other entries in the PLT for an executable.
-  static unsigned char plt_entry[plt_entry_size];
+  static const unsigned char plt_entry[plt_entry_size];
 
   // The reserved TLSDESC entry in the PLT for an executable.
-  static unsigned char tlsdesc_plt_entry[plt_entry_size];
+  static const unsigned char tlsdesc_plt_entry[plt_entry_size];
+
+  // The .eh_frame unwind information for the PLT.
+  static const int plt_eh_frame_cie_size = 16;
+  static const int plt_eh_frame_fde_size = 32;
+  static const unsigned char plt_eh_frame_cie[plt_eh_frame_cie_size];
+  static const unsigned char plt_eh_frame_fde[plt_eh_frame_fde_size];
 
   // Set the final size.
   void
@@ -201,7 +208,7 @@ class Output_data_plt_x86_64 : public Output_section_data
 //   http://people.redhat.com/drepper/tls.pdf
 //   http://www.lsd.ic.unicamp.br/~oliva/writeups/TLS/RFC-TLSDESC-x86.txt
 
-class Target_x86_64 : public Target_freebsd<64, false>
+class Target_x86_64 : public Sized_target<64, false>
 {
  public:
   // In the x86_64 ABI (p 68), it says "The AMD64 ABI architectures
@@ -209,27 +216,13 @@ class Target_x86_64 : public Target_freebsd<64, false>
   typedef Output_data_reloc<elfcpp::SHT_RELA, true, 64, false> Reloc_section;
 
   Target_x86_64()
-    : Target_freebsd<64, false>(&x86_64_info),
+    : Sized_target<64, false>(&x86_64_info),
       got_(NULL), plt_(NULL), got_plt_(NULL), got_tlsdesc_(NULL),
       global_offset_table_(NULL), rela_dyn_(NULL),
       copy_relocs_(elfcpp::R_X86_64_COPY), dynbss_(NULL),
       got_mod_index_offset_(-1U), tlsdesc_reloc_info_(),
       tls_base_symbol_defined_(false)
   { }
-
-  // This function should be defined in targets that can use relocation
-  // types to determine (implemented in local_reloc_may_be_function_pointer
-  // and global_reloc_may_be_function_pointer)
-  // if a function's pointer is taken.  ICF uses this in safe mode to only
-  // fold those functions whose pointer is defintely not taken.  For x86_64
-  // pie binaries, safe ICF cannot be done by looking at relocation types.
-  inline bool
-  can_check_for_function_pointers() const
-  { return !parameters->options().pie(); }
-
-  virtual bool
-  can_icf_inline_merge_sections () const
-  { return true; }
 
   // Hook for a new output section.
   void
@@ -346,6 +339,20 @@ class Target_x86_64 : public Target_freebsd<64, false>
   Output_data*
   do_plt_section_for_local(const Relobj*, unsigned int) const
   { return this->plt_section(); }
+
+  // This function should be defined in targets that can use relocation
+  // types to determine (implemented in local_reloc_may_be_function_pointer
+  // and global_reloc_may_be_function_pointer)
+  // if a function's pointer is taken.  ICF uses this in safe mode to only
+  // fold those functions whose pointer is defintely not taken.  For x86_64
+  // pie binaries, safe ICF cannot be done by looking at relocation types.
+  bool
+  do_can_check_for_function_pointers() const
+  { return !parameters->options().pie(); }
+
+  // Return the base for a DW_EH_PE_datarel encoding.
+  uint64_t
+  do_ehframe_datarel_base() const;
 
   // Adjust -fsplit-stack code which calls non-split-stack code.
   void
@@ -755,6 +762,7 @@ const Target::Target_info Target_x86_64::x86_64_info =
   false,		// has_resolve
   true,			// has_code_fill
   true,			// is_default_stack_executable
+  true,			// can_icf_inline_merge_sections
   '\0',			// wrap_char
   "/lib/ld64.so.1",     // program interpreter
   0x400000,		// default_text_segment_address
@@ -874,6 +882,11 @@ Output_data_plt_x86_64::init(Symbol_table* symtab, Layout* layout)
 				    elfcpp::STB_GLOBAL, elfcpp::STV_HIDDEN,
 				    0, true, true);
     }
+
+  // Add unwind information if requested.
+  if (parameters->options().ld_generated_unwind_info())
+    layout->add_eh_frame_for_plt(this, plt_eh_frame_cie, plt_eh_frame_cie_size,
+				 plt_eh_frame_fde, plt_eh_frame_fde_size);
 }
 
 void
@@ -1007,7 +1020,7 @@ Output_data_plt_x86_64::set_final_data_size()
 
 // The first entry in the PLT for an executable.
 
-unsigned char Output_data_plt_x86_64::first_plt_entry[plt_entry_size] =
+const unsigned char Output_data_plt_x86_64::first_plt_entry[plt_entry_size] =
 {
   // From AMD64 ABI Draft 0.98, page 76
   0xff, 0x35,	// pushq contents of memory address
@@ -1019,7 +1032,7 @@ unsigned char Output_data_plt_x86_64::first_plt_entry[plt_entry_size] =
 
 // Subsequent entries in the PLT for an executable.
 
-unsigned char Output_data_plt_x86_64::plt_entry[plt_entry_size] =
+const unsigned char Output_data_plt_x86_64::plt_entry[plt_entry_size] =
 {
   // From AMD64 ABI Draft 0.98, page 76
   0xff, 0x25,	// jmpq indirect
@@ -1032,7 +1045,7 @@ unsigned char Output_data_plt_x86_64::plt_entry[plt_entry_size] =
 
 // The reserved TLSDESC entry in the PLT for an executable.
 
-unsigned char Output_data_plt_x86_64::tlsdesc_plt_entry[plt_entry_size] =
+const unsigned char Output_data_plt_x86_64::tlsdesc_plt_entry[plt_entry_size] =
 {
   // From Alexandre Oliva, "Thread-Local Storage Descriptors for IA32
   // and AMD64/EM64T", Version 0.9.4 (2005-10-10).
@@ -1042,6 +1055,54 @@ unsigned char Output_data_plt_x86_64::tlsdesc_plt_entry[plt_entry_size] =
   0, 0, 0, 0,	// replaced with offset of reserved TLSDESC_GOT entry
   0x0f,	0x1f,	// nop
   0x40, 0
+};
+
+// The .eh_frame unwind information for the PLT.
+
+const unsigned char 
+Output_data_plt_x86_64::plt_eh_frame_cie[plt_eh_frame_cie_size] =
+{
+  1,				// CIE version.
+  'z',				// Augmentation: augmentation size included.
+  'R',				// Augmentation: FDE encoding included.
+  '\0',				// End of augmentation string.
+  1,				// Code alignment factor.
+  0x78,				// Data alignment factor.
+  16,				// Return address column.
+  1,				// Augmentation size.
+  (elfcpp::DW_EH_PE_pcrel	// FDE encoding.
+   | elfcpp::DW_EH_PE_sdata4),
+  elfcpp::DW_CFA_def_cfa, 7, 8,	// DW_CFA_def_cfa: r7 (rsp) ofs 8.
+  elfcpp::DW_CFA_offset + 16, 1,// DW_CFA_offset: r16 (rip) at cfa-8.
+  elfcpp::DW_CFA_nop,		// Align to 16 bytes.
+  elfcpp::DW_CFA_nop
+};
+
+const unsigned char
+Output_data_plt_x86_64::plt_eh_frame_fde[plt_eh_frame_fde_size] =
+{
+  0, 0, 0, 0,				// Replaced with offset to .plt.
+  0, 0, 0, 0,				// Replaced with size of .plt.
+  0,					// Augmentation size.
+  elfcpp::DW_CFA_def_cfa_offset, 16,	// DW_CFA_def_cfa_offset: 16.
+  elfcpp::DW_CFA_advance_loc + 6,	// Advance 6 to __PLT__ + 6.
+  elfcpp::DW_CFA_def_cfa_offset, 24,	// DW_CFA_def_cfa_offset: 24.
+  elfcpp::DW_CFA_advance_loc + 10,	// Advance 10 to __PLT__ + 16.
+  elfcpp::DW_CFA_def_cfa_expression,	// DW_CFA_def_cfa_expression.
+  11,					// Block length.
+  elfcpp::DW_OP_breg7, 8,		// Push %rsp + 8.
+  elfcpp::DW_OP_breg16, 0,		// Push %rip.
+  elfcpp::DW_OP_lit15,			// Push 0xf.
+  elfcpp::DW_OP_and,			// & (%rip & 0xf).
+  elfcpp::DW_OP_lit11,			// Push 0xb.
+  elfcpp::DW_OP_ge,			// >= ((%rip & 0xf) >= 0xb)
+  elfcpp::DW_OP_lit3,			// Push 3.
+  elfcpp::DW_OP_shl,			// << (((%rip & 0xf) >= 0xb) << 3)
+  elfcpp::DW_OP_plus,			// + ((((%rip&0xf)>=0xb)<<3)+%rsp+8
+  elfcpp::DW_CFA_nop,			// Align to 32 bytes.
+  elfcpp::DW_CFA_nop,
+  elfcpp::DW_CFA_nop,
+  elfcpp::DW_CFA_nop
 };
 
 // Write out the PLT.  This uses the hand-coded instructions above,
@@ -3583,6 +3644,21 @@ Target_x86_64::do_reloc_addend(void* arg, unsigned int r_type,
   return psymval->value(ti.object, 0);
 }
 
+// Return the value to use for the base of a DW_EH_PE_datarel offset
+// in an FDE.  Solaris and SVR4 use DW_EH_PE_datarel because their
+// assembler can not write out the difference between two labels in
+// different sections, so instead of using a pc-relative value they
+// use an offset from the GOT.
+
+uint64_t
+Target_x86_64::do_ehframe_datarel_base() const
+{
+  gold_assert(this->global_offset_table_ != NULL);
+  Symbol* sym = this->global_offset_table_;
+  Sized_symbol<64>* ssym = static_cast<Sized_symbol<64>*>(sym);
+  return ssym->value();
+}
+
 // FNOFFSET in section SHNDX in OBJECT is the start of a function
 // compiled with -fsplit-stack.  The function calls non-split-stack
 // code.  We have to change the function so that it always ensures
@@ -3651,7 +3727,7 @@ class Target_selector_x86_64 : public Target_selector_freebsd
 public:
   Target_selector_x86_64()
     : Target_selector_freebsd(elfcpp::EM_X86_64, 64, false, "elf64-x86-64",
-			      "elf64-x86-64-freebsd")
+			      "elf64-x86-64-freebsd", "elf_x86_64")
   { }
 
   Target*

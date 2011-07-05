@@ -1,3 +1,280 @@
+2011-07-02  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12957
+	* options.h (class General_options): Add -f and -F.
+	* options.cc (General_options::finalize): Fatal error if -f/-F
+	are used without -shared.
+	* layout.cc (Layout::finish_dynamic_section): Implement -f/-F.
+
+2011-07-02  Ian Lance Taylor  <iant@google.com>
+
+	* dirsearch.cc (Dir_cache::read_files): Ignore ENOTDIR errors.
+
+2011-07-01  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12525
+	PR gold/12952
+	* resolve.cc (Symbol::override_base_with_special): Don't override
+	the version if the overriding symbol has a different name.
+	* dynobj.cc (Versions::add_def): Add dynpool parameter.  Change
+	all callers.  If we give an error about an undefined version,
+	define the base version if necessary.
+	* dynobj.h (class Versions): Update declaration.
+	* testsuite/weak_alias_test_5.cc: New file.
+	* testsuite/weak_alias_test.script: New file.
+	* testsuite/weak_alias_test_main.cc: Check that versioned_symbol
+	and versioned_alias have the right value, and call t2.
+	* testsuite/Makefile.am (weak_alias_test_DEPENDENCIES): Add
+	weak_alias_test_5.so.
+	(weak_alias_test_LDADD): Likewise.
+	(weak_alias_test_5_pic.o, weak_alias_test_5.so): New targets.
+	* testsuite/Makefile.in: Rebuild.
+
+2011-07-01  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12525
+	* options.h (class General_options): Support -z notext.
+	* testsuite/Makefile.am (two_file_shared_1_nonpic.so): Use
+	-Wl,-z,notext.
+	(two_file_shared_nonpic.so): Likewise.
+	(two_file_shared_mixed.so): Likewise.
+	(two_file_shared_mixed_1.so): Likewise.
+	(weak_undef_lib_nonpic.so): Likewise.
+	(alt/weak_undef_lib_nonpic.so): Likewise.
+	(tls_test_shared_nonpic.so): Likewise.
+	* testsuite/Makefile.in: Rebuild.
+
+2011-07-01  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12525
+	* configure.ac: Test whether static linking works, setting
+	the automake conditional HAVE_STATIC.
+	* testsuite/Makefile.am: Disable tests using -static if
+	HAVE_STATIC is not true.
+	* configure, testsuite/Makefile.in: Rebuild.
+
+2011-07-01  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12525
+	* ehframe.cc (Eh_frame_hdr::get_fde_pc): Handle DW_EH_PE_datarel.
+	Assert if we see DW_EH_PE_indirect.
+	* target.h (Target::ehframe_datarel_base): New function.
+	(Target::do_ehframe_datarel_base): New target function.
+	* i386.cc (Target_i386::do_ehframe_datarel_base): New function.
+	* x86_64.cc (Target_x86_64::do_ehframe_datarel_base): New
+	function.
+
+2011-07-01  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12571
+	* options.h (class General_options): Add
+	--ld-generated-unwind-info.
+	* ehframe.cc (Fde::write): Add address parameter.  Change all
+	callers.  If associated with PLT, fill in address and size.
+	(Cie::set_output_offset): Only add merge mapping if there is an
+	object.
+	(Cie::write): Add address parameter.  Change all callers.
+	(Eh_frame::add_ehframe_for_plt): New function.
+	* ehframe.h (class Fde): Update declarations.  Move shndx_ and
+	input_offset_ fields into union u_, with new plt field.
+	(Fde::Fde): Adjust for new union field.
+	(Fde::Fde) [Output_data version]: New constructor.
+	(Fde::add_mapping): Only add merge mapping if there is an object.
+	(class Cie): Update declarations.
+	(class Eh_frame): Declare add_ehframe_for_plt.
+	* layout.cc (Layout::layout_eh_frame): Break out code into
+	make_eh_frame_section, and call it.
+	(Layout::make_eh_frame_section): New function.
+	(Layout::add_eh_frame_for_plt): New function.
+	* layout.h (class Layout): Update declarations.
+	* merge.cc (Merge_map::add_mapping): Add assertion.
+	* i386.cc: Include "dwarf.h".
+	(class Output_data_plt_i386): Make first_plt_entry,
+	dyn_first_plt_entry, exec_plt_entry, and dyn_plt_entry const.  Add
+	plt_eh_frame_cie_size, plt_eh_frame_fde_size, plt_eh_frame_cie,
+	and plt_eh_frame_fde.
+	(Output_data_plt_i386::Output_data_plt_i386): Align to 16-byte
+	boundary.  Call add_eh_frame_for_plt if appropriate.
+	* x86_64.cc: Include "dwarf.h".
+	(class Output_data_plt_x86_64): Align to 16-byte boundary.  Make
+	first_plt_entry, plt_entry and tlsdesc_plt_entry const.  Add
+	plt_eh_frame_cie_size, plt_eh_frame_fde_size, plt_eh_frame_cie,
+	and plt_eh_frame_fde.
+	(Output_data_plt_x86_64::init): Call add_eh_frame_for_plt if
+	appropriate.
+
+2011-06-29  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12629
+	* object.cc (Sized_relobj_file::layout_section): Change shdr
+	parameter to be const.
+	(Sized_relobj_file::layout_eh_frame_section): New function, broken
+	out of do_layout.
+	(Sized_relobj_file::do_layout): Defer .eh_frame sections if
+	appropriate.  Call layout_eh_frame_section.
+	(Sized_relobj_file::do_layout_deferred_sections): Handle .eh_frame
+	sections.
+	* object.h (class Sized_relobj_file): Update declarations.
+
+2011-06-29  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12652
+	* script.cc (Token::integer_value): Accept trailing M/m/K/k
+	modifier.
+	(Lex::gather_token): Accept trailing M/m/K/k for integers.
+
+2011-06-29  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12675
+	* object.cc (Sized_relobj_file::check_eh_frame_flags): Check for
+	SHT_X86_64_UNWIND.
+	* layout.cc (Layout::layout_eh_frame): Likewise.
+
+2011-06-29  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12695
+	* layout.cc (Layout::symtab_section_shndx): New function.
+	* layout.h (class Layout): Declare symtab_section_shndx.
+	* output.cc (Output_section::write_header): Call it.
+
+2011-06-29  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12818
+	* symtab.cc (Symbol::should_add_dynsym_entry): Don't add undefined
+	symbols which are not used in a relocation.
+
+2011-06-28  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12898
+	* layout.cc (Layout::segment_precedes): Don't crash if a linker
+	script create indistinguishable segments.
+	(Layout::set_segment_offsets): Use stable_sort when sorting
+	segments.  Pass this to Compare_segments constructor.
+	* layout.h (class Layout): Make segment_precedes non-static.
+	(class Compare_segments): Change from struct to class.  Add
+	layout_ field.  Add constructor.
+	* script-sections.cc
+	(Script_sections::attach_sections_using_phdrs_clause): Rename
+	local orphan to is_orphan.  Don't report failure to put empty
+	section in segment.  On attachment failure, report name of
+	section, and attach to first PT_LOAD segment.
+
+2011-06-28  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12934
+	* target-select.cc (Target_selector::Target_selector): Add
+	emulation parameter.  Change all callers.
+	(select_target_by_bfd_name): Rename from select_target_by_name.
+	Change all callers.
+	(select_target_by_emulation): New function.
+	(supported_emulation_names): New function.
+	* target-select.h (class Target_selector): Add emulation_ field.
+	Update declarations.
+	(Target_selector::recognize_by_bfd_name): Rename from
+	recognize_by_name.  Change all callers.
+	(Target_selector::supported_bfd_names): Rename from
+	supported_names.  Change all callers.
+	(Target_selector::recognize_by_emulation): New function.
+	(Target_selector::supported_emulations): New function.
+	(Target_selector::emulation): New function.
+	(Target_selector::do_recognize_by_bfd_name): Rename from
+	do_recognize_by_name.  Change all callers.
+	(Target_selector::do_supported_bfd_names): Rename from
+	do_supported_names.  Change all callers.
+	(Target_selector::do_recognize_by_emulation): New function.
+	(Target_selector::do_supported_emulations): New function.
+	(select_target_by_bfd_name): Change name in declaration.
+	(select_target_by_emulation): Declare.
+	(supported_emulation_names): Declare.
+	* parameters.cc (parameters_force_valid_target): Try to find
+	target based on emulation from -m option.
+	* options.h (class General_options): Change doc string for -m.
+	* options.cc (help): Print emulations.
+	(General_options::parse_V): Likewise.
+	* freebsd.h (Target_selector_freebsd::Target_selector_freebsd):
+	Add emulation parameter.  Change all callers.
+
+2011-06-28  Ian Lance Taylor  <iant@google.com>
+
+	* target.h (class Target): Add osabi_ field.
+	(Target::osabi): New function.
+	(Target::set_osabi): New function.
+	(Target::Target): Initialize osabi_.
+	(Target::do_adjust_elf_header): Make pure virtual.
+	(Sized_target::do_adjust_elf_header): Declare.
+	* target.cc (Sized_target::do_adjust_elf_header): New function.
+	(class Sized_target): Instantiate all versions.
+	* freebsd.h (class Target_freebsd): Remove.
+	(Target_selector_freebsd::do_recognize): Call set_osabi on
+	Target.
+	(Target_selector_freebsd::do_recognize_by_name): Likewise.
+	(Target_selector_freebsd::set_osabi): Remove.
+	* i386.cc (class Target_i386): Inherit from Sized_target rather
+	than Target_freebsd.
+	* x86_64.cc (class Target_x86_64): Likewise.
+
+2011-06-28  Ian Lance Taylor  <iant@google.com>
+
+	* target.h (Target::can_check_for_function_pointers): Rewrite.
+	Make non-virtual.
+	(Target::can_icf_inline_merge_sections): Likewise.
+	(Target::section_may_have_icf_unsafe_poineters): Likewise.
+	(Target::Target_info): Add can_icf_inline_merge_sections field.
+	(Target::do_can_check_for_function_pointers): New virtual
+	function.
+	(Target::do_section_may_have_icf_unsafe_pointers): Likewise.
+	* arm.cc (Target_arm::do_can_check_for_function_pointers): Rename
+	from can_check_for_function_pointers, move in file.
+	(Target_arm::do_section_may_have_icf_unsafe_pointers): Rename from
+	section_may_have_icf_unsafe_poineters, move in file.
+	(Target_arm::arm_info): Initialize can_icf_inline_merge_sections.
+	* i386.cc (Target_i386::do_can_check_for_function_pointers):
+	Rename from can_check_for_function_pointers, move in file.
+	(Target_i386::can_icf_inline_merge_sections): Remove.
+	(Target_i386::i386_info): Initialize
+	can_icf_inline_merge_sections.
+	* powerpc.cc (Target_powerpc::powerpc_info) [all versions]:
+	Initialize can_icf_inline_merge_sections.
+	* sparc.cc (Target_sparc::sparc_info) [both version]: Likewise.
+	* x86_64.cc (Target_x86_64::do_can_check_for_function_pointers):
+	Rename from can_check_for_function_pointers, move in file.
+	(Target_x86_64::can_icf_inline_merge_sections): Remove.
+	(Target_x86_64::x86_64_info): Initialize
+	can_icf_inline_merge_sections.
+	* testsuite/testfile.cc (Target_test::test_target_info):
+	Likewise.
+	* icf.cc (get_section_contents): Correct formatting.
+
+2011-06-27  Ian Lance Taylor  <iant@google.com>
+
+	* symtab.cc (Symbol::versioned_name): New function.
+	(Symbol_table::add_to_final_symtab): Use versioned_name when
+	appropriate.
+	(Symbol_table::sized_write_symbol): Likewise.
+	* symtab.h (class Symbol): Declare versioned_name.
+	* stringpool.h (class Stringpool_template): Add variant of add
+	which takes a std::basic_string.
+	* testsuite/Makefile.am (check_PROGRAMS): Add ver_test_12.
+	(ver_test_12_SOURCES, ver_test_12_DEPENDENCIES): New variables.
+	(ver_test_12_LDFLAGS, ver_test_12_LDADD): New variables.
+	(ver_test_12.o): New target.
+	* testsuite/Makefile.in: Rebuild.
+
+2011-06-27  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Arm_relocate_functions::thm_jump8,
+	Arm_relocate_functions::thm_jump11): Use a wider signed
+	type to compute offset.
+	* testsuite/Makefile.am: Add new tests arm_thm_jump11 and
+	arm_thm_jump8.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/arm_branch_in_range.sh: Check test results of
+	arm_thm_jump11 and arm_thm_jump8.
+	* testsuite/arm_thm_jump11.s: New test source file.
+	* testsuite/arm_thm_jump11.t: New linker script.
+	* testsuite/arm_thm_jump8.s: New test source file.
+	* testsuite/arm_thm_jump8.t: New linker script.
+
 2011-06-24  Ian Lance Taylor  <iant@google.com>
 
 	* layout.cc: Include "object.h".

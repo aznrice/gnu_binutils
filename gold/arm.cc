@@ -1,6 +1,6 @@
 // arm.cc -- arm target support for gold.
 
-// Copyright 2009, 2010 Free Software Foundation, Inc.
+// Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com> based on the i386 code
 // by Ian Lance Taylor <iant@google.com>.
 // This file also contains borrowed and adapted code from
@@ -2182,23 +2182,6 @@ class Target_arm : public Sized_target<32, big_endian>
       fix_cortex_a8_(false), cortex_a8_relocs_info_()
   { }
 
-  // Virtual function which is set to return true by a target if
-  // it can use relocation types to determine if a function's
-  // pointer is taken.
-  virtual bool
-  can_check_for_function_pointers() const
-  { return true; }
-
-  // Whether a section called SECTION_NAME may have function pointers to
-  // sections not eligible for safe ICF folding.
-  virtual bool
-  section_may_have_icf_unsafe_pointers(const char* section_name) const
-  {
-    return (!is_prefix_of(".ARM.exidx", section_name)
-	    && !is_prefix_of(".ARM.extab", section_name)
-	    && Target::section_may_have_icf_unsafe_pointers(section_name));
-  }
-  
   // Whether we can use BLX.
   bool
   may_use_blx() const
@@ -2553,6 +2536,23 @@ class Target_arm : public Sized_target<32, big_endian>
     arm_reloc_property_table = new Arm_reloc_property_table();
   }
 
+  // Virtual function which is set to return true by a target if
+  // it can use relocation types to determine if a function's
+  // pointer is taken.
+  virtual bool
+  do_can_check_for_function_pointers() const
+  { return true; }
+
+  // Whether a section called SECTION_NAME may have function pointers to
+  // sections not eligible for safe ICF folding.
+  virtual bool
+  do_section_may_have_icf_unsafe_pointers(const char* section_name) const
+  {
+    return (!is_prefix_of(".ARM.exidx", section_name)
+	    && !is_prefix_of(".ARM.extab", section_name)
+	    && Target::do_section_may_have_icf_unsafe_pointers(section_name));
+  }
+  
  private:
   // The class which scans relocations.
   class Scan
@@ -2946,6 +2946,7 @@ const Target::Target_info Target_arm<big_endian>::arm_info =
   false,		// has_resolve
   false,		// has_code_fill
   true,			// is_default_stack_executable
+  false,		// can_icf_inline_merge_sections
   '\0',			// wrap_char
   "/usr/lib/libc.so.1",	// dynamic_linker
   0x8000,		// default_text_segment_address
@@ -3356,13 +3357,14 @@ class Arm_relocate_functions : public Relocate_functions<32, big_endian>
 	    Arm_address address)
   {
     typedef typename elfcpp::Swap<16, big_endian>::Valtype Valtype;
-    typedef typename elfcpp::Swap<16, big_endian>::Valtype Reltype;
     Valtype* wv = reinterpret_cast<Valtype*>(view);
     Valtype val = elfcpp::Swap<16, big_endian>::readval(wv);
-    Reltype addend = utils::sign_extend<8>((val & 0x00ff) << 1);
-    Reltype x = (psymval->value(object, addend) - address);
-    elfcpp::Swap<16, big_endian>::writeval(wv, (val & 0xff00) | ((x & 0x01fe) >> 1));
-    return (utils::has_overflow<8>(x)
+    int32_t addend = utils::sign_extend<8>((val & 0x00ff) << 1);
+    int32_t x = (psymval->value(object, addend) - address);
+    elfcpp::Swap<16, big_endian>::writeval(wv, ((val & 0xff00)
+                                                | ((x & 0x01fe) >> 1)));
+    // We do a 9-bit overflow check because x is right-shifted by 1 bit.
+    return (utils::has_overflow<9>(x)
 	    ? This::STATUS_OVERFLOW
 	    : This::STATUS_OKAY);
   }
@@ -3375,13 +3377,14 @@ class Arm_relocate_functions : public Relocate_functions<32, big_endian>
 	    Arm_address address)
   {
     typedef typename elfcpp::Swap<16, big_endian>::Valtype Valtype;
-    typedef typename elfcpp::Swap<16, big_endian>::Valtype Reltype;
     Valtype* wv = reinterpret_cast<Valtype*>(view);
     Valtype val = elfcpp::Swap<16, big_endian>::readval(wv);
-    Reltype addend = utils::sign_extend<11>((val & 0x07ff) << 1);
-    Reltype x = (psymval->value(object, addend) - address);
-    elfcpp::Swap<16, big_endian>::writeval(wv, (val & 0xf800) | ((x & 0x0ffe) >> 1));
-    return (utils::has_overflow<11>(x)
+    int32_t addend = utils::sign_extend<11>((val & 0x07ff) << 1);
+    int32_t x = (psymval->value(object, addend) - address);
+    elfcpp::Swap<16, big_endian>::writeval(wv, ((val & 0xf800)
+                                                | ((x & 0x0ffe) >> 1)));
+    // We do a 12-bit overflow check because x is right-shifted by 1 bit.
+    return (utils::has_overflow<12>(x)
 	    ? This::STATUS_OVERFLOW
 	    : This::STATUS_OKAY);
   }
@@ -11901,7 +11904,8 @@ class Target_selector_arm : public Target_selector
  public:
   Target_selector_arm()
     : Target_selector(elfcpp::EM_ARM, 32, big_endian,
-		      (big_endian ? "elf32-bigarm" : "elf32-littlearm"))
+		      (big_endian ? "elf32-bigarm" : "elf32-littlearm"),
+		      (big_endian ? "armelfb" : "armelf"))
   { }
 
   Target*

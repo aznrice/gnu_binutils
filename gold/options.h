@@ -735,6 +735,14 @@ class General_options
 	      N_("(ARM only) Do not warn about objects with incompatible "
 		 "enum sizes"));
 
+  DEFINE_set(auxiliary, options::TWO_DASHES, 'f',
+	     N_("Auxiliary filter for shared object symbol table"),
+	     N_("SHLIB"));
+
+  DEFINE_string(filter, options::TWO_DASHES, 'F', NULL,
+		N_("Filter for shared object symbol table"),
+		N_("SHLIB"));
+
   DEFINE_bool(fatal_warnings, options::TWO_DASHES, '\0', false,
 	      N_("Treat warnings as errors"),
 	      N_("Do not treat warnings as errors"));
@@ -820,6 +828,10 @@ class General_options
               N_("Keep files mapped across passes (default)"),
               N_("Release mapped files after each pass"));
 
+  DEFINE_bool(ld_generated_unwind_info, options::TWO_DASHES, '\0', true,
+	      N_("Generate unwind information for PLT (default)"),
+	      N_("Do not generate unwind information for PLT"));
+
   DEFINE_special(library, options::TWO_DASHES, 'l',
                  N_("Search for library LIBNAME"), N_("LIBNAME"));
 
@@ -835,7 +847,7 @@ class General_options
               NULL);
 
   DEFINE_string(m, options::EXACTLY_ONE_DASH, 'm', "",
-                N_("Ignored for compatibility"), N_("EMULATION"));
+                N_("Set GNU linker emulation; obsolete"), N_("EMULATION"));
 
   DEFINE_bool(print_map, options::TWO_DASHES, 'M', false,
 	      N_("Write map file on standard output"), NULL);
@@ -1166,7 +1178,7 @@ class General_options
 	      N_("Don't mark variables read-only after relocation"));
   DEFINE_bool(text, options::DASH_Z, '\0', false,
 	      N_("Do not permit relocations in read-only segments"),
-	      NULL);
+	      N_("Permit relocations in read-only segments (default)"));
   DEFINE_bool_alias(textoff, text, options::DASH_Z, '\0',
 		    N_("Permit relocations in read-only segments (default)"),
 		    NULL, true);

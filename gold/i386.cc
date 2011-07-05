@@ -1,6 +1,6 @@
 // i386.cc -- i386 target support for gold.
 
-// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -25,6 +25,7 @@
 #include <cstring>
 
 #include "elfcpp.h"
+#include "dwarf.h"
 #include "parameters.h"
 #include "reloc.h"
 #include "i386.h"
@@ -101,16 +102,22 @@ class Output_data_plt_i386 : public Output_section_data
   static const int plt_entry_size = 16;
 
   // The first entry in the PLT for an executable.
-  static unsigned char exec_first_plt_entry[plt_entry_size];
+  static const unsigned char exec_first_plt_entry[plt_entry_size];
 
   // The first entry in the PLT for a shared object.
-  static unsigned char dyn_first_plt_entry[plt_entry_size];
+  static const unsigned char dyn_first_plt_entry[plt_entry_size];
 
   // Other entries in the PLT for an executable.
-  static unsigned char exec_plt_entry[plt_entry_size];
+  static const unsigned char exec_plt_entry[plt_entry_size];
 
   // Other entries in the PLT for a shared object.
-  static unsigned char dyn_plt_entry[plt_entry_size];
+  static const unsigned char dyn_plt_entry[plt_entry_size];
+
+  // The .eh_frame unwind information for the PLT.
+  static const int plt_eh_frame_cie_size = 16;
+  static const int plt_eh_frame_fde_size = 32;
+  static const unsigned char plt_eh_frame_cie[plt_eh_frame_cie_size];
+  static const unsigned char plt_eh_frame_fde[plt_eh_frame_fde_size];
 
   // Set the final size.
   void
@@ -158,26 +165,18 @@ class Output_data_plt_i386 : public Output_section_data
 //   http://people.redhat.com/drepper/tls.pdf
 //   http://www.lsd.ic.unicamp.br/~oliva/writeups/TLS/RFC-TLSDESC-x86.txt
 
-class Target_i386 : public Target_freebsd<32, false>
+class Target_i386 : public Sized_target<32, false>
 {
  public:
   typedef Output_data_reloc<elfcpp::SHT_REL, true, 32, false> Reloc_section;
 
   Target_i386()
-    : Target_freebsd<32, false>(&i386_info),
+    : Sized_target<32, false>(&i386_info),
       got_(NULL), plt_(NULL), got_plt_(NULL), got_tlsdesc_(NULL),
       global_offset_table_(NULL), rel_dyn_(NULL),
       copy_relocs_(elfcpp::R_386_COPY), dynbss_(NULL),
       got_mod_index_offset_(-1U), tls_base_symbol_defined_(false)
   { }
-
-  inline bool
-  can_check_for_function_pointers() const
-  { return true; }
-
-  virtual bool
-  can_icf_inline_merge_sections () const
-  { return true; }
 
   // Process the relocations to determine unreferenced sections for 
   // garbage collection.
@@ -290,6 +289,15 @@ class Target_i386 : public Target_freebsd<32, false>
   Output_data*
   do_plt_section_for_local(const Relobj*, unsigned int) const
   { return this->plt_section(); }
+
+  // We can tell whether we take the address of a function.
+  inline bool
+  do_can_check_for_function_pointers() const
+  { return true; }
+
+  // Return the base for a DW_EH_PE_datarel encoding.
+  uint64_t
+  do_ehframe_datarel_base() const;
 
   // Return whether SYM is call to a non-split function.
   bool
@@ -642,6 +650,7 @@ const Target::Target_info Target_i386::i386_info =
   false,		// has_resolve
   true,			// has_code_fill
   true,			// is_default_stack_executable
+  true,			// can_icf_inline_merge_sections
   '\0',			// wrap_char
   "/usr/lib/libc.so.1",	// dynamic_linker
   0x08048000,		// default_text_segment_address
@@ -730,7 +739,7 @@ Target_i386::rel_dyn_section(Layout* layout)
 Output_data_plt_i386::Output_data_plt_i386(Symbol_table* symtab,
 					   Layout* layout,
 					   Output_data_space* got_plt)
-  : Output_section_data(4), tls_desc_rel_(NULL), got_plt_(got_plt), count_(0),
+  : Output_section_data(16), tls_desc_rel_(NULL), got_plt_(got_plt), count_(0),
     global_ifuncs_(), local_ifuncs_()
 {
   this->rel_ = new Reloc_section(false);
@@ -755,6 +764,11 @@ Output_data_plt_i386::Output_data_plt_i386(Symbol_table* symtab,
 				    elfcpp::STB_GLOBAL, elfcpp::STV_HIDDEN,
 				    0, true, true);
     }
+
+  // Add unwind information if requested.
+  if (parameters->options().ld_generated_unwind_info())
+    layout->add_eh_frame_for_plt(this, plt_eh_frame_cie, plt_eh_frame_cie_size,
+				 plt_eh_frame_fde, plt_eh_frame_fde_size);
 }
 
 void
@@ -859,7 +873,7 @@ Output_data_plt_i386::rel_tls_desc(Layout* layout)
 
 // The first entry in the PLT for an executable.
 
-unsigned char Output_data_plt_i386::exec_first_plt_entry[plt_entry_size] =
+const unsigned char Output_data_plt_i386::exec_first_plt_entry[plt_entry_size] =
 {
   0xff, 0x35,	// pushl contents of memory address
   0, 0, 0, 0,	// replaced with address of .got + 4
@@ -870,7 +884,7 @@ unsigned char Output_data_plt_i386::exec_first_plt_entry[plt_entry_size] =
 
 // The first entry in the PLT for a shared object.
 
-unsigned char Output_data_plt_i386::dyn_first_plt_entry[plt_entry_size] =
+const unsigned char Output_data_plt_i386::dyn_first_plt_entry[plt_entry_size] =
 {
   0xff, 0xb3, 4, 0, 0, 0,	// pushl 4(%ebx)
   0xff, 0xa3, 8, 0, 0, 0,	// jmp *8(%ebx)
@@ -879,7 +893,7 @@ unsigned char Output_data_plt_i386::dyn_first_plt_entry[plt_entry_size] =
 
 // Subsequent entries in the PLT for an executable.
 
-unsigned char Output_data_plt_i386::exec_plt_entry[plt_entry_size] =
+const unsigned char Output_data_plt_i386::exec_plt_entry[plt_entry_size] =
 {
   0xff, 0x25,	// jmp indirect
   0, 0, 0, 0,	// replaced with address of symbol in .got
@@ -891,7 +905,7 @@ unsigned char Output_data_plt_i386::exec_plt_entry[plt_entry_size] =
 
 // Subsequent entries in the PLT for a shared object.
 
-unsigned char Output_data_plt_i386::dyn_plt_entry[plt_entry_size] =
+const unsigned char Output_data_plt_i386::dyn_plt_entry[plt_entry_size] =
 {
   0xff, 0xa3,	// jmp *offset(%ebx)
   0, 0, 0, 0,	// replaced with offset of symbol in .got
@@ -899,6 +913,54 @@ unsigned char Output_data_plt_i386::dyn_plt_entry[plt_entry_size] =
   0, 0, 0, 0,	// replaced with offset into relocation table
   0xe9,		// jmp relative
   0, 0, 0, 0	// replaced with offset to start of .plt
+};
+
+// The .eh_frame unwind information for the PLT.
+
+const unsigned char
+Output_data_plt_i386::plt_eh_frame_cie[plt_eh_frame_cie_size] =
+{
+  1,				// CIE version.
+  'z',				// Augmentation: augmentation size included.
+  'R',				// Augmentation: FDE encoding included.
+  '\0',				// End of augmentation string.
+  1,				// Code alignment factor.
+  0x7c,				// Data alignment factor.
+  8,				// Return address column.
+  1,				// Augmentation size.
+  (elfcpp::DW_EH_PE_pcrel	// FDE encoding.
+   | elfcpp::DW_EH_PE_sdata4),
+  elfcpp::DW_CFA_def_cfa, 4, 4,	// DW_CFA_def_cfa: r4 (esp) ofs 4.
+  elfcpp::DW_CFA_offset + 8, 1,	// DW_CFA_offset: r8 (eip) at cfa-4.
+  elfcpp::DW_CFA_nop,		// Align to 16 bytes.
+  elfcpp::DW_CFA_nop
+};
+
+const unsigned char
+Output_data_plt_i386::plt_eh_frame_fde[plt_eh_frame_fde_size] =
+{
+  0, 0, 0, 0,				// Replaced with offset to .plt.
+  0, 0, 0, 0,				// Replaced with size of .plt.
+  0,					// Augmentation size.
+  elfcpp::DW_CFA_def_cfa_offset, 8,	// DW_CFA_def_cfa_offset: 8.
+  elfcpp::DW_CFA_advance_loc + 6,	// Advance 6 to __PLT__ + 6.
+  elfcpp::DW_CFA_def_cfa_offset, 12,	// DW_CFA_def_cfa_offset: 12.
+  elfcpp::DW_CFA_advance_loc + 10,	// Advance 10 to __PLT__ + 16.
+  elfcpp::DW_CFA_def_cfa_expression,	// DW_CFA_def_cfa_expression.
+  11,					// Block length.
+  elfcpp::DW_OP_breg4, 4,		// Push %esp + 4.
+  elfcpp::DW_OP_breg8, 0,		// Push %eip.
+  elfcpp::DW_OP_lit15,			// Push 0xf.
+  elfcpp::DW_OP_and,			// & (%eip & 0xf).
+  elfcpp::DW_OP_lit11,			// Push 0xb.
+  elfcpp::DW_OP_ge,			// >= ((%eip & 0xf) >= 0xb)
+  elfcpp::DW_OP_lit2,			// Push 2.
+  elfcpp::DW_OP_shl,			// << (((%eip & 0xf) >= 0xb) << 2)
+  elfcpp::DW_OP_plus,			// + ((((%eip&0xf)>=0xb)<<2)+%esp+4
+  elfcpp::DW_CFA_nop,			// Align to 32 bytes.
+  elfcpp::DW_CFA_nop,
+  elfcpp::DW_CFA_nop,
+  elfcpp::DW_CFA_nop
 };
 
 // Write out the PLT.  This uses the hand-coded instructions above,
@@ -3209,6 +3271,21 @@ Target_i386::do_code_fill(section_size_type length) const
   return std::string(nops[length], length);
 }
 
+// Return the value to use for the base of a DW_EH_PE_datarel offset
+// in an FDE.  Solaris and SVR4 use DW_EH_PE_datarel because their
+// assembler can not write out the difference between two labels in
+// different sections, so instead of using a pc-relative value they
+// use an offset from the GOT.
+
+uint64_t
+Target_i386::do_ehframe_datarel_base() const
+{
+  gold_assert(this->global_offset_table_ != NULL);
+  Symbol* sym = this->global_offset_table_;
+  Sized_symbol<32>* ssym = static_cast<Sized_symbol<32>*>(sym);
+  return ssym->value();
+}
+
 // Return whether SYM should be treated as a call to a non-split
 // function.  We don't want that to be true of a call to a
 // get_pc_thunk function.
@@ -3286,7 +3363,8 @@ class Target_selector_i386 : public Target_selector_freebsd
 public:
   Target_selector_i386()
     : Target_selector_freebsd(elfcpp::EM_386, 32, false,
-			      "elf32-i386", "elf32-i386-freebsd")
+			      "elf32-i386", "elf32-i386-freebsd",
+			      "elf_i386")
   { }
 
   Target*

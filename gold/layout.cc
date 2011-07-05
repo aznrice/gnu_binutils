@@ -1132,11 +1132,77 @@ Layout::layout_eh_frame(Sized_relobj_file<size, big_endian>* object,
 			unsigned int reloc_shndx, unsigned int reloc_type,
 			off_t* off)
 {
-  gold_assert(shdr.get_sh_type() == elfcpp::SHT_PROGBITS);
+  gold_assert(shdr.get_sh_type() == elfcpp::SHT_PROGBITS
+	      || shdr.get_sh_type() == elfcpp::SHT_X86_64_UNWIND);
   gold_assert((shdr.get_sh_flags() & elfcpp::SHF_ALLOC) != 0);
 
-  const char* const name = ".eh_frame";
-  Output_section* os = this->choose_output_section(object, name,
+  Output_section* os = this->make_eh_frame_section(object);
+  if (os == NULL)
+    return NULL;
+
+  gold_assert(this->eh_frame_section_ == os);
+
+  elfcpp::Elf_Xword orig_flags = os->flags();
+
+  if (!parameters->incremental()
+      && this->eh_frame_data_->add_ehframe_input_section(object,
+							 symbols,
+							 symbols_size,
+							 symbol_names,
+							 symbol_names_size,
+							 shndx,
+							 reloc_shndx,
+							 reloc_type))
+    {
+      os->update_flags_for_input_section(shdr.get_sh_flags());
+
+      // A writable .eh_frame section is a RELRO section.
+      if ((orig_flags & (elfcpp::SHF_WRITE | elfcpp::SHF_EXECINSTR))
+	  != (os->flags() & (elfcpp::SHF_WRITE | elfcpp::SHF_EXECINSTR)))
+	{
+	  os->set_is_relro();
+	  os->set_order(ORDER_RELRO);
+	}
+
+      // We found a .eh_frame section we are going to optimize, so now
+      // we can add the set of optimized sections to the output
+      // section.  We need to postpone adding this until we've found a
+      // section we can optimize so that the .eh_frame section in
+      // crtbegin.o winds up at the start of the output section.
+      if (!this->added_eh_frame_data_)
+	{
+	  os->add_output_section_data(this->eh_frame_data_);
+	  this->added_eh_frame_data_ = true;
+	}
+      *off = -1;
+    }
+  else
+    {
+      // We couldn't handle this .eh_frame section for some reason.
+      // Add it as a normal section.
+      bool saw_sections_clause = this->script_options_->saw_sections_clause();
+      *off = os->add_input_section(this, object, shndx, ".eh_frame", shdr,
+				   reloc_shndx, saw_sections_clause);
+      this->have_added_input_section_ = true;
+
+      if ((orig_flags & (elfcpp::SHF_WRITE | elfcpp::SHF_EXECINSTR))
+	  != (os->flags() & (elfcpp::SHF_WRITE | elfcpp::SHF_EXECINSTR)))
+	os->set_order(this->default_section_order(os, false));
+    }
+
+  return os;
+}
+
+// Create and return the magic .eh_frame section.  Create
+// .eh_frame_hdr also if appropriate.  OBJECT is the object with the
+// input .eh_frame section; it may be NULL.
+
+Output_section*
+Layout::make_eh_frame_section(const Relobj* object)
+{
+  // FIXME: On x86_64, this could use SHT_X86_64_UNWIND rather than
+  // SHT_PROGBITS.
+  Output_section* os = this->choose_output_section(object, ".eh_frame",
 						   elfcpp::SHT_PROGBITS,
 						   elfcpp::SHF_ALLOC, false,
 						   ORDER_EHFRAME, false);
@@ -1180,57 +1246,31 @@ Layout::layout_eh_frame(Sized_relobj_file<size, big_endian>* object,
 	}
     }
 
-  gold_assert(this->eh_frame_section_ == os);
-
-  elfcpp::Elf_Xword orig_flags = os->flags();
-
-  if (!parameters->incremental()
-      && this->eh_frame_data_->add_ehframe_input_section(object,
-							 symbols,
-							 symbols_size,
-							 symbol_names,
-							 symbol_names_size,
-							 shndx,
-							 reloc_shndx,
-							 reloc_type))
-    {
-      os->update_flags_for_input_section(shdr.get_sh_flags());
-
-      // A writable .eh_frame section is a RELRO section.
-      if ((orig_flags & (elfcpp::SHF_WRITE | elfcpp::SHF_EXECINSTR))
-	  != (os->flags() & (elfcpp::SHF_WRITE | elfcpp::SHF_EXECINSTR)))
-	{
-	  os->set_is_relro();
-	  os->set_order(ORDER_RELRO);
-	}
-
-      // We found a .eh_frame section we are going to optimize, so now
-      // we can add the set of optimized sections to the output
-      // section.  We need to postpone adding this until we've found a
-      // section we can optimize so that the .eh_frame section in
-      // crtbegin.o winds up at the start of the output section.
-      if (!this->added_eh_frame_data_)
-	{
-	  os->add_output_section_data(this->eh_frame_data_);
-	  this->added_eh_frame_data_ = true;
-	}
-      *off = -1;
-    }
-  else
-    {
-      // We couldn't handle this .eh_frame section for some reason.
-      // Add it as a normal section.
-      bool saw_sections_clause = this->script_options_->saw_sections_clause();
-      *off = os->add_input_section(this, object, shndx, name, shdr, reloc_shndx,
-				   saw_sections_clause);
-      this->have_added_input_section_ = true;
-
-      if ((orig_flags & (elfcpp::SHF_WRITE | elfcpp::SHF_EXECINSTR))
-	  != (os->flags() & (elfcpp::SHF_WRITE | elfcpp::SHF_EXECINSTR)))
-	os->set_order(this->default_section_order(os, false));
-    }
-
   return os;
+}
+
+// Add an exception frame for a PLT.  This is called from target code.
+
+void
+Layout::add_eh_frame_for_plt(Output_data* plt, const unsigned char* cie_data,
+			     size_t cie_length, const unsigned char* fde_data,
+			     size_t fde_length)
+{
+  if (parameters->incremental())
+    {
+      // FIXME: Maybe this could work some day....
+      return;
+    }
+  Output_section* os = this->make_eh_frame_section(NULL);
+  if (os == NULL)
+    return;
+  this->eh_frame_data_->add_ehframe_for_plt(plt, cie_data, cie_length,
+					    fde_data, fde_length);
+  if (!this->added_eh_frame_data_)
+    {
+      os->add_output_section_data(this->eh_frame_data_);
+      this->added_eh_frame_data_ = true;
+    }
 }
 
 // Add POSD to an output section using NAME, TYPE, and FLAGS.  Return
@@ -2751,7 +2791,7 @@ Layout::create_incremental_info_sections(Symbol_table* symtab)
 
 // Return whether SEG1 should be before SEG2 in the output file.  This
 // is based entirely on the segment type and flags.  When this is
-// called the segment addresses has normally not yet been set.
+// called the segment addresses have normally not yet been set.
 
 bool
 Layout::segment_precedes(const Output_segment* seg1,
@@ -2877,8 +2917,10 @@ Layout::segment_precedes(const Output_segment* seg1,
     return (flags1 & elfcpp::PF_R) == 0;
 
   // We shouldn't get here--we shouldn't create segments which we
-  // can't distinguish.
-  gold_unreachable();
+  // can't distinguish.  Unless of course we are using a weird linker
+  // script.
+  gold_assert(this->script_options_->saw_phdrs_clause());
+  return false;
 }
 
 // Increase OFF so that it is congruent to ADDR modulo ABI_PAGESIZE.
@@ -2902,9 +2944,11 @@ off_t
 Layout::set_segment_offsets(const Target* target, Output_segment* load_seg,
 			    unsigned int* pshndx)
 {
-  // Sort them into the final order.
-  std::sort(this->segment_list_.begin(), this->segment_list_.end(),
-	    Layout::Compare_segments());
+  // Sort them into the final order.  We use a stable sort so that we
+  // don't randomize the order of indistinguishable segments created
+  // by linker scripts.
+  std::stable_sort(this->segment_list_.begin(), this->segment_list_.end(),
+		   Layout::Compare_segments(this));
 
   // Find the PT_LOAD segments, and set their addresses and offsets
   // and their section's addresses and offsets.
@@ -4174,8 +4218,18 @@ Layout::finish_dynamic_section(const Input_objects* input_objects,
         }
     }
 
-  // Add a DT_FLAGS entry. We add it even if no flags are set so that
-  // post-link tools can easily modify these flags if desired.
+  if (parameters->options().filter() != NULL)
+    odyn->add_string(elfcpp::DT_FILTER, parameters->options().filter());
+  if (parameters->options().any_auxiliary())
+    {
+      for (options::String_set::const_iterator p =
+	     parameters->options().auxiliary_begin();
+	   p != parameters->options().auxiliary_end();
+	   ++p)
+	odyn->add_string(elfcpp::DT_AUXILIARY, *p);
+    }
+
+  // Add a DT_FLAGS entry if necessary.
   unsigned int flags = 0;
   if (have_textrel)
     {
@@ -4529,6 +4583,17 @@ Layout::symtab_section_offset() const
 {
   if (this->symtab_section_ != NULL)
     return this->symtab_section_->offset();
+  return 0;
+}
+
+// Return the section index of the normal symbol table.  It may have
+// been stripped by the -s/--strip-all option.
+
+unsigned int
+Layout::symtab_section_shndx() const
+{
+  if (this->symtab_section_ != NULL)
+    return this->symtab_section_->out_shndx();
   return 0;
 }
 

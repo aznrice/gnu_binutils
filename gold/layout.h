@@ -549,6 +549,14 @@ class Layout
 		  unsigned int reloc_shndx, unsigned int reloc_type,
 		  off_t* offset);
 
+  // Add .eh_frame information for a PLT.  The FDE must start with a
+  // 4-byte PC-relative reference to the start of the PLT, followed by
+  // a 4-byte size of PLT.
+  void
+  add_eh_frame_for_plt(Output_data* plt, const unsigned char* cie_data,
+		       size_t cie_length, const unsigned char* fde_data,
+		       size_t fde_length);
+
   // Handle a GNU stack note.  This is called once per input object
   // file.  SEEN_GNU_STACK is true if the object file has a
   // .note.GNU-stack section.  GNU_STACK_FLAGS is the section flags
@@ -700,6 +708,10 @@ class Layout
   // Return the file offset of the normal symbol table.
   off_t
   symtab_section_offset() const;
+
+  // Return the section index of the normal symbol tabl.e
+  unsigned int
+  symtab_section_shndx() const;
 
   // Return the dynamic symbol table.
   Output_section*
@@ -1014,6 +1026,10 @@ class Layout
   void
   attach_allocated_section_to_segment(Output_section*);
 
+  // Make the .eh_frame section.
+  Output_section*
+  make_eh_frame_section(const Relobj*);
+
   // Set the final file offsets of all the segments.
   off_t
   set_segment_offsets(const Target*, Output_segment*, unsigned int* pshndx);
@@ -1052,7 +1068,7 @@ class Layout
   place_orphan_sections_in_script();
 
   // Return whether SEG1 comes before SEG2 in the output file.
-  static bool
+  bool
   segment_precedes(const Output_segment* seg1, const Output_segment* seg2);
 
   // Use to save and restore segments during relaxation. 
@@ -1102,11 +1118,19 @@ class Layout
 
   // A comparison class for segments.
 
-  struct Compare_segments
+  class Compare_segments
   {
+   public:
+    Compare_segments(Layout* layout)
+      : layout_(layout)
+    { }
+
     bool
     operator()(const Output_segment* seg1, const Output_segment* seg2)
-    { return Layout::segment_precedes(seg1, seg2); }
+    { return this->layout_->segment_precedes(seg1, seg2); }
+
+   private:
+    Layout* layout_;
   };
 
   typedef std::vector<Output_section_data*> Output_section_data_list;
