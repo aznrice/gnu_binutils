@@ -950,7 +950,7 @@ index 3f45c37..50eccf3 100644
        /* Restore the global list pointer now they have all been added.  */
        lang_list_remove_tail (stat_ptr, &added);
 diff --git a/ld/plugin.c b/ld/plugin.c
-index a9c2a95..4f96a07 100644
+index a9c2a95..3bbad29 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -32,6 +32,7 @@
@@ -1015,7 +1015,7 @@ index a9c2a95..4f96a07 100644
        /* No further processing if this def/ref is from an IR dummy BFD.  */
        if (is_ir_dummy_bfd (abfd))
  	return TRUE;
-@@ -975,14 +992,26 @@ plugin_notice (struct bfd_link_info *info,
+@@ -975,14 +992,28 @@ plugin_notice (struct bfd_link_info *info,
  	 definition, and strong symbols will normally cause multiple
  	 definition errors.  Avoid this by making the symbol appear
  	 to be undefined.  */
@@ -1027,8 +1027,10 @@ index a9c2a95..4f96a07 100644
 -		   && is_ir_dummy_bfd (sym_bfd = h->u.c.p->section->owner)))
 +		&& is_ir_dummy_bfd (h->u.def.section->owner))
 +	{
-+	  /* A symbol with comdat key in IR dummy BFD may override
-+	     the comdat symbol in a real BFD.  */
++	  /* A symbol with comdat key from IR dummy BFD overrides the
++	     comdat symbol from a real BFD in the first pass and sets
++	     non_ir_ref.  It will be overridden by the new definition
++	     from the LTO output in the seciond pass.  */
 +	  if (link_info.loading_lto_outputs
 +	      || (h->u.def.section->flags & SEC_LTO_COMDAT) == 0)
 +	    {
