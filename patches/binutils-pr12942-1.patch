@@ -141,7 +141,7 @@ index 98a1463..07994b4 100644
    if (bed->elf_backend_section_flags)
      if (! bed->elf_backend_section_flags (&flags, hdr))
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 12fa714..42186db 100644
+index 12fa714..a962447 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -12441,63 +12441,100 @@ section_signature (asection *sec)
@@ -259,8 +259,8 @@ index 12fa714..42186db 100644
 +      const char *l_name = l->linked.comdat_key;
 +      if (l_name)
 +	{
-+	  l_owner = l->linked.u.abfd;
 +	  l_sec = NULL;
++	  l_owner = l->linked.u.abfd;
 +	  l_flags = (SEC_GROUP
 +		     | SEC_LINK_ONCE
 +		     | SEC_LINK_DUPLICATES_DISCARD);
@@ -270,10 +270,10 @@ index 12fa714..42186db 100644
 +	{
 +	  l_sec = l->linked.u.sec;
 +	  l_owner = l_sec->owner;
-+	  l_name = section_signature (l_sec);
 +	  l_flags = l_sec->flags;
 +	  l_coff_comdat_sec
 +	    = !!bfd_coff_get_comdat_section (l_sec->owner, l_sec);
++	  l_name = section_signature (l_sec);
 +	}
 +
        /* We may have 2 different types of sections on the list: group
@@ -287,10 +287,16 @@ index 12fa714..42186db 100644
  	{
  	  /* The section has already been linked.  See if we should
  	     issue a warning.  */
-@@ -12507,6 +12544,13 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
+@@ -12507,6 +12544,19 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
  	      abort ();
  
  	    case SEC_LINK_DUPLICATES_DISCARD:
++	      /* If we found an LTO IR match for this comdat group on
++		 the first pass, replace it with the LTO output on the
++		 second pass.  We can't simply choose real object
++		 files over IR because the first pass may contain a
++		 mix of LTO and normal objects and we must keep the
++		 first match, be it IR or real.  */
 +	      if (info->loading_lto_outputs
 +		  && (l_owner->flags & BFD_PLUGIN) != 0)
 +		{
@@ -301,7 +307,7 @@ index 12fa714..42186db 100644
  	      break;
  
  	    case SEC_LINK_DUPLICATES_ONE_ONLY:
-@@ -12516,14 +12560,20 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
+@@ -12516,14 +12566,20 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
  	      break;
  
  	    case SEC_LINK_DUPLICATES_SAME_SIZE:
@@ -324,7 +330,7 @@ index 12fa714..42186db 100644
  		(*_bfd_error_handler)
  		  (_("%B: duplicate section `%A' has different size"),
  		   abfd, sec);
-@@ -12535,11 +12585,11 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
+@@ -12535,11 +12591,11 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
  		    (*_bfd_error_handler)
  		      (_("%B: warning: could not read contents of section `%A'"),
  		       abfd, sec);
@@ -338,7 +344,7 @@ index 12fa714..42186db 100644
  		  else if (memcmp (sec_contents, l_sec_contents, sec->size) != 0)
  		    (*_bfd_error_handler)
  		      (_("%B: warning: duplicate section `%A' has different contents"),
-@@ -12553,28 +12603,31 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
+@@ -12553,28 +12609,31 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
  	      break;
  	    }
  
@@ -389,7 +395,7 @@ index 12fa714..42186db 100644
  		}
  	    }
  
-@@ -12582,67 +12635,100 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
+@@ -12582,67 +12641,100 @@ _bfd_elf_section_already_linked (bfd *abfd, asection *sec,
  	}
      }
  
@@ -648,7 +654,7 @@ index dd4cc94..d778f89 100644
    (bfd_boolean (*) (struct bfd_section_already_linked_hash_entry *,
  		    void *), void *);
 diff --git a/bfd/linker.c b/bfd/linker.c
-index e472317..5951bc9 100644
+index e472317..f88dba4 100644
 --- a/bfd/linker.c
 +++ b/bfd/linker.c
 @@ -2888,15 +2888,16 @@ FUNCTION
@@ -772,17 +778,17 @@ index e472317..5951bc9 100644
 +
 +      if (l->linked.comdat_key)
 +	{
++	  l_sec = NULL;
 +	  l_owner = l->linked.u.abfd;
++	  l_comdat = NULL;
 +	  l_flags = (SEC_GROUP
 +		     | SEC_LINK_ONCE
 +		     | SEC_LINK_DUPLICATES_DISCARD);
-+	  l_sec = NULL;
-+	  l_comdat = NULL;
 +	}
 +      else
 +	{
-+	  l_owner = l_sec->owner;
 +	  l_sec = l->linked.u.sec;
++	  l_owner = l_sec->owner;
 +	  l_comdat = bfd_coff_get_comdat_section (l_sec->owner, l_sec);
 +	}
  
@@ -797,10 +803,16 @@ index e472317..5951bc9 100644
  	skip = TRUE;
        else if (bfd_get_flavour (abfd) == bfd_target_coff_flavour)
  	{
-@@ -3056,6 +3089,13 @@ _bfd_generic_section_already_linked (bfd *abfd, asection *sec,
+@@ -3056,6 +3089,19 @@ _bfd_generic_section_already_linked (bfd *abfd, asection *sec,
  	      abort ();
  
  	    case SEC_LINK_DUPLICATES_DISCARD:
++	      /* If we found an LTO IR match for this comdat group on
++		 the first pass, replace it with the LTO output on the
++		 second pass.  We can't simply choose real object
++		 files over IR because the first pass may contain a
++		 mix of LTO and normal objects and we must keep the
++		 first match, be it IR or real.  */
 +	      if (info->loading_lto_outputs
 +		  && (l_owner->flags & BFD_PLUGIN) != 0)
 +		{
@@ -811,7 +823,7 @@ index e472317..5951bc9 100644
  	      break;
  
  	    case SEC_LINK_DUPLICATES_ONE_ONLY:
-@@ -3072,27 +3112,31 @@ _bfd_generic_section_already_linked (bfd *abfd, asection *sec,
+@@ -3072,27 +3118,31 @@ _bfd_generic_section_already_linked (bfd *abfd, asection *sec,
                   either.  */
  	      /* Fall through.  */
  	    case SEC_LINK_DUPLICATES_SAME_SIZE:
