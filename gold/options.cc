@@ -235,6 +235,17 @@ parse_double(const char* option_name, const char* arg, double* retval)
 }
 
 void
+parse_percent(const char* option_name, const char* arg, double* retval)
+{
+  char* endptr;
+  *retval = strtod(arg, &endptr) / 100.0;
+  if (*endptr != '\0')
+    gold_fatal(_("%s: invalid option value "
+		 "(expected a floating point number): %s"),
+	       option_name, arg);
+}
+
+void
 parse_string(const char* option_name, const char* arg, const char** retval)
 {
   if (*arg == '\0')
@@ -384,6 +395,14 @@ General_options::parse_incremental_unknown(const char*, const char*,
 {
   this->implicit_incremental_ = true;
   this->incremental_disposition_ = INCREMENTAL_CHECK;
+}
+
+void
+General_options::parse_incremental_startup_unchanged(const char*, const char*,
+						     Command_line*)
+{
+  this->implicit_incremental_ = true;
+  this->incremental_startup_disposition_ = INCREMENTAL_UNCHANGED;
 }
 
 void
@@ -899,7 +918,8 @@ General_options::General_options()
     plugins_(NULL),
     dynamic_list_(),
     incremental_mode_(INCREMENTAL_OFF),
-    incremental_disposition_(INCREMENTAL_CHECK),
+    incremental_disposition_(INCREMENTAL_STARTUP),
+    incremental_startup_disposition_(INCREMENTAL_CHECK),
     implicit_incremental_(false),
     excluded_libs_(),
     symbols_to_retain_(),

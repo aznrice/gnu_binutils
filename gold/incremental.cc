@@ -1,6 +1,6 @@
 // inremental.cc -- incremental linking support for gold
 
-// Copyright 2009, 2010 Free Software Foundation, Inc.
+// Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Mikolaj Zalewski <mikolajz@google.com>.
 
 // This file is part of gold.
@@ -309,7 +309,7 @@ Sized_incremental_binary<size, big_endian>::setup_readers()
 	  break;
 	case INCREMENTAL_INPUT_SCRIPT:
 	  {
-	    Script_info* script = new Script_info(input_file.filename());
+	    Script_info* script = new Script_info(input_file.filename(), i);
 	    this->script_map_[i] = script;
 	    unsigned int object_count = input_file.get_object_count();
 	    for (unsigned int j = 0; j < object_count; j++)
@@ -393,6 +393,12 @@ Sized_incremental_binary<size, big_endian>::do_check_inputs(
 
   if (incremental_inputs->command_line() != inputs.command_line())
     {
+      gold_debug(DEBUG_INCREMENTAL,
+      		 "old command line: %s",
+      		 inputs.command_line());
+      gold_debug(DEBUG_INCREMENTAL,
+      		 "new command line: %s",
+      		 incremental_inputs->command_line().c_str());
       explain_no_incremental(_("command line changed"));
       return false;
     }
@@ -442,9 +448,23 @@ Sized_incremental_binary<size, big_endian>::do_file_has_changed(
 {
   Input_entry_reader input_file = this->inputs_reader_.input_file(n);
   Incremental_disposition disp = INCREMENTAL_CHECK;
+
+  // For files named in scripts, find the file that was actually named
+  // on the command line, so that we can get the incremental disposition
+  // flag.
+  Script_info* script = this->get_script_info(n);
+  if (script != NULL)
+    n = script->input_file_index();
+
   const Input_argument* input_argument = this->get_input_argument(n);
   if (input_argument != NULL)
     disp = input_argument->file().options().incremental_disposition();
+
+  // For files at the beginning of the command line (i.e., those added
+  // implicitly by gcc), check whether the --incremental-startup-unchanged
+  // option was used.
+  if (disp == INCREMENTAL_STARTUP)
+    disp = parameters->options().incremental_startup_disposition();
 
   if (disp != INCREMENTAL_CHECK)
     return disp == INCREMENTAL_CHANGED;
@@ -654,7 +674,7 @@ Sized_incremental_binary<size, big_endian>::do_process_got_plt(
 	  gold_debug(DEBUG_INCREMENTAL,
 		     "PLT entry %d: %s",
 		     i, sym->name());
-	  target->register_global_plt_entry(i, sym);
+	  target->register_global_plt_entry(symtab, layout, i, sym);
 	}
     }
 }
@@ -924,10 +944,13 @@ Incremental_inputs::report_command_line(int argc, const char* const* argv)
 	  || strcmp(argv[i], "--incremental-changed") == 0
 	  || strcmp(argv[i], "--incremental-unchanged") == 0
 	  || strcmp(argv[i], "--incremental-unknown") == 0
+	  || strcmp(argv[i], "--incremental-startup-unchanged") == 0
 	  || is_prefix_of("--incremental-base=", argv[i])
+	  || is_prefix_of("--incremental-patch=", argv[i])
 	  || is_prefix_of("--debug=", argv[i]))
         continue;
       if (strcmp(argv[i], "--incremental-base") == 0
+	  || strcmp(argv[i], "--incremental-patch") == 0
 	  || strcmp(argv[i], "--debug") == 0)
 	{
 	  // When these options are used without the '=', skip the
@@ -1646,9 +1669,15 @@ Output_section_incremental_inputs<size, big_endian>::write_info_blocks(
 	        if (sym->symtab_index() == -1U)
 	          continue;
 		unsigned int flags = 0;
-		if (sym->source() == Symbol::FROM_OBJECT
-		    && sym->object() == obj
-		    && sym->is_defined())
+		// If the symbol has hidden or internal visibility, we
+		// mark it as defined in the shared object so we don't
+		// try to resolve it during an incremental update.
+		if (sym->visibility() == elfcpp::STV_HIDDEN
+		    || sym->visibility() == elfcpp::STV_INTERNAL)
+		  flags = INCREMENTAL_SHLIB_SYM_DEF;
+		else if (sym->source() == Symbol::FROM_OBJECT
+			 && sym->object() == obj
+			 && sym->is_defined())
 		  flags = INCREMENTAL_SHLIB_SYM_DEF;
 		else if (sym->is_copied_from_dynobj()
 			 && this->symtab_->get_copy_source(sym) == dynobj)

@@ -1833,6 +1833,18 @@ check_PROGRAMS += ifuncmain7pie
 ifuncmain7pie: ifuncmain7pie.o gcctestdir/ld
 	$(LINK) -Bgcctestdir/ -pie ifuncmain7pie.o
 
+check_PROGRAMS += ifuncvar
+ifuncvar1_pic.o: ifuncvar1.c
+	$(COMPILE) -c -fpic -o $@ $<
+ifuncvar2_pic.o: ifuncvar2.c	
+	$(COMPILE) -c -fpic -o $@ $<
+ifuncvar.so: ifuncvar1_pic.o ifuncvar2_pic.o gcctestdir/ld
+	$(LINK) -Bgcctestdir/ -shared ifuncvar1_pic.o ifuncvar2_pic.o
+ifuncvar_SOURCES = ifuncvar3.c
+ifuncvar_DEPENDENCIES = gcctestdir/ld ifuncvar.so
+ifuncvar_LDFLAGS = -Bgcctestdir/ -Wl,-R,.
+ifuncvar_LDADD = ifuncvar.so
+
 endif IFUNC
 
 # Test that strong reference to a weak symbol in a DSO remains strong.
@@ -1898,15 +1910,26 @@ memory_test.stdout: memory_test
 
 if DEFAULT_TARGET_X86_64
 
+two_file_test_1_v1_ndebug.o: two_file_test_1_v1.cc
+	$(CXXCOMPILE) -O0 -g0 -c -o $@ $<
+two_file_test_1_ndebug.o: two_file_test_1.cc
+	$(CXXCOMPILE) -O0 -g0 -c -o $@ $<
+two_file_test_1b_ndebug.o: two_file_test_1b.cc
+	$(CXXCOMPILE) -O0 -g0 -c -o $@ $<
+two_file_test_2_ndebug.o: two_file_test_2.cc
+	$(CXXCOMPILE) -O0 -g0 -c -o $@ $<
+two_file_test_main_ndebug.o: two_file_test_main.cc
+	$(CXXCOMPILE) -O0 -g0 -c -o $@ $<
+
 check_PROGRAMS += incremental_test_2
 MOSTLYCLEANFILES += two_file_test_tmp_2.o
-incremental_test_2: two_file_test_1_v1.o two_file_test_1.o two_file_test_1b.o \
-		    two_file_test_2.o two_file_test_main.o gcctestdir/ld
-	cp -f two_file_test_1_v1.o two_file_test_tmp_2.o
-	$(CXXLINK) -Wl,--incremental-full -Bgcctestdir/ two_file_test_tmp_2.o two_file_test_1b.o two_file_test_2.o two_file_test_main.o
+incremental_test_2: two_file_test_1_v1_ndebug.o two_file_test_1_ndebug.o two_file_test_1b_ndebug.o \
+		    two_file_test_2_ndebug.o two_file_test_main_ndebug.o gcctestdir/ld
+	cp -f two_file_test_1_v1_ndebug.o two_file_test_tmp_2.o
+	$(CXXLINK) -Wl,--incremental-full,--incremental-patch=100 -Bgcctestdir/ two_file_test_tmp_2.o two_file_test_1b_ndebug.o two_file_test_2_ndebug.o two_file_test_main_ndebug.o
 	@sleep 1
-	cp -f two_file_test_1.o two_file_test_tmp_2.o
-	$(CXXLINK) -Wl,--incremental-update -Bgcctestdir/ two_file_test_tmp_2.o two_file_test_1b.o two_file_test_2.o two_file_test_main.o
+	cp -f two_file_test_1_ndebug.o two_file_test_tmp_2.o
+	$(CXXLINK) -Wl,--incremental-update -Bgcctestdir/ two_file_test_tmp_2.o two_file_test_1b_ndebug.o two_file_test_2_ndebug.o two_file_test_main_ndebug.o
 
 check_PROGRAMS += incremental_test_3
 MOSTLYCLEANFILES += two_file_test_tmp_3.o
@@ -1928,6 +1951,32 @@ incremental_test_4: two_file_test_1.o two_file_test_1b.o two_file_test_2_v1.o \
 	@sleep 1
 	cp -f two_file_test_2.o two_file_test_tmp_4.o
 	$(CXXLINK) -Wl,--incremental-update,--incremental-base=incremental_test_4.base -Bgcctestdir/ two_file_test_1.o two_file_test_1b.o two_file_test_tmp_4.o two_file_test_main.o
+
+check_PROGRAMS += incremental_test_5
+MOSTLYCLEANFILES += two_file_test_5.a
+incremental_test_5: two_file_test_1.o two_file_test_1b_v1.o two_file_test_1b.o \
+		    two_file_test_2.o two_file_test_main.o gcctestdir/ld
+	cp -f two_file_test_1b_v1.o two_file_test_tmp_5.o
+	$(TEST_AR) rc two_file_test_5.a two_file_test_1.o two_file_test_tmp_5.o two_file_test_2.o
+	$(CXXLINK) -Wl,--incremental-full -Bgcctestdir/ two_file_test_main.o two_file_test_5.a
+	@sleep 1
+	cp -f two_file_test_1b.o two_file_test_tmp_5.o
+	$(TEST_AR) rc two_file_test_5.a two_file_test_1.o two_file_test_tmp_5.o two_file_test_2.o
+	$(CXXLINK) -Wl,--incremental-update -Bgcctestdir/ two_file_test_main.o two_file_test_5.a
+
+# Test the --incremental-unchanged flag with an archive library.
+# The second link should not update the library.
+check_PROGRAMS += incremental_test_6
+MOSTLYCLEANFILES += two_file_test_6.a
+incremental_test_6: two_file_test_1.o two_file_test_1b_v1.o two_file_test_1b.o \
+		    two_file_test_2.o two_file_test_main.o gcctestdir/ld
+	cp -f two_file_test_1b.o two_file_test_tmp_6.o
+	$(TEST_AR) rc two_file_test_6.a two_file_test_1.o two_file_test_tmp_6.o two_file_test_2.o
+	$(CXXLINK) -Wl,--incremental-full -Bgcctestdir/ two_file_test_main.o two_file_test_6.a
+	@sleep 1
+	cp -f two_file_test_1b_v1.o two_file_test_tmp_6.o
+	$(TEST_AR) rc two_file_test_6.a two_file_test_1.o two_file_test_tmp_6.o two_file_test_2.o
+	$(CXXLINK) -Wl,--incremental-update -Bgcctestdir/ two_file_test_main.o -Wl,--incremental-unchanged two_file_test_6.a -Wl,--incremental-unknown
 
 check_PROGRAMS += incremental_copy_test
 incremental_copy_test: copy_test_v1.o copy_test.o copy_test_1.so copy_test_2.so
@@ -2342,6 +2391,20 @@ pr12826_1.o: pr12826_1.s
 
 pr12826_2.o: pr12826_2.s
 	$(TEST_AS) -o $@ $<
+
+check_SCRIPTS += arm_unaligned_reloc.sh
+check_DATA += arm_unaligned_reloc.stdout
+
+arm_unaligned_reloc.stdout: arm_unaligned_reloc
+	$(TEST_OBJDUMP) -D $< > $@
+
+arm_unaligned_reloc: arm_unaligned_reloc.o ../ld-new
+	../ld-new -o $@ $<
+
+arm_unaligned_reloc.o: arm_unaligned_reloc.s
+	$(TEST_AS) -o $@ $<
+
+MOSTLYCLEANFILES += arm_unaligned_reloc
 
 endif DEFAULT_TARGET_ARM
 

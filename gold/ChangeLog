@@ -1,3 +1,272 @@
+2011-07-08  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/11985
+	* layout.cc (Layout::create_initial_dynamic_sections): Don't crash
+	if linker script discards key sections.
+	(Layout::create_dynamic_symtab): Likewise.
+	(Layout::assign_local_dynsym_offsets): Likewise.
+	(Layout::sized_create_version_sections): Likewise.
+	(Layout::create_interp): Likewise.
+	(Layout::finish_dynamic_section): Likewise.
+	(Layout::set_dynamic_symbol_size): Likewise.
+
+2011-07-08  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12386
+	* options.h (class General_options): Add --unresolved-symbols.
+	* target-reloc.h (issue_undefined_symbol_error): Check
+	--unresolved-symbols.  Add comments.
+
+2011-07-08  Ian Lance Taylor  <iant@google.com>
+
+	* testsuite/odr_violation2.cc (Ordering::operator()): Make
+	expression more complex.
+
+2011-07-08  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/11317
+	* target-reloc.h (issue_undefined_symbol_error): New inline
+	function, broken out of relocate_section.
+	(relocate_section): Call issue_undefined_symbol_error.
+	* i386.cc (Target_i386::Relocate::relocate_tls): Don't crash if
+	there is no TLS segment if we are about to issue an undefined
+	symbol error.
+	* x86_64.cc (Target_x86_64::relocate_tls): Likewise.
+
+2011-07-08  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12279
+	* resolve.cc (Symbol_table::should_override): Add fromtype
+	parameter.  Change all callers.  Give error when linking together
+	TLS and non-TLS symbol.
+	(Symbol_table::should_override_with_special): Add fromtype
+	parameter.  Change all callers.
+	* i386.cc (Target_i386::Relocate::relocate_tls): Don't crash if
+	there is no TLS segment if we have reported some errors.
+	* x86_64.cc (Target_x86_64::relocate_tls): Likewise.
+
+2011-07-08  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12372
+	* target.h (Target::plt_address_for_global): New function.
+	(Target::plt_address_for_local): New function.
+	(Target::plt_section_for_global): Remove.
+	(Target::plt_section_for_local): Remove.
+	(Target::do_plt_address_for_global): New virtual function.
+	(Target::do_plt_address_for_local): New virtual function.
+	(Target::do_plt_section_for_global): Remove.
+	(Target::do_plt_section_for_local): Remove.
+	(Target::register_global_plt_entry): Add Symbol_table and Layout
+	parameters.
+	* output.cc (Output_data_got::Got_entry::write): Use
+	plt_address_for_global and plt_address_for_local.
+	* layout.cc (Layout::add_target_dynamic_tags): Use size and
+	address of output section.
+	* i386.cc (class Output_data_plt_i386): Add irelative_rel_,
+	got_irelative_, and irelative_count_ fields.  Update
+	declarations.
+	(Output_data_plt_i386::has_irelative_section): New function.
+	(Output_data_plt_i386::entry_count): Add irelative_count_.
+	(Output_data_plt_i386::set_final_data_size): Likewise.
+	(class Target_i386): Add got_irelative_ and rel_irelative_
+	fields.  Update declarations.
+	(Target_i386::Target_i386): Initialize new fields.
+	(Target_i386::do_plt_address_for_global): New function replacing
+	do_plt_section_for_global.
+	(Target_i386::do_plt_address_for_local): New function replacing
+	do_plt_section_for_local.
+	(Target_i386::got_section): Create got_irelative_.
+	(Target_i386::rel_irelative_section): New function.
+	(Output_data_plt_i386::Output_data_plt_i386): Initialize new
+	fields.  Don't define __rel_iplt_{start,end}.
+	(Output_data_plt_i386::add_entry): Add symtab and layout
+	parameters.  Change all callers.  Use different PLT and GOT for
+	IFUNC symbols.
+	(Output_data_plt_i386::add_local_ifunc_entry): Add symtab and
+	layout parameters.  Change all callers.  Use different PLT and
+	GOT.
+	(Output_data_plt_i386::rel_tls_desc): Fix formatting.
+	(Output_data_plt_i386::rel_irelative): New function.
+	(Output_data_plt_i386::address_for_global): New function.
+	(Output_data_plt_i386::address_for_local): New function.
+	(Output_data_plt_i386::do_write): Write out IRELATIVE area.  Use
+	IRELATIVE GOT when changing IFUNC GOT entries.
+	(Target_i386::Scan::global): Use IRELATIVE GOT for IRELATIVE
+	reloc.
+	(Target_i386::do_finalize_sections): Create the __rel_iplt symbols
+	if we didn't create an IRELATIVE GOT.
+	(Target_i386::Relocate::relocate): Use plt_address_for_global and
+	plt_address_for_local.
+	(Target_i386::do_dynsym_value): Use plt_address_for_global.
+	* x86_64.cc (class Output_data_plt_x86_64): Add irelative_rel_,
+	got_irelative_, and irelative_count_ fields.  Update
+	declarations.
+	(Output_data_plt_x86_64::Output_data_plt_x86_64) [both versions]:
+	Initialize new fields.  Remove symtab parameter.  Change all
+	callers.
+	(Output_data_plt_x86_64::get_tlsdesc_plt_offset): Add
+	irelative_count_.
+	(Output_data_plt_x86_64::has_irelative_section): New function.
+	(Output_data_plt_x86_64::entry_count): Add irelative_count_.
+	(class Target_x86_64): Add got_irelative_ and rel_irelative_
+	fields.  Update declarations.
+	(Target_x86_64::Target_x86_64): Initialize new fields.
+	(Target_x86_64::do_plt_address_for_global): New function replacing
+	do_plt_section_for_global.
+	(Target_x86_64::do_plt_address_for_local): New function replacing
+	do_plt_section_for_local.
+	(Target_x86_64::got_section): Create got_irelative_.
+	(Target_x86_64::rela_irelative_section): New function.
+	(Output_data_plt_x86_64::init): Remove symtab parameter.  Change
+	all callers.  Don't create __rel_iplt_{start,end}.
+	(Output_data_plt_x86_64::add_entry): Add symtab and layout
+	parameters.  Change all callers.  Use different PLT and GOT for
+	IFUNC symbols.
+	(Output_data_plt_x86_64::add_local_ifunc_entry): Add symtab and
+	layout parameters.  Change all callers.  Use different PLT and
+	GOT.
+	(Output_data_plt_x86_64::add_relocation): Add symtab and layout
+	parameters.  Change all callers.  Use different PLT and GOT for
+	IFUNC symbols.
+	(Output_data_plt_x86_64::rela_tlsdesc): Fix formatting.
+	(Output_data_plt_x86_64::rela_irelative): New function.
+	(Output_data_plt_x86_64::address_for_global): New function.
+	(Output_data_plt_x86_64::address_for_local): New function.
+	(Output_data_plt_x86_64::set_final_data_size): Likewise.
+	(Output_data_plt_x86_64::do_write): Write out IRELATIVE area.
+	(Target_x86_64::init_got_plt_for_update): Create got_irelative_.
+	(Target_x86_64::register_global_plt_entry): Add symtab and layout
+	parameters.
+	(Target_x86_64::Scan::global): Use IRELATIVE GOT for IRELATIVE
+	reloc.
+	(Target_x86_64::do_finalize_sections): Create the __rela_iplt
+	symbols if we didn't create an IRELATIVE GOT.
+	(Target_x86_64::Relocate::relocate): Use plt_address_for_global and
+	plt_address_for_local.
+	(Target_x86_64::do_dynsym_value): Use plt_address_for_global.
+	* testsuite/ifuncvar1.c: New test file.
+	* testsuite/ifuncvar2.c: New test file.
+	* testsuite/ifuncvar3.c: New test file.
+	* testsuite/Makefile.am (check_PROGRAMS): Add ifuncvar.
+	(ifuncvar1_pic.o, ifuncvar2_pic.o, ifuncvar.so): New targets.
+	(ifuncvar_SOURCES, ifuncvar_DEPENDENCIES): New variables.
+	(ifuncvar_LDFLAGS, ifuncvar_LDADD): New variables.
+	* testsuite/Makefile.in: Rebuild.
+
+2011-07-07  Cary Coutant  <ccoutant@google.com>
+
+	* testsuite/Makefile.am (two_file_test_1_v1_ndebug.o): New target.
+	(two_file_test_1_ndebug.o): Likewise.
+	(two_file_test_1b_ndebug.o): Likewise.
+	(two_file_test_2_ndebug.o): Likewise.
+	(two_file_test_main_ndebug.o): Likewise.
+	(incremental_test_2): Link with no-debug versions.
+
+2011-07-06  Cary Coutant  <ccoutant@google.com>
+
+	* gold/incremental.cc
+	(Output_section_incremental_inputs::write_info_blocks): Check for
+	hidden and internal symbols.
+
+2011-07-06  Cary Coutant  <ccoutant@google.com>
+
+	* incremental.cc (Sized_incremental_binary::do_file_has_changed):
+	Check disposition for startup file.
+	(Incremental_inputs::report_command_line): Ignore
+	--incremental-startup-unchanged option.
+	* options.cc (General_options::parse_incremental_startup_unchanged):
+	New function.
+	(General_options::General_options): Initialize new data member.
+	* options.h (Incremental_disposition): Add INCREMENTAL_STARTUP.
+	(General_options): Add --incremental-startup-unchanged option.
+	(General_options::incremental_startup_disposition): New function.
+	(General_options::incremental_startup_disposition_): New data member.
+
+2011-07-06  Cary Coutant  <ccoutant@google.com>
+
+	* incremental.cc (Sized_incremental_binary::setup_readers): Pass
+	input file index to Script_info ctor.
+	(Sized_incremental_binary::do_file_has_changed): Find the
+	command-line argument for files named in scripts.
+	* incremental.h (Script_info::Script_info): New ctor
+	with input file index.
+	(Script_info::input_file_index): New function.
+	(Script_info::input_file_index_): New data member.
+	(Incremental_binary::get_library): Add const.
+	(Incremental_binary::get_script_info): Add const.
+	* readsyms.cc (Read_member::is_runnable): Check for this_blocker_.
+	* testsuite/Makefile.am (incremental_test_5): New test case.
+	(incremental_test_6): New test case.
+	* testsuite/Makefile.in: Regenerate.
+
+2011-07-06  Cary Coutant  <ccoutant@google.com>
+
+	* incremental.cc (Sized_incremental_binary::do_check_inputs): Add
+	debug output when command lines differ.
+
+2011-07-06  Cary Coutant  <ccoutant@google.com>
+
+	* incremental.cc (Incremental_inputs::report_command_line): Ignore
+	--incremental-patch option.
+	* layout.cc (Free_list::allocate): Extend allocation beyond original
+	end if enabled.
+	(Layout::make_output_section): Mark sections that should get
+	patch space.
+	* options.cc (parse_percent): New function.
+	* options.h (parse_percent): New function.
+	(DEFINE_percent): New macro.
+	(General_options): Add --incremental-patch option.
+	* output.cc (Output_section::Output_section): Initialize new data
+	members.
+	(Output_section::add_input_section): Print section name when out
+	of patch space.
+	(Output_section::add_output_section_data): Likewise.
+	(Output_section::set_final_data_size): Add patch space when
+	doing --incremental-full.
+	(Output_section::do_reset_address_and_file_offset): Remove patch
+	space.
+	(Output_segment::set_section_list_addresses): Print debug output
+	only if --incremental-update.
+	* output.h (Output_section::set_is_patch_space_allowed): New function.
+	(Output_section::is_patch_space_allowed_): New data member.
+	(Output_section::patch_space_): New data member.
+	* parameters.cc (Parameters::incremental_full): New function.
+	* parameters.h (Parameters::incremental_full): New function
+	* testsuite/Makefile.am (incremental_test_2): Add test for
+	--incremental-patch option.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/two_file_test_1_v1.cc (t1, t2, t3): Add comments.
+	(t18): Remove function body.
+
+2011-07-05  Doug Kwan  <dougkwan@google.com>
+
+	PR gold/12771
+	* arm.cc (Arm_relocate_functions::abs8): Use int32_t for addend and
+	Arm_Address type for relocation result.
+	(Arm_relocate_functions::abs16): Use unaligned access.  Also fix
+	overflow check.
+	(Arm_relocate_functions::abs32): Use unaligned access.
+	(Arm_relocate_functions::rel32): Ditto.
+	(Arm_relocate_functions::prel31): Ditto.
+	(Arm_exidix_cantunwind::do_fixed_endian_write): Ditto.
+	* testsuite/Makefile.am: Add new test arm_unaligned_reloc for unaligned
+	static data relocations.
+	* testsuite/Makefile.in: Regnerate.
+	* testsuite/arm_unaligned_reloc.{s,sh}: New files.
+
+2011-07-05  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12392
+	* i386.cc (Target_i386::do_finalize_sections): Define __rel_iplt
+	symbols if necessary.
+	* x86_64.cc (Target_x86_64::do_finalize_sections): Likewise.
+
+2011-07-05  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/12952
+	* resolve.cc (Symbol::override_base_with_special): Simply override
+	version with special symbol version, ignoring previous version.
+
 2011-07-05  Ian Lance Taylor  <iant@google.com>
 
 	* object.cc (Sized_relobj_file::include_section_group): Add

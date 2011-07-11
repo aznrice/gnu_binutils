@@ -63,6 +63,11 @@ class Script_info;
 
 enum Incremental_disposition
 {
+  // Startup files that appear before the first disposition option.
+  // These will default to INCREMENTAL_CHECK unless the
+  // --incremental-startup-unchanged option is given.
+  // (For files added implicitly by gcc before any user options.)
+  INCREMENTAL_STARTUP,
   // Determine the status from the timestamp (default).
   INCREMENTAL_CHECK,
   // Assume the file changed from the previous build.
@@ -96,6 +101,9 @@ parse_uint64(const char* option_name, const char* arg, uint64_t* retval);
 
 extern void
 parse_double(const char* option_name, const char* arg, double* retval);
+
+extern void
+parse_percent(const char* option_name, const char* arg, double* retval);
 
 extern void
 parse_string(const char* option_name, const char* arg, const char** retval);
@@ -371,6 +379,12 @@ struct Struct_special : public Struct_var
   DEFINE_var(varname__, dashes__, shortname__, default_value__,		 \
 	     #default_value__, helpstring__, helparg__, false,		 \
 	     double, double, options::parse_double)
+
+#define DEFINE_percent(varname__, dashes__, shortname__, default_value__, \
+		       helpstring__, helparg__)				  \
+  DEFINE_var(varname__, dashes__, shortname__, default_value__ / 100.0,	  \
+	     #default_value__, helpstring__, helparg__, false,		  \
+	     double, double, options::parse_percent)
 
 #define DEFINE_string(varname__, dashes__, shortname__, default_value__, \
                       helpstring__, helparg__)                           \
@@ -813,6 +827,14 @@ class General_options
   DEFINE_special(incremental_unknown, options::TWO_DASHES, '\0',
                  N_("Use timestamps to check files (default)"), NULL);
 
+  DEFINE_special(incremental_startup_unchanged, options::TWO_DASHES, '\0',
+                 N_("Assume startup files unchanged "
+		    "(files preceding this option)"), NULL);
+
+  DEFINE_percent(incremental_patch, options::TWO_DASHES, '\0', 10,
+		 N_("Amount of extra space to allocate for patches"),
+		 N_("PERCENT"));
+
   DEFINE_string(init, options::ONE_DASH, '\0', "_init",
                 N_("Call SYMBOL at load-time"), N_("SYMBOL"));
 
@@ -1046,6 +1068,13 @@ class General_options
 
   DEFINE_set(undefined, options::TWO_DASHES, 'u',
 	     N_("Create undefined reference to SYMBOL"), N_("SYMBOL"));
+
+  DEFINE_enum(unresolved_symbols, options::TWO_DASHES, '\0', NULL,
+	      N_("How to handle unresolved symbols"),
+	      ("ignore-all,report-all,ignore-in-object-files,"
+	       "ignore-in-shared-libs"),
+	      {"ignore-all", "report-all", "ignore-in-object-files",
+		  "ignore-in-shared-libs"});
 
   DEFINE_bool(verbose, options::TWO_DASHES, '\0', false,
               N_("Synonym for --debug=files"), NULL);
@@ -1329,6 +1358,12 @@ class General_options
   incremental_disposition() const
   { return this->incremental_disposition_; }
 
+  // The disposition to use for startup files (those that precede the
+  // first --incremental-changed, etc. option).
+  Incremental_disposition
+  incremental_startup_disposition() const
+  { return this->incremental_startup_disposition_; }
+
   // Return true if S is the name of a library excluded from automatic
   // symbol export.
   bool
@@ -1446,9 +1481,12 @@ class General_options
   // --incremental-unchanged or --incremental-unknown option.  The
   // value may change as we proceed parsing the command line flags.
   Incremental_disposition incremental_disposition_;
+  // The disposition to use for startup files (those marked
+  // INCREMENTAL_STARTUP).
+  Incremental_disposition incremental_startup_disposition_;
   // Whether we have seen one of the options that require incremental
-  // build (--incremental-changed, --incremental-unchanged or
-  // --incremental-unknown)
+  // build (--incremental-changed, --incremental-unchanged,
+  // --incremental-unknown, or --incremental-startup-unchanged).
   bool implicit_incremental_;
   // Libraries excluded from automatic export, via --exclude-libs.
   Unordered_set<std::string> excluded_libs_;
