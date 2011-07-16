@@ -1,5 +1,9 @@
 2011-07-11  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-lto-mixed-18.patch: Add a test for PR ld/12982.
+
+2011-07-11  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-lto-mixed-18.patch: New file. Replace ...
 	* binutils-lto-mixed-17.patch: This. Removed.
 
