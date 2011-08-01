@@ -1,3 +1,27 @@
+2011-07-27  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* dwarf.c (read_and_display_attr_value): Recognize DW_FORM_data4 and
+	DW_FORM_data8 as location list pointers only for DWARF < 4.
+
+2011-07-26  Jakub Jelinek  <jakub@redhat.com>
+
+	* NEWS: Mention .debug_macro support.
+	* dwarf.c (read_and_display_attr_value): Don't print a tab
+	if attribute is 0.
+	(get_AT_name): Handle DW_AT_GNU_macros.
+	(get_line_filename_and_dirname, display_debug_macro): New
+	functions.
+	(debug_displays): Add an entry for .debug_macro and .zdebug_macro.
+	* readelf.c (process_section_headers): With do_debug_macinfo
+	handle also .debug_macro sections.
+	* dwarf.h (dwarf_section_display_enum): Add macro.
+
+2011-07-24  Chao-ying Fu  <fu@mips.com>
+            Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* readelf.c (get_machine_flags): Handle microMIPS ASE.
+	(get_mips_symbol_other): Likewise.
+
 2011-07-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* dwarf.c (init_dwarf_regnames): Handle EM_K1OM.
