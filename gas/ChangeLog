@@ -1,3 +1,42 @@
+2011-08-08  Tristan Gingold  <gingold@adacore.com>
+
+	* config/obj-macho.c (obj_mach_o_section): New function.
+	(struct known_section): New type.
+	(known_sections): Declare.
+	(obj_mach_o_known_section): New function.
+	(obj_mach_o_common_parse): Ditto.
+	(obj_mach_o_comm): Ditto.
+	(obj_mach_o_subsections_via_symbols): Ditto.
+	(mach_o_pseudo_table): Add new pseudos.
+
+2011-08-06  Richard Henderson  <rth@redhat.com>
+
+	* dw2gencfi.c (all_fde_data): Export.
+	* dw2gencfi.h (all_fde_data): Declare.
+	* config/tc-alpha.c (alpha_elf_md_end): Don't convert legacy unwind
+	info to cfi unwind info if the user already has supplied some.
+
+2011-08-06  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (emit_nop): Delete.
+	(get_delay_slot_nop): New function.
+	(nops_for_insn_or_target): Use it.
+	(append_insn): Likewise.  When avoiding hazards, call add_fixed_insn
+	and insert_into_history directly.
+
+2011-08-06  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (delayed_branch_p, compact_branch_p)
+	(uncond_branch_p, branch_likely_p): New functions.
+	(insns_between, nops_for_insn_or_target, append_insn)
+	(macro_start): Use them.
+	(get_append_method): Likewise.  Remove redundant test.
+
+2011-08-05  David S. Miller  <davem@davemloft.net>
+
+	* config/tc-sparc.c (v9a_asr_table): Add "cps".
+	(sparc_ip): Handle '4', '5' and '(' format codes.
+
 2011-08-04  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR gas/13056
