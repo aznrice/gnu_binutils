@@ -169,6 +169,14 @@ ld/
 
 ld/testsuite/
 
+2011-08-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13066
+	* ld-plugin/lto.exp (lto_run_tests): Add a test for PR ld/13066.
+
+	* ld-plugin/pr13066.cc: New.
+	* ld-plugin/pr13066.out: Likewise.
+
 2011-07-11  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12942
@@ -320,7 +328,7 @@ ld/testsuite/
 	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index af13ca4..c6bd1a9 100644
+index 63ffd95..dc1db19 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
 @@ -1552,6 +1552,9 @@ struct relax_table {
@@ -681,10 +689,10 @@ index 21064ad..ec0965a 100644
  EOF
  
 diff --git a/ld/emultempl/armelf.em b/ld/emultempl/armelf.em
-index 948bf8d..69f7c19 100644
+index d29da59..e5f931a 100644
 --- a/ld/emultempl/armelf.em
 +++ b/ld/emultempl/armelf.em
-@@ -364,7 +364,7 @@ gld${EMULATION_NAME}_after_allocation (void)
+@@ -365,7 +365,7 @@ gld${EMULATION_NAME}_after_allocation (void)
  }
  
  static void
@@ -693,7 +701,7 @@ index 948bf8d..69f7c19 100644
  {
    struct bfd_link_hash_entry * h;
  
-@@ -387,7 +387,7 @@ gld${EMULATION_NAME}_finish (void)
+@@ -388,7 +388,7 @@ gld${EMULATION_NAME}_finish (void)
  	}
      }
  
@@ -702,7 +710,7 @@ index 948bf8d..69f7c19 100644
  
    if (thumb_entry_symbol)
      {
-@@ -675,4 +675,4 @@ LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=arm_elf_create_output_section_statements
+@@ -689,4 +689,4 @@ LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=arm_elf_create_output_section_statements
  LDEMUL_BEFORE_PARSE=gld"${EMULATION_NAME}"_before_parse
  
  # Call the extra arm-elf function
@@ -2265,7 +2273,7 @@ index b5e52a8..90bba23 100644
  	case 'q':
  	  link_info.emitrelocations = TRUE;
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 5ba1fca..9fd5000 100644
+index 9baeb46..950fed3 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -40,6 +40,9 @@
@@ -2296,7 +2304,7 @@ index 5ba1fca..9fd5000 100644
    newarg = xmalloc (sizeof *newarg);
    newarg->arg = arg;
    newarg->next = NULL;
-@@ -840,6 +854,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
+@@ -839,6 +853,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
    close (file->fd);
    if (claimed)
      {
@@ -2306,7 +2314,7 @@ index 5ba1fca..9fd5000 100644
        /* Discard the real file's BFD and substitute the dummy one.  */
  
        /* BFD archive handling caches elements so we can't call
-@@ -893,13 +910,16 @@ plugin_call_cleanup (void)
+@@ -892,13 +909,16 @@ plugin_call_cleanup (void)
      {
        if (curplug->cleanup_handler && !curplug->cleanup_done)
  	{
@@ -3294,10 +3302,10 @@ index 0000000..4b5bcf8
 +#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..c173f20
+index 0000000..e239b40
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
-@@ -0,0 +1,312 @@
+@@ -0,0 +1,315 @@
 +# Expect script for ld-plugin LTO tests
 +#   Copyright 2011
 +#   Free Software Foundation, Inc.
@@ -3534,6 +3542,9 @@ index 0000000..c173f20
 +  {"PR ld/12942 (2)"
 +   "-O2 -flto -fuse-linker-plugin tmpdir/pr12942a.o tmpdir/pr12942c.o" ""
 +   {dummy.c} "pr12942c.exe" "pr12942.out" "" "c++"}
++  {"PR ld/13066"
++   "-O2 -flto -fuse-linker-plugin" ""
++   {pr13066.cc} "pr13066.exe" "pr13066.out" "" "c++"}
 +}
 +
 +# LTO run-time tests for ELF
@@ -3962,6 +3973,104 @@ index 0000000..f536d5b
 +#...
 +[ \t]+GNU_STACK[ \t]+0x[0-9a-f]+ +0x[0-9a-f]+ +0x[0-9a-f]+ +0x[0-9a-f]+ +0x[0-9a-f]+ +RW +0x[0-9a-f]+
 +#pass
+diff --git a/ld/testsuite/ld-plugin/pr13066.cc b/ld/testsuite/ld-plugin/pr13066.cc
+new file mode 100644
+index 0000000..b2c73f2
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr13066.cc
+@@ -0,0 +1,85 @@
++#include <stdio.h>
++
++template <typename V> struct S
++{
++  V *f, *l;
++  __attribute__ ((noinline)) S (void) { f = 0, l = 0; }
++  void foo (V *x)
++  {
++    if (x->p != 0)
++      x->p->n = x->n;
++    else
++      f = x->n;
++    if (x->n != 0)
++      x->n->p = x->p;
++    else
++      l = x->p;
++  }
++  __attribute__ ((noinline)) void bar (V *x)
++  {
++    x->n = 0;
++    x->p = l;
++    if (l != 0)
++      l->n = x;
++    else
++      f = x;
++    l = x;
++  }
++};
++
++struct H;
++
++struct A
++{
++  S <H> k;
++};
++
++struct H
++{
++  A *a;
++  H *p, *n;
++  __attribute__ ((noinline)) H (void) { p = 0, n = 0, a = 0; }
++  __attribute__ ((noinline)) H (A *b) : a (b)
++  {
++    p = 0;
++    n = 0;
++    if (a != 0)
++      a->k.bar (this);
++  }
++  __attribute__ ((noinline)) H (const H &h) : a (h.a)
++  {
++    p = 0;
++    n = 0;
++    if (a != 0)
++      a->k.bar (this);
++  }
++  ~H (void) { if (a != 0) a->k.foo (this); }
++  H &operator= (const H &o)
++  {
++    if (a != 0 || &o == this)
++      __builtin_abort ();
++    a = o.a;
++    if (a != 0)
++      a->k.bar (this);
++    return *this;
++  }
++};
++
++__attribute__ ((noinline))
++H baz (void)
++{
++  return H (new A);
++}
++
++H g;
++
++int
++main (void)
++{
++  g = baz ();
++  if (g.a->k.f != &g)
++    __builtin_abort ();
++  printf ("OK\n");
++  return 0;
++}
++
+diff --git a/ld/testsuite/ld-plugin/pr13066.out b/ld/testsuite/ld-plugin/pr13066.out
+new file mode 100644
+index 0000000..d86bac9
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr13066.out
+@@ -0,0 +1 @@
++OK
 diff --git a/ld/testsuite/ld-plugin/run-ie.c b/ld/testsuite/ld-plugin/run-ie.c
 new file mode 100644
 index 0000000..32afa0a
