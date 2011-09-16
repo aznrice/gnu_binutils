@@ -1,3 +1,8 @@
+2011-09-16  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-lto-mixed-18.patch: Add tests for PRs ld/12975 and
+	ld/13183.
+
 2011-08-09  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-lto-mixed-18.patch: Add a test for PR ld/13066.
