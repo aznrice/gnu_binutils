@@ -1,3 +1,42 @@
+2011-09-13  Cary Coutant  <ccoutant@google.com>
+
+	* configure.ac: Check for glibc support for gnu_indirect_function
+	support with static linking, setting automake conditional
+	IFUNC_STATIC.
+	* Makefile.in: Regenerate.
+	* configure: Regenerate.
+
+	* testsuite/Makefile.am (ifuncmain1static, ifuncmain2static)
+	(ifuncmain4static, ifuncmain5static, ifuncmain7static): Add check
+	for IFUNC_STATIC.
+	* testsuite/Makefile.in: Regenerate.
+
+2011-09-13  Cary Coutant  <ccoutant@google.com>
+
+	* incremental.cc (Sized_relobj_incr::do_layout): Call
+	report_comdat_group for kept comdat sections.
+	* testsuite/Makefile.am (incremental_comdat_test_1): New test.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/incr_comdat_test_1.cc: New source file.
+	* testsuite/incr_comdat_test_2_v1.cc: New source file.
+	* testsuite/incr_comdat_test_2_v2.cc: New source file.
+	* testsuite/incr_comdat_test_2_v3.cc: New source file.
+
+2011-09-13  Ian Lance Taylor  <iant@google.com>
+
+	* object.cc (Sized_relobj_file::do_layout): Remove unused local
+	variable external_symbols_offset.
+
+2011-09-12  Ian Lance Taylor  <iant@google.com>
+
+	* object.cc (Sized_relobj_file::do_layout): Remove assertion which
+	triggered if object has no symbols.
+
+2011-09-09  David S. Miller  <davem@davemloft.net>
+
+	* output.cc (Output_fill_debug_info::do_write): Use Swap_unaligned.
+	(Output_fill_debug_line::do_write): Likewise.
+
 2011-08-29  Cary Coutant  <ccoutant@google.com>
 
 	* output.cc: (Output_fill_debug_info::do_minimum_hole_size): Add
