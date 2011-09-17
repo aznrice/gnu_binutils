@@ -1,5 +1,11 @@
 bfd/
 
+2011-09-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13195
+	* elflink.c (bfd_elf_gc_mark_dynamic_ref_symbol): Check if a
+	symbol is versioned.
+
 2011-09-16  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/13195
@@ -26,6 +32,13 @@ bfd/
 
 ld/testsuite/
 
+2011-09-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13195
+	* ld-elf/pr13195.d: New.
+	* ld-elf/pr13195.s: Likewise.
+	* ld-elf/pr13195.t: Likewise.
+
 2006-10-17  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/3351
@@ -44,7 +57,7 @@ ld/testsuite/
 	* ld-elf/indirect4c.c: Likewise.
 
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 9ccf37d..36e07fe 100644
+index 9ccf37d..c4c9288 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -893,6 +893,33 @@ elf_merge_st_other (bfd *abfd, struct elf_link_hash_entry *h,
@@ -281,6 +294,18 @@ index 9ccf37d..36e07fe 100644
        sym.st_name = h->dynstr_index;
        esym = finfo->dynsym_sec->contents + h->dynindx * bed->s->sizeof_sym;
        if (! check_dynsym (finfo->output_bfd, &sym))
+@@ -11914,8 +11977,9 @@ bfd_elf_gc_mark_dynamic_ref_symbol (struct elf_link_hash_entry *h, void *inf)
+ 	      && h->def_regular
+ 	      && ELF_ST_VISIBILITY (h->other) != STV_INTERNAL
+ 	      && ELF_ST_VISIBILITY (h->other) != STV_HIDDEN
+-	      && !bfd_hide_sym_by_version (info->version_info,
+-					   h->root.root.string))))
++	      && (strchr (h->root.root.string, ELF_VER_CHR) != NULL
++		  || !bfd_hide_sym_by_version (info->version_info,
++					       h->root.root.string)))))
+     h->root.u.def.section->flags |= SEC_KEEP;
+ 
+   return TRUE;
 diff --git a/ld/testsuite/ld-elf/indirect.exp b/ld/testsuite/ld-elf/indirect.exp
 new file mode 100644
 index 0000000..603179a
@@ -595,3 +620,43 @@ index 0000000..b52cb95
 +{
 +  foo ();
 +}
+diff --git a/ld/testsuite/ld-elf/pr13195.d b/ld/testsuite/ld-elf/pr13195.d
+new file mode 100644
+index 0000000..796102b
+--- /dev/null
++++ b/ld/testsuite/ld-elf/pr13195.d
+@@ -0,0 +1,10 @@
++#ld: --gc-sections -shared -version-script pr13195.t
++#readelf: -s --wide -D
++#target: *-*-linux* *-*-gnu*
++#notarget: arc-*-* d30v-*-* dlx-*-* i960-*-* or32-*-* pj*-*-*
++#notarget: hppa64-*-* i370-*-* i860-*-* ia64-*-* mep-*-* mn10200-*-*
++# generic linker targets don't support --gc-sections, nor do a bunch of others
++
++#...
++ +[0-9]+ +[0-9]+: +[0-9a-f]+ +[0-9]+ +FUNC +GLOBAL +DEFAULT +[1-9]+ foo
++#pass
+diff --git a/ld/testsuite/ld-elf/pr13195.s b/ld/testsuite/ld-elf/pr13195.s
+new file mode 100644
+index 0000000..409b5af
+--- /dev/null
++++ b/ld/testsuite/ld-elf/pr13195.s
+@@ -0,0 +1,6 @@
++	.section .text.new_foo,"ax",%progbits
++	.globl	new_foo
++	.type	new_foo, %function
++new_foo:
++	.byte 0
++	.symver new_foo,foo@@VERS_2.0
+diff --git a/ld/testsuite/ld-elf/pr13195.t b/ld/testsuite/ld-elf/pr13195.t
+new file mode 100644
+index 0000000..2b82842
+--- /dev/null
++++ b/ld/testsuite/ld-elf/pr13195.t
+@@ -0,0 +1,6 @@
++VERS_2.0 {
++global:
++  foo;
++local:
++  *;
++};

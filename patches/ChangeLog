@@ -1,5 +1,9 @@
 2011-09-17  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-indirect-5.patch: Check if a symbol is versioned.
+
+2011-09-17  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-indirect-5.patch: New file. Replace ...
 	* binutils-indirect-4.patch: This. Removed.
 	* README: Likewise.
