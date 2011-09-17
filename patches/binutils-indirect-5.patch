@@ -1,5 +1,13 @@
 bfd/
 
+2011-09-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13195
+	* elflink.c (_bfd_elf_merge_symbol): Don't set dynamic_def when
+	clearing def_dynamic.
+	(elf_link_add_object_symbols): Likewise.  Set dynamic_def when
+	setting def_dynamic.
+
 2006-10-17  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/3351
@@ -36,10 +44,10 @@ ld/testsuite/
 	* ld-elf/indirect4c.c: Likewise.
 
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 32575d9..f6f2740 100644
+index 9ccf37d..36e07fe 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
-@@ -899,6 +899,33 @@ elf_merge_st_other (bfd *abfd, struct elf_link_hash_entry *h,
+@@ -893,6 +893,33 @@ elf_merge_st_other (bfd *abfd, struct elf_link_hash_entry *h,
      }
  }
  
@@ -73,7 +81,7 @@ index 32575d9..f6f2740 100644
  /* This function is called when we want to define a new symbol.  It
     handles the various cases which arise when we find a definition in
     a dynamic object, or when there is already a definition in a
-@@ -927,6 +954,7 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -921,6 +948,7 @@ _bfd_elf_merge_symbol (bfd *abfd,
  {
    asection *sec, *oldsec;
    struct elf_link_hash_entry *h;
@@ -81,7 +89,7 @@ index 32575d9..f6f2740 100644
    struct elf_link_hash_entry *flip;
    int bind;
    bfd *oldbfd;
-@@ -965,8 +993,9 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -959,8 +987,9 @@ _bfd_elf_merge_symbol (bfd *abfd,
    if (!(*bed->relocs_compatible) (abfd->xvec, info->output_bfd->xvec))
      return TRUE;
  
@@ -93,7 +101,7 @@ index 32575d9..f6f2740 100644
    while (h->root.type == bfd_link_hash_indirect
  	 || h->root.type == bfd_link_hash_warning)
      h = (struct elf_link_hash_entry *) h->root.u.i.link;
-@@ -1138,23 +1167,11 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -1136,23 +1165,11 @@ _bfd_elf_merge_symbol (bfd *abfd,
    /* We need to remember if a symbol has a definition in a dynamic
       object or is weak in all dynamic objects. Internal and hidden
       visibility will make it unavailable to dynamic objects.  */
@@ -121,7 +129,7 @@ index 32575d9..f6f2740 100644
      }
  
    /* If the old symbol has non-default visibility, we ignore the new
-@@ -1166,6 +1183,7 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -1164,6 +1181,7 @@ _bfd_elf_merge_symbol (bfd *abfd,
        *skip = TRUE;
        /* Make sure this symbol is dynamic.  */
        h->ref_dynamic = 1;
@@ -129,7 +137,15 @@ index 32575d9..f6f2740 100644
        /* A protected symbol has external availability. Make sure it is
  	 recorded as dynamic.
  
-@@ -1718,6 +1736,7 @@ _bfd_elf_add_default_symbol (bfd *abfd,
+@@ -1238,7 +1256,6 @@ _bfd_elf_merge_symbol (bfd *abfd,
+ 	{
+ 	  h->def_dynamic = 0;
+ 	  h->ref_dynamic = 1;
+-	  h->dynamic_def = 1;
+ 	}
+       /* FIXME: Should we check type and size for protected symbol?  */
+       h->size = 0;
+@@ -1718,6 +1735,7 @@ _bfd_elf_add_default_symbol (bfd *abfd,
  	  if (! dynamic)
  	    {
  	      if (! info->executable
@@ -137,7 +153,7 @@ index 32575d9..f6f2740 100644
  		  || hi->ref_dynamic)
  		*dynsym = TRUE;
  	    }
-@@ -3860,6 +3879,7 @@ error_free_dyn:
+@@ -3835,6 +3853,7 @@ error_free_dyn:
        flagword flags;
        const char *name;
        struct elf_link_hash_entry *h;
@@ -145,7 +161,7 @@ index 32575d9..f6f2740 100644
        bfd_boolean definition;
        bfd_boolean size_change_ok;
        bfd_boolean type_change_ok;
-@@ -4179,6 +4199,9 @@ error_free_dyn:
+@@ -4167,6 +4186,9 @@ error_free_dyn:
  	goto error_free_vers;
  
        h = *sym_hash;
@@ -155,8 +171,11 @@ index 32575d9..f6f2740 100644
        while (h->root.type == bfd_link_hash_indirect
  	     || h->root.type == bfd_link_hash_warning)
  	h = (struct elf_link_hash_entry *) h->root.u.i.link;
-@@ -4371,22 +4394,36 @@ error_free_dyn:
- 		      h->dynamic_def = 1;
+@@ -4353,25 +4375,40 @@ error_free_dyn:
+ 		    {
+ 		      h->def_dynamic = 0;
+ 		      h->ref_dynamic = 1;
+-		      h->dynamic_def = 1;
  		    }
  		}
 -	      if (! info->executable
@@ -188,7 +207,9 @@ index 32575d9..f6f2740 100644
 -		      && h->u.weakdef->dynindx != -1))
 +		{
 +		  h->def_dynamic = 1;
++		  h->dynamic_def = 1;
 +		  hi->def_dynamic = 1;
++		  hi->dynamic_def = 1;
 +		}
 +
 +	      /* If the indirect symbol has been forced local, don't
@@ -202,7 +223,7 @@ index 32575d9..f6f2740 100644
  		dynsym = TRUE;
  	    }
  
-@@ -8442,6 +8479,10 @@ elf_link_check_versioned_symbol (struct bfd_link_info *info,
+@@ -8422,6 +8459,10 @@ elf_link_check_versioned_symbol (struct bfd_link_info *info,
    if (!is_elf_hash_table (info->hash))
      return FALSE;
  
@@ -213,7 +234,7 @@ index 32575d9..f6f2740 100644
    switch (h->root.type)
      {
      default:
-@@ -8662,6 +8703,11 @@ elf_link_output_extsym (struct elf_link_hash_entry *h, void *data)
+@@ -8643,6 +8684,11 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
      {
        bfd *def_bfd;
        const char *msg;
@@ -225,7 +246,7 @@ index 32575d9..f6f2740 100644
  
        if (ELF_ST_VISIBILITY (h->other) == STV_INTERNAL)
  	msg = _("%B: internal symbol `%s' in %B is referenced by DSO");
-@@ -8670,8 +8716,8 @@ elf_link_output_extsym (struct elf_link_hash_entry *h, void *data)
+@@ -8651,8 +8697,8 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
        else
  	msg = _("%B: local symbol `%s' in %B is referenced by DSO");
        def_bfd = finfo->output_bfd;
@@ -236,7 +257,7 @@ index 32575d9..f6f2740 100644
        (*_bfd_error_handler) (msg, finfo->output_bfd, def_bfd,
  			     h->root.root.string);
        bfd_set_error (bfd_error_bad_value);
-@@ -8899,6 +8945,23 @@ elf_link_output_extsym (struct elf_link_hash_entry *h, void *data)
+@@ -8886,6 +8932,23 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
      {
        bfd_byte *esym;
  
