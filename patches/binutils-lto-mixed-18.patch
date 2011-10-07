@@ -1,5 +1,12 @@
 bfd/
 
+2011-10-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13229
+	PR ld/13244
+	* elflink.c (elf_link_output_extsym): Don't output any plugin
+	symbols for non-relocatable link.
+
 2011-05-14  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12758
@@ -168,6 +175,27 @@ ld/
 	* scripttempl/pep.sc: Likewise.
 
 ld/testsuite/
+
+2011-10-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13229
+	PR ld/13244
+	* ld-plugin/lto.exp (lto_link_elf_tests): Add tests for PRs
+	ld/13229 and ld/13244.
+
+	* ld-plugin/pr13229.cc: New.
+	* ld-plugin/pr13229.d: Likewise.
+	* ld-plugin/pr13244.c: Likewise.
+	* ld-plugin/pr13244.d: Likewise.
+
+2011-09-23  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13201
+	* ld-plugin/lto.exp (lto_link_tests): Add a test for PR ld/13201.
+	(lto_run_tests): Likewise.
+
+	* ld-plugin/pr13201.c: New.
+	* ld-plugin/pr13201.out: Likewise.
 
 2011-09-16  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -484,7 +512,7 @@ index 7c14c7a..45afaa8 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index aa40c33..98a1463 100644
+index dc6a9bb..8e93c7f 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2086,6 +2086,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -496,10 +524,10 @@ index aa40c33..98a1463 100644
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 9ccf37d..a13bd5b 100644
+index 5d181f7..e04cb7c 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
-@@ -5054,6 +5054,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
+@@ -5055,6 +5055,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
  	     something wrong with the archive.  */
  	  if (element->archive_pass != 0)
  	    {
@@ -509,6 +537,47 @@ index 9ccf37d..a13bd5b 100644
  	      bfd_set_error (bfd_error_bad_value);
  	      goto error_return;
  	    }
+@@ -8577,6 +8580,7 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+   const struct elf_backend_data *bed;
+   long indx;
+   int ret;
++  bfd *sym_bfd; 
+ 
+   if (h->root.type == bfd_link_hash_warning)
+     {
+@@ -8664,8 +8668,18 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+   /* We don't want to output symbols that have never been mentioned by
+      a regular file, or that we have been told to strip.  However, if
+      h->indx is set to -2, the symbol is used by a reloc and we must
+-     output it.  */
+-  if (h->indx == -2)
++     output it.  Don't output any plugin symbols for non-relocatable
++     link.  */
++  if (!finfo->info->relocatable
++      && ((((h->root.type == bfd_link_hash_defweak
++	     || h->root.type == bfd_link_hash_defined)
++	    && (sym_bfd = h->root.u.def.section->owner) != NULL)
++	   || ((h->root.type == bfd_link_hash_undefined
++		|| h->root.type == bfd_link_hash_undefweak)
++	       && (sym_bfd = h->root.u.undef.abfd) != NULL))
++	  && (sym_bfd->flags & BFD_PLUGIN) != 0))
++    return TRUE;
++  else if (h->indx == -2)
+     strip = FALSE;
+   else if ((h->def_dynamic
+ 	    || h->ref_dynamic
+@@ -8684,11 +8698,6 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+ 	       || h->root.type == bfd_link_hash_defweak)
+ 	   && elf_discarded_section (h->root.u.def.section))
+     strip = TRUE;
+-  else if ((h->root.type == bfd_link_hash_undefined
+-	    || h->root.type == bfd_link_hash_undefweak)
+-	   && h->root.u.undef.abfd != NULL
+-	   && (h->root.u.undef.abfd->flags & BFD_PLUGIN) != 0)
+-    strip = TRUE;
+   else
+     strip = FALSE;
+ 
 diff --git a/bfd/format.c b/bfd/format.c
 index 66b9051..181ac05 100644
 --- a/bfd/format.c
@@ -637,10 +706,10 @@ index 31ac0a2..e4ae760 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index a9064c5..016a132 100644
+index d68cf27..c5e31e7 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
-@@ -3030,6 +3030,7 @@ get_section_type_name (unsigned int sh_type)
+@@ -3035,6 +3035,7 @@ get_section_type_name (unsigned int sh_type)
      case 0x7ffffffd:		return "AUXILIARY";
      case 0x7fffffff:		return "FILTER";
      case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
@@ -919,7 +988,7 @@ index c4b8912..10e8e89 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 7251a86..6223dd7 100644
+index ae54155..805a706 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -961,7 +1030,7 @@ index 7251a86..6223dd7 100644
  
  /* Exported variables.  */
  const char *output_target;
-@@ -1229,14 +1240,17 @@ output_section_statement_table_free (void)
+@@ -1230,14 +1241,17 @@ output_section_statement_table_free (void)
  /* Build enough state so that the parser can build its tree.  */
  
  void
@@ -981,7 +1050,7 @@ index 7251a86..6223dd7 100644
    lang_list_init (stat_ptr);
  
    lang_list_init (&input_file_chain);
-@@ -1255,10 +1269,11 @@ lang_init (void)
+@@ -1256,10 +1270,11 @@ lang_init (void)
       simpler to re-use working machinery than using a linked list in terms
       of code-complexity here in ld, besides the initialization which just
       looks like other code here.  */
@@ -997,7 +1066,7 @@ index 7251a86..6223dd7 100644
      einfo (_("%P%F: can not create hash table: %E\n"));
  }
  
-@@ -2808,6 +2823,12 @@ load_symbols (lang_input_statement_type *entry,
+@@ -2812,6 +2827,12 @@ load_symbols (lang_input_statement_type *entry,
  		  loaded = FALSE;
  		}
  
@@ -1010,7 +1079,7 @@ index 7251a86..6223dd7 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6608,7 +6629,38 @@ lang_process (void)
+@@ -6624,7 +6645,38 @@ lang_process (void)
  	  open_input_bfds (statement_list.head, OPEN_BFD_RESCAN);
  	}
      }
@@ -1049,7 +1118,7 @@ index 7251a86..6223dd7 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -8061,3 +8113,1006 @@ lang_ld_feature (char *str)
+@@ -8077,3 +8129,1006 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -2057,10 +2126,10 @@ index 7251a86..6223dd7 100644
 +      }
 +}
 diff --git a/ld/ldlang.h b/ld/ldlang.h
-index 533fe74..caeff87 100644
+index 95f9412..857dca6 100644
 --- a/ld/ldlang.h
 +++ b/ld/ldlang.h
-@@ -481,7 +481,7 @@ extern int lang_statement_iteration;
+@@ -485,7 +485,7 @@ extern int lang_statement_iteration;
  extern bfd_boolean missing_file;
  
  extern void lang_init
@@ -2069,7 +2138,7 @@ index 533fe74..caeff87 100644
  extern void lang_finish
    (void);
  extern lang_memory_region_type * lang_memory_region_lookup
-@@ -659,4 +659,45 @@ ldlang_override_segment_assignment
+@@ -663,4 +663,45 @@ ldlang_override_segment_assignment
  extern void
  lang_ld_feature (char *);
  
@@ -2295,7 +2364,7 @@ index b5e52a8..90bba23 100644
  	case 'q':
  	  link_info.emitrelocations = TRUE;
 diff --git a/ld/plugin.c b/ld/plugin.c
-index b172111..f613850 100644
+index 250233b..73465c6 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -39,6 +39,9 @@
@@ -2308,7 +2377,7 @@ index b172111..f613850 100644
  /* The suffix to append to the name of the real (claimed) object file
     when generating a dummy BFD to hold the IR symbols sent from the
     plugin.  For cosmetic use only; appears in maps, crefs etc.  */
-@@ -209,6 +212,17 @@ plugin_opt_plugin_arg (const char *arg)
+@@ -210,6 +213,17 @@ plugin_opt_plugin_arg (const char *arg)
    if (!last_plugin)
      return set_plugin_error (_("<no plugin>"));
  
@@ -2326,7 +2395,7 @@ index b172111..f613850 100644
    newarg = xmalloc (sizeof *newarg);
    newarg->arg = arg;
    newarg->next = NULL;
-@@ -855,6 +869,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
+@@ -870,6 +884,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
    close (file->fd);
    if (claimed)
      {
@@ -2336,7 +2405,7 @@ index b172111..f613850 100644
        /* Discard the real file's BFD and substitute the dummy one.  */
  
        /* BFD archive handling caches elements so we can't call
-@@ -908,13 +925,16 @@ plugin_call_cleanup (void)
+@@ -923,13 +940,16 @@ plugin_call_cleanup (void)
      {
        if (curplug->cleanup_handler && !curplug->cleanup_done)
  	{
@@ -2453,10 +2522,10 @@ index e61342d..6c7b451 100644
    SBSS=".sbss         ${RELOCATING-0} :
    {
 diff --git a/ld/scripttempl/pe.sc b/ld/scripttempl/pe.sc
-index 3cb77ab..42d99a2 100644
+index 3a27952..b44fe8b 100644
 --- a/ld/scripttempl/pe.sc
 +++ b/ld/scripttempl/pe.sc
-@@ -147,6 +147,7 @@ SECTIONS
+@@ -148,6 +148,7 @@ SECTIONS
      *(.drectve)
      ${RELOCATING+ *(.note.GNU-stack)}
      ${RELOCATING+ *(.gnu.lto_*)}
@@ -2465,10 +2534,10 @@ index 3cb77ab..42d99a2 100644
  
    .idata ${RELOCATING+BLOCK(__section_alignment__)} :
 diff --git a/ld/scripttempl/pep.sc b/ld/scripttempl/pep.sc
-index 60515ef..3a570e4 100644
+index b2113fe..fcc3c83 100644
 --- a/ld/scripttempl/pep.sc
 +++ b/ld/scripttempl/pep.sc
-@@ -153,6 +153,7 @@ SECTIONS
+@@ -154,6 +154,7 @@ SECTIONS
      *(.drectve)
      ${RELOCATING+ *(.note.GNU-stack)}
      ${RELOCATING+ *(.gnu.lto_*)}
@@ -3324,10 +3393,10 @@ index 0000000..4b5bcf8
 +#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..c55d90e
+index 0000000..586e295
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
-@@ -0,0 +1,327 @@
+@@ -0,0 +1,339 @@
 +# Expect script for ld-plugin LTO tests
 +#   Copyright 2011
 +#   Free Software Foundation, Inc.
@@ -3471,6 +3540,9 @@ index 0000000..c55d90e
 +  {"Build libdummy.a PR ld/13183"
 +   "" "-flto -O2"
 +   {pr13183b.c} {} "libdummy.a"}
++  {"Build libdummy.a PR ld/13201"
++   "" "-flto -O2"
++   {pr13201.c} {} "libdummy.a"}
 +}
 +
 +# Generate input files for complex LTO tests for ELF.
@@ -3502,6 +3574,12 @@ index 0000000..c55d90e
 +  {"PR ld/12975"
 +   "-shared -O2 -fPIC -flto -fuse-linker-plugin -nostdlib -Wl,-version-script,pr12975.t" "-O2 -flto"
 +   {pr12975.c} {{"readelf" {-s --wide} "pr12975.d"}} "pr12975.so" "c"}
++  {"PR ld/13229"
++   "-shared -O2 -fPIC -flto -fuse-linker-plugin -nostdlib" "-O2 -fno-early-inlining -flto"
++   {pr13229.cc} {{"readelf" {-s --wide} "pr13229.d"}} "pr13229.so" "c++"}
++  {"PR ld/13244"
++   "-shared -O2 -fPIC -flto -fuse-linker-plugin -nostdlib" "-O2 -fno-early-inlining -flto"
++   {pr13244.c} {{"readelf" {-s --wide} "pr13244.d"}} "pr13244.so" "c"}
 +}
 +
 +# Check final symbols in executables.
@@ -3579,6 +3657,9 @@ index 0000000..c55d90e
 +  {"PR ld/13066"
 +   "-O2 -flto -fuse-linker-plugin" ""
 +   {pr13066.cc} "pr13066.exe" "pr13066.out" "" "c++"}
++  {"PR ld/13201"
++   "-O2 -flto -fuse-linker-plugin -Wl,--as-needed tmpdir/pr13201.o -lm" ""
++   {dummy.c} "pr13201.exe" "pr13201.out" "" "c"}
 +}
 +
 +# LTO run-time tests for ELF
@@ -4172,6 +4253,95 @@ index 0000000..93d57b5
 +{
 +  return foo();
 +}
+diff --git a/ld/testsuite/ld-plugin/pr13201.c b/ld/testsuite/ld-plugin/pr13201.c
+new file mode 100644
+index 0000000..8cfc50c
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr13201.c
+@@ -0,0 +1,16 @@
++#include <math.h>
++#include <stdio.h>
++
++int
++main(int argc, char **argv)
++{
++  double x;
++  if (argc > 1)
++    x = atof (argv[1]);
++  else
++    x = 3;
++  x = sin (x);
++  if (x > 0)
++    printf("OK\n");
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/pr13201.out b/ld/testsuite/ld-plugin/pr13201.out
+new file mode 100644
+index 0000000..d86bac9
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr13201.out
+@@ -0,0 +1 @@
++OK
+diff --git a/ld/testsuite/ld-plugin/pr13229.cc b/ld/testsuite/ld-plugin/pr13229.cc
+new file mode 100644
+index 0000000..f584982
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr13229.cc
+@@ -0,0 +1,15 @@
++int call_something (int);
++inline void optimize_me_out (void)                                              
++{ 
++  call_something(0);
++}
++__attribute__ ((visibility("hidden")))
++int optimize_me_out2 (int param)                                                
++{ 
++  if ((void *)optimize_me_out != (void *)call_something)
++    return call_something(0);                                                   
++}
++void test2 (void)
++{ 
++  optimize_me_out();
++}
+diff --git a/ld/testsuite/ld-plugin/pr13229.d b/ld/testsuite/ld-plugin/pr13229.d
+new file mode 100644
+index 0000000..017a716
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr13229.d
+@@ -0,0 +1,4 @@
++#failif
++#...
++.*optimize_me_out.*
++#...
+diff --git a/ld/testsuite/ld-plugin/pr13244.c b/ld/testsuite/ld-plugin/pr13244.c
+new file mode 100644
+index 0000000..0d6d14a
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr13244.c
+@@ -0,0 +1,13 @@
++extern __attribute__ ((visibility("hidden"))) int fooblah;
++
++static
++do_nothing (int param)
++{ 
++  if (param)
++   fooblah = 1;
++}
++
++bar ()
++{ 
++  do_nothing (0);
++}
+diff --git a/ld/testsuite/ld-plugin/pr13244.d b/ld/testsuite/ld-plugin/pr13244.d
+new file mode 100644
+index 0000000..59bbe4d
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr13244.d
+@@ -0,0 +1,4 @@
++#failif
++#...
++.*fooblah.*
++#...
 diff --git a/ld/testsuite/ld-plugin/run-ie.c b/ld/testsuite/ld-plugin/run-ie.c
 new file mode 100644
 index 0000000..32afa0a
