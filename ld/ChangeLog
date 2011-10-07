@@ -1,3 +1,34 @@
+2011-10-06  Alan Modra  <amodra@gmail.com>
+
+	PR ld/13229
+	* plugin.c (tv_header_tags): Add LDPT_GET_SYMBOLS_V2.
+	(set_tv_header): Handle it.  Adjust LDPT_GET_SYMBOLS.  Return void.
+	(get_symbols): Add def_ironly_exp param.  Return that value for
+	syms exported from shared libs.
+	(get_symbols_v1, get_symbols_v2): New wrapper functions.
+	* testplug.c: Update for above changes.
+
+2011-09-27  Kai Tietz  <ktietz@redhat.com>
+
+	* scripttempl/pe.sc (.text): Add support for
+	.gnu.linkonce.t.* section.
+	(.debug_info): Only use .gnu.linkonce.wi.* for
+	relocating.
+	* scripttempl/pep.sc: Likewise.
+
+2011-09-22  Tristan Gingold  <gingold@adacore.com>
+
+	* NEWS: Add marker for 2.22.
+
+2011-09-20  Alan Modra  <amodra@gmail.com>
+
+	PR ld/13201
+	* ldlang.h (lang_input_statement_type): Add "reload" bitfield.
+	Clarify comments.
+	* ldlang.c (new_afile): Init new field.
+	(load_symbols): Don't call ldlang_add_file when reloading.
+	(open_input_bfds): Reload as-needed libs during plugin rescan.
+
 2011-09-15  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12975

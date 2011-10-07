@@ -1,3 +1,50 @@
+2011-10-05  DJ Delorie  <dj@redhat.com>
+	    Nick Clifton  <nickc@redhat.com>
+
+	* readelf.c (get_machine_dlags): Add support for RX's PID mode.
+
+2011-10-04  Paul Woegerer  <paul_woegerer@mentor.com>
+	    Carlos O'Donell  <carlos@codesourcery.com>
+
+	* dwarf.c (display_debug_lines_decoded): Index directory_table with
+	directory_index from file_table entry.
+
+2011-09-30  Cary Coutant  <ccoutant@google.com>
+
+	* binutils/dwarf.h (dwarf_section_display_enum): Add missing enum
+	constant.
+
+2011-09-28  Tristan Gingold  <gingold@adacore.com>
+
+	* od-xcoff.c (dump_xcoff32_aout_header): Fix typo.
+
+2011-09-27  Tristan Gingold  <gingold@adacore.com>
+
+	* od-xcoff.c (dump_xcoff32_aout_header): Remove some gettext macros.
+	(dump_xcoff32_sections_header): Likewise.
+	(dump_xcoff32_symbols, dump_xcoff32_relocs): Likewise.
+	(dump_xcoff32_lineno, dump_xcoff32_loader): Likewise.
+	(dump_xcoff32_except): Likewise.
+	(dump_xcoff32_typchk, dump_xcoff32_tbtags): Likewise.
+
+2011-09-27  Tristan Gingold  <gingold@adacore.com>
+
+	* readelf.c (print_ia64_vms_note): Fix xgettext warnings.
+
+2011-09-22  Tristan Gingold  <gingold@adacore.com>
+
+	* NEWS: Add marker for 2.22.
+
+2011-09-21  David S. Miller  <davem@davemloft.net>
+
+	* MAINTAINER: Take over from Jakub Jalinek as SPARC maintainer.
+
+	* readelf.c (display_sparc_hwcaps): New.
+	(display_sparc_gnu_attribute): New.
+	(process_sparc_specific): New.
+	(process_arch_specific): When EM_SPARC, EM_SPARC32PLUS,
+	or EM_SPARCV9 invoke process_sparc_specific.
+
 2011-09-18  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR binutils/13196

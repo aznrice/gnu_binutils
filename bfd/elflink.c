@@ -1238,7 +1238,6 @@ _bfd_elf_merge_symbol (bfd *abfd,
 	{
 	  h->def_dynamic = 0;
 	  h->ref_dynamic = 1;
-	  h->dynamic_def = 1;
 	}
       /* FIXME: Should we check type and size for protected symbol?  */
       h->size = 0;
@@ -4353,7 +4352,6 @@ error_free_dyn:
 		    {
 		      h->def_dynamic = 0;
 		      h->ref_dynamic = 1;
-		      h->dynamic_def = 1;
 		    }
 		}
 	      if (! info->executable
@@ -4366,7 +4364,10 @@ error_free_dyn:
 	      if (! definition)
 		h->ref_dynamic = 1;
 	      else
-		h->def_dynamic = 1;
+		{
+		  h->def_dynamic = 1;
+		  h->dynamic_def = 1;
+		}
 	      if (h->def_regular
 		  || h->ref_regular
 		  || (h->u.weakdef != NULL
@@ -11667,9 +11668,10 @@ _bfd_elf_gc_mark_extra_sections (struct bfd_link_info *info,
 	continue;
 
       /* Keep debug and special sections like .comment when they are
-	 not part of a group.  */
+	 not part of a group, or when we have single-member groups.  */
       for (isec = ibfd->sections; isec != NULL; isec = isec->next)
-	if (elf_next_in_group (isec) == NULL
+	if ((elf_next_in_group (isec) == NULL
+	     || elf_next_in_group (isec) == isec)
 	    && ((isec->flags & SEC_DEBUGGING) != 0
 		|| (isec->flags & (SEC_ALLOC | SEC_LOAD | SEC_RELOC)) == 0))
 	  isec->gc_mark = 1;
@@ -11914,8 +11916,9 @@ bfd_elf_gc_mark_dynamic_ref_symbol (struct elf_link_hash_entry *h, void *inf)
 	      && h->def_regular
 	      && ELF_ST_VISIBILITY (h->other) != STV_INTERNAL
 	      && ELF_ST_VISIBILITY (h->other) != STV_HIDDEN
-	      && !bfd_hide_sym_by_version (info->version_info,
-					   h->root.root.string))))
+	      && (strchr (h->root.root.string, ELF_VER_CHR) != NULL
+		  || !bfd_hide_sym_by_version (info->version_info,
+					       h->root.root.string)))))
     h->root.u.def.section->flags |= SEC_KEEP;
 
   return TRUE;

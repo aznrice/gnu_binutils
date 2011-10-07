@@ -2595,14 +2595,19 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	    strcat (buf, ", 64-bit doubles");
 	  if (e_flags & E_FLAG_RX_DSP)
 	    strcat (buf, ", dsp");
+	  if (e_flags & E_FLAG_RX_PID)
+	    strcat (buf, ", pid");	  
+	  break;
 
 	case EM_S390:
 	  if (e_flags & EF_S390_HIGH_GPRS)
 	    strcat (buf, ", highgprs");
+	  break;
 
 	case EM_TI_C6000:
 	  if ((e_flags & EF_C6000_REL))
 	    strcat (buf, ", relocatable module");
+	  break;
 	}
     }
 
@@ -11096,6 +11101,88 @@ display_power_gnu_attribute (unsigned char * p, int tag)
   return p;
 }
 
+static void
+display_sparc_hwcaps (int mask)
+{
+  if (mask)
+    {
+      int first = 1;
+      if (mask & ELF_SPARC_HWCAP_MUL32)
+	fputs ("mul32", stdout), first = 0;
+      if (mask & ELF_SPARC_HWCAP_DIV32)
+	printf ("%sdiv32", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_FSMULD)
+	printf ("%sfsmuld", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_V8PLUS)
+	printf ("%sv8plus", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_POPC)
+	printf ("%spopc", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_VIS)
+	printf ("%svis", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_VIS2)
+	printf ("%svis2", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_ASI_BLK_INIT)
+	printf ("%sASIBlkInit", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_FMAF)
+	printf ("%sfmaf", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_VIS3)
+	printf ("%svis3", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_HPC)
+	printf ("%shpc", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_RANDOM)
+	printf ("%srandom", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_TRANS)
+	printf ("%strans", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_FJFMAU)
+	printf ("%sfjfmau", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_IMA)
+	printf ("%sima", first ? "" : "|"), first = 0;
+      if (mask & ELF_SPARC_HWCAP_ASI_CACHE_SPARING)
+	printf ("%scspare", first ? "" : "|"), first = 0;
+    }
+  else
+    fputc('0', stdout);
+  fputc('\n', stdout);
+}
+
+static unsigned char *
+display_sparc_gnu_attribute (unsigned char * p, int tag)
+{
+  int type;
+  unsigned int len;
+  int val;
+
+  if (tag == Tag_GNU_Sparc_HWCAPS)
+    {
+      val = read_uleb128 (p, &len);
+      p += len;
+      printf ("  Tag_GNU_Sparc_HWCAPS: ");
+
+      display_sparc_hwcaps (val);
+      return p;
+   }
+
+  if (tag & 1)
+    type = 1; /* String.  */
+  else
+    type = 2; /* uleb128.  */
+  printf ("  Tag_unknown_%d: ", tag);
+
+  if (type == 1)
+    {
+      printf ("\"%s\"\n", p);
+      p += strlen ((char *) p) + 1;
+    }
+  else
+    {
+      val = read_uleb128 (p, &len);
+      p += len;
+      printf ("%d (0x%x)\n", val, val);
+    }
+
+  return p;
+}
+
 static unsigned char *
 display_mips_gnu_attribute (unsigned char * p, int tag)
 {
@@ -11542,6 +11629,13 @@ process_power_specific (FILE * file)
 {
   return process_attributes (file, NULL, SHT_GNU_ATTRIBUTES, NULL,
 			     display_power_gnu_attribute);
+}
+
+static int
+process_sparc_specific (FILE * file)
+{
+  return process_attributes (file, NULL, SHT_GNU_ATTRIBUTES, NULL,
+			     display_sparc_gnu_attribute);
 }
 
 static int
@@ -12605,7 +12699,8 @@ print_ia64_vms_note (Elf_Internal_Note * pnote)
       break;
 #ifdef BFD64
     case NT_VMS_FPMODE:
-      printf (_("   FP mode: 0x%016" BFD_VMA_FMT "x\n"),
+      printf (_("   FP mode: "));
+      printf ("0x%016" BFD_VMA_FMT "x\n",
               (bfd_vma)byte_get ((unsigned char *)pnote->descdata, 8));
       break;
     case NT_VMS_LINKTIME:
@@ -12628,7 +12723,8 @@ print_ia64_vms_note (Elf_Internal_Note * pnote)
       print_vms_time
         ((bfd_int64_t) byte_get ((unsigned char *)pnote->descdata + 8, 8));
       printf (_("\n"
-                "   Link flags  : 0x%016" BFD_VMA_FMT "x\n"),
+                "   Link flags  : "));
+      printf ("0x%016" BFD_VMA_FMT "x\n",
               (bfd_vma)byte_get ((unsigned char *)pnote->descdata + 16, 8));
       printf (_("   Header flags: 0x%08x\n"),
               (unsigned)byte_get ((unsigned char *)pnote->descdata + 24, 4));
@@ -12897,6 +12993,11 @@ process_arch_specific (FILE * file)
       break;
     case EM_PPC:
       return process_power_specific (file);
+      break;
+    case EM_SPARC:
+    case EM_SPARC32PLUS:
+    case EM_SPARCV9:
+      return process_sparc_specific (file);
       break;
     case EM_TI_C6000:
       return process_tic6x_specific (file);

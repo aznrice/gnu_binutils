@@ -1,3 +1,45 @@
+2011-09-28  Jan Beulich  <jbeulich@suse.com>
+
+	* gas/ppc/476.s: Fix lswi first operand.
+	* gas/ppc/476.d: Adjust expected output.
+	* gas/ppc/a2.s: Fix lswi first operand.
+	* gas/ppc/a2.d: Adjust expected output.
+	* gas/ppc/power6.s: Fix lfdpx first operand.
+	* gas/ppc/power6.d: Adjust expected output.
+
+2011-09-28  Kai Tietz  <ktietz@redhat.com>
+
+	* gas/pe/section-exclude.d: Correct testcase.
+
+2011-09-27  Kai Tietz  <ktietz@redhat.com>
+
+	* gas/pe/pe.exp: Add new testcase.
+	* gas/pe/section-exclude.d: New file.
+	* gas/pe/section-exclude.s: New file.
+
+2011-09-27  David S. Miller  <davem@davemloft.net>
+
+	* gas/sparc/hpcvis3.s: Update to use float reg for random insn.
+	* gas/sparc/hpcvis3.d: Likewise.
+
+2011-09-26  David S. Miller  <davem@davemloft.net>
+
+	* gas/sparc/ima.d: New test.
+	* gas/sparc/ima.s: New test source.
+	* gas/sparc/sparc.exp: Run new test.
+
+2011-09-21  David S. Miller  <davem@davemloft.net>
+
+	* gas/sparc/hpcvis3.s: Update for fixed fchksum16 mnemonic.
+	* gas/sparc/hpcvis3.d: Likewise.
+
+	* gas/sparc/imm-plus-rreg.d: Fix address regex for 64-bit.
+	* gas/sparc/save-args.d: Likewise.
+	* gas/sparc/ticc-imm-reg.d: Likewise, add -32 to options.
+	* gas/sparc/v8-movwr-imm.d: Likewise.
+
+	* gas/sparc/hpcvis3.d: Pass '-Av9v'.
+
 2011-09-08  Mark Fortescue <mark@mtfhpc.demon.co.uk>
 
 	* gas/sparc/imm-plus-rreg.[sd]: New test.
