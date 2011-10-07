@@ -1,19 +1,5 @@
 bfd/
 
-2011-09-17  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/13195
-	* elflink.c (bfd_elf_gc_mark_dynamic_ref_symbol): Check if a
-	symbol is versioned.
-
-2011-09-16  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/13195
-	* elflink.c (_bfd_elf_merge_symbol): Don't set dynamic_def when
-	clearing def_dynamic.
-	(elf_link_add_object_symbols): Likewise.  Set dynamic_def when
-	setting def_dynamic.
-
 2006-10-17  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/3351
@@ -57,7 +43,7 @@ ld/testsuite/
 	* ld-elf/indirect4c.c: Likewise.
 
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 9ccf37d..c4c9288 100644
+index 5d181f7..da6a68c 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -893,6 +893,33 @@ elf_merge_st_other (bfd *abfd, struct elf_link_hash_entry *h,
@@ -150,15 +136,7 @@ index 9ccf37d..c4c9288 100644
        /* A protected symbol has external availability. Make sure it is
  	 recorded as dynamic.
  
-@@ -1238,7 +1256,6 @@ _bfd_elf_merge_symbol (bfd *abfd,
- 	{
- 	  h->def_dynamic = 0;
- 	  h->ref_dynamic = 1;
--	  h->dynamic_def = 1;
- 	}
-       /* FIXME: Should we check type and size for protected symbol?  */
-       h->size = 0;
-@@ -1718,6 +1735,7 @@ _bfd_elf_add_default_symbol (bfd *abfd,
+@@ -1717,6 +1735,7 @@ _bfd_elf_add_default_symbol (bfd *abfd,
  	  if (! dynamic)
  	    {
  	      if (! info->executable
@@ -166,7 +144,7 @@ index 9ccf37d..c4c9288 100644
  		  || hi->ref_dynamic)
  		*dynsym = TRUE;
  	    }
-@@ -3835,6 +3853,7 @@ error_free_dyn:
+@@ -3834,6 +3853,7 @@ error_free_dyn:
        flagword flags;
        const char *name;
        struct elf_link_hash_entry *h;
@@ -174,7 +152,7 @@ index 9ccf37d..c4c9288 100644
        bfd_boolean definition;
        bfd_boolean size_change_ok;
        bfd_boolean type_change_ok;
-@@ -4167,6 +4186,9 @@ error_free_dyn:
+@@ -4166,6 +4186,9 @@ error_free_dyn:
  	goto error_free_vers;
  
        h = *sym_hash;
@@ -184,11 +162,8 @@ index 9ccf37d..c4c9288 100644
        while (h->root.type == bfd_link_hash_indirect
  	     || h->root.type == bfd_link_hash_warning)
  	h = (struct elf_link_hash_entry *) h->root.u.i.link;
-@@ -4353,25 +4375,40 @@ error_free_dyn:
- 		    {
- 		      h->def_dynamic = 0;
+@@ -4354,25 +4377,38 @@ error_free_dyn:
  		      h->ref_dynamic = 1;
--		      h->dynamic_def = 1;
  		    }
  		}
 -	      if (! info->executable
@@ -212,18 +187,17 @@ index 9ccf37d..c4c9288 100644
 +		  hi->ref_dynamic = 1;
 +		}
  	      else
--		h->def_dynamic = 1;
+ 		{
+ 		  h->def_dynamic = 1;
+ 		  h->dynamic_def = 1;
++		  hi->def_dynamic = 1;
++		  hi->dynamic_def = 1;
+ 		}
 -	      if (h->def_regular
 -		  || h->ref_regular
 -		  || (h->u.weakdef != NULL
 -		      && ! new_weakdef
 -		      && h->u.weakdef->dynindx != -1))
-+		{
-+		  h->def_dynamic = 1;
-+		  h->dynamic_def = 1;
-+		  hi->def_dynamic = 1;
-+		  hi->dynamic_def = 1;
-+		}
 +
 +	      /* If the indirect symbol has been forced local, don't
 +		 make the real symbol dynamic.  */
@@ -236,7 +210,7 @@ index 9ccf37d..c4c9288 100644
  		dynsym = TRUE;
  	    }
  
-@@ -8422,6 +8459,10 @@ elf_link_check_versioned_symbol (struct bfd_link_info *info,
+@@ -8423,6 +8459,10 @@ elf_link_check_versioned_symbol (struct bfd_link_info *info,
    if (!is_elf_hash_table (info->hash))
      return FALSE;
  
@@ -247,7 +221,7 @@ index 9ccf37d..c4c9288 100644
    switch (h->root.type)
      {
      default:
-@@ -8643,6 +8684,11 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+@@ -8644,6 +8684,11 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
      {
        bfd *def_bfd;
        const char *msg;
@@ -259,7 +233,7 @@ index 9ccf37d..c4c9288 100644
  
        if (ELF_ST_VISIBILITY (h->other) == STV_INTERNAL)
  	msg = _("%B: internal symbol `%s' in %B is referenced by DSO");
-@@ -8651,8 +8697,8 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+@@ -8652,8 +8697,8 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
        else
  	msg = _("%B: local symbol `%s' in %B is referenced by DSO");
        def_bfd = finfo->output_bfd;
@@ -270,7 +244,7 @@ index 9ccf37d..c4c9288 100644
        (*_bfd_error_handler) (msg, finfo->output_bfd, def_bfd,
  			     h->root.root.string);
        bfd_set_error (bfd_error_bad_value);
-@@ -8886,6 +8932,23 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+@@ -8887,6 +8932,23 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
      {
        bfd_byte *esym;
  
@@ -294,18 +268,6 @@ index 9ccf37d..c4c9288 100644
        sym.st_name = h->dynstr_index;
        esym = finfo->dynsym_sec->contents + h->dynindx * bed->s->sizeof_sym;
        if (! check_dynsym (finfo->output_bfd, &sym))
-@@ -11914,8 +11977,9 @@ bfd_elf_gc_mark_dynamic_ref_symbol (struct elf_link_hash_entry *h, void *inf)
- 	      && h->def_regular
- 	      && ELF_ST_VISIBILITY (h->other) != STV_INTERNAL
- 	      && ELF_ST_VISIBILITY (h->other) != STV_HIDDEN
--	      && !bfd_hide_sym_by_version (info->version_info,
--					   h->root.root.string))))
-+	      && (strchr (h->root.root.string, ELF_VER_CHR) != NULL
-+		  || !bfd_hide_sym_by_version (info->version_info,
-+					       h->root.root.string)))))
-     h->root.u.def.section->flags |= SEC_KEEP;
- 
-   return TRUE;
 diff --git a/ld/testsuite/ld-elf/indirect.exp b/ld/testsuite/ld-elf/indirect.exp
 new file mode 100644
 index 0000000..603179a
@@ -620,43 +582,3 @@ index 0000000..b52cb95
 +{
 +  foo ();
 +}
-diff --git a/ld/testsuite/ld-elf/pr13195.d b/ld/testsuite/ld-elf/pr13195.d
-new file mode 100644
-index 0000000..796102b
---- /dev/null
-+++ b/ld/testsuite/ld-elf/pr13195.d
-@@ -0,0 +1,10 @@
-+#ld: --gc-sections -shared -version-script pr13195.t
-+#readelf: -s --wide -D
-+#target: *-*-linux* *-*-gnu*
-+#notarget: arc-*-* d30v-*-* dlx-*-* i960-*-* or32-*-* pj*-*-*
-+#notarget: hppa64-*-* i370-*-* i860-*-* ia64-*-* mep-*-* mn10200-*-*
-+# generic linker targets don't support --gc-sections, nor do a bunch of others
-+
-+#...
-+ +[0-9]+ +[0-9]+: +[0-9a-f]+ +[0-9]+ +FUNC +GLOBAL +DEFAULT +[1-9]+ foo
-+#pass
-diff --git a/ld/testsuite/ld-elf/pr13195.s b/ld/testsuite/ld-elf/pr13195.s
-new file mode 100644
-index 0000000..409b5af
---- /dev/null
-+++ b/ld/testsuite/ld-elf/pr13195.s
-@@ -0,0 +1,6 @@
-+	.section .text.new_foo,"ax",%progbits
-+	.globl	new_foo
-+	.type	new_foo, %function
-+new_foo:
-+	.byte 0
-+	.symver new_foo,foo@@VERS_2.0
-diff --git a/ld/testsuite/ld-elf/pr13195.t b/ld/testsuite/ld-elf/pr13195.t
-new file mode 100644
-index 0000000..2b82842
---- /dev/null
-+++ b/ld/testsuite/ld-elf/pr13195.t
-@@ -0,0 +1,6 @@
-+VERS_2.0 {
-+global:
-+  foo;
-+local:
-+  *;
-+};
