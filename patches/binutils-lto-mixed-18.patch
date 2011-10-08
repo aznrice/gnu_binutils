@@ -1,12 +1,5 @@
 bfd/
 
-2011-10-07  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/13229
-	PR ld/13244
-	* elflink.c (elf_link_output_extsym): Don't output any plugin
-	symbols for non-relocatable link.
-
 2011-05-14  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12758
@@ -524,10 +517,10 @@ index dc6a9bb..8e93c7f 100644
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 5d181f7..e04cb7c 100644
+index 358ada8..371ccb3 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
-@@ -5055,6 +5055,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
+@@ -5057,6 +5057,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
  	     something wrong with the archive.  */
  	  if (element->archive_pass != 0)
  	    {
@@ -537,47 +530,6 @@ index 5d181f7..e04cb7c 100644
  	      bfd_set_error (bfd_error_bad_value);
  	      goto error_return;
  	    }
-@@ -8577,6 +8580,7 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
-   const struct elf_backend_data *bed;
-   long indx;
-   int ret;
-+  bfd *sym_bfd; 
- 
-   if (h->root.type == bfd_link_hash_warning)
-     {
-@@ -8664,8 +8668,18 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
-   /* We don't want to output symbols that have never been mentioned by
-      a regular file, or that we have been told to strip.  However, if
-      h->indx is set to -2, the symbol is used by a reloc and we must
--     output it.  */
--  if (h->indx == -2)
-+     output it.  Don't output any plugin symbols for non-relocatable
-+     link.  */
-+  if (!finfo->info->relocatable
-+      && ((((h->root.type == bfd_link_hash_defweak
-+	     || h->root.type == bfd_link_hash_defined)
-+	    && (sym_bfd = h->root.u.def.section->owner) != NULL)
-+	   || ((h->root.type == bfd_link_hash_undefined
-+		|| h->root.type == bfd_link_hash_undefweak)
-+	       && (sym_bfd = h->root.u.undef.abfd) != NULL))
-+	  && (sym_bfd->flags & BFD_PLUGIN) != 0))
-+    return TRUE;
-+  else if (h->indx == -2)
-     strip = FALSE;
-   else if ((h->def_dynamic
- 	    || h->ref_dynamic
-@@ -8684,11 +8698,6 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
- 	       || h->root.type == bfd_link_hash_defweak)
- 	   && elf_discarded_section (h->root.u.def.section))
-     strip = TRUE;
--  else if ((h->root.type == bfd_link_hash_undefined
--	    || h->root.type == bfd_link_hash_undefweak)
--	   && h->root.u.undef.abfd != NULL
--	   && (h->root.u.undef.abfd->flags & BFD_PLUGIN) != 0)
--    strip = TRUE;
-   else
-     strip = FALSE;
- 
 diff --git a/bfd/format.c b/bfd/format.c
 index 66b9051..181ac05 100644
 --- a/bfd/format.c

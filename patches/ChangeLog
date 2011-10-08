@@ -1,3 +1,8 @@
+2011-10-08  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-lto-mixed-18.patch: Remove fix for PRs ld/13229 and
+	ld/13244.
+
 2011-10-07  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-lto-mixed-18.patch: Fix PRs ld/13229 and ld/13244.
