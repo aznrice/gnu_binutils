@@ -18,7 +18,7 @@ clean=$1
 patches="
 	binutils-indirect-5.patch
 	binutils-shr-99.patch
-	binutils-error-13.patch
+	binutils-error-14.patch
 	binutils-signed-8.patch
 	binutils-weakdef-2.patch
 	bfd-64k-2.patch
