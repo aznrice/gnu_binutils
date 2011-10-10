@@ -1,3 +1,31 @@
+2011-10-10  Nick Clifton  <nickc@redhat.com>
+
+	* po/bg.po: Updated Bulgarian translation.
+	* po/es.po: Updated Spanish translation.
+	* po/fi.po: Updated Finnish translation.
+	* po/fr.po: Updated French translation.
+
+2011-10-10  Alan Modra  <amodra@gmail.com>
+
+	* ldmain.c (main): Move code twiddling various config and link_info
+	bits to..
+	* lexsup.c (parse_args): ..here.  Move plugin_load_plugins call
+	into main.
+	* plugin.c (set_tv_header): Test link_info.executable, not
+	link_info.shared.
+	(is_visible_from_outside): Likewise.  Delete redundant
+	is_ir_dummy_bfd check and "section" parameter.
+
+2011-10-10  Alan Modra  <amodra@gmail.com>
+
+	* emultempl/ppc64elf.em (ppc_add_stub_section): Align to 32 bytes.
+
+2011-10-09  Alan Modra  <amodra@gmail.com>
+
+	* emultempl/ppc64elf.em (ppc_create_output_section_statements): Add
+	missing colon to error message.
+	(ppc_before_allocation): Likewise.
+
 2011-10-06  Alan Modra  <amodra@gmail.com>
 
 	PR ld/13229
