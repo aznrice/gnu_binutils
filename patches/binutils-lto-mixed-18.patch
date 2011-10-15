@@ -1,5 +1,28 @@
 bfd/
 
+2011-10-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13298
+	* opncls.c (bfd_extract_object_only_section): New.
+
+	* plugin.c (add_symbols): Initialize object_only_syms and
+	object_only_nsyms.
+	(bfd_plugin_fake_text_section): New.
+	(bfd_plugin_fake_common_section): Likewise.
+	(bfd_plugin_get_symbols_in_object_only): Likewise.
+	(bfd_plugin_get_symtab_upper_bound): Call
+	bfd_plugin_get_symbols_in_object_only and add symbols from
+	object only section.
+	(bfd_plugin_canonicalize_symtab): Remove fake_section and
+	fake_common_section.  Use bfd_plugin_fake_text_section and
+	bfd_plugin_fake_common_section.  Set udata.p to NULL.  Copy
+	symbols from object only section.
+
+	* plugin.h (plugin_data_struct): Add object_only_nsyms and
+	object_only_syms.
+
+	* bfd-in2.h: Regenerated.
+
 2011-05-14  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/12758
@@ -53,6 +76,12 @@ include/elf/
 	* common.h (SHT_GNU_OBJECT_ONLY): New.
 
 ld/
+
+2011-10-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13298
+	* ldlang.c (cmdline_extract_object_only_section): Call
+	bfd_extract_object_only_section.
 
 2011-05-17  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -371,10 +400,20 @@ ld/testsuite/
 	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index 22fcdf6..79c7b26 100644
+index 22fcdf6..a84b030 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
-@@ -1556,6 +1556,9 @@ struct relax_table {
+@@ -1028,6 +1028,9 @@ struct bfd_section *bfd_create_gnu_debuglink_section
+ bfd_boolean bfd_fill_in_gnu_debuglink_section
+    (bfd *abfd, struct bfd_section *sect, const char *filename);
+ 
++const char *bfd_extract_object_only_section
++   (bfd *abfd);
++
+ /* Extracted from libbfd.c.  */
+ 
+ /* Byte swapping macros for user section data.  */
+@@ -1556,6 +1559,9 @@ struct relax_table {
  #define BFD_COM_SECTION_NAME "*COM*"
  #define BFD_IND_SECTION_NAME "*IND*"
  
@@ -384,7 +423,7 @@ index 22fcdf6..79c7b26 100644
  /* The absolute section.  */
  extern asection bfd_abs_section;
  #define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
-@@ -5230,6 +5233,14 @@ enum bfd_direction
+@@ -5230,6 +5236,14 @@ enum bfd_direction
      both_direction = 3
    };
  
@@ -399,7 +438,7 @@ index 22fcdf6..79c7b26 100644
  struct bfd
  {
    /* A unique identifier of the BFD  */
-@@ -5377,6 +5388,9 @@ struct bfd
+@@ -5377,6 +5391,9 @@ struct bfd
    /* The last section on the section list.  */
    struct bfd_section *section_last;
  
@@ -409,7 +448,7 @@ index 22fcdf6..79c7b26 100644
    /* The number of sections.  */
    unsigned int section_count;
  
-@@ -5495,6 +5509,9 @@ struct bfd
+@@ -5495,6 +5512,9 @@ struct bfd
    /* Set if only required symbols should be added in the link hash table for
       this object.  Used by VMS linkers.  */
    unsigned int selective_search : 1;
@@ -419,7 +458,7 @@ index 22fcdf6..79c7b26 100644
  };
  
  typedef enum bfd_error
-@@ -5702,6 +5719,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
+@@ -5702,6 +5722,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
  
  char *bfd_demangle (bfd *, const char *, int);
  
@@ -517,10 +556,10 @@ index dc6a9bb..8e93c7f 100644
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 358ada8..371ccb3 100644
+index 18aefdb..3d2bea3 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
-@@ -5057,6 +5057,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
+@@ -5080,6 +5080,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
  	     something wrong with the archive.  */
  	  if (element->archive_pass != 0)
  	    {
@@ -590,6 +629,317 @@ index 66b9051..181ac05 100644
        return TRUE;			/* File position has moved, BTW.  */
      }
  
+diff --git a/bfd/opncls.c b/bfd/opncls.c
+index 9d33f39..673c7f8 100644
+--- a/bfd/opncls.c
++++ b/bfd/opncls.c
+@@ -1529,3 +1529,69 @@ bfd_fill_in_gnu_debuglink_section (bfd *abfd,
+ 
+   return TRUE;
+ }
++
++/*
++FUNCTION
++	bfd_extract_object_only_section
++
++SYNOPSIS
++	const char *bfd_extract_object_only_section
++	  (bfd *abfd);
++
++DESCRIPTION
++
++	Takes a @var{ABFD} and extract the .gnu_object_only section into
++	a temporary file.
++
++RETURNS
++	The name of the temporary file is returned if all is ok.
++	Otherwise <<NULL>> is returned and bfd_error is set.
++*/
++
++const char *
++bfd_extract_object_only_section (bfd *abfd)
++{
++  asection *sec = abfd->object_only_section;
++  const char *name;
++  FILE *file;
++  bfd_byte *memhunk = NULL;
++  size_t off, size;
++  bfd_error_type err;
++
++  /* Get a temporary object-only file.  */
++  name = make_temp_file (".obj-only.o");
++
++  /* Open the object-only file.  */
++  file = real_fopen (name, FOPEN_WB);
++  if (!bfd_get_full_section_contents (abfd, sec, &memhunk))
++    {
++      err = bfd_get_error ();
++
++loser:
++      free (memhunk);
++      fclose (file);
++      unlink (name);
++      bfd_set_error (err);
++      return NULL;
++    }
++
++  off = 0;
++  size = sec->size;
++  while (off != size)
++    {
++      size_t written, nwrite = size - off;
++
++      written = fwrite (memhunk + off, 1, nwrite, file);
++      if (written < nwrite && ferror (file))
++	{
++	  err = bfd_error_system_call;
++	  goto loser;
++	}
++
++      off += written;
++    }
++
++  free (memhunk);
++  fclose (file);
++  return name;
++}
+diff --git a/bfd/plugin.c b/bfd/plugin.c
+index 064e273..7f432c1 100644
+--- a/bfd/plugin.c
++++ b/bfd/plugin.c
+@@ -109,6 +109,9 @@ add_symbols (void * handle,
+   if (nsyms != 0)
+     abfd->flags |= HAS_SYMS;
+ 
++  plugin_data->object_only_syms = NULL;
++  plugin_data->object_only_nsyms = -1;
++
+   abfd->tdata.plugin_data = plugin_data;
+   return LDPS_OK;
+ }
+@@ -349,6 +352,147 @@ bfd_plugin_core_file_pid (bfd *abfd ATTRIBUTE_UNUSED)
+   return 0;
+ }
+ 
++static asection bfd_plugin_fake_text_section
++  = BFD_FAKE_SECTION (bfd_plugin_fake_text_section, 0, 0, ".text", 0);
++static asection bfd_plugin_fake_common_section
++  = BFD_FAKE_SECTION (bfd_plugin_fake_common_section, SEC_IS_COMMON, 0,
++		      NULL, 0);
++
++/* Get symbols from object only section.  */
++
++static void
++bfd_plugin_get_symbols_in_object_only (bfd *abfd)
++{
++  struct plugin_data_struct *plugin_data = abfd->tdata.plugin_data;
++  const char *object_only_file;
++  bfd *nbfd;
++  long storage;
++  long object_only_nsyms, added_nsyms, i;
++  asymbol **object_only_syms, **added_syms;
++
++  /* Return if it is done already.  */
++  if (plugin_data->object_only_nsyms >= 0)
++    return;
++
++  plugin_data->object_only_nsyms = 0;
++
++  if (abfd->sections == NULL && abfd->my_archive == NULL)
++    {
++      nbfd = bfd_openr (abfd->filename, NULL);
++      if (nbfd == NULL
++	  || !bfd_check_format (nbfd, bfd_object))
++	{
++	  (*_bfd_error_handler)
++	    (_("%s: failed to open to extract object only section: %s"),
++	     abfd->filename, bfd_errmsg (bfd_get_error ()));
++	  bfd_close (nbfd);
++	  return;
++	}
++    }
++  else
++    {
++      if (!bfd_check_format (abfd, bfd_object))
++	return;
++      nbfd = abfd;
++    }
++
++  if (nbfd->lto_type == lto_mixed_object 
++      && (bfd_get_file_flags (nbfd) & HAS_SYMS) != 0)
++    {
++      object_only_file = bfd_extract_object_only_section (nbfd);
++      if (object_only_file == NULL)
++	(*_bfd_error_handler)
++	  (_("%B: failed to extract object only section: %s"),
++	   abfd, bfd_errmsg (bfd_get_error ()));
++    }
++  else
++    object_only_file = NULL;
++
++  /* Close the new bfd we just opened.  */
++  if (nbfd != abfd)
++    bfd_close (nbfd);
++
++  /* Return if there is no object only section or there is no
++     symbol in object only section.  */
++  if (!object_only_file)
++    return;
++
++  /* Open the file containing object only section.  */
++  nbfd = bfd_openr (object_only_file, NULL);
++  if (!bfd_check_format (nbfd, bfd_object))
++    {
++      (*_bfd_error_handler)
++	(_("%B: failed to open object only section: %s"),
++	 abfd, bfd_errmsg (bfd_get_error ()));
++      goto quit;
++    }
++
++  storage = bfd_get_symtab_upper_bound (nbfd);
++  if (storage <= 0)
++    {
++      if (storage < 0)
++	(*_bfd_error_handler)
++	  (_("%B: failed to get symbol table in object only section: %s"),
++	   abfd, bfd_errmsg (bfd_get_error ()));
++
++quit:
++      unlink (nbfd->filename);
++      bfd_close (nbfd);
++      return;
++    }
++
++  object_only_syms = (asymbol **) bfd_malloc (storage);
++  object_only_nsyms = bfd_canonicalize_symtab (nbfd, object_only_syms);
++
++  /* FIXME: We waste some spaces if not all symbols are copied.  */
++  added_syms = (asymbol **) bfd_alloc (abfd, storage);
++  added_nsyms = 0;
++
++  /* Copy only global symbols from object only section.  */
++  for (i = 0; i < object_only_nsyms; i++)
++    {
++      asection *sec = object_only_syms[i]->section;
++      flagword flags = object_only_syms[i]->flags;
++      asymbol *s;
++      if (bfd_is_com_section (sec))
++	{
++	  s = bfd_alloc (abfd, sizeof (asymbol)); 
++	  s->section = &bfd_plugin_fake_common_section;
++	}
++      else if (bfd_is_und_section (sec))
++	{
++	  s = bfd_alloc (abfd, sizeof (asymbol)); 
++	  s->section = bfd_und_section_ptr;
++	}
++      else if ((flags & (BSF_GLOBAL | BSF_WEAK | BSF_GNU_UNIQUE)) != 0)
++	{
++	  s = bfd_alloc (abfd, sizeof (asymbol)); 
++	  s->section = &bfd_plugin_fake_text_section;
++	}
++      else
++	continue;
++
++      BFD_ASSERT (s);
++      added_syms[added_nsyms] = s;
++
++      s->the_bfd = abfd;
++      s->name = xstrdup (object_only_syms[i]->name);
++      s->value = 0;
++      s->flags = flags;
++      s->udata.p = NULL;
++      added_nsyms++;
++    }
++
++  plugin_data->object_only_syms = added_syms;
++  plugin_data->object_only_nsyms = added_nsyms;
++
++  free (object_only_syms);
++
++  /* Remove and close the object only section file.  */
++  unlink (nbfd->filename);
++  bfd_close (nbfd);
++}
++
+ static long
+ bfd_plugin_get_symtab_upper_bound (bfd *abfd)
+ {
+@@ -357,7 +501,11 @@ bfd_plugin_get_symtab_upper_bound (bfd *abfd)
+ 
+   BFD_ASSERT (nsyms >= 0);
+ 
+-  return ((nsyms + 1) * sizeof (asymbol *));
++  bfd_plugin_get_symbols_in_object_only (abfd);
++
++  /* Add symbols from object only section.  */
++  return ((nsyms + plugin_data->object_only_nsyms + 1)
++	  * sizeof (asymbol *));
+ }
+ 
+ static flagword
+@@ -387,12 +535,7 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
+   struct plugin_data_struct *plugin_data = abfd->tdata.plugin_data;
+   long nsyms = plugin_data->nsyms;
+   const struct ld_plugin_symbol *syms = plugin_data->syms;
+-  static asection fake_section;
+-  static asection fake_common_section;
+-  int i;
+-
+-  fake_section.name = ".text";
+-  fake_common_section.flags = SEC_IS_COMMON;
++  int i, j;
+ 
+   for (i = 0; i < nsyms; i++)
+     {
+@@ -405,10 +548,11 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
+       s->name = syms[i].name;
+       s->value = 0;
+       s->flags = convert_flags (&syms[i]);
++      s->udata.p = NULL;
+       switch (syms[i].def)
+ 	{
+ 	case LDPK_COMMON:
+-	  s->section = &fake_common_section;
++	  s->section = &bfd_plugin_fake_common_section;
+ 	  break;
+ 	case LDPK_UNDEF:
+ 	case LDPK_WEAKUNDEF:
+@@ -416,15 +560,18 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
+ 	  break;
+ 	case LDPK_DEF:
+ 	case LDPK_WEAKDEF:
+-	  s->section = &fake_section;
++	  s->section = &bfd_plugin_fake_text_section;
+ 	  break;
+ 	default:
+ 	  BFD_ASSERT (0);
+ 	}
+-
+-      s->udata.p = (void *) &syms[i];
+     }
+ 
++  /* Copy symbols from object only section.  */
++  nsyms += plugin_data->object_only_nsyms;
++  for (j = 0; j < plugin_data->object_only_nsyms; j++, i++)
++    alocation[i] = plugin_data->object_only_syms[j];
++
+   return nsyms;
+ }
+ 
+diff --git a/bfd/plugin.h b/bfd/plugin.h
+index 3091f97..2db087f 100644
+--- a/bfd/plugin.h
++++ b/bfd/plugin.h
+@@ -30,6 +30,8 @@ typedef struct plugin_data_struct
+ {
+   int nsyms;
+   const struct ld_plugin_symbol *syms;
++  int object_only_nsyms;
++  asymbol **object_only_syms;
+ }
+ plugin_data_struct;
+ 
 diff --git a/bfd/section.c b/bfd/section.c
 index 7c1f750..eb50367 100644
 --- a/bfd/section.c
@@ -658,7 +1008,7 @@ index 31ac0a2..e4ae760 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index d68cf27..c5e31e7 100644
+index f6fd38d..2922f36 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
 @@ -3035,6 +3035,7 @@ get_section_type_name (unsigned int sh_type)
@@ -867,10 +1217,10 @@ index 7c8e55b..02bc6ae 100644
    ${LDEMUL_OPEN_DYNAMIC_ARCHIVE-gld${EMULATION_NAME}_open_dynamic_archive},
    ${LDEMUL_PLACE_ORPHAN-gld${EMULATION_NAME}_place_orphan},
 diff --git a/ld/emultempl/ppc64elf.em b/ld/emultempl/ppc64elf.em
-index 8a81beb..1fed131 100644
+index 0a49c5b..363238d 100644
 --- a/ld/emultempl/ppc64elf.em
 +++ b/ld/emultempl/ppc64elf.em
-@@ -522,7 +522,7 @@ gld${EMULATION_NAME}_after_allocation (void)
+@@ -523,7 +523,7 @@ gld${EMULATION_NAME}_after_allocation (void)
  /* Final emulation specific call.  */
  
  static void
@@ -879,7 +1229,7 @@ index 8a81beb..1fed131 100644
  {
    /* e_entry on PowerPC64 points to the function descriptor for
       _start.  If _start is missing, default to the first function
-@@ -562,7 +562,7 @@ gld${EMULATION_NAME}_finish (void)
+@@ -563,7 +563,7 @@ gld${EMULATION_NAME}_finish (void)
      }
  
    ppc64_elf_restore_symbols (&link_info);
@@ -888,7 +1238,7 @@ index 8a81beb..1fed131 100644
  }
  
  
-@@ -809,6 +809,6 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
+@@ -810,6 +810,6 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
  #
  LDEMUL_BEFORE_ALLOCATION=ppc_before_allocation
  LDEMUL_AFTER_ALLOCATION=gld${EMULATION_NAME}_after_allocation
@@ -940,7 +1290,7 @@ index c4b8912..10e8e89 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index ae54155..805a706 100644
+index ae54155..ee09c63 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -1070,7 +1420,7 @@ index ae54155..805a706 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -8077,3 +8129,1006 @@ lang_ld_feature (char *str)
+@@ -8077,3 +8129,961 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -1943,62 +2293,17 @@ index ae54155..805a706 100644
 +static const char *
 +cmdline_extract_object_only_section (bfd *abfd)
 +{
-+  asection *sec = abfd->object_only_section;
-+  const char *name;
-+  int fd;
-+  bfd_byte *memhunk = NULL;
-+  size_t off, size;
-+  const char *err;
++  const char *name = bfd_extract_object_only_section (abfd);
 +
-+  /* Get a temporary object-only file.  */
-+  name = make_temp_file (".obj-only.o");
-+
-+  /* Open the object-only file.  */
-+  fd = open (name, O_WRONLY | O_BINARY);
-+  if (fd < 0)
-+    {
-+      bfd_set_error (bfd_error_system_call);
-+      einfo (_("%P%F:%s: cannot open object-only output: %E"), name);
-+    }
-+
-+  if (!bfd_get_full_section_contents (abfd, sec, &memhunk))
-+    {
-+      err = bfd_errmsg (bfd_get_error ());
-+      goto loser;
-+    }
-+
-+  off = 0;
-+  size = sec->size;
-+  while (off != size)
-+    {
-+      ssize_t written;
-+
-+      written = write (fd, memhunk + off, size - off);
-+      if (written < 0)
-+	{
-+	  bfd_set_error (bfd_error_system_call);
-+	  einfo (_("%P%F:%s: write failed on object-only output: %E"),
-+		 name);
-+	}
-+
-+      off += written;
-+    }
-+
-+  free (memhunk);
-+
-+  close (fd);
++  if (name == NULL)
++    einfo (_("%P%F: cannot extract object-only section from %B: %E"),
++	   abfd);
 +
 +  /* It should be removed after it is done.  */
 +  cmdline_list_append (&cmdline_temp_object_only_list,
 +		       cmdline_is_file_enum, (void *) name);
 +
 +  return name;
-+
-+loser:
-+  einfo (_("%P%F: failed to extract object-only section: %s\n"),
-+	 err);
-+
-+  return NULL;
 +}
 +
 +/* Check and handle the object-only section.   */
@@ -2137,7 +2442,7 @@ index 95f9412..857dca6 100644
 +
  #endif
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index 3c0dbc4..1ec23d6 100644
+index 7aacf0f..0efeab2 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
 @@ -213,6 +213,9 @@ main (int argc, char **argv)
@@ -2159,9 +2464,9 @@ index 3c0dbc4..1ec23d6 100644
    ldemul_before_parse ();
    lang_has_input_file = FALSE;
    parse_args (argc, argv);
-@@ -365,34 +368,7 @@ main (int argc, char **argv)
- 	link_info.discard = discard_all;
-     }
+@@ -305,34 +308,7 @@ main (int argc, char **argv)
+ 
+   ldemul_set_symbols ();
  
 -  /* If we have not already opened and parsed a linker script,
 -     try the default script from command line first.  */
@@ -2195,7 +2500,7 @@ index 3c0dbc4..1ec23d6 100644
  
    if (trace_file_tries)
      {
-@@ -499,6 +475,8 @@ main (int argc, char **argv)
+@@ -439,6 +415,8 @@ main (int argc, char **argv)
        if (! bfd_close (link_info.output_bfd))
  	einfo (_("%F%B: final close failed: %E\n"), link_info.output_bfd);
  
@@ -2204,7 +2509,7 @@ index 3c0dbc4..1ec23d6 100644
        /* If the --force-exe-suffix is enabled, and we're making an
  	 executable file and it doesn't end in .exe, copy it to one
  	 which does.  */
-@@ -545,6 +523,9 @@ main (int argc, char **argv)
+@@ -485,6 +463,9 @@ main (int argc, char **argv)
  	}
      }
  
@@ -2214,7 +2519,7 @@ index 3c0dbc4..1ec23d6 100644
    END_PROGRESS (program_name);
  
    if (config.stats)
-@@ -834,7 +815,9 @@ add_archive_element (struct bfd_link_info *info,
+@@ -774,7 +755,9 @@ add_archive_element (struct bfd_link_info *info,
  	    }
  	}
      }
@@ -2224,7 +2529,7 @@ index 3c0dbc4..1ec23d6 100644
  
    ldlang_add_file (input);
  
-@@ -1207,7 +1190,7 @@ warning_callback (struct bfd_link_info *info ATTRIBUTE_UNUSED,
+@@ -1147,7 +1130,7 @@ warning_callback (struct bfd_link_info *info ATTRIBUTE_UNUSED,
      einfo ("%P: %s%s\n", _("warning: "), warning);
    else if (symbol == NULL)
      einfo ("%B: %s%s\n", abfd, _("warning: "), warning);
@@ -2233,7 +2538,7 @@ index 3c0dbc4..1ec23d6 100644
      {
        struct warning_callback_info cinfo;
  
-@@ -1514,3 +1497,38 @@ notice (struct bfd_link_info *info,
+@@ -1454,3 +1437,38 @@ notice (struct bfd_link_info *info,
  
    return TRUE;
  }
@@ -2284,7 +2589,7 @@ index 57ce8d7..22f9885 100644
 +
  #endif
 diff --git a/ld/lexsup.c b/ld/lexsup.c
-index b5e52a8..90bba23 100644
+index 20e0271..868a82f 100644
 --- a/ld/lexsup.c
 +++ b/ld/lexsup.c
 @@ -173,6 +173,7 @@ enum option_values
@@ -2316,7 +2621,7 @@ index b5e52a8..90bba23 100644
  	case 'q':
  	  link_info.emitrelocations = TRUE;
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 250233b..73465c6 100644
+index 5f4aa8f..e38c9cd 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -39,6 +39,9 @@
@@ -2347,7 +2652,7 @@ index 250233b..73465c6 100644
    newarg = xmalloc (sizeof *newarg);
    newarg->arg = arg;
    newarg->next = NULL;
-@@ -870,6 +884,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
+@@ -866,6 +880,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
    close (file->fd);
    if (claimed)
      {
@@ -2357,7 +2662,7 @@ index 250233b..73465c6 100644
        /* Discard the real file's BFD and substitute the dummy one.  */
  
        /* BFD archive handling caches elements so we can't call
-@@ -923,13 +940,16 @@ plugin_call_cleanup (void)
+@@ -919,13 +936,16 @@ plugin_call_cleanup (void)
      {
        if (curplug->cleanup_handler && !curplug->cleanup_done)
  	{
