@@ -271,9 +271,9 @@ print_mode;
 
 #define DT_VERSIONTAGIDX(tag)	(DT_VERNEEDNUM - (tag))	/* Reverse order!  */
 
-#define GET_ELF_SYMBOLS(file, section)			\
-  (is_32bit_elf ? get_32bit_elf_symbols (file, section)	\
-   : get_64bit_elf_symbols (file, section))
+#define GET_ELF_SYMBOLS(file, section, sym_count)			\
+  (is_32bit_elf ? get_32bit_elf_symbols (file, section, sym_count)	\
+   : get_64bit_elf_symbols (file, section, sym_count))
 
 #define VALID_DYNAMIC_NAME(offset)	((dynamic_strings != NULL) && (offset < dynamic_strings_length))
 /* GET_DYNAMIC_NAME asssumes that VALID_DYNAMIC_NAME has
@@ -654,7 +654,7 @@ slurp_rela_relocs (FILE * file,
       Elf32_External_Rela * erelas;
 
       erelas = (Elf32_External_Rela *) get_data (NULL, file, rel_offset, 1,
-                                                 rel_size, _("relocs"));
+                                                 rel_size, _("32-bit relocation data"));
       if (!erelas)
 	return 0;
 
@@ -684,7 +684,7 @@ slurp_rela_relocs (FILE * file,
       Elf64_External_Rela * erelas;
 
       erelas = (Elf64_External_Rela *) get_data (NULL, file, rel_offset, 1,
-                                                 rel_size, _("relocs"));
+                                                 rel_size, _("64-bit relocation data"));
       if (!erelas)
 	return 0;
 
@@ -752,7 +752,7 @@ slurp_rel_relocs (FILE * file,
       Elf32_External_Rel * erels;
 
       erels = (Elf32_External_Rel *) get_data (NULL, file, rel_offset, 1,
-                                               rel_size, _("relocs"));
+                                               rel_size, _("32-bit relocation data"));
       if (!erels)
 	return 0;
 
@@ -781,7 +781,7 @@ slurp_rel_relocs (FILE * file,
       Elf64_External_Rel * erels;
 
       erels = (Elf64_External_Rel *) get_data (NULL, file, rel_offset, 1,
-                                               rel_size, _("relocs"));
+                                               rel_size, _("64-bit relocation data"));
       if (!erels)
 	return 0;
 
@@ -4050,11 +4050,13 @@ get_64bit_section_headers (FILE * file, unsigned int num)
 }
 
 static Elf_Internal_Sym *
-get_32bit_elf_symbols (FILE * file, Elf_Internal_Shdr * section)
+get_32bit_elf_symbols (FILE * file,
+		       Elf_Internal_Shdr * section,
+		       unsigned long * num_syms_return)
 {
-  unsigned long number;
+  unsigned long number = 0;
   Elf32_External_Sym * esyms = NULL;
-  Elf_External_Sym_Shndx * shndx;
+  Elf_External_Sym_Shndx * shndx = NULL;
   Elf_Internal_Sym * isyms = NULL;
   Elf_Internal_Sym * psym;
   unsigned int j;
@@ -4063,7 +4065,7 @@ get_32bit_elf_symbols (FILE * file, Elf_Internal_Shdr * section)
   if (section->sh_entsize == 0)
     {
       error (_("sh_entsize is zero\n"));
-      return NULL;
+      goto exit_point;
     }
 
   number = section->sh_size / section->sh_entsize;
@@ -4071,13 +4073,13 @@ get_32bit_elf_symbols (FILE * file, Elf_Internal_Shdr * section)
   if (number * sizeof (Elf32_External_Sym) > section->sh_size + 1)
     {
       error (_("Invalid sh_entsize\n"));
-      return NULL;
+      goto exit_point;
     }
 
   esyms = (Elf32_External_Sym *) get_data (NULL, file, section->sh_offset, 1,
                                            section->sh_size, _("symbols"));
   if (esyms == NULL)
-    return NULL;
+    goto exit_point;
 
   shndx = NULL;
   if (symtab_shndx_hdr != NULL
@@ -4087,7 +4089,7 @@ get_32bit_elf_symbols (FILE * file, Elf_Internal_Shdr * section)
       shndx = (Elf_External_Sym_Shndx *) get_data (NULL, file,
                                                    symtab_shndx_hdr->sh_offset,
                                                    1, symtab_shndx_hdr->sh_size,
-                                                   _("symtab shndx"));
+                                                   _("symbol table section indicies"));
       if (shndx == NULL)
 	goto exit_point;
     }
@@ -4116,21 +4118,26 @@ get_32bit_elf_symbols (FILE * file, Elf_Internal_Shdr * section)
     }
 
  exit_point:
-  if (shndx)
+  if (shndx != NULL)
     free (shndx);
-  if (esyms)
+  if (esyms != NULL)
     free (esyms);
+
+  if (num_syms_return != NULL)
+    * num_syms_return = isyms == NULL ? 0 : number;
 
   return isyms;
 }
 
 static Elf_Internal_Sym *
-get_64bit_elf_symbols (FILE * file, Elf_Internal_Shdr * section)
+get_64bit_elf_symbols (FILE * file,
+		       Elf_Internal_Shdr * section,
+		       unsigned long * num_syms_return)
 {
-  unsigned long number;
-  Elf64_External_Sym * esyms;
-  Elf_External_Sym_Shndx * shndx;
-  Elf_Internal_Sym * isyms;
+  unsigned long number = 0;
+  Elf64_External_Sym * esyms = NULL;
+  Elf_External_Sym_Shndx * shndx = NULL;
+  Elf_Internal_Sym * isyms = NULL;
   Elf_Internal_Sym * psym;
   unsigned int j;
 
@@ -4138,7 +4145,7 @@ get_64bit_elf_symbols (FILE * file, Elf_Internal_Shdr * section)
   if (section->sh_entsize == 0)
     {
       error (_("sh_entsize is zero\n"));
-      return NULL;
+      goto exit_point;
     }
 
   number = section->sh_size / section->sh_entsize;
@@ -4146,15 +4153,14 @@ get_64bit_elf_symbols (FILE * file, Elf_Internal_Shdr * section)
   if (number * sizeof (Elf64_External_Sym) > section->sh_size + 1)
     {
       error (_("Invalid sh_entsize\n"));
-      return NULL;
+      goto exit_point;
     }
 
   esyms = (Elf64_External_Sym *) get_data (NULL, file, section->sh_offset, 1,
                                            section->sh_size, _("symbols"));
   if (!esyms)
-    return NULL;
+    goto exit_point;
 
-  shndx = NULL;
   if (symtab_shndx_hdr != NULL
       && (symtab_shndx_hdr->sh_link
 	  == (unsigned long) (section - section_headers)))
@@ -4162,12 +4168,9 @@ get_64bit_elf_symbols (FILE * file, Elf_Internal_Shdr * section)
       shndx = (Elf_External_Sym_Shndx *) get_data (NULL, file,
                                                    symtab_shndx_hdr->sh_offset,
                                                    1, symtab_shndx_hdr->sh_size,
-                                                   _("symtab shndx"));
-      if (!shndx)
-	{
-	  free (esyms);
-	  return NULL;
-	}
+                                                   _("symbol table section indicies"));
+      if (shndx == NULL)
+	goto exit_point;
     }
 
   isyms = (Elf_Internal_Sym *) cmalloc (number, sizeof (Elf_Internal_Sym));
@@ -4175,32 +4178,34 @@ get_64bit_elf_symbols (FILE * file, Elf_Internal_Shdr * section)
   if (isyms == NULL)
     {
       error (_("Out of memory\n"));
-      if (shndx)
-	free (shndx);
-      free (esyms);
-      return NULL;
+      goto exit_point;
     }
 
-  for (j = 0, psym = isyms;
-       j < number;
-       j++, psym++)
+  for (j = 0, psym = isyms; j < number; j++, psym++)
     {
       psym->st_name  = BYTE_GET (esyms[j].st_name);
       psym->st_info  = BYTE_GET (esyms[j].st_info);
       psym->st_other = BYTE_GET (esyms[j].st_other);
       psym->st_shndx = BYTE_GET (esyms[j].st_shndx);
+
       if (psym->st_shndx == (SHN_XINDEX & 0xffff) && shndx != NULL)
 	psym->st_shndx
 	  = byte_get ((unsigned char *) &shndx[j], sizeof (shndx[j]));
       else if (psym->st_shndx >= (SHN_LORESERVE & 0xffff))
 	psym->st_shndx += SHN_LORESERVE - (SHN_LORESERVE & 0xffff);
+
       psym->st_value = BYTE_GET (esyms[j].st_value);
       psym->st_size  = BYTE_GET (esyms[j].st_size);
     }
 
-  if (shndx)
+ exit_point:
+  if (shndx != NULL)
     free (shndx);
-  free (esyms);
+  if (esyms != NULL)
+    free (esyms);
+
+  if (num_syms_return != NULL)
+    * num_syms_return = isyms == NULL ? 0 : number;
 
   return isyms;
 }
@@ -4568,8 +4573,7 @@ process_section_headers (FILE * file)
 	    }
 
 	  CHECK_ENTSIZE (section, i, Sym);
-	  num_dynamic_syms = section->sh_size / section->sh_entsize;
-	  dynamic_symbols = GET_ELF_SYMBOLS (file, section);
+	  dynamic_symbols = GET_ELF_SYMBOLS (file, section, & num_dynamic_syms);
 	}
       else if (section->sh_type == SHT_STRTAB
 	       && streq (name, ".dynstr"))
@@ -4924,6 +4928,7 @@ process_section_groups (FILE * file)
   Elf_Internal_Shdr * symtab_sec;
   Elf_Internal_Shdr * strtab_sec;
   Elf_Internal_Sym * symtab;
+  unsigned long num_syms;
   char * strtab;
   size_t strtab_size;
 
@@ -4981,6 +4986,7 @@ process_section_groups (FILE * file)
   symtab_sec = NULL;
   strtab_sec = NULL;
   symtab = NULL;
+  num_syms = 0;
   strtab = NULL;
   strtab_size = 0;
   for (i = 0, section = section_headers, group = section_groups;
@@ -5011,12 +5017,18 @@ process_section_groups (FILE * file)
 	      symtab_sec = sec;
 	      if (symtab)
 		free (symtab);
-	      symtab = GET_ELF_SYMBOLS (file, symtab_sec);
+	      symtab = GET_ELF_SYMBOLS (file, symtab_sec, & num_syms);
 	    }
 
 	  if (symtab == NULL)
 	    {
 	      error (_("Corrupt header in group section `%s'\n"), name);
+	      continue;
+	    }
+
+	  if (section->sh_info >= num_syms)
+	    {
+	      error (_("Bad sh_info in group section `%s'\n"), name);
 	      continue;
 	    }
 
@@ -5230,7 +5242,7 @@ dump_ia64_vms_dynamic_relocs (FILE *file, struct ia64_vms_dynimgrela *imgrela)
 
   imrs = get_data (NULL, file, dynamic_addr + imgrela->img_rela_off,
 		   1, imgrela->img_rela_cnt * sizeof (*imrs),
-		   _("dynamic section image relas"));
+		   _("dynamic section image relocations"));
   if (!imrs)
     return;
 
@@ -5436,7 +5448,7 @@ process_relocs (FILE * file)
 	      if (string_table == NULL)
 		printf ("%d", section->sh_name);
 	      else
-		printf (_("'%s'"), SECTION_NAME (section));
+		printf ("'%s'", SECTION_NAME (section));
 
 	      printf (_(" at offset 0x%lx contains %lu entries:\n"),
 		 rel_offset, (unsigned long) (rel_size / section->sh_entsize));
@@ -5457,8 +5469,7 @@ process_relocs (FILE * file)
 		      && symsec->sh_type != SHT_DYNSYM)
                     continue;
 
-		  nsyms = symsec->sh_size / symsec->sh_entsize;
-		  symtab = GET_ELF_SYMBOLS (file, symsec);
+		  symtab = GET_ELF_SYMBOLS (file, symsec, & nsyms);
 
 		  if (symtab == NULL)
 		    continue;
@@ -5770,8 +5781,7 @@ ia64_process_unwind (FILE * file)
       if (sec->sh_type == SHT_SYMTAB
 	  && sec->sh_link < elf_header.e_shnum)
 	{
-	  aux.nsyms = sec->sh_size / sec->sh_entsize;
-	  aux.symtab = GET_ELF_SYMBOLS (file, sec);
+	  aux.symtab = GET_ELF_SYMBOLS (file, sec, & aux.nsyms);
 
 	  strsec = section_headers + sec->sh_link;
 	  assert (aux.strtab == NULL);
@@ -6184,8 +6194,7 @@ hppa_process_unwind (FILE * file)
       if (sec->sh_type == SHT_SYMTAB
 	  && sec->sh_link < elf_header.e_shnum)
 	{
-	  aux.nsyms = sec->sh_size / sec->sh_entsize;
-	  aux.symtab = GET_ELF_SYMBOLS (file, sec);
+	  aux.symtab = GET_ELF_SYMBOLS (file, sec, & aux.nsyms);
 
 	  strsec = section_headers + sec->sh_link;
 	  assert (aux.strtab == NULL);
@@ -6704,12 +6713,12 @@ decode_tic6x_unwind_bytecode (struct arm_unw_aux_info *aux,
       op = word >> 24;
       word <<= 8;
 
-      printf (_("  0x%02x "), op);
+      printf ("  0x%02x ", op);
 
       if ((op & 0xc0) == 0x00)
 	{
 	  int offset = ((op & 0x3f) << 3) + 8;
-	  printf (_("     sp = sp + %d"), offset);
+	  printf ("     sp = sp + %d", offset);
 	}
       else if ((op & 0xc0) == 0x80)
 	{
@@ -7069,8 +7078,7 @@ arm_process_unwind (FILE *file)
     {
       if (sec->sh_type == SHT_SYMTAB && sec->sh_link < elf_header.e_shnum)
 	{
-	  aux.nsyms = sec->sh_size / sec->sh_entsize;
-	  aux.symtab = GET_ELF_SYMBOLS (file, sec);
+	  aux.symtab = GET_ELF_SYMBOLS (file, sec, & aux.nsyms);
 
 	  strsec = section_headers + sec->sh_link;
 	  assert (aux.strtab == NULL);
@@ -7531,14 +7539,12 @@ process_dynamic_section (FILE * file)
 	  else
 	    section.sh_entsize = sizeof (Elf64_External_Sym);
 
-	  num_dynamic_syms = section.sh_size / section.sh_entsize;
+	  dynamic_symbols = GET_ELF_SYMBOLS (file, &section, & num_dynamic_syms);
 	  if (num_dynamic_syms < 1)
 	    {
 	      error (_("Unable to determine the number of symbols to load\n"));
 	      continue;
 	    }
-
-	  dynamic_symbols = GET_ELF_SYMBOLS (file, &section);
 	}
     }
 
@@ -8239,7 +8245,7 @@ process_version_sections (FILE * file)
 	    eneed = (Elf_External_Verneed *) get_data (NULL, file,
                                                        section->sh_offset, 1,
                                                        section->sh_size,
-                                                       _("version need section"));
+                                                       _("Version Needs section"));
 	    if (!eneed)
 	      break;
 	    endbuf = (char *) eneed + section->sh_size;
@@ -8316,13 +8322,15 @@ process_version_sections (FILE * file)
 		    isum   += aux.vna_next;
 		    vstart += aux.vna_next;
 		  }
+
 		if (j < ent.vn_cnt)
-		  printf (_("  Version need aux past end of section\n"));
+		  warn (_("Missing Version Needs auxillary information\n"));
 
 		idx += ent.vn_next;
 	      }
+
 	    if (cnt < section->sh_info)
-	      printf (_("  Version need past end of section\n"));
+	      warn (_("Missing Version Needs information\n"));
 
 	    free (eneed);
 	  }
@@ -8338,6 +8346,7 @@ process_version_sections (FILE * file)
 	    char * strtab;
 	    Elf_Internal_Sym * symbols;
 	    Elf_Internal_Shdr * string_sec;
+	    unsigned long num_syms;
 	    long off;
 
 	    if (section->sh_link >= elf_header.e_shnum)
@@ -8351,7 +8360,7 @@ process_version_sections (FILE * file)
 
 	    found = 1;
 
-	    symbols = GET_ELF_SYMBOLS (file, link_section);
+	    symbols = GET_ELF_SYMBOLS (file, link_section, & num_syms);
 	    if (symbols == NULL)
 	      break;
 
@@ -8420,10 +8429,8 @@ process_version_sections (FILE * file)
 				   data[cnt + j] & VERSYM_HIDDEN ? 'h' : ' ');
 
 		      /* If this index value is greater than the size of the symbols
-		         array, break to avoid an out-of-bounds read,  */
-		      if ((unsigned long)(cnt + j) >=
-		         ((unsigned long)link_section->sh_size /
-			  (unsigned long)link_section->sh_entsize))
+		         array, break to avoid an out-of-bounds read.  */
+		      if ((unsigned long)(cnt + j) >= num_syms)
 		        {
 		          warn (_("invalid index into symbol array\n"));
 		          break;
@@ -9155,6 +9162,7 @@ process_symbol_table (FILE * file)
 	  unsigned long int strtab_size = 0;
 	  Elf_Internal_Sym * symtab;
 	  Elf_Internal_Sym * psym;
+	  unsigned long num_syms;
 
 	  if ((section->sh_type != SHT_SYMTAB
 	       && section->sh_type != SHT_DYNSYM)
@@ -9178,7 +9186,7 @@ process_symbol_table (FILE * file)
 	  else
 	    printf (_("   Num:    Value          Size Type    Bind   Vis      Ndx Name\n"));
 
-	  symtab = GET_ELF_SYMBOLS (file, section);
+	  symtab = GET_ELF_SYMBOLS (file, section, & num_syms);
 	  if (symtab == NULL)
 	    continue;
 
@@ -9199,9 +9207,7 @@ process_symbol_table (FILE * file)
 	      strtab_size = strtab != NULL ? string_sec->sh_size : 0;
 	    }
 
-	  for (si = 0, psym = symtab;
-	       si < section->sh_size / section->sh_entsize;
-	       si++, psym++)
+	  for (si = 0, psym = symtab; si < num_syms; si++, psym++)
 	    {
 	      printf ("%6d: ", si);
 	      print_vma (psym->st_value, LONG_HEX);
@@ -10057,6 +10063,7 @@ apply_relocations (void * file,
       Elf_Internal_Rela * rp;
       Elf_Internal_Shdr * symsec;
       Elf_Internal_Sym * symtab;
+      unsigned long num_syms;
       Elf_Internal_Sym * sym;
 
       if ((relsec->sh_type != SHT_RELA && relsec->sh_type != SHT_REL)
@@ -10086,7 +10093,7 @@ apply_relocations (void * file,
 	is_rela = FALSE;
 
       symsec = section_headers + relsec->sh_link;
-      symtab = GET_ELF_SYMBOLS ((FILE *) file, symsec);
+      symtab = GET_ELF_SYMBOLS ((FILE *) file, symsec, & num_syms);
 
       for (rp = relocs; rp < relocs + num_relocs; ++rp)
 	{
@@ -10094,6 +10101,7 @@ apply_relocations (void * file,
 	  unsigned int    reloc_type;
 	  unsigned int    reloc_size;
 	  unsigned char * rloc;
+	  unsigned long   sym_index;
 
 	  reloc_type = get_reloc_type (rp->r_info);
 
@@ -10127,7 +10135,14 @@ apply_relocations (void * file,
 	      continue;
 	    }
 
-	  sym = symtab + get_reloc_symindex (rp->r_info);
+	  sym_index = (unsigned long) get_reloc_symindex (rp->r_info);
+	  if (sym_index >= num_syms)
+	    {
+	      warn (_("skipping invalid relocation symbol index 0x%lx in section %s\n"),
+		    sym_index, SECTION_NAME (section));
+	      continue;
+	    }
+	  sym = symtab + sym_index;
 
 	  /* If the reloc has a symbol associated with it,
 	     make sure that it is of an appropriate type.
@@ -11778,7 +11793,7 @@ process_mips_specific (FILE * file)
       elib = (Elf32_External_Lib *) get_data (NULL, file, liblist_offset,
                                               liblistno,
                                               sizeof (Elf32_External_Lib),
-                                              _("liblist"));
+                                              _("liblist section data"));
       if (elib)
 	{
 	  printf (_("\nSection '.liblist' contains %lu entries:\n"),
@@ -12134,7 +12149,8 @@ process_mips_specific (FILE * file)
 
       offset = offset_from_vma (file, pltgot, global_end - pltgot);
       data = (unsigned char *) get_data (NULL, file, offset,
-                                         global_end - pltgot, 1, _("GOT"));
+                                         global_end - pltgot, 1,
+					 _("Global Offset Table data"));
       if (data == NULL)
 	return 0;
 
@@ -12178,9 +12194,14 @@ process_mips_specific (FILE * file)
 
 	  printf (_(" Global entries:\n"));
 	  printf ("  %*s %10s %*s %*s %-7s %3s %s\n",
-		  addr_size * 2, _("Address"), _("Access"),
+		  addr_size * 2, _("Address"),
+		  _("Access"),
 		  addr_size * 2, _("Initial"),
-		  addr_size * 2, _("Sym.Val."), _("Type"), _("Ndx"), _("Name"));
+		  addr_size * 2, _("Sym.Val."),
+		  _("Type"),
+		  /* Note for translators: "Ndx" = abbreviated form of "Index".  */
+		  _("Ndx"), _("Name"));
+	  
 	  sym_width = (is_32bit_elf ? 80 : 160) - 28 - addr_size * 6 - 1;
 	  for (i = gotsym; i < symtabno; i++)
 	    {
@@ -12233,11 +12254,11 @@ process_mips_specific (FILE * file)
 
       offset = offset_from_vma (file, mips_pltgot, end - mips_pltgot);
       data = (unsigned char *) get_data (NULL, file, offset, end - mips_pltgot,
-                                         1, _("PLT GOT"));
+                                         1, _("Procedure Linkage Table data"));
       if (data == NULL)
 	return 0;
 
-      printf (_("\nPLT GOT:\n\n"));
+      printf ("\nPLT GOT:\n\n");
       printf (_(" Reserved entries:\n"));
       printf (_("  %*s %*s Purpose\n"),
 	      addr_size * 2, _("Address"), addr_size * 2, _("Initial"));
@@ -12306,7 +12327,7 @@ process_gnu_liblist (FILE * file)
 
 	  elib = (Elf32_External_Lib *)
               get_data (NULL, file, section->sh_offset, 1, section->sh_size,
-                        _("liblist"));
+                        _("liblist section data"));
 
 	  if (elib == NULL)
 	    break;
@@ -12474,7 +12495,7 @@ print_gnu_note (Elf_Internal_Note *pnote)
 	printf (_("    Build ID: "));
 	for (i = 0; i < pnote->descsz; ++i)
 	  printf ("%02x", pnote->descdata[i] & 0xff);
-	printf (_("\n"));
+	printf ("\n");
       }
       break;
 
@@ -12576,7 +12597,7 @@ get_netbsd_elfcore_note_type (unsigned e_type)
 	}
     }
 
-  snprintf (buff, sizeof (buff), _("PT_FIRSTMACH+%d"),
+  snprintf (buff, sizeof (buff), "PT_FIRSTMACH+%d",
 	    e_type - NT_NETBSDCORE_FIRSTMACH);
   return buff;
 }
@@ -12630,7 +12651,7 @@ print_stapsdt_note (Elf_Internal_Note *pnote)
   print_vma (base_addr, FULL_HEX);
   printf (_(", Semaphore: "));
   print_vma (semaphore, FULL_HEX);
-  printf (_("\n"));
+  printf ("\n");
   printf (_("    Arguments: %s\n"), arg_fmt);
 
   return data == data_end;
@@ -12650,13 +12671,13 @@ get_ia64_vms_note_type (unsigned e_type)
     case NT_VMS_SRC:
       return _("NT_VMS_SRC (source files)");
     case NT_VMS_TITLE:
-      return _("NT_VMS_TITLE");
+      return "NT_VMS_TITLE";
     case NT_VMS_EIDC:
       return _("NT_VMS_EIDC (consistency check)");
     case NT_VMS_FPMODE:
       return _("NT_VMS_FPMODE (FP mode)");
     case NT_VMS_LINKTIME:
-      return _("NT_VMS_LINKTIME");
+      return "NT_VMS_LINKTIME";
     case NT_VMS_IMGNAM:
       return _("NT_VMS_IMGNAM (image name)");
     case NT_VMS_IMGID:
@@ -12668,9 +12689,9 @@ get_ia64_vms_note_type (unsigned e_type)
     case NT_VMS_GSTNAM:
       return _("NT_VMS_GSTNAM (sym table name)");
     case NT_VMS_ORIG_DYN:
-      return _("NT_VMS_ORIG_DYN");
+      return "NT_VMS_ORIG_DYN";
     case NT_VMS_PATCHTIME:
-      return _("NT_VMS_PATCHTIME");
+      return "NT_VMS_PATCHTIME";
     default:
       snprintf (buff, sizeof (buff), _("Unknown note type: (0x%08x)"), e_type);
       return buff;
@@ -12699,7 +12720,7 @@ print_ia64_vms_note (Elf_Internal_Note * pnote)
       break;
 #ifdef BFD64
     case NT_VMS_FPMODE:
-      printf (_("   FP mode: "));
+      printf (_("   Floating Point mode: "));
       printf ("0x%016" BFD_VMA_FMT "x\n",
               (bfd_vma)byte_get ((unsigned char *)pnote->descdata, 8));
       break;
@@ -12719,11 +12740,10 @@ print_ia64_vms_note (Elf_Internal_Note * pnote)
       printf (_("   Major id: %u,  minor id: %u\n"),
               (unsigned) byte_get ((unsigned char *)pnote->descdata, 4),
               (unsigned) byte_get ((unsigned char *)pnote->descdata + 4, 4));
-      printf (_("   Manip date  : "));
+      printf (_("   Last modified  : "));
       print_vms_time
         ((bfd_int64_t) byte_get ((unsigned char *)pnote->descdata + 8, 8));
-      printf (_("\n"
-                "   Link flags  : "));
+      printf (_("\n   Link flags  : "));
       printf ("0x%016" BFD_VMA_FMT "x\n",
               (bfd_vma)byte_get ((unsigned char *)pnote->descdata + 16, 8));
       printf (_("   Header flags: 0x%08x\n"),
