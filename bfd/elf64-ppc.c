@@ -3527,8 +3527,8 @@ must_be_dyn_reloc (struct bfd_link_info *info,
 #define ELIMINATE_COPY_RELOCS 1
 
 /* Section name for stubs is the associated section name plus this
-   string.  */
-#define STUB_SUFFIX ".stub"
+   string.  PR 13049: Use a name that is not a valid C identifier.  */
+#define STUB_SUFFIX ".__stub"
 
 /* Linker stubs.
    ppc_stub_long_branch:
@@ -5717,7 +5717,10 @@ ppc64_elf_gc_mark_dynamic_ref (struct elf_link_hash_entry *h, void *inf)
 	  || (!info->executable
 	      && eh->elf.def_regular
 	      && ELF_ST_VISIBILITY (eh->elf.other) != STV_INTERNAL
-	      && ELF_ST_VISIBILITY (eh->elf.other) != STV_HIDDEN)))
+	      && ELF_ST_VISIBILITY (eh->elf.other) != STV_HIDDEN
+	      && (strchr (eh->elf.root.root.string, ELF_VER_CHR) != NULL
+		  || !bfd_hide_sym_by_version (info->version_info,
+					       eh->elf.root.root.string)))))
     {
       asection *code_sec;
       struct ppc_link_hash_entry *fh;
@@ -13456,7 +13459,9 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 	 not process them.  */
       if (unresolved_reloc
 	  && !((input_section->flags & SEC_DEBUGGING) != 0
-	       && h->elf.def_dynamic))
+	       && h->elf.def_dynamic)
+	  && _bfd_elf_section_offset (output_bfd, info, input_section,
+				      rel->r_offset) != (bfd_vma) -1)
 	{
 	  info->callbacks->einfo
 	    (_("%P: %H: unresolvable %s relocation against symbol `%s'\n"),

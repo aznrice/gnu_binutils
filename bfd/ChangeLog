@@ -1,3 +1,74 @@
+2011-10-20  Nick Clifton  <nickc@redhat.com>
+
+	PR ld/13049
+	* elf32-arm.c (STUB_SUFFIX): Avoid collision with user namespace
+	symbol names.
+	* elf64-ppc.c (STUB_SUFFIX): Likewise.
+	* elf32-hppa.c (STUB_SUFFIX): Likewise.
+
+2011-10-20  Alan Modra  <amodra@gmail.com>
+
+	* elf32-i386.c (i386_opcode16): Delete.
+	(elf_i386_check_tls_transition): Use memcmp to compare contents.
+	* elf64-x86-64.c (x86_64_opcode16, x86_64_opcode32): Delete.
+	(elf_x86_64_check_tls_transition): Use memcmp to compare contents.
+
+2011-10-19  Alan Modra  <amodra@gmail.com>
+
+	PR ld/13177
+	* elflink.c (_bfd_elf_gc_mark_rsec): Set symbol "mark".
+	(elf_gc_sweep_symbol): Don't test plt/got refcounts, instead test
+	"mark".  Hide undefweak too.  Clear def_regular and ref_regular.
+	* elf-m10300.c (mn10300_elf_relocate_section): Ignore unresolved
+	reloc errors from garbage-collected code.
+	* elf32-arm.c (elf32_arm_relocate_section): Likewise.
+	* elf32-bfin.c (bfin_relocate_section): Likewise.
+	(bfinfdpic_relocate_section): Likewise.
+	* elf32-cris.c (cris_elf_relocate_section): Likewise.
+	* elf32-frv.c (elf32_frv_relocate_section): Likewise.
+	* elf32-i386.c (elf_i386_relocate_section): Likewise.
+	* elf32-m32r.c (m32r_elf_relocate_section): Likewise.
+	* elf32-m68k.c (elf_m68k_relocate_section): Likewise.
+	* elf32-ppc.c (ppc_elf_relocate_section): Likewise.
+	* elf32-s390.c (elf_s390_relocate_section): Likewise.
+	* elf32-sh.c (sh_elf_relocate_section): Likewise.
+	* elf32-spu.c (spu_elf_relocate_section): Likewise.
+	* elf32-tilepro.c (tilepro_elf_relocate_section): Likewise.
+	* elf32-xtensa.c (elf_xtensa_relocate_section): Likewise.
+	* elf64-alpha.c (elf64_alpha_relocate_section): Likewise.
+	* elf64-ppc.c (ppc64_elf_relocate_section): Likewise.
+	* elf64-s390.c (elf_s390_relocate_section): Likewise.
+	* elf64-sh64.c (sh_elf64_relocate_section): Likewise.
+	* elf64-x86-64.c (elf_x86_64_relocate_section): Likewise.
+	* elfxx-sparc.c (_bfd_sparc_elf_relocate_section): Likewise.
+	* elfxx-tilegx.c (tilegx_elf_relocate_section): Likewise.
+
+2011-10-19  Alan Modra  <amodra@gmail.com>
+
+	PR ld/13311
+	* elflink.c (elf_link_output_extsym): Correct test for warning when
+	forced local executable syms are referenced from shared libraries.
+
+2011-10-19  Alan Modra  <amodra@gmail.com>
+
+	PR ld/13254
+	* elflink.c (bfd_elf_final_link): Emit error_textrel error.
+
+2011-10-18  David S. Miller  <davem@davemloft.net>
+
+	PR binutils/13301
+	* elfxx-sparc.c (sparc_elf_find_reloc_at_ofs): New function.
+	(_bfd_sparc_elf_relocate_section): Always move the __tls_get_addr
+	call delay slot instruction forward 4 bytes when performing
+	relaxation.
+
+2011-10-17  Alan Modra  <amodra@gmail.com>
+
+	PR ld/12975
+	PR ld/13195
+	* elf64-ppc.c (ppc64_elf_gc_mark_dynamic_ref): Apply 2011-09-15
+	and 2011-09-29 bfd_elf_gc_mark_dynamic_ref_symbol changes here too.
+
 2011-10-14  Hans-Peter Nilsson  <hp@axis.com>
 
 	* elf32-cris.c (cris_elf_gc_sweep_hook) <R_CRIS_16_GOTPLT>
