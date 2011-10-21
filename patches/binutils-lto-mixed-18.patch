@@ -214,6 +214,13 @@ ld/
 
 ld/testsuite/
 
+2011-10-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13287
+	* ld-plugin/lto.exp (lto_link_tests): Add a test for PR ld/13287.
+
+	* ld-plugin/pr13287.cc: New.
+
 2011-10-07  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/13229
@@ -572,7 +579,7 @@ index dc6a9bb..8e93c7f 100644
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 18aefdb..3d2bea3 100644
+index 4f55d9a..ae56fc5 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -5080,6 +5080,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
@@ -1046,10 +1053,10 @@ index 6b8b107..abcdea1 100644
 +	.section .gnu_object_only
 +	.byte 0,0,0,0
 diff --git a/include/bfdlink.h b/include/bfdlink.h
-index c9e127c..4995a75 100644
+index be85329..723dc96 100644
 --- a/include/bfdlink.h
 +++ b/include/bfdlink.h
-@@ -377,6 +377,12 @@ struct bfd_link_info
+@@ -380,6 +380,12 @@ struct bfd_link_info
    /* TRUE if ok to have multiple definition.  */
    unsigned int allow_multiple_definition: 1;
  
@@ -1116,7 +1123,7 @@ index d29da59..e5f931a 100644
 -LDEMUL_FINISH=gld${EMULATION_NAME}_finish
 +LDEMUL_FINISH=arm_finish
 diff --git a/ld/emultempl/elf32.em b/ld/emultempl/elf32.em
-index 7c8e55b..02bc6ae 100644
+index 78a708b..bedd231 100644
 --- a/ld/emultempl/elf32.em
 +++ b/ld/emultempl/elf32.em
 @@ -68,6 +68,7 @@ static void gld${EMULATION_NAME}_before_allocation (void);
@@ -1213,7 +1220,7 @@ index 7c8e55b..02bc6ae 100644
  if test x"$LDEMUL_AFTER_ALLOCATION" != xgld"$EMULATION_NAME"_after_allocation; then
  fragment <<EOF
  
-@@ -2485,7 +2516,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
+@@ -2491,7 +2522,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
    ${LDEMUL_GET_SCRIPT-gld${EMULATION_NAME}_get_script},
    "${EMULATION_NAME}",
    "${OUTPUT_FORMAT}",
@@ -1296,7 +1303,7 @@ index c4b8912..10e8e89 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index ae54155..ee09c63 100644
+index 2c56b56..66f3746 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -1387,7 +1394,7 @@ index ae54155..ee09c63 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6624,7 +6645,38 @@ lang_process (void)
+@@ -6625,7 +6646,38 @@ lang_process (void)
  	  open_input_bfds (statement_list.head, OPEN_BFD_RESCAN);
  	}
      }
@@ -1426,7 +1433,7 @@ index ae54155..ee09c63 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -8077,3 +8129,961 @@ lang_ld_feature (char *str)
+@@ -8078,3 +8130,961 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -2627,7 +2634,7 @@ index 20e0271..868a82f 100644
  	case 'q':
  	  link_info.emitrelocations = TRUE;
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 5f4aa8f..e38c9cd 100644
+index 91fe48b..6738d9a 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -39,6 +39,9 @@
@@ -2693,7 +2700,7 @@ index 5f4aa8f..e38c9cd 100644
  	}
        curplug = curplug->next;
 diff --git a/ld/plugin.h b/ld/plugin.h
-index ee29b7c..96b3264 100644
+index dc32295..e3e6ee3 100644
 --- a/ld/plugin.h
 +++ b/ld/plugin.h
 @@ -24,6 +24,9 @@
@@ -3656,10 +3663,10 @@ index 0000000..4b5bcf8
 +#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..586e295
+index 0000000..92932f3
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
-@@ -0,0 +1,339 @@
+@@ -0,0 +1,342 @@
 +# Expect script for ld-plugin LTO tests
 +#   Copyright 2011
 +#   Free Software Foundation, Inc.
@@ -3806,6 +3813,9 @@ index 0000000..586e295
 +  {"Build libdummy.a PR ld/13201"
 +   "" "-flto -O2"
 +   {pr13201.c} {} "libdummy.a"}
++  {"PR ld/13287"
++   "-flto -fuse-linker-plugin -Wl,--as-needed" "-flto"
++   {pr13287.cc} {} "pr13287.exe" "c++"}
 +}
 +
 +# Generate input files for complex LTO tests for ELF.
@@ -4605,6 +4615,13 @@ index 0000000..59bbe4d
 +#...
 +.*fooblah.*
 +#...
+diff --git a/ld/testsuite/ld-plugin/pr13287.cc b/ld/testsuite/ld-plugin/pr13287.cc
+new file mode 100644
+index 0000000..67e8506
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr13287.cc
+@@ -0,0 +1 @@
++int main() {return 0; }
 diff --git a/ld/testsuite/ld-plugin/run-ie.c b/ld/testsuite/ld-plugin/run-ie.c
 new file mode 100644
 index 0000000..32afa0a
@@ -4651,7 +4668,7 @@ index 0000000..7edca6d
 @@ -0,0 +1 @@
 +IE: 4
 diff --git a/ld/testsuite/lib/ld-lib.exp b/ld/testsuite/lib/ld-lib.exp
-index 3e77a5a..b509b50 100644
+index e764591..11a76e2 100644
 --- a/ld/testsuite/lib/ld-lib.exp
 +++ b/ld/testsuite/lib/ld-lib.exp
 @@ -889,7 +889,7 @@ proc set_file_contents { filename contents } {
@@ -4663,7 +4680,7 @@ index 3e77a5a..b509b50 100644
      set exec_output [prune_warnings $exec_output]
  
      if [string match "" $exec_output] then {
-@@ -1465,6 +1465,34 @@ proc check_plugin_api_available { } {
+@@ -1511,6 +1511,34 @@ proc check_plugin_api_available { } {
      return $plugin_api_available_saved
  }
  
