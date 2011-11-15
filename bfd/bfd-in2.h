@@ -1027,6 +1027,9 @@ struct bfd_section *bfd_create_gnu_debuglink_section
 bfd_boolean bfd_fill_in_gnu_debuglink_section
    (bfd *abfd, struct bfd_section *sect, const char *filename);
 
+const char *bfd_extract_object_only_section
+   (bfd *abfd);
+
 /* Extracted from libbfd.c.  */
 
 /* Byte swapping macros for user section data.  */
@@ -1554,6 +1557,9 @@ struct relax_table {
 #define BFD_UND_SECTION_NAME "*UND*"
 #define BFD_COM_SECTION_NAME "*COM*"
 #define BFD_IND_SECTION_NAME "*IND*"
+
+/* GNU object-only section name.  */
+#define GNU_OBJECT_ONLY_SECTION_NAME ".gnu_object_only"
 
 /* The absolute section.  */
 extern asection bfd_abs_section;
@@ -5289,6 +5295,14 @@ enum bfd_direction
     both_direction = 3
   };
 
+enum bfd_lto_object_type
+  {
+    lto_non_object,
+    lto_non_ir_object,
+    lto_ir_object,
+    lto_mixed_object
+  };
+
 struct bfd
 {
   /* A unique identifier of the BFD  */
@@ -5436,6 +5450,9 @@ struct bfd
   /* The last section on the section list.  */
   struct bfd_section *section_last;
 
+  /* The object-only section on the section list.  */
+  struct bfd_section *object_only_section;
+
   /* The number of sections.  */
   unsigned int section_count;
 
@@ -5554,6 +5571,9 @@ struct bfd
   /* Set if only required symbols should be added in the link hash table for
      this object.  Used by VMS linkers.  */
   unsigned int selective_search : 1;
+
+  /* LTO object type.  */
+  unsigned int lto_type : 2;
 };
 
 typedef enum bfd_error
@@ -5760,6 +5780,8 @@ bfd_vma bfd_emul_get_commonpagesize (const char *);
 void bfd_emul_set_commonpagesize (const char *, bfd_vma);
 
 char *bfd_demangle (bfd *, const char *, int);
+
+asymbol *bfd_group_signature (asection *group, asymbol **isympp);
 
 /* Extracted from archive.c.  */
 symindex bfd_get_next_mapent

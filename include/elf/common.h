@@ -434,6 +434,7 @@
 #define PT_SUNW_EH_FRAME PT_GNU_EH_FRAME      /* Solaris uses the same value */
 #define PT_GNU_STACK	(PT_LOOS + 0x474e551) /* Stack flags */
 #define PT_GNU_RELRO	(PT_LOOS + 0x474e552) /* Read-only after relocation */
+#define PT_GNU_SHR	(PT_LOOS + 0x474e554) /* Sharable segment */
 
 /* Program segment permissions, in program header p_flags field.  */
 
@@ -472,6 +473,7 @@
 #define SHT_GNU_ATTRIBUTES 0x6ffffff5	/* Object attributes */
 #define SHT_GNU_HASH	0x6ffffff6	/* GNU style symbol hash table */
 #define SHT_GNU_LIBLIST	0x6ffffff7	/* List of prelink dependencies */
+#define SHT_GNU_OBJECT_ONLY 0x6ffffff8	/* Object only */
 
 /* The next three section types are defined by Solaris, and are named
    SHT_SUNW*.  We use them in GNU code, so we also define SHT_GNU*
@@ -515,6 +517,8 @@
 					   builds when those objects
 					   are not to be further
 					   relocated.  */
+
+#define SHF_GNU_SHARABLE 0x01000000	/* sharable section */
 
 /* Values of note segment descriptor types for core files.  */
 
@@ -665,6 +669,9 @@
 #define STT_HIOS	12		/* OS-specific semantics */
 #define STT_LOPROC	13		/* Processor-specific semantics */
 #define STT_HIPROC	15		/* Processor-specific semantics */
+
+/* Associated symbol is in common sharable */
+#define SHN_GNU_SHARABLE_COMMON (SHN_LOOS + 10)
 
 /* The following constants control how a symbol may be accessed once it has
    become part of an executable or shared library.  */

@@ -1336,6 +1336,8 @@ dump_relocations (FILE * file,
 			sec_name = "ABS";
 		      else if (psym->st_shndx == SHN_COMMON)
 			sec_name = "COMMON";
+		      else if (psym->st_shndx == SHN_GNU_SHARABLE_COMMON)
+			sec_name = "GNU_SHARABLE_COMMON";
 		      else if ((elf_header.e_machine == EM_MIPS
 				&& psym->st_shndx == SHN_MIPS_SCOMMON)
 			       || (elf_header.e_machine == EM_TI_C6000
@@ -2800,6 +2802,7 @@ get_segment_type (unsigned long p_type)
     case PT_SHLIB:	return "SHLIB";
     case PT_PHDR:	return "PHDR";
     case PT_TLS:	return "TLS";
+    case PT_GNU_SHR:	return "GNU_SHR";
 
     case PT_GNU_EH_FRAME:
 			return "GNU_EH_FRAME";
@@ -3049,6 +3052,7 @@ get_section_type_name (unsigned int sh_type)
     case 0x7ffffffd:		return "AUXILIARY";
     case 0x7fffffff:		return "FILTER";
     case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
+    case SHT_GNU_OBJECT_ONLY:	return "GNU_OBJECT_ONLY";
 
     default:
       if ((sh_type >= SHT_LOPROC) && (sh_type <= SHT_HIPROC))
@@ -8825,6 +8829,8 @@ get_symbol_index_type (unsigned int type)
     case SHN_UNDEF:	return "UND";
     case SHN_ABS:	return "ABS";
     case SHN_COMMON:	return "COM";
+    case SHN_GNU_SHARABLE_COMMON:
+			return "GNU_SHARABLE_COM";
     default:
       if (type == SHN_IA_64_ANSI_COMMON
 	  && elf_header.e_machine == EM_IA_64
@@ -9171,7 +9177,7 @@ process_symbol_table (FILE * file)
 	   i < elf_header.e_shnum;
 	   i++, section++)
 	{
-	  unsigned int si;
+	  unsigned int si, start_global;
 	  char * strtab = NULL;
 	  unsigned long int strtab_size = 0;
 	  Elf_Internal_Sym * symtab;
@@ -9204,6 +9210,7 @@ process_symbol_table (FILE * file)
 	  if (symtab == NULL)
 	    continue;
 
+	  start_global = section->sh_info;
 	  if (section->sh_link == elf_header.e_shstrndx)
 	    {
 	      strtab = string_table;
@@ -9228,7 +9235,11 @@ process_symbol_table (FILE * file)
 	      putchar (' ');
 	      print_vma (psym->st_size, DEC_5);
 	      printf (" %-7s", get_symbol_type (ELF_ST_TYPE (psym->st_info)));
-	      printf (" %-6s", get_symbol_binding (ELF_ST_BIND (psym->st_info)));
+	      if (si < start_global
+		  && ELF_ST_BIND (psym->st_info) != STB_LOCAL)
+		printf (" %-6s", "<corrupt>");
+	      else
+		printf (" %-6s", get_symbol_binding (ELF_ST_BIND (psym->st_info)));
 	      printf (" %-7s", get_symbol_visibility (ELF_ST_VISIBILITY (psym->st_other)));
 	      /* Check to see if any other bits in the st_other field are set.
 	         Note - displaying this information disrupts the layout of the

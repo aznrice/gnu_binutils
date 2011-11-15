@@ -633,8 +633,14 @@ elf_object_p (bfd *abfd)
       if (i_ehdrp->e_shnum == SHN_UNDEF)
 	{
 	  i_ehdrp->e_shnum = i_shdr.sh_size;
-	  if (i_ehdrp->e_shnum != i_shdr.sh_size
-	      || i_ehdrp->e_shnum == 0)
+	  if (i_ehdrp->e_shnum >= SHN_LORESERVE)
+	    {
+	      _bfd_error_handler (_("%B: too many sections: %u"),
+				  abfd, i_ehdrp->e_shnum);
+	      abort ();
+	    }
+	  else if (i_ehdrp->e_shnum != i_shdr.sh_size
+		   || i_ehdrp->e_shnum  == 0)
 	    goto got_wrong_format_error;
 	}
 
@@ -1158,6 +1164,9 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bfd_boolean dynamic)
     sym = symbase = NULL;
   else
     {
+      /* Start of global symbols */
+      Elf_Internal_Sym *start_global;
+
       isymbuf = bfd_elf_get_elf_syms (abfd, hdr, symcount, 0,
 				      NULL, NULL, NULL);
       if (isymbuf == NULL)
@@ -1202,6 +1211,9 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bfd_boolean dynamic)
       if (xver != NULL)
 	++xver;
       isymend = isymbuf + symcount;
+      start_global = isymbuf;
+      if (!elf_bad_symtab (abfd))
+	start_global += hdr->sh_info;
       for (isym = isymbuf + 1, sym = symbase; isym < isymend; isym++, sym++)
 	{
 	  memcpy (&sym->internal_elf_sym, isym, sizeof (Elf_Internal_Sym));
@@ -1259,6 +1271,18 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bfd_boolean dynamic)
 	     already section relative.  */
 	  if ((abfd->flags & (EXEC_P | DYNAMIC)) != 0)
 	    sym->symbol.value -= sym->symbol.section->vma;
+
+	  if (isym < start_global
+	      && ELF_ST_BIND (isym->st_info) != STB_LOCAL)
+	    {
+	      (*_bfd_error_handler)
+		(_("%s: corrupted local symbol `%s'"),
+		 abfd->filename, sym->symbol.name);
+
+	      /* Force it to local symbol.  */
+	      isym->st_info = ELF_ST_INFO (STB_LOCAL,
+					   ELF_ST_TYPE (isym->st_info));
+	    }
 
 	  switch (ELF_ST_BIND (isym->st_info))
 	    {

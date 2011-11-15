@@ -68,6 +68,7 @@ static void gld${EMULATION_NAME}_before_allocation (void);
 static void gld${EMULATION_NAME}_after_allocation (void);
 static lang_output_section_statement_type *gld${EMULATION_NAME}_place_orphan
   (asection *, const char *, int);
+static void gld${EMULATION_NAME}_finish (void);
 EOF
 
 if [ "x${USE_LIBPATH}" = xyes ] ; then
@@ -104,6 +105,7 @@ gld${EMULATION_NAME}_before_parse (void)
   ldfile_set_output_arch ("${OUTPUT_ARCH}", bfd_arch_`echo ${ARCH} | sed -e 's/:.*//'`);
   config.dynamic_link = ${DYNAMIC_LINK-TRUE};
   config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo TRUE ; else echo FALSE ; fi`;
+  link_info.sharable_sections = `if test "$SHARABLE_SECTIONS" = "yes" ; then echo TRUE ; else echo FALSE ; fi`;
 }
 
 EOF
@@ -1758,6 +1760,8 @@ output_rel_find (asection *sec, int isdyn)
   return last;
 }
 
+static int orphan_init_done = 0;
+
 /* Place an orphan section.  We use this to put random SHF_ALLOC
    sections in the right segment.  */
 
@@ -1766,7 +1770,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
 				   const char *secname,
 				   int constraint)
 {
-  static struct orphan_save hold[] =
+  static struct orphan_save orig_hold[] =
     {
       { ".text",
 	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE,
@@ -1793,6 +1797,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
 	SEC_HAS_CONTENTS,
 	0, 0, 0, 0 },
     };
+  static struct orphan_save hold[ARRAY_SIZE (orig_hold)];
   enum orphan_save_index
     {
       orphan_text = 0,
@@ -1804,7 +1809,6 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
       orphan_sdata,
       orphan_nonalloc
     };
-  static int orphan_init_done = 0;
   struct orphan_save *place;
   lang_output_section_statement_type *after;
   lang_output_section_statement_type *os;
@@ -1812,6 +1816,12 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
   int isdyn = 0;
   int iself = s->owner->xvec->flavour == bfd_target_elf_flavour;
   unsigned int sh_type = iself ? elf_section_type (s) : SHT_NULL;
+
+  /* Orphaned sharable sections won't have correct page
+     requirements.  */
+  if (elf_section_flags (s) & SHF_GNU_SHARABLE)
+    einfo ("%F%P: unable to place orphaned sharable section %A (%B)\n",
+	   s, s->owner);
 
   if (! link_info.relocatable
       && link_info.combreloc
@@ -1881,15 +1891,22 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
 
   if (!orphan_init_done)
     {
-      struct orphan_save *ho;
+      struct orphan_save *ho, *horig;
 
       for (ho = hold; ho < hold + sizeof (hold) / sizeof (hold[0]); ++ho)
+      for (ho = hold, horig = orig_hold;
+	   ho < hold + ARRAY_SIZE (hold);
+	   ++ho, ++horig)
+	{
+	  *ho = *horig;
+	  if (ho->name != NULL)
 	if (ho->name != NULL)
 	  {
 	    ho->os = lang_output_section_find (ho->name);
 	    if (ho->os != NULL && ho->os->flags == 0)
 	      ho->os->flags = ho->flags;
 	  }
+	}
       orphan_init_done = 1;
     }
 
@@ -1958,6 +1975,27 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
 }
 EOF
 fi
+
+fragment <<EOF
+
+/* Final emulation specific call.  */
+
+static void
+gld${EMULATION_NAME}_finish (void)
+{
+EOF
+if test x"$LDEMUL_PLACE_ORPHAN" != xgld"$EMULATION_NAME"_place_orphan; then
+fragment <<EOF
+  /* Support the object-only output.  */
+  if (link_info.emit_gnu_object_only)
+    orphan_init_done = 0;
+
+EOF
+fi
+fragment <<EOF
+  finish_default ();
+}
+EOF
 
 if test x"$LDEMUL_AFTER_ALLOCATION" != xgld"$EMULATION_NAME"_after_allocation; then
 fragment <<EOF
@@ -2491,7 +2529,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
   ${LDEMUL_GET_SCRIPT-gld${EMULATION_NAME}_get_script},
   "${EMULATION_NAME}",
   "${OUTPUT_FORMAT}",
-  ${LDEMUL_FINISH-finish_default},
+  ${LDEMUL_FINISH-gld${EMULATION_NAME}_finish},
   ${LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS-NULL},
   ${LDEMUL_OPEN_DYNAMIC_ARCHIVE-gld${EMULATION_NAME}_open_dynamic_archive},
   ${LDEMUL_PLACE_ORPHAN-gld${EMULATION_NAME}_place_orphan},

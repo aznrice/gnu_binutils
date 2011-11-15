@@ -554,6 +554,9 @@ CODE_FRAGMENT
 .#define BFD_COM_SECTION_NAME "*COM*"
 .#define BFD_IND_SECTION_NAME "*IND*"
 .
+.{* GNU object-only section name.  *}
+.#define GNU_OBJECT_ONLY_SECTION_NAME ".gnu_object_only"
+.
 .{* The absolute section.  *}
 .extern asection bfd_abs_section;
 .#define bfd_abs_section_ptr ((asection *) &bfd_abs_section)

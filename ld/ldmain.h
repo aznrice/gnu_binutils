@@ -46,4 +46,6 @@ extern void add_ysym (const char *);
 extern void add_wrap (const char *);
 extern void add_keepsyms_file (const char *);
 
+extern void ld_parse_linker_script (void);
+
 #endif

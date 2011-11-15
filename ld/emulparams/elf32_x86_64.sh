@@ -16,6 +16,7 @@ NO_SMALL_DATA=yes
 LARGE_SECTIONS=yes
 SEPARATE_GOTPLT=24
 IREL_IN_PLT=
+SHARABLE_SECTIONS=yes
 
 if [ "x${host}" = "x${target}" ]; then
   case " $EMULATION_LIBPATH " in

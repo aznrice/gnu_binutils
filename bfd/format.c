@@ -95,6 +95,33 @@ bfd_check_format (bfd *abfd, bfd_format format)
   return bfd_check_format_matches (abfd, format, NULL);
 }
 
+/* Set lto_type in ABFD.  */
+
+static void
+bfd_set_lto_type (bfd *abfd)
+{
+  if (abfd->format == bfd_object
+      && abfd->lto_type == lto_non_object
+      && (abfd->flags & (DYNAMIC | EXEC_P)) == 0)
+    {
+      asection *sec;
+      enum bfd_lto_object_type type = lto_non_ir_object;
+      for (sec = abfd->sections; sec != NULL; sec = sec->next)
+	{
+	  if (strcmp (sec->name, GNU_OBJECT_ONLY_SECTION_NAME) == 0)
+	    {
+	      type = lto_mixed_object;
+	      abfd->object_only_section = sec;
+	      break;
+	    }
+	  else if (type != lto_ir_object
+		   && strncmp (sec->name, ".gnu.lto_", 9) == 0)
+	    type = lto_ir_object;
+	}
+      abfd->lto_type = type;
+    }
+}
+
 /*
 FUNCTION
 	bfd_check_format_matches
@@ -136,7 +163,10 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
     }
 
   if (abfd->format != bfd_unknown)
-    return abfd->format == format;
+    {
+      bfd_set_lto_type (abfd);
+      return abfd->format == format;
+    }
 
   /* Since the target type was defaulted, check them
      all in the hope that one will be uniquely recognized.  */
@@ -322,6 +352,9 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
 
       if (matching_vector)
 	free (matching_vector);
+
+      bfd_set_lto_type (abfd);
+
       return TRUE;			/* File position has moved, BTW.  */
     }
 

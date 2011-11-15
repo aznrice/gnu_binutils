@@ -39,6 +39,9 @@
 /* Report plugin symbols.  */
 bfd_boolean report_plugin_symbols;
 
+/* Store plugin intermediate files permanently.  */
+bfd_boolean plugin_save_temps;
+
 /* The suffix to append to the name of the real (claimed) object file
    when generating a dummy BFD to hold the IR symbols sent from the
    plugin.  For cosmetic use only; appears in maps, crefs etc.  */
@@ -209,6 +212,17 @@ plugin_opt_plugin_arg (const char *arg)
 
   if (!last_plugin)
     return set_plugin_error (_("<no plugin>"));
+
+  /* Ignore -pass-through= from GCC driver.  */
+  if (*arg == '-')
+    {
+      const char *p;
+      for (p = arg + 1; p; p++)
+	if (*p != '-')
+	  break;
+      if (strncmp (p, "pass-through=", 13) == 0)
+	return 0;
+    }
 
   newarg = xmalloc (sizeof *newarg);
   newarg->arg = arg;
@@ -866,6 +880,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
   close (file->fd);
   if (claimed)
     {
+      /* Check object only section.  */
+      cmdline_check_object_only_section (entry->the_bfd, TRUE);
+
       /* Discard the real file's BFD and substitute the dummy one.  */
 
       /* BFD archive handling caches elements so we can't call
@@ -919,13 +936,16 @@ plugin_call_cleanup (void)
     {
       if (curplug->cleanup_handler && !curplug->cleanup_done)
 	{
-	  enum ld_plugin_status rv;
-	  curplug->cleanup_done = TRUE;
-	  called_plugin = curplug;
-	  rv = (*curplug->cleanup_handler) ();
-	  called_plugin = NULL;
-	  if (rv != LDPS_OK)
-	    set_plugin_error (curplug->name);
+	  if (!plugin_save_temps)
+	    {
+	      enum ld_plugin_status rv;
+	      curplug->cleanup_done = TRUE;
+	      called_plugin = curplug;
+	      rv = (*curplug->cleanup_handler) ();
+	      called_plugin = NULL;
+	      if (rv != LDPS_OK)
+		set_plugin_error (curplug->name);
+	    }
 	  dlclose (curplug->dlhandle);
 	}
       curplug = curplug->next;

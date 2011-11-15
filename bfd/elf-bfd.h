@@ -2113,6 +2113,28 @@ extern bfd_boolean bfd_elf_link_add_symbols
   (bfd *, struct bfd_link_info *);
 extern bfd_boolean _bfd_elf_add_dynamic_entry
   (struct bfd_link_info *, bfd_vma, bfd_vma);
+extern asection _bfd_elf_sharable_com_section;
+extern bfd_boolean _bfd_elf_add_sharable_symbol
+  (bfd *, struct bfd_link_info *, Elf_Internal_Sym *, const char **,
+   flagword *, asection **, bfd_vma *);
+extern bfd_boolean _bfd_elf_sharable_section_from_bfd_section
+  (bfd *, asection *, int *);
+extern void _bfd_elf_sharable_symbol_processing
+  (bfd *, asymbol *);
+extern bfd_boolean _bfd_elf_sharable_common_definition
+  (Elf_Internal_Sym *);
+extern unsigned int _bfd_elf_sharable_common_section_index
+  (asection *);
+extern asection *_bfd_elf_sharable_common_section
+  (asection *);
+extern bfd_boolean _bfd_elf_sharable_merge_symbol
+  (struct bfd_link_info *, struct elf_link_hash_entry **,
+   struct elf_link_hash_entry *, Elf_Internal_Sym *, asection **,
+   bfd_vma *, unsigned int *, bfd_boolean *, bfd_boolean *,
+   bfd_boolean *, bfd_boolean *, bfd_boolean *, bfd_boolean *,
+   bfd_boolean *, bfd_boolean *, bfd *, asection **,
+   bfd_boolean *, bfd_boolean *, bfd_boolean *, bfd_boolean *,
+   bfd *, asection **);
 
 extern bfd_boolean bfd_elf_link_record_dynamic_symbol
   (struct bfd_link_info *, struct elf_link_hash_entry *);
@@ -2334,7 +2356,7 @@ extern asection _bfd_elf_large_com_section;
 #define RELOC_FOR_GLOBAL_SYMBOL(info, input_bfd, input_section, rel,	\
 				r_symndx, symtab_hdr, sym_hashes,	\
 				h, sec, relocation,			\
-				unresolved_reloc, warned)		\
+				unresolved_reloc, warned, ignored)	\
   do									\
     {									\
       /* It seems this can happen with erroneous or unsupported		\
@@ -2349,6 +2371,7 @@ extern asection _bfd_elf_large_com_section;
 	h = (struct elf_link_hash_entry *) h->root.u.i.link;		\
 									\
       warned = FALSE;							\
+      ignored = FALSE;							\
       unresolved_reloc = FALSE;						\
       relocation = 0;							\
       if (h->root.type == bfd_link_hash_defined				\
@@ -2371,7 +2394,7 @@ extern asection _bfd_elf_large_com_section;
 	;								\
       else if (info->unresolved_syms_in_objects == RM_IGNORE		\
 	       && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)		\
-	;								\
+	ignored = TRUE;							\
       else if (!info->relocatable)					\
 	{								\
 	  bfd_boolean err;						\
@@ -2387,6 +2410,7 @@ extern asection _bfd_elf_large_com_section;
 	}								\
       (void) unresolved_reloc;						\
       (void) warned;							\
+      (void) ignored;							\
     }									\
   while (0)
 

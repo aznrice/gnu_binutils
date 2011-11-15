@@ -380,12 +380,21 @@ struct bfd_link_info
   /* TRUE if ok to have multiple definition.  */
   unsigned int allow_multiple_definition: 1;
 
+  /* TRUE if .gnu_object_only section should be created.  */
+  unsigned int emit_gnu_object_only: 1;
+
+  /* TRUE if .gnu_object_only section is being created.  */
+  unsigned int emitting_gnu_object_only: 1;
+
   /* TRUE if ok to have version with no definition.  */
   unsigned int allow_undefined_version: 1;
 
   /* TRUE if some symbols have to be dynamic, controlled by
      --dynamic-list command line options.  */
   unsigned int dynamic: 1;
+
+  /* TRUE if sharables sections may be created.  */
+  unsigned int sharable_sections: 1;
 
   /* TRUE if PT_GNU_STACK segment should be created with PF_R|PF_W|PF_X
      flags.  */
