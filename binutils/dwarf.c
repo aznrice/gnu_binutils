@@ -1769,7 +1769,8 @@ read_and_display_attr_value (unsigned long attribute,
 
 	if (form == DW_FORM_ref1
 	    || form == DW_FORM_ref2
-	    || form == DW_FORM_ref4)
+	    || form == DW_FORM_ref4
+	    || form == DW_FORM_ref_udata)
 	  uvalue += cu_offset;
 
 	if (uvalue >= section->size)
@@ -5109,6 +5110,9 @@ display_debug_frames (struct dwarf_section *section,
 		{
 		  fc->col_type[opa] = cie->col_type[opa];
 		  fc->col_offset[opa] = cie->col_offset[opa];
+		  if (do_debug_frames_interp
+		      && fc->col_type[opa] == DW_CFA_unreferenced)
+		    fc->col_type[opa] = DW_CFA_undefined;
 		}
 	      break;
 

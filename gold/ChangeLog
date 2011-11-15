@@ -1,3 +1,139 @@
+2011-11-11  Sterling Augustine  <saugustine@google.com>
+
+	* yyscript.y (section_cmd): Add support for INCLUDE directive.
+	(file_or_sections_cmd): Likewise.
+
+2011-11-11  Doug Kwan  <dougkwan@google.com>
+
+	* arm.cc (Target_arm::do_make_elf_object): Allow executable also
+	if --just-symbols is given.
+
+2011-11-10  Doug Kwan  <dougkwan@google.com>
+
+	PR gold/13362
+	* arm.cc (Target_arm::Relocate::relocate_tls): Do unaligned accesses
+	when processing data relocs.
+	* reloc.h (Relocate_functions::rel_unaligned): New method.
+	(Relocate_functions::pcrel_unaligned): Ditto.
+	(Relocate_functions::rel32_unaligned): Ditto.
+	(Relocate_functions::pcrel32_unaligned): Ditto.
+
+2011-11-09  Doug Kwan  <dougkwan@google.com>
+
+	PR gold/13362
+	* arm.cc (Arm_scan_relocatable_relocs::Default_scan_relocatable_relocs):
+	Use unaligned 4-byte relocs for static 32-bit data as required by EABI.
+	* reloc.h (Relocatable_relocs::Reloc_strategy): New enum
+	RELOC_ADJUST_FOR_SECTION_4_UNALIGNED.
+	(Relocate_functions::rel_unaligned): New.
+	(Relocate_functions::rel32_unaligned): New.
+	* target-reloc.h (relocate_for_relocatable): Add code to handle
+	RELOC_ADJUST_FOR_SECTION_4_UNALIGNED.
+	* testsuite/Makefile.am (arm_unaligned_reloc_r.stdout,
+	arm_unaligned_reloc_r): New targets.
+	* testsuite/Makefile.in: Regenerate.
+	* arm_unaligned_reloc.sh: Check unaligned relocs in relocatable
+	linking.
+
+2011-11-02  Ian Lance Taylor  <iant@google.com>
+
+	* configure.ac: Add --with-lib-path option.  Define LIB_PATH and
+	NATIVE_LINKER.
+	* Makefile.am (AM_CPPFLAGS): Define TOOLLIBDIR.
+	* options.cc (General_options::finalize): Use library search path
+	from configure script if specified.  If not native and no sysroot,
+	only search TOOLLIBDIR.
+	* options.h (Search_directory::Search_directory): Change name to
+	const std::string&.
+	(General_options::add_to_library_path_with_sysroot): Change arg to
+	const std::string&.
+	* configure, Makefile.in, config.in: Rebuild.
+
+2011-11-02  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* arm.cc (Target_arm::may_use_v5t_interworking): Check whether
+	we are working around the ARM1176 Erratum.
+	* options.h (General_options::fix_arm1176): Add option.
+	* testsuite/Makefile.am: Add testcases, and keep current ones
+	working.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/arm_fix_1176.s: New file.
+	* testsuite/arm_fix_1176.sh: Likewise.
+
+2011-11-02  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* arm.cc (Target_arm::Target_arm): Remove initialisation of
+	may_use_blx_.
+	(Target_arm::may_use_blx): Remove method.
+	(Target_arm::set_may_use_blx): Likewise.
+	(Target_arm::may_use_v4t_interworking): New method.
+	(Target_arm::may_use_v5t_interworking): Likewise.
+	(Target_arm::may_use_blx_): Remove member variable.
+	(Arm_relocate_functions::arm_branch_common): Check for v5T
+	interworking.
+	(Arm_relocate_functions::thumb_branch_common): Likewise.
+	(Reloc_stub::stub_type_for_reloc): Likewise.
+	(Target_arm::do_finalize_sections): Correct interworking checks.
+	* testsuite/Makefile.am: Add new tests.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/arm_farcall_arm_arm.s: New test.
+	* testsuite/arm_farcall_arm_arm.sh: Likewise.
+	* testsuite/arm_farcall_arm_thumb.s: Likewise.
+	* testsuite/arm_farcall_arm_thumb.sh: Likewise.
+	* testsuite/arm_farcall_thumb_arm.s: Likewise.
+	* testsuite/arm_farcall_thumb_arm.sh: Likewise.
+	* testsuite/arm_farcall_thumb_thumb.s: Likewise.
+	* testsuite/arm_farcall_thumb_thumb.sh: Likewise.
+
+2011-10-31  Cary Coutant  <ccoutant@google.com>
+
+	PR gold/13023
+	* expression.cc (Expression::eval_with_dot): Add
+	is_section_dot_assignment parameter.
+	(Expression::eval_maybe_dot): Likewise.  Adjust value when rhs is
+	absolute and assigning to dot within a section.
+	* script-sections.cc
+	(Output_section_element_assignment::set_section_addresses): Pass
+	dot_section to set_if_absolute.
+	(Output_section_element_dot_assignment::finalize_symbols): Pass TRUE
+	as is_section_dot_assignment flag to eval_with_dot.
+	(Output_section_element_dot_assignment::set_section_addresses):
+	Likewise.
+	* script.cc (Symbol_assignment::set_if_absolute): Add dot_section
+	parameter.  Also set value if relative to dot_section; set the
+	symbol's output_section.
+	* script.h (Expression::eval_with_dot): Add is_section_dot_assignment
+	parameter.  Adjust all callers.
+	(Expression::eval_maybe_dot): Likewise.
+	(Symbol_assignment::set_if_absolute): Add dot_section parameter.
+	Adjust all callers.
+	* testsuite/script_test_2.t: Test assignment of an absolute value
+	to dot within an output section element.
+
+2011-10-31  Cary Coutant  <ccoutant@google.com>
+
+	* options.h (class General_options): Add --[no-]gnu-unique options.
+	* symtab.cc (Symbol_table::sized_write_globals): Convert
+	STB_GNU_UNIQUE to STB_GLOBAL if --no-gnu-unique.
+
+2011-10-31  Cary Coutant  <ccoutant@google.com>
+
+	PR gold/13359
+	* i386.cc (Target_i386::Relocate::relocate_tls): Remove
+	unnecessary assertion.
+	* x86_64.cc (Target_x86_64::Relocate::relocate_tls): Likewise.
+
+2011-10-31 Sriraman Tallam  <tmsriram@google.com>
+
+	* symtab.h (Symbol_table::gc_mark_symbol_for_shlib): Rename to
+	gc_mark_symbol.
+	* symtab.cc (Symbol_table::gc_mark_symbol_for_shlib): Rename to
+	gc_mark_symbol.
+	Change to just keep the section associated with symbol.
+	(Symbol_table::add_from_relobj): Mark symbols as not garbage when
+	they are externally visible and --export-dynamic is turned on.
+	(Symbol_table::gc_mark_dyn_syms): Call gc_mark_symbol.
+
 2011-10-19  Ian Lance Taylor  <iant@google.com>
 
 	PR gold/13163

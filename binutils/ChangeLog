@@ -1,3 +1,64 @@
+2011-11-11  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* readelf.c (process_program_headers): Fix typo printing p_memsz
+	field.
+
+2011-11-01  DJ Delorie  <dj@redhat.com>
+
+	* readelf.c: Include elf/rl78.h
+	(guess_is_rela): Handle EM_RL78.
+	(dump_relocations): Likewise.
+	(get_machine_name): Likewise.
+	(is_32bit_abs_reloc): Likewise.
+	* NEWS: Mention addition of RL78 support.
+	* MAINTAINERS: Add myself as RL78 port maintainer.
+
+2011-10-28  Ian Lance Taylor  <iant@google.com>
+
+	* dwarf.c (display_debug_frames): If do_debug_frames_interp,
+	DW_CFA_restore goes to DW_CFA_undefined, not DW_CFA_unreferenced.
+
+2011-10-28  Walter Lee  <walt@tilera.com>
+
+	* NEWS: Mention addition of TILEPro and TILE-Gx support.
+	* MAINTAINERS: Add myself as TILEPro and TILE-Gx port maintainer.
+
+2011-10-27  Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	* MAINTAINERS: Add myself as EPIPHANY port maintainer.
+
+2011-10-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.am (syslex.@OBJEXT@): Add -I$(srcdir).
+	* Makefile.in: Regen.
+
+2011-10-25  Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	* readelf.c: Include "elf/epiphany.h".
+	(guess_is_rela, dump_relocation): Handle EM_ADAPTEVA_EPIPHANY.
+	(get_machine_name, is_32bit_abs_reloc, is_32bit_pcrel_reloc): Likewise.
+	(is_16bit_abs_reloc, is_none_reloc): Likewise.
+	* po/binutils.pot: Regenerate.
+
+2011-10-25  Kai Tietz  <ktietz@redhat.com>
+
+	* winduni.h (unicode_from_ascii_len): New prototype.
+	* winduni.c (unicode_from_ascii_len): New function.
+	* windres.h (define_stringtable): Add additional length argument.
+	* windres.c (define_stringtable): Add length argument for string.
+	* rcparse.y (res_unicode_sizedstring): New rule.
+	(res_unicode_sizedstring_concat): Likewise.
+	(string_data): Adjust rule.
+
+2011-10-24  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* dwarf.c (read_and_display_attr_value) <DW_AT_import>: Add CU_OFFSET
+	also for DW_FORM_ref_udata.
+
+2011-10-24  Nick Clifton  <nickc@redhat.com>
+
+	* po/ja.po: Updated Japanese translation.
+
 2011-10-16  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR binutils/13278

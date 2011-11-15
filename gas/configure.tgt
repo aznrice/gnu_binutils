@@ -38,6 +38,7 @@ case ${cpu} in
   cr16*)		cpu_type=cr16 endian=little ;;
   crisv32)		cpu_type=cris arch=crisv32 ;;
   crx*)			cpu_type=crx endian=little ;;
+  epiphany*)		cpu_type=epiphany endian=little ;;
   fido)			cpu_type=m68k ;;
   hppa*)		cpu_type=hppa ;;
   i[3-7]86)		cpu_type=i386 arch=i386;;
@@ -64,6 +65,7 @@ case ${cpu} in
   powerpc*le*)		cpu_type=ppc endian=little ;;
   powerpc*)		cpu_type=ppc endian=big ;;
   rs6000*)		cpu_type=ppc ;;
+  rl78*)		cpu_type=rl78 ;;
   rx)			cpu_type=rx ;;
   s390x*)		cpu_type=s390 arch=s390x ;;
   s390*)		cpu_type=s390 arch=s390 ;;
@@ -140,6 +142,8 @@ case ${generic_target} in
   d10v-*-*)				fmt=elf ;;
   d30v-*-*)				fmt=elf ;;
   dlx-*-*)				fmt=elf ;;
+
+  epiphany-*-*)				fmt=elf ;;
 
   fr30-*-*)				fmt=elf ;;
   frv-*-*linux*)			fmt=elf em=linux;;

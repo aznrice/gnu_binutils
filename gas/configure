@@ -12143,7 +12143,7 @@ _ACEOF
         fi
         ;;
 
-      fr30 | ip2k | iq2000 | lm32 | m32r | openrisc)
+      epiphany | fr30 | ip2k | iq2000 | lm32 | m32r | openrisc)
 	using_cgen=yes
 	;;
 
@@ -12193,6 +12193,13 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 	fi
+	;;
+
+      rl78)
+        echo ${extra_objects} | grep -s "rl78-parse.o"
+        if test $? -ne 0 ; then
+          extra_objects="$extra_objects rl78-parse.o"
+        fi
 	;;
 
       rx)
@@ -12746,7 +12753,7 @@ if test "$LEX" = :; then
   LEX=${am_missing_run}flex
 fi
 
-ALL_LINGUAS="fr tr es rw id ru fi"
+ALL_LINGUAS="fr tr es rw id ru fi ja"
 # If we haven't got the data from the intl directory,
 # assume NLS is disabled.
 USE_NLS=no

@@ -1,3 +1,136 @@
+2011-11-15  Alan Modra  <amodra@gmail.com>
+	    Andreas Tobler  <andreast@fgznet.ch>
+
+	* elflink.c (_bfd_elf_create_got_section): Replace
+	bfd_make_section_with_flags with bfd_make_section_anyway_with_flags.
+	(_bfd_elf_link_create_dynamic_sections): Likewise.
+	* elf32-ppc.c (ppc_elf_create_glink): Likewise.
+	(ppc_elf_create_dynamic_sections): Likewise.
+
+2011-11-14  Maxim Kuvyrkov  <maxim@codesourcery.com>
+
+	* elfxx-mips.c (mips_n64_exec_plt0_entry): Use 64-bit move.
+
+2011-11-08  Nick Clifton  <nickc@redhat.com>
+
+	* elf-m10300.c (mn10300_elf_relax_section): Fix check for an
+	immediate move into an address register.
+
+2011-11-09  Alan Modra  <amodra@gmail.com>
+
+	* elflink.c (bfd_elf_gc_mark_dynamic_ref_symbol): Mark syms in
+	executables when export_dynamic.
+
+2011-11-08  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (struct ppc64_elf_obj_tdata): Rename
+	ha_relocs_not_using_r2 to unexpected_toc_insn.
+	(ok_lo_toc_insn): New function.
+	(ppc64_elf_edit_toc): Check insn on lo toc reloc.  Emit warning.
+	(ppc64_elf_relocate_section): Don't check insn on lo toc reloc here.
+	Handle addic on lo toc reloc.
+
+2011-11-06  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	PR ld/13387
+	* elf32-hppa.c (elf32_hppa_hide_symbol): Make STT_GNU_IFUNC symbol
+	go through PLT.  Reset plt field with init_plt_offset.
+	(elf32_hppa_adjust_dynamic_symbol): Ensure that a PLT slot is
+	allocated for symbols referenced by a plabel.
+
+2011-11-02  DJ Delorie  <dj@redhat.com>
+
+	* elf32-rl78.c (rl78_elf_merge_private_bfd_data): Delete unused
+	variable.
+
+2011-11-02  Jan Beulich  <jbeulich@suse.com>
+
+	* coffgen.c (coff_write_alien_symbol): Make public. Add 'struct
+	internal_syment *' parameter. Extend 'dummy' to an array with two
+	elements. Set n_numaux early. Handle BSF_FILE.
+	(coff_write_symbols): Pass NULL as new third argument to
+	coff_write_alien_symbol().
+	* cofflink.c (_bfd_coff_final_link): Don't use COFF-specific
+	obj_raw_syment_count() on non-COFF input BFD. Insert local symbols
+	from non-COFF input BFDs.
+	* libcoff-in.h (coff_write_alien_symbol): Declare.
+	* libcoff.h (coff_write_alien_symbol): Re-generate.
+
+2011-11-01  DJ Delorie  <dj@redhat.com>
+
+	* Makefile.am (ALL_MACHINES): Add cpu-rl78.lo.
+	(ALL_MACHINES_CFILES): Add cpu-rl78.c.
+	(BFD32_BACKENDS): Add elf32-rl78.lo.
+	(BFD32_BACKENDS_CFILES): Add elf32-rl78.c.
+	(Makefile.in): Regenerate.
+	* archures.c (bfd_architecture): Define bfd_arch_rl78.
+	(bfd_archures_list): Add bfd_rl78_arch.
+	* config.bfd: Add rl78-*-elf.
+	* configure.in: Add bfd_elf32_rl78_vec.
+	* reloc.c (bfd_reloc_code_type): Add BFD_RELOC_RL78_* relocations.
+	* targets.c (bfd_target_vector): Add bfd_elf32_rl78_vec.
+	* Makefile.in: Regenerate.
+	* bfd-in2.h: Regenerate.
+	* configure: Regenerate.
+	* libbfd.h: Regenerate.
+	* cpu-rl78.c: New file.
+	* elf32-rl78.c: New file.
+
+2011-10-26  Nick Clifton  <nickc@redhat.com>
+
+	PR ld/13049
+	* elf64-ppc.c (STUB_SUFFIX): Revert previous delta.
+	* elf32-hppa.c (STUB_SUFFIX): Likewise.
+
+2011-10-25  Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	* Makefile.am (ALL_MACHINES): Add cpu-epiphany.lo.
+	(ALL_MACHINES_CFILES): Add cpu-epiphany.c.
+	(BFD32_BACKENDS): Add elf32-epiphany.lo.
+	(BFD32_BACKENDS_CFILES): Add elf32-epiphany.c.
+	* archures.c (bfd_arch_epiphany): Add.
+	(bfd_mach_epiphany16, bfd_mach_epiphany32): Define.
+	(bfd_epiphany_arch): Declare.
+	(bfd_archures_list): Add &bfd_epiphany_arch.
+	* config.bfd (epiphany-*-elf): New target case.
+	* configure.in (bfd_elf32_epiphany_vec): New target vector case.
+	* reloc.c (BFD_RELOC_EPIPHANY_SIMM8): New relocation.
+	(BFD_RELOC_EPIPHANY_SIMM24, BFD_RELOC_EPIPHANY_HIGH): Likewise.
+	(BFD_RELOC_EPIPHANY_LOW, BFD_RELOC_EPIPHANY_SIMM11): Likewise.
+	(BFD_RELOC_EPIPHANY_IMM11, BFD_RELOC_EPIPHANY_IMM8): Likewise.
+	* targets.c (bfd_elf32_epiphany_vec): Declare.
+	(_bfd_target_vector): Add bfd_elf32_epiphany_vec.
+	* Makefile.in: Regenerate.
+	* bfd-in2.h: Regenerate.
+	* configure: Regenerate.
+	* libbfd.h: Regenerate.
+	* po/SRC-POTFILES.in: Regenerate.
+	* po/bfd.pot: Regenerate.
+	* cpu-epiphany.c: New file.
+	* elf32-epiphany.c: New file.
+
+2011-10-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* elfxx-mips.c (_bfd_mips_elf_symbol_processing): Remove
+	assertions.
+
+2011-10-24  Eugeniy Meshcheryakov  <eugen@debian.org>
+
+	PR ld/13273
+	* elf32-arm.c (elf32_arm_merge_eabi_attributes): Do not warn about
+	identical TAG_PCS_config attributes.
+
+2011-10-24  Nick Clifton  <nickc@redhat.com>
+
+	* po/ja.po: Updated Japanese translation.
+
+2011-10-24  Pau Garcia i Quiles  <pgquiles@elpauer.org>
+
+	PR binutils/13292
+	* bfd-in.h: Include <sys/stat.h> rather than forward defining
+	struct stat.
+	* bfd-in2.h: Regenerate.
+
 2011-10-21  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/13302

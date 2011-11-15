@@ -307,6 +307,11 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @emph{Target D30V options:}
    [@b{-O}|@b{-n}|@b{-N}]
 @end ifset
+@ifset EPIPHANY
+
+@emph{Target EPIPHANY options:}
+   [@b{-mepiphany}|@b{-mepiphany16}]
+@end ifset
 @ifset H8
 
 @emph{Target H8/300 options:}
@@ -842,6 +847,27 @@ Warn when a nop after a 32-bit multiply instruction is generated.
 @end table
 @end ifset
 @c man end
+
+@ifset EPIPHANY
+The following options are available when @value{AS} is configured for the
+Adapteva EPIPHANY series.
+
+@ifclear man
+@xref{Epiphany Options}, for the options available when @value{AS} is
+configured for an Epiphany processor.
+@end ifclear
+
+@ifset man
+@c man begin OPTIONS
+The following options are available when @value{AS} is configured for
+an Epiphany processor.
+@c man end
+@c man begin INCLUDE
+@include c-epiphany.texi
+@c ended inside the included file
+@end ifset
+
+@end ifset
 
 @ifset I80386
 
@@ -6849,6 +6875,9 @@ subject, see the hardware manufacturer's manual.
 @ifset D30V
 * D30V-Dependent::              D30V Dependent Features
 @end ifset
+@ifset EPIPHANY
+* Epiphany-Dependent::          EPIPHANY Dependent Features
+@end ifset
 @ifset H8/300
 * H8/300-Dependent::            Renesas H8/300 Dependent Features
 @end ifset
@@ -6915,6 +6944,9 @@ subject, see the hardware manufacturer's manual.
 @end ifset
 @ifset PPC
 * PPC-Dependent::               PowerPC Dependent Features
+@end ifset
+@ifset RL78
+* RL78-Dependent::              RL78 Dependent Features
 @end ifset
 @ifset RX
 * RX-Dependent::                RX Dependent Features
@@ -7025,6 +7057,10 @@ family.
 @include c-d30v.texi
 @end ifset
 
+@ifset EPIPHANY
+@include c-epiphany.texi
+@end ifset
+
 @ifset H8/300
 @include c-h8300.texi
 @end ifset
@@ -7107,6 +7143,10 @@ family.
 
 @ifset PPC
 @include c-ppc.texi
+@end ifset
+
+@ifset RL78
+@include c-rl78.texi
 @end ifset
 
 @ifset RX

@@ -3687,7 +3687,6 @@ can_swap_branch_p (struct mips_cl_insn *ip)
   unsigned long pinfo, pinfo2, prev_pinfo, prev_pinfo2;
   unsigned int gpr_read, gpr_write, prev_gpr_read, prev_gpr_write;
 
-
   /* -O2 and above is required for this optimization.  */
   if (mips_optimize < 2)
     return FALSE;
@@ -3729,9 +3728,8 @@ can_swap_branch_p (struct mips_cl_insn *ip)
 
   /* If the previous instruction is in a variant frag other than this
      branch's one, we cannot do the swap.  This does not apply to
-     MIPS16/microMIPS code, which uses variant frags for different
-     purposes.  */
-  if (!HAVE_CODE_COMPRESSION
+     MIPS16 code, which uses variant frags for different purposes.  */
+  if (!mips_opts.mips16
       && history[0].frag
       && history[0].frag->fr_type == rs_machine_dependent)
     return FALSE;
@@ -4593,7 +4591,6 @@ start_noreorder (void)
 static void
 end_noreorder (void)
 {
-
   mips_opts.noreorder--;
   if (mips_opts.noreorder == 0 && prev_nop_frag != NULL)
     {
@@ -5947,7 +5944,7 @@ move_register (int dest, int source)
      instruction specifically requires a 32-bit one.  */
   if (mips_opts.micromips
       && !(history[0].insn_mo->pinfo2 & INSN2_BRANCH_DELAY_32BIT))
-    macro_build (NULL, "move", "mp,mj", dest, source );
+    macro_build (NULL, "move", "mp,mj", dest, source);
   else
     macro_build (NULL, HAVE_32BIT_GPRS ? "addu" : "daddu", "d,v,t",
 		 dest, source, 0);
@@ -10450,7 +10447,7 @@ validate_micromips_insn (const struct mips_opcode *opc)
       case 'D': USE_BITS (FD);		break;
       case 'E': USE_BITS (RT);		break;
       case 'G': USE_BITS (RS);		break;
-      case 'H': USE_BITS (SEL);	break;
+      case 'H': USE_BITS (SEL);		break;
       case 'K': USE_BITS (RS);		break;
       case 'M': USE_BITS (CCC);		break;
       case 'N': USE_BITS (BCC);		break;
@@ -15945,7 +15942,7 @@ s_option (int x ATTRIBUTE_UNUSED)
 	mips_pic = NO_PIC;
       else if (i == 2)
 	{
-	mips_pic = SVR4_PIC;
+	  mips_pic = SVR4_PIC;
 	  mips_abicalls = TRUE;
 	}
       else
@@ -18400,7 +18397,7 @@ mips_elf_final_processing (void)
     elf_elfheader (stdoutput)->e_flags |= EF_MIPS_NOREORDER;
   if (mips_pic != NO_PIC)
     {
-    elf_elfheader (stdoutput)->e_flags |= EF_MIPS_PIC;
+      elf_elfheader (stdoutput)->e_flags |= EF_MIPS_PIC;
       elf_elfheader (stdoutput)->e_flags |= EF_MIPS_CPIC;
     }
   if (mips_abicalls)

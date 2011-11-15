@@ -1,3 +1,125 @@
+2011-11-15  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* write.c (dump_section_relocs): Don't convert PC-relative relocs
+	that have an in-place addend narrower than the addresses used.
+
+2011-11-14  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (can_swap_branch_p): Exclude microMIPS
+	variant frags too.
+
+2011-11-07  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* config/tc-arm.c (arm_cpus): Add cortex-a7 entry.
+	* doc/c-arm.texi (ARM Options): Add cortex-a7 to list of accepted
+	CPUs.
+
+2011-11-04  DJ Delorie  <dj@redhat.com>
+
+	* doc/c-rl78.texi (RL78-Float): Remove unused menu entry.
+
+2011-11-02  DJ Delorie  <dj@redhat.com>
+
+	* config/tc-rl78.c (tc_gen_reloc): Remove unused variable.
+
+2011-11-02  Nick Clifton  <nickc@redhat.com>
+
+	* config/tc-arm.c (md_begin): Remove ARM_PLT32 reloc associated
+	with the (PLT) instruction suffix when operating in eabi mode.
+	* doc/c-arm.texi (ARM_Relocations): Extend description of (PLT)
+	suffix.
+
+2011-11-01  DJ Delorie  <dj@redhat.com>
+
+	* Makefile.am (TARGET_CPU_CFILES): Add tc-rl78.c.
+	(TARGET_CPU_HFILES): Add rc-rl78.h.
+	(EXTRA_DIST): Add rl78-parse.c and rl78-parse.y.
+	(rl78-parse.c, rl78-parse.h, rl78-parse.o, rl78-defs.h): New rules.
+	* Makefile.in: Regenerate.
+	* configure.in: Add rl78 case.
+	* configure: Regenerate.
+	* configure.tgt: Add rl78 case.
+	* config/rl78-defs.h: New file.
+	* config/rl78-parse.y: New file.
+	* config/tc-rl78.c: New file.
+	* config/tc-rl78.h: New file.
+	* NEWS: Add Renesas RL78.
+
+	* doc/Makefile.am (c-rl78.texi): New.
+	* doc/Makefile.in: Likewise.
+	* doc/all.texi: Enable it.
+	* doc/as.texi: Add it.
+	* doc/c-rl78.texi: New file.
+
+2011-10-28  Walter Lee  <walt@tilera.com>
+
+	* NEWS: Fix TILEPro capitalization.
+	* config/tc-tilegx.c (emit_tilegx_instruction) Handle
+        relocations of aliases.
+	* config/tc-tilepro.c: (emit_tilepro_instruction) Likewise.
+
+2011-10-28  Nick Clifton  <nickc@redhat.com>
+
+	* po/ja.po: New Japanese translation.
+	* configure.in (ALL_LINGUAS): Add ja.
+	* configure: Regenerate.
+
+2011-10-26  Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	* doc/as.texinfo [EPIPHANY]: Include c-epiphany.texi to avoid
+	duplication.
+
+2011-10-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* config/rx-defs.h (rx_error): Add const to first arg.
+	* config/rx-parse.y (rx_error): Likewise.
+
+2011-10-25  Nick Clifton  <nickc@redhat.com>
+
+	* config/tc-ns32k.c (md_begin): Rename local variable 'stat' to
+	'status'.
+
+2011-10-25  Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	* NEWS: Mention addition of Adapteva Epiphany support.
+	* config/tc-epiphany.c: New file.
+	* config/tc-epiphany.h: New file.
+	* Makefile.am (TARGET_CPU_CFILES): Add config/tc-epiphany.c .
+	(TARGET_CPU_HFILES): Add config/tc-epiphany.h .
+	* configure.in: Also set using_cgen for epiphany.
+	* configure.tgt: Handle epiphany.
+	* doc/Makefile.am (CPU_DOCS): Add c-epiphany.texi .
+	* doc/all.texi: Set EPIPHANY.
+	* doc/as.texinfo: Add EPIPHANY-specific text.
+	* doc/c-epiphany.texi: New file.
+	* po/gas.pot: Regenerate.
+	* Makefile.in: Regenerate.
+	* configure: Regenerate.
+	* doc/Makefile.in: Regenerate.
+	* po/POTFILES.in: Regenerate.
+
+2011-10-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (move_register): Fix formatting.
+
+2011-10-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (can_swap_branch_p): Remove empty line.
+	(start_noreorder): Likewise.
+
+2011-10-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (s_option): Fix formatting.
+	(mips_elf_final_processing): Likewise.
+
+2011-10-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (validate_micromips_insn): Fix formatting.
+
+2011-10-24  David Binderman  <dcb314@hotmail.com>
+
+	* config/tc-mn10200.c (md_convert_frag): Add missing break.
+
 2011-10-21  Tristan Gingold  <gingold@adacore.com>
 
 	* config/tc-alpha.c (load_expression): Use symbol_mark_used accessor.

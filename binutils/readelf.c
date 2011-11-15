@@ -103,6 +103,7 @@
 #include "elf/d10v.h"
 #include "elf/d30v.h"
 #include "elf/dlx.h"
+#include "elf/epiphany.h"
 #include "elf/fr30.h"
 #include "elf/frv.h"
 #include "elf/h8.h"
@@ -133,6 +134,7 @@
 #include "elf/pj.h"
 #include "elf/ppc.h"
 #include "elf/ppc64.h"
+#include "elf/rl78.h"
 #include "elf/rx.h"
 #include "elf/s390.h"
 #include "elf/score.h"
@@ -552,6 +554,7 @@ guess_is_rela (unsigned int e_machine)
       /* Targets that use RELA relocations.  */
     case EM_68K:
     case EM_860:
+    case EM_ADAPTEVA_EPIPHANY:
     case EM_ALPHA:
     case EM_ALTERA_NIOS2:
     case EM_AVR:
@@ -591,6 +594,7 @@ guess_is_rela (unsigned int e_machine)
     case EM_NIOS32:
     case EM_PPC64:
     case EM_PPC:
+    case EM_RL78:
     case EM_RX:
     case EM_S390:
     case EM_S390_OLD:
@@ -1168,6 +1172,10 @@ dump_relocations (FILE * file,
 	  rtype = elf_vax_reloc_type (type);
 	  break;
 
+	case EM_ADAPTEVA_EPIPHANY:
+	  rtype = elf_epiphany_reloc_type (type);
+	  break;
+
 	case EM_IP2K:
 	case EM_IP2K_OLD:
 	  rtype = elf_ip2k_reloc_type (type);
@@ -1211,6 +1219,10 @@ dump_relocations (FILE * file,
 	case EM_MICROBLAZE:
 	case EM_MICROBLAZE_OLD:
 	  rtype = elf_microblaze_reloc_type (type);
+	  break;
+
+	case EM_RL78:
+	  rtype = elf_rl78_reloc_type (type);
 	  break;
 
 	case EM_RX:
@@ -1911,6 +1923,7 @@ get_machine_name (unsigned e_machine)
     case EM_OR32:		return "OpenRISC";
     case EM_ARC_A5:		return "ARC International ARCompact processor";
     case EM_CRX:		return "National Semiconductor CRX microprocessor";
+    case EM_ADAPTEVA_EPIPHANY:	return "Adapteva EPIPHANY";
     case EM_DLX:		return "OpenDLX";
     case EM_IP2K_OLD:
     case EM_IP2K:		return "Ubicom IP2xxx 8-bit microcontrollers";
@@ -1971,6 +1984,7 @@ get_machine_name (unsigned e_machine)
     case EM_CR16_OLD:		return "National Semiconductor's CR16";
     case EM_MICROBLAZE:		return "Xilinx MicroBlaze";
     case EM_MICROBLAZE_OLD:	return "Xilinx MicroBlaze";
+    case EM_RL78:		return "Renesas RL78";
     case EM_RX:			return "Renesas RX";
     case EM_METAG:		return "Imagination Technologies META processor architecture";
     case EM_MCST_ELBRUS:	return "MCST Elbrus general purpose hardware architecture";
@@ -3795,7 +3809,7 @@ process_program_headers (FILE * file)
 		printf ("0x%6.6lx", (unsigned long) segment->p_memsz);
 	      else
 		{
-		  print_vma (segment->p_offset, FULL_HEX);
+		  print_vma (segment->p_memsz, FULL_HEX);
 		}
 
 	      printf (" %c%c%c ",
@@ -9680,6 +9694,8 @@ is_32bit_abs_reloc (unsigned int reloc_type)
     case EM_AVR_OLD:
     case EM_AVR:
       return reloc_type == 1;
+    case EM_ADAPTEVA_EPIPHANY:
+      return reloc_type == 3;
     case EM_BLACKFIN:
       return reloc_type == 0x12; /* R_byte4_data.  */
     case EM_CRIS:
@@ -9759,6 +9775,8 @@ is_32bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 1; /* R_PPC64_ADDR32.  */
     case EM_PPC:
       return reloc_type == 1; /* R_PPC_ADDR32.  */
+    case EM_RL78:
+      return reloc_type == 1; /* R_RL78_DIR32.  */
     case EM_RX:
       return reloc_type == 1; /* R_RX_DIR32.  */
     case EM_S370:
@@ -9820,6 +9838,8 @@ is_32bit_pcrel_reloc (unsigned int reloc_type)
       return reloc_type == 2;  /* R_386_PC32.  */
     case EM_68K:
       return reloc_type == 4;  /* R_68K_PC32.  */
+    case EM_ADAPTEVA_EPIPHANY:
+      return reloc_type == 6;
     case EM_ALPHA:
       return reloc_type == 10; /* R_ALPHA_SREL32.  */
     case EM_ARM:
@@ -9961,6 +9981,8 @@ is_16bit_abs_reloc (unsigned int reloc_type)
     case EM_AVR_OLD:
     case EM_AVR:
       return reloc_type == 4; /* R_AVR_16.  */
+    case EM_ADAPTEVA_EPIPHANY:
+      return reloc_type == 5;
     case EM_CYGNUS_D10V:
     case EM_D10V:
       return reloc_type == 3; /* R_D10V_16.  */
@@ -10006,6 +10028,7 @@ is_none_reloc (unsigned int reloc_type)
     case EM_MIPS:    /* R_MIPS_NONE.  */
     case EM_PARISC:  /* R_PARISC_NONE.  */
     case EM_ALPHA:   /* R_ALPHA_NONE.  */
+    case EM_ADAPTEVA_EPIPHANY:
     case EM_PPC:     /* R_PPC_NONE.  */
     case EM_PPC64:   /* R_PPC64_NONE.  */
     case EM_ARM:     /* R_ARM_NONE.  */
