@@ -1,3 +1,57 @@
+2011-11-23  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-alpha.c (s_alpha_prologue): Requires empty line.
+
+2011-11-23  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-alpha.c (s_alpha_frame): Emit a warning if bad value
+	of RA.
+	(s_alpha_pdesc): Adjust comment.
+
+2011-11-23  Thomas Klein  <th.r.klein@web.de>
+
+	* config/tc-arm.c (do_t_mov_cmp): Prevent emitting code for MOV
+	with two low register at arch v4t or v5t when assember using
+	unified syntax.
+
+2011-11-21  DJ Delorie  <dj@redhat.com>
+
+	* config/rl78-defs.h (rl78_error): Add "const".
+	* config/rl78-parse.y (rl78_error): Likewise.
+
+2011-11-21  Andreas Tobler  <andreast@fgznet.ch>
+
+	* config/tc-ppc.c (ppc_target_format): Add format for powerpc*-freebsd.
+
+2011-11-16  David S. Miller  <davem@davemloft.net>
+
+	* config/tc-sparc.c (md_apply_fix): Handle BFD_RELOC_8.
+
+2011-11-16  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (macro): Fix unsupported opcode message
+	capitalization.
+	(mips_ip, mips16_ip): Likewise.
+
+2011-11-16  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (ISA_SUPPORTS_MCU_ASE): Also set if microMIPS
+	mode.
+
+2011-11-16  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (macro_build_jalr): Reverse a negative
+	conditional.
+	(mips_ip): Likewise.
+
+2011-11-16  Catherine Moore  <clm@codesourcery.com>
+            Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (mips_cpu_info_table): Add "m14ke" and
+	"m14kec".
+	* doc/c-mips.texi (MIPS architecture options): Add "m14ke" and
+	"m14kec" to the list of -march options.
+
 2011-11-15  Maciej W. Rozycki  <macro@codesourcery.com>
 
 	* write.c (dump_section_relocs): Don't convert PC-relative relocs

@@ -370,7 +370,8 @@ static int file_ase_mt;
 			     || mips_opts.isa == ISA_MIPS64R2)
 
 #define ISA_SUPPORTS_MCU_ASE (mips_opts.isa == ISA_MIPS32R2		\
-			      || mips_opts.isa == ISA_MIPS64R2)
+			      || mips_opts.isa == ISA_MIPS64R2		\
+			      || mips_opts.micromips)
 
 /* The argument of the -march= flag.  The architecture we are assembling.  */
 static int file_mips_arch = CPU_UNKNOWN;
@@ -5260,9 +5261,7 @@ macro_build_jalr (expressionS *ep, int cprestore)
       frag_grow (8);
       f = frag_more (0);
     }
-  if (!mips_opts.micromips)
-    macro_build (NULL, "jalr", "d,s", RA, PIC_CALL_REG);
-  else
+  if (mips_opts.micromips)
     {
       jalr = mips_opts.noreorder && !cprestore ? "jalr" : "jalrs";
       if (MIPS_JALR_HINT_P (ep))
@@ -5270,6 +5269,8 @@ macro_build_jalr (expressionS *ep, int cprestore)
       else
 	macro_build (NULL, jalr, "mj", PIC_CALL_REG);
     }
+  else
+    macro_build (NULL, "jalr", "d,s", RA, PIC_CALL_REG);
   if (MIPS_JALR_HINT_P (ep))
     fix_new_exp (frag_now, f - frag_now->fr_literal, 4, ep, FALSE, jalr_reloc);
 }
@@ -9150,7 +9151,7 @@ macro (struct mips_cl_insn *ip)
       if (NO_ISA_COP (mips_opts.arch)
 	  && (ip->insn_mo->pinfo2 & INSN2_M_FP_S) == 0)
 	{
-	  as_bad (_("opcode not supported on this processor: %s"),
+	  as_bad (_("Opcode not supported on this processor: %s"),
 		  mips_cpu_info_from_arch (mips_opts.arch)->name);
 	  break;
 	}
@@ -10699,7 +10700,7 @@ mips_ip (char *str, struct mips_cl_insn *ip)
 	    return;
 
 	  if (!ok)
-	    sprintf (buf, _("opcode not supported on this processor: %s (%s)"),
+	    sprintf (buf, _("Opcode not supported on this processor: %s (%s)"),
 		     mips_cpu_info_from_arch (mips_opts.arch)->name,
 		     mips_cpu_info_from_isa (mips_opts.isa)->name);
 	  else
@@ -10964,9 +10965,9 @@ mips_ip (char *str, struct mips_cl_insn *ip)
 
 	    case '\\':		/* 3-bit bit position.  */
 	      {
-		unsigned long mask = (!mips_opts.micromips
-				      ? OP_MASK_3BITPOS
-				      : MICROMIPSOP_MASK_3BITPOS);
+		unsigned long mask = (mips_opts.micromips
+				      ? MICROMIPSOP_MASK_3BITPOS
+				      : OP_MASK_3BITPOS);
 
 		my_getExpression (&imm_expr, s);
 		check_absolute_expr (ip, &imm_expr);
@@ -13228,7 +13229,7 @@ mips16_ip (char *str, struct mips_cl_insn *ip)
 		{
 		  static char buf[100];
 		  sprintf (buf,
-			   _("opcode not supported on this processor: %s (%s)"),
+			   _("Opcode not supported on this processor: %s (%s)"),
 			   mips_cpu_info_from_arch (mips_opts.arch)->name,
 			   mips_cpu_info_from_isa (mips_opts.isa)->name);
 		  insn_error = buf;
@@ -18963,6 +18964,10 @@ static const struct mips_cpu_info mips_cpu_info_table[] =
   { "m4kp",           0,			ISA_MIPS32R2,   CPU_MIPS32R2 },
   { "m14k",           MIPS_CPU_ASE_MCU,		ISA_MIPS32R2,   CPU_MIPS32R2 },
   { "m14kc",          MIPS_CPU_ASE_MCU,		ISA_MIPS32R2,   CPU_MIPS32R2 },
+  { "m14ke",          MIPS_CPU_ASE_DSP | MIPS_CPU_ASE_DSPR2 | MIPS_CPU_ASE_MCU,
+						ISA_MIPS32R2,   CPU_MIPS32R2 },
+  { "m14kec",         MIPS_CPU_ASE_DSP | MIPS_CPU_ASE_DSPR2 | MIPS_CPU_ASE_MCU,
+						ISA_MIPS32R2,   CPU_MIPS32R2 },
   { "24kc",           0,			ISA_MIPS32R2,   CPU_MIPS32R2 },
   { "24kf2_1",        0,			ISA_MIPS32R2,   CPU_MIPS32R2 },
   { "24kf",           0,			ISA_MIPS32R2,   CPU_MIPS32R2 },
