@@ -1,3 +1,54 @@
+2011-12-13  Tristan Gingold  <gingold@adacore.com>
+
+	* od-macho.c: New file.
+	* objdump.h (objdump_private_desc_mach_o): Add.
+	* configure.in: Add Mach-O od_vectors.
+	* Makefile.am (CFILES): Add od-macho.c
+	* configure: Regenerate.
+	* Makefile.in: Regenerate.
+
+2011-12-06 David Daney <david.daney@cavium.com>
+
+	* readelf.c (dynamic_section_mips_val): Factor out trailing '\n'
+	from printed strings and move it to the end of the function.
+	Use BFD_VMA_FMT for printf format specifier for dynamic tag value.
+	Use print_vma() to print dynamic tag values.
+
+2011-12-02  Nick Clifton  <nickc@redhat.com>
+
+	* readelf.c (ia64_process_unwind): Turn into a void funtion.
+	(hppa_process_unwind): Likewise.
+	(arm_process_unwind): Likewise.
+	(process_unwind): Likewise.
+	(arm_get_section_word): Rename to get_unwind_section_word.
+	Add sym_name parameter to return the offset into the string table
+	of the symbol associated with the reloc applied to the word.
+	(decode_tic6x_unwind_regmask): Add NULL argument to invocation of
+	get_unwind_section_word.
+	(dump_arm_unwind): Likewise.
+	(decode_arm_unwind_bytecode): Prepend a comma when *not* the first
+	register in a list.
+	(decode_arm_unwind): If the returned function address is 0 and a
+	valid symname offset is provided use that to compute the name
+	associated with the entry.
+	Add extra checks of the compact model index entry.
+
+2011-11-29  Roland McGrath  <mcgrathr@google.com>
+
+	* ar.c (ranlib_usage): Describe -D.
+	(ranlib_main): Parse -D.
+	(ranlib_touch): Set BFD_DETERMINISTIC_OUTPUT under -D.
+	* doc/binutils.texi (ranlib): Describe -D, and also --help/-h/-H.
+
+2011-11-28  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/13421
+	* readelf.c (arm_section_get_word): Add descriptive comments.
+	Initliase the rel_type field of the arm_sec structure.
+	(expand_prel31): Rename to arm_expand_prel31.
+	(dump_arm_unwind): Use new name.
+	Print the function name based on the function address entry.
+
 2011-11-11  Andreas Schwab  <schwab@linux-m68k.org>
 
 	* readelf.c (process_program_headers): Fix typo printing p_memsz

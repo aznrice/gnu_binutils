@@ -1,3 +1,71 @@
+2011-12-08  Andrew Pinski  <apinski@cavium.com>
+
+	* gas/mips/mips32-mt.d: Add pause instruction encoding to the end.
+	* gas/mips/micromips@mips32r2.d: Likewise.
+	* gas/mips/mips32r2.d: Likewise.
+	* gas/mips/mips32-mt.s: Add pause instruction to the end.
+	* gas/mips/mips32r2.s: Likewise.
+
+2011-12-08  Andrew Pinski  <apinski@cavium.com>
+            Adam Nemet  <anemet@caviumnetworks.com>
+
+	* gas/mips/mips.exp: Add Octeon2 for an architecture.
+	Run octeon2 test.
+	* gas/mips/octeon2.d: New file.
+	* gas/mips/octeon2.s: New file.
+
+2011-12-07  Sameera Deshpande  <sameera.deshpande@arm.com>
+
+	* gas/arm/thumb2_ldstd_unpredictable.d: New testcase.
+	* gas/arm/thumb2_ldstd_unpredictable.l: Likewise.
+	* gas/arm/thumb2_ldstd_unpredictable.s: Likewise.
+	* gas/testsuite/gas/arm/sp-pc-validations-bad-t.l: Update
+	testcase.
+	* gas/testsuite/gas/arm/sp-pc-validations-bad-t.s: Likewise.
+
+2011-11-07  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* gas/arm/neon-suffix-bad.l: Add testcase.
+	* gas/arm/neon-suffix-bad.s: Likewise.
+
+2011-12-05  Richard Earnshaw  <rearnsha@arm.com>
+
+	* gas/arm/attr-any-armv4t.d: New test.
+	* gas/arm/attr-any-armv4t.s: New file.
+	* gas/arm/attr-any-thumbv6.d: New test.
+	* gas/arm/attr-any-thumbv6.s: New file.
+
+2011-11-30  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* gas/arm/cmdline-bad-arch.d: New test case.
+	* gas/arm/cmdline-bad-cpu.d: Likewise.
+
+2011-12-03  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* gas/mips/mips.exp (run_dump_test_arch): Add an opts parameter.
+	(run_dump_test_arches): Allow additional options to be passed.
+	(run_list_test_arch): Add opts to the name.
+	(run_list_test_arches): Allow the options to be elided.
+	(mips4-fp, mips5-fp): Run twice, one with -32 and once with -mabi=o64.
+	(mips64r2-ill, octeon-ill): Remove empty options string.
+
+2011-11-29  Andrew Pinski  <apinski@cavium.com>
+
+	* gas/mips/mips.exp: Add octeon+ for an architecture.
+	Run octeon-saa-saad test.
+	(run_dump_test_arch): For Octeon architectures, also try octeon@.
+	* gas/mips/octeon-pref.d: Remove -march=octeon from command line.
+	* gas/mips/octeon.d: Likewise.
+	* gas/mips/octeon-saa-saad.d: New file.
+	* gas/mips/octeon-saa-saad.s: New file
+
+2011-11-25  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* gas/arm/mov-highregs-any.d: New testcase.
+	* gas/arm/mov-highregs-any.s: Likewise.
+	* gas/arm/mov-lowregs-any.d: Likewise.
+	* gas/arm/mov-lowregs-any.s: Likewise.
+
 2011-11-21  Maciej W. Rozycki  <macro@codesourcery.com>
 
 	* gas/mips/micromips@24k-branch-delay-1.d: New test.

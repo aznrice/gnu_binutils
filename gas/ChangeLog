@@ -1,3 +1,66 @@
+2011-12-13  Andrew Burgess  <aburgess@broadcom.com>
+
+	* doc/internals.texi (TC_FORCE_RELOCATION_SUB_SAME): Update
+	to match code.
+
+2011-12-08  Andrew Pinski  <apinski@cavium.com>
+            Adam Nemet  <anemet@caviumnetworks.com>
+
+	* tc-mips.c (CPU_IS_OCTEON): Add Octeon2.
+	(mips_cpu_info_table): Add Octeon2.
+	* doc/c-mips.texi: Document octeon2 as an acceptable value for -march=.
+
+2011-12-07  Sameera Deshpande  <sameera.deshpande@arm.com>
+
+	* config/tc-arm.c (do_t_ldstd): Warn for unpredictable cases.
+
+2011-11-07  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* config/tc-arm.c (ARM_IT_MAX_OPERANDS): New define.
+	(arm_it): Use ARM_IT_MAX_OPERANDS.
+	(neon_select_shape): Ensure we have matched all	operands.
+
+2011-11-07  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* config/tc-arm.c (parse_neon_mov): Update which_operand
+	correctly.
+
+2011-12-05  Richard Earnshaw  <rearnsha@arm.com>
+
+	* tc-arm.c (aeabi_set_public_attributes): Correctly set
+	Tag_ARM_ISA_use and Tag_Thumb_ISA_use.
+
+2011-11-30  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* config/tc-arm.c (arm_cpu_option_table): Add name_len field.
+	(arm_arch_option_table): Likewise.
+	(arm_option_extension_value_table): Likewise.
+	(ARM_CPU_OPT): New define.
+	(ARM_ARCH_OPT): Likewise.
+	(ARM_EXT_OPT): Likewise.
+	(arm_cpus): Use ARM_CPU_OPT to initialize.
+	(arm_archs): Use ARM_ARCH_OPT to initialize.
+	(arm_extensions): Use ARM_EXT_OPT to initialize.
+	(arm_parse_extension): Ensure option string matching matches
+	the whole string.
+	(arm_parse_cpu): Likewise.
+	(arm_parse_arch): Likewise.
+
+2011-11-29  Andrew Pinski  <apinski@cavium.com>
+
+	* config/tc-mips.c (CPU_IS_OCTEON): New macro function.
+	(CPU_HAS_SEQ): Change to use CPU_IS_OCTEON.
+	(NO_ISA_COP): Likewise.
+	(macro) <ld_st>: Add support when off0 is true.
+	Add support for M_SAA_AB, M_SAA_OB, M_SAAD_OB and M_SAAD_AB.
+	(mips_cpu_info_table): Add octeon+.
+	* doc/c-mips.texi: Document octeon+ as an acceptable value for -march=.
+
+2011-11-25  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* config/tc-arm.c (do_t_mov_cmp): Allow MOV lowreg, lowreg when no CPU
+	is specified.
+
 2011-11-23  Tristan Gingold  <gingold@adacore.com>
 
 	* config/tc-alpha.c (s_alpha_prologue): Requires empty line.

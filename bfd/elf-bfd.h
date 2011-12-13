@@ -2132,9 +2132,6 @@ extern unsigned int _bfd_elf_common_section_index
 extern asection *_bfd_elf_common_section
   (asection *);
 
-extern void _bfd_dwarf2_cleanup_debug_info
-  (bfd *);
-
 extern bfd_vma _bfd_elf_default_got_elt_size
 (bfd *, struct bfd_link_info *, struct elf_link_hash_entry *, bfd *,
  unsigned long);
@@ -2236,6 +2233,10 @@ extern char *elfcore_write_s390_todpreg
 extern char *elfcore_write_s390_ctrs
   (bfd *, char *, int *, const void *, int);
 extern char *elfcore_write_s390_prefix
+  (bfd *, char *, int *, const void *, int);
+extern char *elfcore_write_s390_last_break
+  (bfd *, char *, int *, const void *, int);
+extern char *elfcore_write_s390_system_call
   (bfd *, char *, int *, const void *, int);
 extern char *elfcore_write_arm_vfp
   (bfd *, char *, int *, const void *, int);
