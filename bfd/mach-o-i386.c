@@ -338,6 +338,7 @@ const mach_o_segment_name_xlat mach_o_i386_segsec_names_xlat[] =
 #define bfd_mach_o_print_thread bfd_mach_o_i386_print_thread
 
 #define bfd_mach_o_tgt_seg_table mach_o_i386_segsec_names_xlat
+#define bfd_mach_o_section_type_valid_for_tgt NULL
 
 #define bfd_mach_o_bfd_reloc_type_lookup bfd_mach_o_i386_bfd_reloc_type_lookup 
 #define bfd_mach_o_bfd_reloc_name_lookup bfd_mach_o_i386_bfd_reloc_name_lookup
@@ -347,4 +348,5 @@ const mach_o_segment_name_xlat mach_o_i386_segsec_names_xlat[] =
 #define TARGET_ARCHITECTURE	bfd_arch_i386
 #define TARGET_BIG_ENDIAN 	0
 #define TARGET_ARCHIVE 		0
+#define TARGET_PRIORITY		0
 #include "mach-o-target.c"

@@ -1,5 +1,5 @@
 /* Mach-O object file format
-   Copyright 2009, 2011 Free Software Foundation, Inc.
+   Copyright 2009, 2011, 2012 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -45,39 +45,45 @@
 #include "mach-o/loader.h"
 #include "obj-macho.h"
 
+/* Forward decls.  */
+static segT obj_mach_o_segT_from_bfd_name (const char *, int);
+
 /* TODO: Implement "-dynamic"/"-static" command line options.  */
 
 static int obj_mach_o_is_static;
 
+/* TODO: Implement the "-n" command line option to suppress the initial
+   switch to the text segment.  */
+static int obj_mach_o_start_with_text_section = 1;
+
 /* Allow for special re-ordering on output.  */
 
-static int seen_objc_section;
+static int obj_mach_o_seen_objc_section;
 
-static void
-obj_mach_o_weak (int ignore ATTRIBUTE_UNUSED)
+/* Start-up: At present, just create the sections we want.  */
+void
+mach_o_begin (void)
 {
-  char *name;
-  int c;
-  symbolS *symbolP;
-
-  do
+  /* Mach-O only defines the .text section by default, and even this can
+     be suppressed by a flag.  In the latter event, the first code MUST
+     be a section definition.  */
+  if (obj_mach_o_start_with_text_section)
     {
-      /* Get symbol name.  */
-      name = input_line_pointer;
-      c = get_symbol_end ();
-      symbolP = symbol_find_or_make (name);
-      S_SET_WEAK (symbolP);
-      *input_line_pointer = c;
-      SKIP_WHITESPACE ();
-
-      if (c != ',')
-        break;
-      input_line_pointer++;
-      SKIP_WHITESPACE ();
+      text_section = obj_mach_o_segT_from_bfd_name (TEXT_SECTION_NAME, 1);
+      subseg_set (text_section, 0);
+      if (obj_mach_o_is_static)
+	{
+	  bfd_mach_o_section *mo_sec 
+			= bfd_mach_o_get_mach_o_section (text_section);
+	  mo_sec->flags &= ~BFD_MACH_O_S_ATTR_PURE_INSTRUCTIONS;
+	}
     }
-  while (*input_line_pointer != '\n');
-  demand_empty_rest_of_line ();
 }
+
+/* Remember the subsections_by_symbols state in case we need to reset
+   the file flags.  */
+
+static int obj_mach_o_subsections_by_symbols;
 
 /* This will put at most 16 characters (terminated by a ',' or newline) from
    the input stream into dest.  If there are more than 16 chars before the
@@ -125,6 +131,139 @@ collect_16char_name (char *dest, const char *msg, int require_comma)
   return 0;
 }
 
+static int
+obj_mach_o_get_section_names (char *seg, char *sec,
+			      unsigned segl, unsigned secl)
+{
+  /* Zero-length segment and section names are allowed.  */
+  /* Parse segment name.  */
+  memset (seg, 0, segl);
+  if (collect_16char_name (seg, "segment", 1))
+    {
+      ignore_rest_of_line ();
+      return 0;
+    }
+  input_line_pointer++; /* Skip the terminating ',' */
+
+  /* Parse section name, which can be empty.  */
+  memset (sec, 0, secl);
+  collect_16char_name (sec, "section", 0);
+  return 1;
+}
+
+/* Build (or get) a section from the mach-o description - which includes
+   optional definitions for type, attributes, alignment and stub size.
+   
+   BFD supplies default values for sections which have a canonical name.  */
+
+#define SECT_TYPE_SPECIFIED 0x0001
+#define SECT_ATTR_SPECIFIED 0x0002
+#define SECT_ALGN_SPECIFIED 0x0004
+
+static segT
+obj_mach_o_make_or_get_sect (char * segname, char * sectname,
+			     unsigned int specified_mask, 
+			     unsigned int usectype, unsigned int usecattr,
+			     unsigned int ualign, offsetT stub_size)
+{
+  unsigned int sectype, secattr, secalign;
+  flagword oldflags, flags;
+  const char *name;
+  segT sec;
+  bfd_mach_o_section *msect;
+  const mach_o_section_name_xlat *xlat;
+
+  /* This provides default bfd flags and default mach-o section type and
+     attributes along with the canonical name.  */
+  xlat = bfd_mach_o_section_data_for_mach_sect (stdoutput, segname, sectname);
+
+  /* TODO: more checking of whether overides are acually allowed.  */
+
+  if (xlat != NULL)
+    {
+      name = xstrdup (xlat->bfd_name);
+      sectype = xlat->macho_sectype;
+      if (specified_mask & SECT_TYPE_SPECIFIED)
+	{
+	  if ((sectype == BFD_MACH_O_S_ZEROFILL
+	       || sectype == BFD_MACH_O_S_GB_ZEROFILL)
+	      && sectype != usectype)
+	    as_bad (_("cannot overide zerofill section type for `%s,%s'"),
+		    segname, sectname);
+	  else
+	    sectype = usectype;
+	}
+      secattr = xlat->macho_secattr;
+      secalign = xlat->sectalign;
+      flags = xlat->bfd_flags;
+    }
+  else
+    {
+      /* There is no normal BFD section name for this section.  Create one.
+         The name created doesn't really matter as it will never be written
+         on disk.  */
+      size_t seglen = strlen (segname);
+      size_t sectlen = strlen (sectname);
+      char *n;
+
+      n = xmalloc (seglen + 1 + sectlen + 1);
+      memcpy (n, segname, seglen);
+      n[seglen] = '.';
+      memcpy (n + seglen + 1, sectname, sectlen);
+      n[seglen + 1 + sectlen] = 0;
+      name = n;
+      if (specified_mask & SECT_TYPE_SPECIFIED)
+	sectype = usectype;
+      else
+	sectype = BFD_MACH_O_S_REGULAR;
+      secattr = BFD_MACH_O_S_ATTR_NONE;
+      secalign = 0;
+      flags = SEC_NO_FLAGS;
+    }
+
+  /* For now, just use what the user provided.  */
+
+  if (specified_mask & SECT_ATTR_SPECIFIED)
+    secattr = usecattr;
+
+  if (specified_mask & SECT_ALGN_SPECIFIED)
+    secalign = ualign;
+
+  /* Sub-segments don't exists as is on Mach-O.  */
+  sec = subseg_new (name, 0);
+
+  oldflags = bfd_get_section_flags (stdoutput, sec);
+  msect = bfd_mach_o_get_mach_o_section (sec);
+
+  if (oldflags == SEC_NO_FLAGS)
+    {
+      /* New, so just use the defaults or what's specified.  */
+      if (! bfd_set_section_flags (stdoutput, sec, flags))
+	as_warn (_("failed to set flags for \"%s\": %s"),
+		 bfd_section_name (stdoutput, sec),
+		 bfd_errmsg (bfd_get_error ()));
+ 
+      strncpy (msect->segname, segname, sizeof (msect->segname));
+      strncpy (msect->sectname, sectname, sizeof (msect->sectname));
+
+      msect->align = secalign;
+      msect->flags = sectype | secattr;
+      msect->reserved2 = stub_size;
+      
+      if (sectype == BFD_MACH_O_S_ZEROFILL
+	  || sectype == BFD_MACH_O_S_GB_ZEROFILL)
+        seg_info (sec)->bss = 1;
+    }
+  else if (flags != SEC_NO_FLAGS)
+    {
+      if (flags != oldflags
+	  || msect->flags != (secattr | sectype))
+	as_warn (_("Ignoring changed section attributes for %s"), name);
+    }
+
+  return sec;
+}
+
 /* .section
 
    The '.section' specification syntax looks like:
@@ -147,41 +286,27 @@ collect_16char_name (char *dest, const char *msg, int require_comma)
 static void
 obj_mach_o_section (int ignore ATTRIBUTE_UNUSED)
 {
-  char *p;
-  char c;
   unsigned int sectype = BFD_MACH_O_S_REGULAR;
-  unsigned int defsectype = BFD_MACH_O_S_REGULAR;
-  unsigned int sectype_given = 0;
+  unsigned int specified_mask = 0;
   unsigned int secattr = 0;
-  unsigned int defsecattr = 0;
-  int secattr_given = 0;
-  unsigned int secalign = 0;
   offsetT sizeof_stub = 0;
-  const mach_o_section_name_xlat * xlat;
-  const char *name;
-  flagword oldflags, flags;
-  asection *sec;
-  bfd_mach_o_section *msect;
+  segT new_seg;
   char segname[17];
   char sectname[17];
 
-  /* Zero-length segment and section names are allowed.  */
-  /* Parse segment name.  */
-  memset (segname, 0, sizeof(segname));
-  if (collect_16char_name (segname, "segment", 1))
-    {
-      ignore_rest_of_line ();
-      return;
-    }
-  input_line_pointer++; /* Skip the terminating ',' */
+#ifdef md_flush_pending_output
+  md_flush_pending_output ();
+#endif
 
-  /* Parse section name.  */
-  memset (sectname, 0, sizeof(sectname));
-  collect_16char_name (sectname, "section", 0);
+  /* Get the User's segment annd section names.  */
+  if (! obj_mach_o_get_section_names (segname, sectname, 17, 17))
+    return;
 
-  /* Parse type.  */
+  /* Parse section type, if present.  */
   if (*input_line_pointer == ',')
     {
+      char *p;
+      char c;
       char tmpc;
       int len;
       input_line_pointer++;
@@ -199,20 +324,23 @@ obj_mach_o_section (int ignore ATTRIBUTE_UNUSED)
 
       /* Temporarily make a string from the token.  */
       p[len] = 0;
-      sectype = bfd_mach_o_get_section_type_from_name (p);
+      sectype = bfd_mach_o_get_section_type_from_name (stdoutput, p);
       if (sectype > 255) /* Max Section ID == 255.  */
         {
           as_bad (_("unknown or invalid section type '%s'"), p);
-          sectype = BFD_MACH_O_S_REGULAR;
+	  p[len] = tmpc;
+	  ignore_rest_of_line ();
+	  return;
         }
       else
-	sectype_given = 1;
+	specified_mask |= SECT_TYPE_SPECIFIED;
       /* Restore.  */
-      tmpc = p[len];
+      p[len] = tmpc;
 
       /* Parse attributes.
 	 TODO: check validity of attributes for section type.  */
-      if (sectype_given && c == ',')
+      if ((specified_mask & SECT_TYPE_SPECIFIED)
+	  && c == ',')
         {
           do
             {
@@ -237,10 +365,15 @@ obj_mach_o_section (int ignore ATTRIBUTE_UNUSED)
 	      p[len] ='\0';
               attr = bfd_mach_o_get_section_attribute_from_name (p);
 	      if (attr == -1)
-                as_bad (_("unknown or invalid section attribute '%s'"), p);
+		{
+                  as_bad (_("unknown or invalid section attribute '%s'"), p);
+		  p[len] = tmpc;
+		  ignore_rest_of_line ();
+		  return;
+                }
               else
 		{
-		  secattr_given = 1;
+		  specified_mask |= SECT_ATTR_SPECIFIED;
                   secattr |= attr;
 		}
 	      /* Restore.  */
@@ -249,87 +382,202 @@ obj_mach_o_section (int ignore ATTRIBUTE_UNUSED)
           while (*input_line_pointer == '+');
 
           /* Parse sizeof_stub.  */
-          if (*input_line_pointer == ',')
+          if ((specified_mask & SECT_ATTR_SPECIFIED) 
+	      && *input_line_pointer == ',')
             {
               if (sectype != BFD_MACH_O_S_SYMBOL_STUBS)
-                as_bad (_("unexpected sizeof_stub expression"));
+                {
+		  as_bad (_("unexpected section size information"));
+		  ignore_rest_of_line ();
+		  return;
+		}
 
 	      input_line_pointer++;
               sizeof_stub = get_absolute_expression ();
             }
-          else if (sectype == BFD_MACH_O_S_SYMBOL_STUBS)
-            as_bad (_("missing sizeof_stub expression"));
+          else if ((specified_mask & SECT_ATTR_SPECIFIED) 
+		   && sectype == BFD_MACH_O_S_SYMBOL_STUBS)
+            {
+              as_bad (_("missing sizeof_stub expression"));
+	      ignore_rest_of_line ();
+	      return;
+            }
         }
     }
-  demand_empty_rest_of_line ();
 
-  flags = SEC_NO_FLAGS;
-  /* This provides default bfd flags and default mach-o section type and
-     attributes along with the canonical name.  */
-  xlat = bfd_mach_o_section_data_for_mach_sect (stdoutput, segname, sectname);
-  if (xlat != NULL)
+  new_seg = obj_mach_o_make_or_get_sect (segname, sectname, specified_mask, 
+					 sectype, secattr, 0 /*align */,
+					 sizeof_stub);
+  if (new_seg != NULL)
     {
-      name = xstrdup (xlat->bfd_name);
-      flags = xlat->bfd_flags;
-      defsectype = xlat->macho_sectype;
-      defsecattr = xlat->macho_secattr;
-      secalign = xlat->sectalign;
+      subseg_set (new_seg, 0);
+      demand_empty_rest_of_line ();
     }
-  else
-    {
-      /* There is no normal BFD section name for this section.  Create one.
-         The name created doesn't really matter as it will never be written
-         on disk.  */
-      size_t seglen = strlen (segname);
-      size_t sectlen = strlen (sectname);
-      char *n;
+}
 
-      n = xmalloc (seglen + 1 + sectlen + 1);
-      memcpy (n, segname, seglen);
-      n[seglen] = '.';
-      memcpy (n + seglen + 1, sectname, sectlen);
-      n[seglen + 1 + sectlen] = 0;
-      name = n;
-    }
+/* .zerofill segname, sectname [, symbolname, size [, align]]
+
+   Zerofill switches, temporarily, to a sect of type 'zerofill'.
+
+   If a variable name is given, it defines that in the section.
+   Otherwise it just creates the section if it doesn't exist.  */
+
+static void
+obj_mach_o_zerofill (int ignore ATTRIBUTE_UNUSED)
+{
+  char segname[17];
+  char sectname[17];
+  segT old_seg = now_seg;
+  segT new_seg;
+  symbolS *sym = NULL;
+  unsigned int align = 0;
+  unsigned int specified_mask = 0;
+  offsetT size;
 
 #ifdef md_flush_pending_output
   md_flush_pending_output ();
 #endif
 
-  /* Sub-segments don't exists as is on Mach-O.  */
-  sec = subseg_new (name, 0);
+  /* Get the User's segment annd section names.  */
+  if (! obj_mach_o_get_section_names (segname, sectname, 17, 17))
+    return;
 
-  oldflags = bfd_get_section_flags (stdoutput, sec);
-  msect = bfd_mach_o_get_mach_o_section (sec);
-   if (oldflags == SEC_NO_FLAGS)
+  /* Parse variable definition, if present.  */
+  if (*input_line_pointer == ',')
     {
-      if (! bfd_set_section_flags (stdoutput, sec, flags))
-	as_warn (_("error setting flags for \"%s\": %s"),
-		 bfd_section_name (stdoutput, sec),
-		 bfd_errmsg (bfd_get_error ()));
-      strncpy (msect->segname, segname, sizeof (msect->segname));
-      msect->segname[16] = 0;
-      strncpy (msect->sectname, sectname, sizeof (msect->sectname));
-      msect->sectname[16] = 0;
-      msect->align = secalign;
-      if (sectype_given)
+      /* Parse symbol, size [.align] 
+         We follow the method of s_common_internal, with the difference
+         that the symbol cannot be a duplicate-common.  */
+      char *name;
+      char c;
+      char *p;
+      expressionS exp;
+  
+      input_line_pointer++; /* Skip ',' */
+      SKIP_WHITESPACE ();
+      name = input_line_pointer;
+      c = get_symbol_end ();
+      /* Just after name is now '\0'.  */
+      p = input_line_pointer;
+      *p = c;
+
+      if (name == p)
 	{
-	  msect->flags = sectype;
-	  if (secattr_given)
-	    msect->flags |= secattr;
-	  else
-	    msect->flags |= defsecattr;
+	  as_bad (_("expected symbol name"));
+	  ignore_rest_of_line ();
+	  goto done;
 	}
-      else
-        msect->flags = defsectype | defsecattr;
-      msect->reserved2 = sizeof_stub;
+
+      SKIP_WHITESPACE ();  
+      if (*input_line_pointer == ',')
+	input_line_pointer++;
+
+      expression_and_evaluate (&exp);
+      if (exp.X_op != O_constant
+	  && exp.X_op != O_absent)
+	{
+	    as_bad (_("bad or irreducible absolute expression"));
+	  ignore_rest_of_line ();
+	  goto done;
+	}
+      else if (exp.X_op == O_absent)
+	{
+	  as_bad (_("missing size expression"));
+	  ignore_rest_of_line ();
+	  goto done;
+	}
+
+      size = exp.X_add_number;
+      size &= ((offsetT) 2 << (stdoutput->arch_info->bits_per_address - 1)) - 1;
+      if (exp.X_add_number != size || !exp.X_unsigned)
+	{
+	  as_warn (_("size (%ld) out of range, ignored"),
+		   (long) exp.X_add_number);
+	  ignore_rest_of_line ();
+	  goto done;
+	}
+
+     *p = 0; /* Make the name into a c string for err messages.  */
+     sym = symbol_find_or_make (name);
+     if (S_IS_DEFINED (sym) || symbol_equated_p (sym))
+	{
+	  as_bad (_("symbol `%s' is already defined"), name);
+	  *p = c;
+	  ignore_rest_of_line ();
+	   goto done;
+	}
+
+      size = S_GET_VALUE (sym);
+      if (size == 0)
+	size = exp.X_add_number;
+      else if (size != exp.X_add_number)
+	as_warn (_("size of \"%s\" is already %ld; not changing to %ld"),
+		   name, (long) size, (long) exp.X_add_number);
+
+      *p = c;  /* Restore the termination char.  */
+      
+      SKIP_WHITESPACE ();  
+      if (*input_line_pointer == ',')
+	{
+	  align = (unsigned int) parse_align (0);
+	  if (align == (unsigned int) -1)
+	    {
+	      as_warn (_("align value not recognized, using size"));
+	      align = size;
+	    }
+	  if (align > 15)
+	    {
+	      as_warn (_("Alignment (%lu) too large: 15 assumed."),
+			(unsigned long)align);
+	      align = 15;
+	    }
+	  specified_mask |= SECT_ALGN_SPECIFIED;
+	}
     }
-  else if (flags != SEC_NO_FLAGS)
+ /* else just a section definition.  */
+
+  specified_mask |= SECT_TYPE_SPECIFIED;
+  new_seg = obj_mach_o_make_or_get_sect (segname, sectname, specified_mask, 
+					 BFD_MACH_O_S_ZEROFILL,
+					 BFD_MACH_O_S_ATTR_NONE,
+					 align, (offsetT) 0 /*stub size*/);
+  if (new_seg == NULL)
+    return;
+
+  /* In case the user specifies the bss section by mach-o name.
+     Create it on demand */
+  if (strcmp (new_seg->name, BSS_SECTION_NAME) == 0
+      && bss_section == NULL)
+    bss_section = new_seg;
+
+  subseg_set (new_seg, 0);
+
+  if (sym != NULL)
     {
-      if (flags != oldflags
-	  || msect->flags != (secattr | sectype))
-	as_warn (_("Ignoring changed section attributes for %s"), name);
+      char *pfrag;
+
+      if (align)
+	{
+	  record_alignment (new_seg, align);
+	  frag_align (align, 0, 0);
+	}
+
+      /* Detach from old frag.  */
+      if (S_GET_SEGMENT (sym) == new_seg)
+	symbol_get_frag (sym)->fr_symbol = NULL;
+
+      symbol_set_frag (sym, frag_now);
+      pfrag = frag_var (rs_org, 1, 1, 0, sym, size, NULL);
+      *pfrag = 0;
+
+      S_SET_SEGMENT (sym, new_seg);
+      if (new_seg == bss_section)
+	S_CLEAR_EXTERNAL (sym);
     }
+
+done:
+  /* switch back to the section that was current before the .zerofill.  */
+  subseg_set (old_seg, 0);
 }
 
 static segT 
@@ -454,8 +702,9 @@ obj_mach_o_objc_section (int sect_index)
   section = obj_mach_o_segT_from_bfd_name (objc_sections[sect_index], 1);
   if (section != NULL)
     {
-      seen_objc_section = 1; /* We need to ensure that certain sections are
-				present and in the right order.  */
+      obj_mach_o_seen_objc_section = 1; /* We need to ensure that certain
+					   sections are present and in the
+					   right order.  */
       subseg_set (section, 0);
     }
 
@@ -627,6 +876,9 @@ obj_mach_o_common_parse (int is_local, symbolS *symbolP,
 			 addressT size)
 {
   addressT align = 0;
+  bfd_mach_o_asymbol *s;
+
+  SKIP_WHITESPACE ();  
 
   /* Both comm and lcomm take an optional alignment, as a power
      of two between 1 and 15.  */
@@ -644,6 +896,7 @@ obj_mach_o_common_parse (int is_local, symbolS *symbolP,
 	}
     }
 
+  s = (bfd_mach_o_asymbol *) symbol_get_bfdsym (symbolP);
   if (is_local)
     {
       /* Create the BSS section on demand.  */
@@ -653,6 +906,7 @@ obj_mach_o_common_parse (int is_local, symbolS *symbolP,
 	  seg_info (bss_section)->bss = 1;	  
 	}
       bss_alloc (symbolP, size, align);
+      s->n_type = BFD_MACH_O_N_SECT;
       S_CLEAR_EXTERNAL (symbolP);
     }
   else
@@ -661,9 +915,14 @@ obj_mach_o_common_parse (int is_local, symbolS *symbolP,
       S_SET_ALIGN (symbolP, align);
       S_SET_EXTERNAL (symbolP);
       S_SET_SEGMENT (symbolP, bfd_com_section_ptr);
+      s->n_type = BFD_MACH_O_N_UNDF | BFD_MACH_O_N_EXT;
     }
 
-  symbol_get_bfdsym (symbolP)->flags |= BSF_OBJECT;
+  /* This is a data object (whatever we choose that to mean).  */
+  s->symbol.flags |= BSF_OBJECT;
+
+  /* We've set symbol qualifiers, so validate if you can.  */
+  s->symbol.udata.i = SYM_MACHO_FIELDS_NOT_VALIDATED;
 
   return symbolP;
 }
@@ -674,20 +933,276 @@ obj_mach_o_comm (int is_local)
   s_comm_internal (is_local, obj_mach_o_common_parse);
 }
 
-static void
-obj_mach_o_subsections_via_symbols (int arg ATTRIBUTE_UNUSED)
+/* Set properties that apply to the whole file.  At present, the only
+   one defined, is subsections_via_symbols.  */
+
+typedef enum obj_mach_o_file_properties {
+  OBJ_MACH_O_FILE_PROP_NONE = 0,
+  OBJ_MACH_O_FILE_PROP_SUBSECTS_VIA_SYMS,
+  OBJ_MACH_O_FILE_PROP_MAX
+} obj_mach_o_file_properties;
+
+static void 
+obj_mach_o_fileprop (int prop)
 {
-  /* Currently ignore it.  */
+  if (prop < 0 || prop >= OBJ_MACH_O_FILE_PROP_MAX)
+    as_fatal (_("internal error: bad file property ID %d"), prop);
+    
+  switch ((obj_mach_o_file_properties) prop)
+    {
+      case OBJ_MACH_O_FILE_PROP_SUBSECTS_VIA_SYMS:
+        obj_mach_o_subsections_by_symbols = 1;
+	if (!bfd_set_private_flags (stdoutput, 
+				    BFD_MACH_O_MH_SUBSECTIONS_VIA_SYMBOLS))
+	  as_bad (_("failed to set subsections by symbols"));
+	demand_empty_rest_of_line ();
+	break;
+      default:
+	break;
+    }
+}
+
+/* Temporary markers for symbol reference data.  
+   Lazy will remain in place.  */
+#define LAZY 0x01
+#define REFE 0x02
+
+/* We have a bunch of qualifiers that may be applied to symbols.
+   .globl is handled here so that we might make sure that conflicting qualifiers
+   are caught where possible.  */
+
+typedef enum obj_mach_o_symbol_type {
+  OBJ_MACH_O_SYM_UNK = 0,
+  OBJ_MACH_O_SYM_LOCAL = 1,
+  OBJ_MACH_O_SYM_GLOBL = 2,
+  OBJ_MACH_O_SYM_REFERENCE = 3,
+  OBJ_MACH_O_SYM_WEAK_REF = 4,
+  OBJ_MACH_O_SYM_LAZY_REF = 5,
+  OBJ_MACH_O_SYM_WEAK_DEF = 6,
+  OBJ_MACH_O_SYM_PRIV_EXT = 7,
+  OBJ_MACH_O_SYM_NO_DEAD_STRIP = 8,
+  OBJ_MACH_O_SYM_WEAK = 9
+} obj_mach_o_symbol_type;
+
+/* Set Mach-O-specific symbol qualifiers. */
+
+static int
+obj_mach_o_set_symbol_qualifier (symbolS *sym, int type)
+{
+  int is_defined;
+  bfd_mach_o_asymbol *s = (bfd_mach_o_asymbol *) symbol_get_bfdsym (sym);
+  bfd_mach_o_section *sec;
+  int sectype = -1;
+  int err = 0;
+
+  /* If the symbol is defined, then we can do more rigorous checking on
+     the validity of the qualifiers.  Otherwise, we are stuck with waiting 
+     until it's defined - or until write the file.
+     
+     In certain cases (e.g. when a symbol qualifier is intended to introduce
+     an undefined symbol in a stubs section) we should check that the current
+     section is appropriate to the qualifier.  */
+
+  is_defined = s->symbol.section != bfd_und_section_ptr;
+  if (is_defined)
+    sec = bfd_mach_o_get_mach_o_section (s->symbol.section) ;
+  else
+    sec = bfd_mach_o_get_mach_o_section (now_seg) ;
+
+  if (sec != NULL)
+    sectype = sec->flags & BFD_MACH_O_SECTION_TYPE_MASK;
+
+  switch ((obj_mach_o_symbol_type) type)
+    {
+      case OBJ_MACH_O_SYM_LOCAL:
+	/* This is an extension over the system tools.  */
+        if (s->n_type & (BFD_MACH_O_N_PEXT | BFD_MACH_O_N_EXT))
+	  {
+	    as_bad (_("'%s' previously declared as '%s'."), s->symbol.name,
+		      (s->n_type & BFD_MACH_O_N_PEXT) ? "private extern"
+						      : "global" );
+	    err = 1;
+	  }
+	else
+	  {
+	    s->n_type &= ~BFD_MACH_O_N_EXT;
+	    S_CLEAR_EXTERNAL (sym);
+	  }
+	break;
+
+      case OBJ_MACH_O_SYM_PRIV_EXT:
+	s->n_type |= BFD_MACH_O_N_PEXT ;
+	s->n_desc &= ~LAZY; /* The native tool switches this off too.  */
+	/* We follow the system tools in marking PEXT as also global.  */
+	/* Fall through.  */
+
+      case OBJ_MACH_O_SYM_GLOBL:
+	/* It's not an error to define a symbol and then make it global.  */
+	s->n_type |= BFD_MACH_O_N_EXT;
+	S_SET_EXTERNAL (sym);
+	break;
+
+      case OBJ_MACH_O_SYM_REFERENCE:
+        if (is_defined)
+          s->n_desc |= BFD_MACH_O_N_NO_DEAD_STRIP;
+        else
+          s->n_desc |= (REFE | BFD_MACH_O_N_NO_DEAD_STRIP);
+	break;
+
+      case OBJ_MACH_O_SYM_LAZY_REF:
+        if (is_defined)
+          s->n_desc |= BFD_MACH_O_N_NO_DEAD_STRIP;
+        else
+          s->n_desc |= (REFE | LAZY | BFD_MACH_O_N_NO_DEAD_STRIP);
+	break;
+
+      /* Force ld to retain the symbol - even if it appears unused.  */
+      case OBJ_MACH_O_SYM_NO_DEAD_STRIP:
+	s->n_desc |= BFD_MACH_O_N_NO_DEAD_STRIP ;
+	break;
+
+      /* Mach-O's idea of weak ...  */
+      case OBJ_MACH_O_SYM_WEAK_REF:
+	s->n_desc |= BFD_MACH_O_N_WEAK_REF ;
+	break;
+
+      case OBJ_MACH_O_SYM_WEAK_DEF:
+	if (is_defined && sectype != BFD_MACH_O_S_COALESCED)
+	  {
+	    as_bad (_("'%s' can't be a weak_definition (currently only"
+		      " supported in sections of type coalesced)"),
+		      s->symbol.name);
+	    err = 1;
+	  }
+	else
+	  s->n_desc |= BFD_MACH_O_N_WEAK_DEF;
+	break;
+
+      case OBJ_MACH_O_SYM_WEAK:
+        /* A generic 'weak' - we try to figure out what it means at
+	   symbol frob time.  */
+	S_SET_WEAK (sym);
+	break;
+
+      default:
+	break;
+    }
+
+    /* We've seen some kind of qualifier - check validity if or when the entity
+     is defined.  */
+  s->symbol.udata.i = SYM_MACHO_FIELDS_NOT_VALIDATED;
+  return err;
+}
+
+/* Respond to symbol qualifiers.
+   All of the form:
+   .<qualifier> symbol [, symbol]*
+   a list of symbols is an extension over the Darwin system as.  */
+
+static void
+obj_mach_o_sym_qual (int ntype)
+{
+  char *name;
+  char c;
+  symbolS *symbolP;
+
+#ifdef md_flush_pending_output
+  md_flush_pending_output ();
+#endif
+
+  do
+    {
+      name = input_line_pointer;
+      c = get_symbol_end ();
+      symbolP = symbol_find_or_make (name);
+      obj_mach_o_set_symbol_qualifier (symbolP, ntype);
+      *input_line_pointer = c;
+      SKIP_WHITESPACE ();
+      c = *input_line_pointer;
+      if (c == ',')
+	{
+	  input_line_pointer++;
+	  SKIP_WHITESPACE ();
+	  if (is_end_of_line[(unsigned char) *input_line_pointer])
+	    c = '\n';
+	}
+    }
+  while (c == ',');
+
   demand_empty_rest_of_line ();
 }
 
-/* Dummy function to allow test-code to work while we are working
-   on things.  */
+typedef struct obj_mach_o_indirect_sym
+{
+  symbolS *sym;
+  segT sect;
+  struct obj_mach_o_indirect_sym *next;
+} obj_mach_o_indirect_sym;
+
+/* We store in order an maintain a pointer to the last one - to save reversing
+   later.  */
+obj_mach_o_indirect_sym *indirect_syms;
+obj_mach_o_indirect_sym *indirect_syms_tail;
 
 static void
-obj_mach_o_placeholder (int arg ATTRIBUTE_UNUSED)
+obj_mach_o_indirect_symbol (int arg ATTRIBUTE_UNUSED)
 {
-  ignore_rest_of_line ();
+  bfd_mach_o_section *sec = bfd_mach_o_get_mach_o_section (now_seg);
+
+#ifdef md_flush_pending_output
+  md_flush_pending_output ();
+#endif
+
+  if (obj_mach_o_is_static)
+    as_bad (_("use of .indirect_symbols requires `-dynamic'"));
+
+  switch (sec->flags & BFD_MACH_O_SECTION_TYPE_MASK)
+    {
+      case BFD_MACH_O_S_SYMBOL_STUBS:
+      case BFD_MACH_O_S_LAZY_SYMBOL_POINTERS:
+      case BFD_MACH_O_S_NON_LAZY_SYMBOL_POINTERS:
+        {
+          obj_mach_o_indirect_sym *isym;
+	  char *name = input_line_pointer;
+	  char c = get_symbol_end ();
+	  symbolS *sym = symbol_find_or_make (name);
+	  unsigned int elsize =
+			bfd_mach_o_section_get_entry_size (stdoutput, sec);
+
+	  if (elsize == 0)
+	    {
+	      as_bad (_("attempt to add an indirect_symbol to a stub or"
+			" reference section with a zero-sized element at %s"),
+			name);
+	      *input_line_pointer = c;
+	      ignore_rest_of_line ();
+	      return;
+	  }
+	  *input_line_pointer = c;
+
+	  isym = (obj_mach_o_indirect_sym *)
+			xmalloc (sizeof (obj_mach_o_indirect_sym));
+
+	  /* Just record the data for now, we will validate it when we
+	     compute the output in obj_mach_o_set_indirect_symbols.  */
+	  isym->sym = sym;
+	  isym->sect = now_seg;
+	  isym->next = NULL;
+	  if (indirect_syms == NULL)
+	    indirect_syms = isym;
+	  else
+	    indirect_syms_tail->next = isym;
+	  indirect_syms_tail = isym;
+	}
+        break;
+
+      default:
+	as_bad (_("an .indirect_symbol must be in a symbol pointer"
+		  " or stub section."));
+	ignore_rest_of_line ();
+	return;
+    }
+  demand_empty_rest_of_line ();
 }
 
 const pseudo_typeS mach_o_pseudo_table[] =
@@ -768,15 +1283,349 @@ const pseudo_typeS mach_o_pseudo_table[] =
   { "picsymbol_stub3", obj_mach_o_opt_tgt_section, 4}, /* extension.  */
 
   { "section", obj_mach_o_section, 0},
+  { "zerofill", obj_mach_o_zerofill, 0},
 
-  /* Symbol-related.  */
-  { "indirect_symbol", obj_mach_o_placeholder, 0},
-  { "weak_definition", obj_mach_o_placeholder, 0},
-  { "private_extern", obj_mach_o_placeholder, 0},
-  { "weak", obj_mach_o_weak, 0},   /* extension */
+  /* Symbol qualifiers.  */
+  {"local",		obj_mach_o_sym_qual, OBJ_MACH_O_SYM_LOCAL},
+  {"globl",		obj_mach_o_sym_qual, OBJ_MACH_O_SYM_GLOBL},
+  {"reference",		obj_mach_o_sym_qual, OBJ_MACH_O_SYM_REFERENCE},
+  {"weak_reference",	obj_mach_o_sym_qual, OBJ_MACH_O_SYM_WEAK_REF},
+  {"lazy_reference",	obj_mach_o_sym_qual, OBJ_MACH_O_SYM_LAZY_REF},
+  {"weak_definition",	obj_mach_o_sym_qual, OBJ_MACH_O_SYM_WEAK_DEF},
+  {"private_extern",	obj_mach_o_sym_qual, OBJ_MACH_O_SYM_PRIV_EXT},
+  {"no_dead_strip",	obj_mach_o_sym_qual, OBJ_MACH_O_SYM_NO_DEAD_STRIP},
+  {"weak",		obj_mach_o_sym_qual, OBJ_MACH_O_SYM_WEAK}, /* ext */
+
+  { "indirect_symbol",	obj_mach_o_indirect_symbol, 0},
 
   /* File flags.  */
-  { "subsections_via_symbols", obj_mach_o_subsections_via_symbols, 0 },
+  { "subsections_via_symbols", obj_mach_o_fileprop, 
+			       OBJ_MACH_O_FILE_PROP_SUBSECTS_VIA_SYMS},
 
   {NULL, NULL, 0}
 };
+
+/* Determine the default n_type value for a symbol from its section.  */
+
+static unsigned
+obj_mach_o_type_for_symbol (bfd_mach_o_asymbol *s)
+{
+  if (s->symbol.section == bfd_abs_section_ptr)
+    return BFD_MACH_O_N_ABS;
+  else if (s->symbol.section == bfd_com_section_ptr
+	   || s->symbol.section == bfd_und_section_ptr)
+    return BFD_MACH_O_N_UNDF;
+  else
+    return BFD_MACH_O_N_SECT;
+}
+
+/* We need to check the correspondence between some kinds of symbols and their
+   sections.  Common and BSS vars will seen via the obj_macho_comm() function.
+   
+   The earlier we can pick up a problem, the better the diagnostics will be.
+   
+   However, when symbol type information is attached, the symbol section will
+   quite possibly be unknown.  So we are stuck with checking (most of the)
+   validity at the time the file is written (unfortunately, then one doesn't
+   get line number information in the diagnostic).  */
+
+/* Here we pick up the case where symbol qualifiers have been applied that
+   are possibly incompatible with the section etc. that the symbol is defined
+   in.  */
+
+void obj_macho_frob_label (struct symbol *sp)
+{
+  bfd_mach_o_asymbol *s;
+  unsigned base_type;
+  bfd_mach_o_section *sec;
+  int sectype = -1;
+
+  /* Leave local symbols alone.  */
+
+  if (S_IS_LOCAL (sp))
+    return;
+
+  s = (bfd_mach_o_asymbol *) symbol_get_bfdsym (sp);
+  /* Leave debug symbols alone.  */
+  if ((s->n_type & BFD_MACH_O_N_STAB) != 0)
+    return;
+
+  /* This is the base symbol type, that we mask in.  */
+  base_type = obj_mach_o_type_for_symbol (s);
+
+  sec = bfd_mach_o_get_mach_o_section (s->symbol.section);  
+  if (sec != NULL)
+    sectype = sec->flags & BFD_MACH_O_SECTION_TYPE_MASK;
+
+  /* If there is a pre-existing qualifier, we can make some checks about
+     validity now.  */
+
+  if(s->symbol.udata.i == SYM_MACHO_FIELDS_NOT_VALIDATED)
+    {
+      if ((s->n_desc & BFD_MACH_O_N_WEAK_DEF)
+	  && sectype != BFD_MACH_O_S_COALESCED)
+	as_bad (_("'%s' can't be a weak_definition (currently only supported"
+		  " in sections of type coalesced)"), s->symbol.name);
+
+      /* Have we changed from an undefined to defined ref? */
+      s->n_desc &= ~(REFE | LAZY);
+    }
+
+  s->n_type &= ~BFD_MACH_O_N_TYPE;
+  s->n_type |= base_type;
+}
+
+/* This is the fall-back, we come here when we get to the end of the file and
+   the symbol is not defined - or there are combinations of qualifiers required
+   (e.g. global + weak_def).  */
+
+int
+obj_macho_frob_symbol (struct symbol *sp)
+{
+  bfd_mach_o_asymbol *s;
+  unsigned base_type;
+  bfd_mach_o_section *sec;
+  int sectype = -1;
+
+  /* Leave local symbols alone.  */
+  if (S_IS_LOCAL (sp))
+    return 0;
+
+  s = (bfd_mach_o_asymbol *) symbol_get_bfdsym (sp);
+  /* Leave debug symbols alone.  */
+  if ((s->n_type & BFD_MACH_O_N_STAB) != 0)
+    return 0;
+
+  base_type = obj_mach_o_type_for_symbol (s);
+  sec = bfd_mach_o_get_mach_o_section (s->symbol.section);  
+  if (sec != NULL)
+    sectype = sec->flags & BFD_MACH_O_SECTION_TYPE_MASK;
+
+  if (s->symbol.section == bfd_und_section_ptr)
+    {
+      /* ??? Do we really gain much from implementing this as well as the
+	 mach-o specific ones?  */
+      if (s->symbol.flags & BSF_WEAK)
+	s->n_desc |= BFD_MACH_O_N_WEAK_REF;
+
+      /* Undefined syms, become extern.  */
+      s->n_type |= BFD_MACH_O_N_EXT;
+      S_SET_EXTERNAL (sp);
+    }
+  else if (s->symbol.section == bfd_com_section_ptr)
+    {
+      /* ... so do comm.  */
+      s->n_type |= BFD_MACH_O_N_EXT;
+      S_SET_EXTERNAL (sp);
+    }
+  else
+    {
+      if ((s->symbol.flags & BSF_WEAK)
+	   && (sectype == BFD_MACH_O_S_COALESCED)
+	   && (s->n_type & (BFD_MACH_O_N_PEXT | BFD_MACH_O_N_EXT)))
+	s->n_desc |= BFD_MACH_O_N_WEAK_DEF;
+/* ??? we should do this - but then that reveals that the semantics of weak
+       are different from what's supported in mach-o object files.
+      else
+	as_bad (_("'%s' can't be a weak_definition."),
+		s->symbol.name); */
+    }
+
+  if (s->symbol.udata.i == SYM_MACHO_FIELDS_UNSET)
+    {
+      /* Anything here that should be added that is non-standard.  */
+      s->n_desc &= ~BFD_MACH_O_REFERENCE_MASK;
+      s->symbol.udata.i = SYM_MACHO_FIELDS_NOT_VALIDATED;
+    }    
+  else if (s->symbol.udata.i == SYM_MACHO_FIELDS_NOT_VALIDATED)
+    {
+      /* Try to validate any combinations.  */
+      if (s->n_desc & BFD_MACH_O_N_WEAK_DEF)
+	{
+	  if (s->symbol.section == bfd_und_section_ptr)
+	    as_bad (_("'%s' can't be a weak_definition (since it is"
+		      " undefined)"), s->symbol.name);
+	  else if (sectype != BFD_MACH_O_S_COALESCED)
+	    as_bad (_("'%s' can't be a weak_definition (currently only supported"
+		      " in sections of type coalesced)"), s->symbol.name);
+	  else if (! (s->n_type & (BFD_MACH_O_N_PEXT | BFD_MACH_O_N_EXT)))
+	    as_bad (_("Non-global symbol: '%s' can't be a weak_definition."),
+		    s->symbol.name);
+	}
+
+    }
+  else
+    as_bad (_("internal error: [%s] unexpected code [%lx] in frob symbol"),
+	    s->symbol.name, (unsigned long)s->symbol.udata.i);
+
+  s->n_type &= ~BFD_MACH_O_N_TYPE;
+  s->n_type |= base_type;
+
+  if (s->symbol.flags & BSF_GLOBAL)
+    s->n_type |= BFD_MACH_O_N_EXT;
+
+  /* This cuts both ways - we promote some things to external above.  */
+  if (s->n_type & (BFD_MACH_O_N_PEXT | BFD_MACH_O_N_EXT))
+    S_SET_EXTERNAL (sp);
+
+  return 0;
+}
+
+static void
+obj_mach_o_set_indirect_symbols (bfd *abfd, asection *sec,
+				 void *xxx ATTRIBUTE_UNUSED)
+{
+  bfd_vma sect_size = bfd_section_size (abfd, sec);
+  bfd_mach_o_section *ms = bfd_mach_o_get_mach_o_section (sec);
+  unsigned lazy = 0;
+
+  /* See if we have any indirect syms to consider.  */
+  if (indirect_syms == NULL)
+    return;
+
+  /* Process indirect symbols.
+     Check for errors, if OK attach them as a flat array to the section
+     for which they are defined.  */
+
+  switch (ms->flags & BFD_MACH_O_SECTION_TYPE_MASK)
+    {
+      case BFD_MACH_O_S_SYMBOL_STUBS:
+      case BFD_MACH_O_S_LAZY_SYMBOL_POINTERS:
+	lazy = LAZY;
+	/* Fall through.  */
+      case BFD_MACH_O_S_NON_LAZY_SYMBOL_POINTERS:
+	{
+	  unsigned int nactual = 0;
+	  unsigned int ncalc;
+	  obj_mach_o_indirect_sym *isym;
+	  obj_mach_o_indirect_sym *list = NULL;
+	  obj_mach_o_indirect_sym *list_tail = NULL;
+	  unsigned long eltsiz = 
+			bfd_mach_o_section_get_entry_size (abfd, ms);
+
+	  for (isym = indirect_syms; isym != NULL; isym = isym->next)
+	    {
+	      if (isym->sect == sec)
+		{
+		  nactual++;
+		  if (list == NULL)
+		    list = isym;
+		  else
+		    list_tail->next = isym;
+		  list_tail = isym;
+		}
+	    }
+
+	  /* If none are in this section, stop here.  */
+	  if (nactual == 0)
+	    break;
+
+	  /* If we somehow added indirect symbols to a section with a zero
+	     entry size, we're dead ... */
+	  gas_assert (eltsiz != 0);
+
+	  ncalc = (unsigned int) (sect_size / eltsiz);
+	  if (nactual != ncalc)
+	    as_bad (_("the number of .indirect_symbols defined in section %s"
+		      " does not match the number expected (%d defined, %d"
+		      " expected)"), sec->name, nactual, ncalc);
+	  else
+	    {
+	      unsigned n;
+	      bfd_mach_o_asymbol *sym;
+	      ms->indirect_syms =
+			bfd_zalloc (abfd,
+				    nactual * sizeof (bfd_mach_o_asymbol *));
+
+	      if (ms->indirect_syms == NULL)
+		{
+		  as_fatal (_("internal error: failed to allocate %d indirect"
+			      "symbol pointers"), nactual);
+		}
+	      
+	      for (isym = list, n = 0; isym != NULL; isym = isym->next, n++)
+		{
+		  /* Array is init to NULL & NULL signals a local symbol
+		     If the section is lazy-bound, we need to keep the
+		     reference to the symbol, since dyld can override.  */
+		  if (S_IS_LOCAL (isym->sym) && ! lazy)
+		    ;
+		  else
+		    {
+		      sym = (bfd_mach_o_asymbol *)symbol_get_bfdsym (isym->sym);
+		      if (sym == NULL)
+		        ;
+		      /* If the symbols is external ...  */
+		      else if (S_IS_EXTERNAL (isym->sym)
+			       || (sym->n_type & BFD_MACH_O_N_EXT)
+			       || ! S_IS_DEFINED (isym->sym)
+			       || lazy)
+			{
+			  sym->n_desc &= ~LAZY;
+			  /* ... it can be lazy, if not defined or hidden.  */
+			  if ((sym->n_type & BFD_MACH_O_N_TYPE) 
+			       == BFD_MACH_O_N_UNDF 
+			      && ! (sym->n_type & BFD_MACH_O_N_PEXT)
+			      && (sym->n_type & BFD_MACH_O_N_EXT))
+			    sym->n_desc |= lazy;
+			  ms->indirect_syms[n] = sym;
+		        }
+		    }
+		}
+	    }
+	}
+	break;
+
+      default:
+	break;
+    }
+}
+
+/* The process of relocation could alter what's externally visible, thus we
+   leave setting the indirect symbols until last.  */
+
+void
+obj_mach_o_frob_file_after_relocs (void)
+{
+  bfd_map_over_sections (stdoutput, obj_mach_o_set_indirect_symbols, (char *) 0);
+}
+
+/* Support stabs for mach-o.  */
+
+void
+obj_mach_o_process_stab (int what, const char *string,
+			 int type, int other, int desc)
+{
+  symbolS *symbolP;
+  bfd_mach_o_asymbol *s;
+
+  switch (what)
+    {
+      case 'd':
+	symbolP = symbol_new ("", now_seg, frag_now_fix (), frag_now);
+	/* Special stabd NULL name indicator.  */
+	S_SET_NAME (symbolP, NULL);
+	break;
+
+      case 'n':
+      case 's':
+	symbolP = symbol_new (string, undefined_section, (valueT) 0,
+			      &zero_address_frag);
+	pseudo_set (symbolP);
+	break;
+
+      default:
+	as_bad(_("unrecognized stab type '%c'"), (char)what);
+	abort ();
+	break;
+    }
+
+  s = (bfd_mach_o_asymbol *) symbol_get_bfdsym (symbolP);
+  s->n_type = type;
+  s->n_desc = desc;
+  /* For stabd, this will eventually get overwritten by the section number.  */
+  s->n_sect = other;
+
+  /* It's a debug symbol.  */
+  s->symbol.flags |= BSF_DEBUGGING;
+}

@@ -554,6 +554,10 @@ bfd_boolean _bfd_generic_find_line
 extern bfd_boolean _bfd_dwarf2_find_inliner_info
   (bfd *, const char **, const char **, unsigned int *, void **);
 
+/* Read DWARF 2 debugging information. */
+extern bfd_boolean _bfd_dwarf2_slurp_debug_info
+  (bfd *, bfd *, const struct dwarf_debug_section *, asymbol **, void **);
+
 /* Clean up the data used to handle DWARF 2 debugging information. */
 extern void _bfd_dwarf2_cleanup_debug_info
   (bfd *, void **);
@@ -1090,6 +1094,13 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_MIPS16_HI16",
   "BFD_RELOC_MIPS16_HI16_S",
   "BFD_RELOC_MIPS16_LO16",
+  "BFD_RELOC_MIPS16_TLS_GD",
+  "BFD_RELOC_MIPS16_TLS_LDM",
+  "BFD_RELOC_MIPS16_TLS_DTPREL_HI16",
+  "BFD_RELOC_MIPS16_TLS_DTPREL_LO16",
+  "BFD_RELOC_MIPS16_TLS_GOTTPREL",
+  "BFD_RELOC_MIPS16_TLS_TPREL_HI16",
+  "BFD_RELOC_MIPS16_TLS_TPREL_LO16",
   "BFD_RELOC_MIPS_LITERAL",
   "BFD_RELOC_MICROMIPS_LITERAL",
   "BFD_RELOC_MICROMIPS_7_PCREL_S1",

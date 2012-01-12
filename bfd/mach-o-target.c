@@ -46,7 +46,7 @@
 #define bfd_mach_o_bfd_final_link                     _bfd_generic_final_link
 #define bfd_mach_o_bfd_link_split_section             _bfd_generic_link_split_section
 #define bfd_mach_o_bfd_merge_private_bfd_data         _bfd_generic_bfd_merge_private_bfd_data
-#define bfd_mach_o_bfd_set_private_flags              _bfd_generic_bfd_set_private_flags
+#define bfd_mach_o_bfd_set_private_flags              bfd_mach_o_bfd_set_private_flags
 #define bfd_mach_o_get_section_contents               _bfd_generic_get_section_contents
 #define bfd_mach_o_bfd_gc_sections                    bfd_generic_gc_sections
 #define bfd_mach_o_bfd_lookup_section_flags           bfd_generic_lookup_section_flags
@@ -96,7 +96,8 @@ static const bfd_mach_o_backend_data TARGET_NAME_BACKEND =
   bfd_mach_o_swap_reloc_in,
   bfd_mach_o_swap_reloc_out,
   bfd_mach_o_print_thread,
-  bfd_mach_o_tgt_seg_table
+  bfd_mach_o_tgt_seg_table,
+  bfd_mach_o_section_type_valid_for_tgt
 };
 
 const bfd_target TARGET_NAME =
@@ -118,7 +119,7 @@ const bfd_target TARGET_NAME =
   '_',				/* symbol_leading_char.  */
   ' ',				/* ar_pad_char.  */
   16,				/* ar_max_namelen.  */
-  0,				/* match priority.  */
+  TARGET_PRIORITY,	/* match priority.  */
 
 #if TARGET_BIG_ENDIAN
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,

@@ -913,6 +913,7 @@ if { [istarget mips*-*-vxworks*] } {
 
 	run_list_test "tls-ill" "-32"
 	run_dump_test "tls-o32"
+	run_dump_test "tls-relw"
 	run_dump_test "jalr2"
 
 	run_dump_test_arches "aent"	[mips_arch_list_matching mips1]
@@ -1049,6 +1050,7 @@ if { [istarget mips*-*-vxworks*] } {
     run_dump_test "align"
     run_dump_test "align2"
     run_dump_test "align2-el"
+    run_dump_test "align3"
     run_dump_test "odd-float"
 
     run_list_test_arches "mips-macro-ill-sfp" "-32 -msingle-float" \
