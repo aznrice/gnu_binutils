@@ -1,3 +1,9 @@
+2012-01-12  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-error-15.patch: New file. Replace ...
+	* binutils-error-14.patch: This. Removed.
+	* README: Likewise.
+
 2011-10-21  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-lto-mixed-18.patch: Add a test for PR ld/13287.
