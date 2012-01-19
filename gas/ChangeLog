@@ -1,3 +1,36 @@
+2012-01-17  Andrew Burgess  <aburgess@broadcom.com>
+
+	* write.c (fix_new_internal): Don't mark used parameter as unused.
+
+2012-01-17  Alan Modra  <amodra@gmail.com>
+
+	* as.c (parse_args): Update copyright message year.
+
+2012-01-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (cpu_arch): Add ".vmfunc".
+
+	* doc/c-i386.texi: Document vmfunc.
+
+2012-01-13  Tristan Gingold  <gingold@adacore.com>
+
+	* config/obj-macho.c (obj_mach_o_reorder_section_relocs): New.
+	* config/obj-macho.h (SET_SECTION_RELOCS): Define.
+	(obj_mach_o_reorder_section_relocs): Declare.
+
+2012-01-13  Iain Sandoe  <idsandoe@googlemail.com>
+
+	* config/obj-macho.c (obj_mach_o_set_indirect_symbols): Handle
+	absolute indirect symbols.
+
+2012-01-13  Iain Sandoe  <idsandoe@googlemail.com>
+
+	* config/obj-macho.c (obj_mach_o_set_vma_data): New type.
+	(obj_mach_o_set_section_vma): New.
+	(obj_mach_o_post_relax_hook): New.
+	* config/obj-macho.h (md_post_relax_hook): Define.
+	(obj_mach_o_post_relax_hook): Declare.
+
 2012-01-12  Iain Sandoe  <idsandoe@googlemail.com>
 
 	* config/obj-macho.c (obj_mach_o_set_symbol_qualifier): Switch off
