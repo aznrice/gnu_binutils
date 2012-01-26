@@ -1,3 +1,33 @@
+2012-01-24  Cary Coutant  <ccoutant@google.com>
+
+	* int_encoding.cc (read_unsigned_LEB_128): Replaced with inline
+	definition and ...
+	(read_unsigned_LEB_128_x): ... this new function.
+	(read_signed_LEB_128): Replaced with inline definition and ...
+	(read_signed_LEB_128_x): ... this new function.
+	* int_encoding.h  (read_unsigned_LEB_128_x): New function.
+	(read_unsigned_LEB_128): Add inline definition.
+	(read_signed_LEB_128_x): New function.
+	(read_signed_LEB_128): Add inline definition.
+	* testsuite/Makefile.am (leb128_unittest): New unit test.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/leb128_unittest.cc: New unit test.
+
+2012-01-23  Ian Lance Taylor  <iant@google.com>
+
+	PR gold/13617
+	* i386.cc (Target_i386::do_code_fill): When using a jmp
+	instruction, pad with nop instructions.
+	* x86_64.cc (Target_x86_64::do_code_fill): Likewise.
+
+2012-01-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* x86_64.cc (gc_process_relocs): Add typename on types used in
+	template.
+	(scan_relocs): Likewise.
+	(relocate_section): Likewise.
+	(apply_relocation): Likewise.
+
 2012-01-10  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* x86_64.cc (Scan::check_non_pic): Allow R_X86_64_32 for x32.

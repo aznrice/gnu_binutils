@@ -280,8 +280,13 @@ struct _i386_insn
     /* Swap operand in encoding.  */
     unsigned int swap_operand;
 
-    /* Force 32bit displacement in encoding.  */
-    unsigned int disp32_encoding;
+    /* Prefer 8bit or 32bit displacement in encoding.  */
+    enum
+      {
+	disp_encoding_default = 0,
+	disp_encoding_8bit,
+	disp_encoding_32bit
+      } disp_encoding;
 
     /* Error message.  */
     enum i386_error error;
@@ -304,7 +309,8 @@ const char extra_symbol_chars[] = "*%-(["
      || ((defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF))	\
 	 && !defined (TE_GNU)				\
 	 && !defined (TE_LINUX)				\
- 	 && !defined (TE_NETWARE)			\
+	 && !defined (TE_NACL)				\
+	 && !defined (TE_NETWARE)			\
 	 && !defined (TE_FreeBSD)			\
 	 && !defined (TE_DragonFly)			\
 	 && !defined (TE_NetBSD)))
@@ -3053,7 +3059,7 @@ md_assemble (char *line)
   /* Don't optimize displacement for movabs since it only takes 64bit
      displacement.  */
   if (i.disp_operands
-      && !i.disp32_encoding
+      && i.disp_encoding != disp_encoding_32bit
       && (flag_code != CODE_64BIT
 	  || strcmp (mnemonic, "movabs") != 0))
     optimize_disp ();
@@ -3332,11 +3338,15 @@ parse_insn (char *line, char *mnemonic)
 	 encoding.  */
       if (mnem_p - 2 == dot_p && dot_p[1] == 's')
 	i.swap_operand = 1;
-      else if (mnem_p - 4 == dot_p 
+      else if (mnem_p - 3 == dot_p
+	       && dot_p[1] == 'd'
+	       && dot_p[2] == '8')
+	i.disp_encoding = disp_encoding_8bit;
+      else if (mnem_p - 4 == dot_p
 	       && dot_p[1] == 'd'
 	       && dot_p[2] == '3'
 	       && dot_p[3] == '2')
-	i.disp32_encoding = 1;
+	i.disp_encoding = disp_encoding_32bit;
       else
 	goto check_suffix;
       mnem_p = dot_p;
@@ -5698,7 +5708,19 @@ build_modrm_byte (void)
 		      || i.reloc[op] == BFD_RELOC_X86_64_TLSDESC_CALL))
 		i.rm.mode = 0;
 	      else
-		i.rm.mode = mode_from_disp_size (i.types[op]);
+		{
+		  if (!fake_zero_displacement
+		      && !i.disp_operands
+		      && i.disp_encoding)
+		    {
+		      fake_zero_displacement = 1;
+		      if (i.disp_encoding == disp_encoding_8bit)
+			i.types[op].bitfield.disp8 = 1;
+		      else
+			i.types[op].bitfield.disp32 = 1;
+		    }
+		  i.rm.mode = mode_from_disp_size (i.types[op]);
+		}
 	    }
 
 	  if (fake_zero_displacement)
@@ -5833,7 +5855,7 @@ build_modrm_byte (void)
 		  vex_reg = op + 1;
 		}
 	      else
-		{ 
+		{
 		  /* There are only 2 operands.  */
 		  gas_assert (op < 2 && i.operands == 2);
 		  vex_reg = 1;
@@ -5900,7 +5922,7 @@ output_branch (void)
   offsetT off;
 
   code16 = flag_code == CODE_16BIT ? CODE16 : 0;
-  size = i.disp32_encoding ? BIG : SMALL;
+  size = i.disp_encoding == disp_encoding_32bit ? BIG : SMALL;
 
   prefix = 0;
   if (i.prefix[DATA_PREFIX] != 0)
@@ -8626,7 +8648,7 @@ show_arch (FILE *stream, int ext, int check)
 	  fprintf (stream, "%s\n", message);
 	  p = start;
 	  left = size - (start - message) - len - 2;
-	  
+
 	  gas_assert (left >= 0);
 
 	  p = mempcpy (p, name, len);

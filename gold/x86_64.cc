@@ -1,6 +1,7 @@
 // x86_64.cc -- x86_64 target support for gold.
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
+// Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -2809,8 +2810,8 @@ Target_x86_64<size>::gc_process_relocs(Symbol_table* symtab,
     }
 
    gold::gc_process_relocs<size, false, Target_x86_64<size>, elfcpp::SHT_RELA,
-                           Target_x86_64<size>::Scan,
-			   Target_x86_64<size>::Relocatable_size_for_reloc>(
+                           typename Target_x86_64<size>::Scan,
+			   typename Target_x86_64<size>::Relocatable_size_for_reloc>(
     symtab,
     layout,
     this,
@@ -2848,7 +2849,7 @@ Target_x86_64<size>::scan_relocs(Symbol_table* symtab,
     }
 
   gold::scan_relocs<size, false, Target_x86_64<size>, elfcpp::SHT_RELA,
-      Target_x86_64<size>::Scan>(
+      typename Target_x86_64<size>::Scan>(
     symtab,
     layout,
     this,
@@ -3780,7 +3781,7 @@ Target_x86_64<size>::relocate_section(
   gold_assert(sh_type == elfcpp::SHT_RELA);
 
   gold::relocate_section<size, false, Target_x86_64<size>, elfcpp::SHT_RELA,
-			 Target_x86_64<size>::Relocate>(
+			 typename Target_x86_64<size>::Relocate>(
     relinfo,
     this,
     prelocs,
@@ -3809,7 +3810,7 @@ Target_x86_64<size>::apply_relocation(
     section_size_type view_size)
 {
   gold::apply_relocation<size, false, Target_x86_64<size>,
-			 Target_x86_64<size>::Relocate>(
+			 typename Target_x86_64<size>::Relocate>(
     relinfo,
     this,
     r_offset,
@@ -3991,7 +3992,7 @@ Target_x86_64<size>::do_code_fill(section_size_type length) const
       jmp[0] = 0xe9;
       elfcpp::Swap_unaligned<32, false>::writeval(jmp + 1, length - 5);
       return (std::string(reinterpret_cast<char*>(&jmp[0]), 5)
-              + std::string(length - 5, '\0'));
+              + std::string(length - 5, static_cast<char>(0x90)));
     }
 
   // Nop sequences of various lengths.
