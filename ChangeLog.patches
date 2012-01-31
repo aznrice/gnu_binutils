@@ -180,6 +180,14 @@ diff --git a/bfd/elf-bfd.h b/bfd/elf-bfd.h
 index d6e2ab2..8660802 100644
 bfd/
 
+2011-01-12  Bernhard Rosenkränzer <bernhard.rosenkranzer@linaro.org>
+
+	* elf32-epiphany.c (epiphany_elf_relocate_section): Add an
+	argument for error ignored.
+	* elf32-rl78.c (rl78_elf_relocate_section): Likewise.
+	* elf32-tilepro.c (tilepro_elf_relocate_section): Likewise.
+	* elfxx-tilegx.c (tilegx_elf_relocate_section): Likewise.
+	
 2010-07-01  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* elf-bfd.h (RELOC_FOR_GLOBAL_SYMBOL): Silence unused warning
@@ -269,7 +277,7 @@ ld/testsuite/
 	* ld-ia64/error4.d: Likewise.
 
 diff --git a/bfd/elf-bfd.h b/bfd/elf-bfd.h
-index d6e2ab2..fe7cfef 100644
+index c7846e1..7d047e8 100644
 diff --git a/binutils/ChangeLog.addend b/binutils/ChangeLog.addend
 new file mode 100644
 index 0000000..e0bd096
