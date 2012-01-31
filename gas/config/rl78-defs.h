@@ -26,7 +26,7 @@
 #define RL78REL_DATA		0
 #define RL78REL_PCREL		1
 
-extern int    rl78_error (char *);
+extern int    rl78_error (const char *);
 extern void   rl78_lex_init (char *, char *);
 extern void   rl78_prefix (int);
 extern int    rl78_has_prefix (void);
@@ -40,8 +40,7 @@ extern void   rl78_disp3 (expressionS, int);
 extern void   rl78_field5s (expressionS);
 extern void   rl78_field5s2 (expressionS);
 extern void   rl78_relax (int, int);
-extern void   rl78_linkrelax_dsp (int);
-extern void   rl78_linkrelax_imm (int);
+extern void   rl78_linkrelax_addr16 (void);
 extern void   rl78_linkrelax_branch (void);
 extern int    rl78_parse (void);
 extern int    rl78_wrap (void);

@@ -1,6 +1,7 @@
 /* tc-i386.c -- Assemble code for the Intel 80386
    Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011,
+   2012
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -279,8 +280,13 @@ struct _i386_insn
     /* Swap operand in encoding.  */
     unsigned int swap_operand;
 
-    /* Force 32bit displacement in encoding.  */
-    unsigned int disp32_encoding;
+    /* Prefer 8bit or 32bit displacement in encoding.  */
+    enum
+      {
+	disp_encoding_default = 0,
+	disp_encoding_8bit,
+	disp_encoding_32bit
+      } disp_encoding;
 
     /* Error message.  */
     enum i386_error error;
@@ -303,7 +309,8 @@ const char extra_symbol_chars[] = "*%-(["
      || ((defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF))	\
 	 && !defined (TE_GNU)				\
 	 && !defined (TE_LINUX)				\
- 	 && !defined (TE_NETWARE)			\
+	 && !defined (TE_NACL)				\
+	 && !defined (TE_NETWARE)			\
 	 && !defined (TE_FreeBSD)			\
 	 && !defined (TE_DragonFly)			\
 	 && !defined (TE_NetBSD)))
@@ -688,6 +695,8 @@ static const arch_entry cpu_arch[] =
     CPU_ANY_AVX_FLAGS, 0, 1 },
   { STRING_COMMA_LEN (".vmx"), PROCESSOR_UNKNOWN,
     CPU_VMX_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN (".vmfunc"), PROCESSOR_UNKNOWN,
+    CPU_VMFUNC_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".smx"), PROCESSOR_UNKNOWN,
     CPU_SMX_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".xsave"), PROCESSOR_UNKNOWN,
@@ -3050,7 +3059,7 @@ md_assemble (char *line)
   /* Don't optimize displacement for movabs since it only takes 64bit
      displacement.  */
   if (i.disp_operands
-      && !i.disp32_encoding
+      && i.disp_encoding != disp_encoding_32bit
       && (flag_code != CODE_64BIT
 	  || strcmp (mnemonic, "movabs") != 0))
     optimize_disp ();
@@ -3329,11 +3338,15 @@ parse_insn (char *line, char *mnemonic)
 	 encoding.  */
       if (mnem_p - 2 == dot_p && dot_p[1] == 's')
 	i.swap_operand = 1;
-      else if (mnem_p - 4 == dot_p 
+      else if (mnem_p - 3 == dot_p
+	       && dot_p[1] == 'd'
+	       && dot_p[2] == '8')
+	i.disp_encoding = disp_encoding_8bit;
+      else if (mnem_p - 4 == dot_p
 	       && dot_p[1] == 'd'
 	       && dot_p[2] == '3'
 	       && dot_p[3] == '2')
-	i.disp32_encoding = 1;
+	i.disp_encoding = disp_encoding_32bit;
       else
 	goto check_suffix;
       mnem_p = dot_p;
@@ -5695,7 +5708,19 @@ build_modrm_byte (void)
 		      || i.reloc[op] == BFD_RELOC_X86_64_TLSDESC_CALL))
 		i.rm.mode = 0;
 	      else
-		i.rm.mode = mode_from_disp_size (i.types[op]);
+		{
+		  if (!fake_zero_displacement
+		      && !i.disp_operands
+		      && i.disp_encoding)
+		    {
+		      fake_zero_displacement = 1;
+		      if (i.disp_encoding == disp_encoding_8bit)
+			i.types[op].bitfield.disp8 = 1;
+		      else
+			i.types[op].bitfield.disp32 = 1;
+		    }
+		  i.rm.mode = mode_from_disp_size (i.types[op]);
+		}
 	    }
 
 	  if (fake_zero_displacement)
@@ -5830,7 +5855,7 @@ build_modrm_byte (void)
 		  vex_reg = op + 1;
 		}
 	      else
-		{ 
+		{
 		  /* There are only 2 operands.  */
 		  gas_assert (op < 2 && i.operands == 2);
 		  vex_reg = 1;
@@ -5897,7 +5922,7 @@ output_branch (void)
   offsetT off;
 
   code16 = flag_code == CODE_16BIT ? CODE16 : 0;
-  size = i.disp32_encoding ? BIG : SMALL;
+  size = i.disp_encoding == disp_encoding_32bit ? BIG : SMALL;
 
   prefix = 0;
   if (i.prefix[DATA_PREFIX] != 0)
@@ -6526,7 +6551,8 @@ x86_cons_fix_new (fragS *frag, unsigned int off, unsigned int len,
   fix_new_exp (frag, off, len, exp, 0, r);
 }
 
-#if (!defined (OBJ_ELF) && !defined (OBJ_MAYBE_ELF)) || defined (LEX_AT)
+#if !(defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) || defined (OBJ_MACH_O)) \
+    || defined (LEX_AT)
 # define lex_got(reloc, adjust, types) NULL
 #else
 /* Parse operands of the form
@@ -6609,8 +6635,10 @@ lex_got (enum bfd_reloc_code_real *rel,
   char *cp;
   unsigned int j;
 
+#if defined (OBJ_MAYBE_ELF)
   if (!IS_ELF)
     return NULL;
+#endif
 
   for (cp = input_line_pointer; *cp != '@'; cp++)
     if (is_end_of_line[(unsigned char) *cp] || *cp == ',')
@@ -8283,7 +8311,7 @@ struct option md_longopts[] =
 {
   {"32", no_argument, NULL, OPTION_32},
 #if (defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) \
-     || defined (TE_PE) || defined (TE_PEP))
+     || defined (TE_PE) || defined (TE_PEP) || defined (OBJ_MACH_O))
   {"64", no_argument, NULL, OPTION_64},
 #endif
 #if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
@@ -8341,7 +8369,7 @@ md_parse_option (int c, char *arg)
       break;
 #endif
 #if (defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) \
-     || defined (TE_PE) || defined (TE_PEP))
+     || defined (TE_PE) || defined (TE_PEP) || defined (OBJ_MACH_O))
     case OPTION_64:
       {
 	const char **list, **l;
@@ -8351,7 +8379,8 @@ md_parse_option (int c, char *arg)
 	  if (CONST_STRNEQ (*l, "elf64-x86-64")
 	      || strcmp (*l, "coff-x86-64") == 0
 	      || strcmp (*l, "pe-x86-64") == 0
-	      || strcmp (*l, "pei-x86-64") == 0)
+	      || strcmp (*l, "pei-x86-64") == 0
+	      || strcmp (*l, "mach-o-x86-64") == 0)
 	    {
 	      default_arch = "x86_64";
 	      break;
@@ -8619,7 +8648,7 @@ show_arch (FILE *stream, int ext, int check)
 	  fprintf (stream, "%s\n", message);
 	  p = start;
 	  left = size - (start - message) - len - 2;
-	  
+
 	  gas_assert (left >= 0);
 
 	  p = mempcpy (p, name, len);
@@ -8773,7 +8802,14 @@ i386_target_format (void)
 #endif
 #if defined (OBJ_MACH_O)
     case bfd_target_mach_o_flavour:
-      return flag_code == CODE_64BIT ? "mach-o-x86-64" : "mach-o-i386";
+      if (flag_code == CODE_64BIT)
+	{
+	  use_rela_relocations = 1;
+	  object_64bit = 1;
+	  return "mach-o-x86-64";
+	}
+      else
+	return "mach-o-i386";
 #endif
     default:
       abort ();

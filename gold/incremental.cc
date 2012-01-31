@@ -632,7 +632,7 @@ Sized_incremental_binary<size, big_endian>::do_process_got_plt(
   // Tell the target how big the GOT and PLT sections are.
   unsigned int got_count = got_plt_reader.get_got_entry_count();
   unsigned int plt_count = got_plt_reader.get_plt_entry_count();
-  Output_data_got<size, big_endian>* got =
+  Output_data_got_base* got =
       target->init_got_plt_for_update(symtab, layout, got_count, plt_count);
 
   // Read the GOT entries from the base file and build the outgoing GOT.
@@ -1632,7 +1632,8 @@ Output_section_incremental_inputs<size, big_endian>::write_info_blocks(
 		Swap32::writeval(pov + 4, shndx);
 		Swap32::writeval(pov + 8, chain);
 		Swap32::writeval(pov + 12, nrelocs);
-		Swap32::writeval(pov + 16, first_reloc * 3 * sizeof_addr);
+		Swap32::writeval(pov + 16,
+				 first_reloc * (8 + 2 * sizeof_addr));
 		pov += 20;
 	      }
 

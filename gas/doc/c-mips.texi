@@ -290,6 +290,8 @@ m4k,
 m4kp,
 m14k,
 m14kc,
+m14ke,
+m14kec,
 24kc,
 24kf2_1,
 24kf,
@@ -321,6 +323,8 @@ loongson2e,
 loongson2f,
 loongson3a,
 octeon,
+octeon+,
+octeon2,
 xlr
 @end quotation
 
