@@ -1,5 +1,5 @@
-This is the beta release of binutils 2.22.51.0.1 for Linux, which is
-based on binutils 2011 1115 in CVS on sourceware.org plus various
+This is the beta release of binutils 2.22.52.0.1 for Linux, which is
+based on binutils 2012 0131 in CVS on sourceware.org plus various
 changes. It is purely for Linux.
 
 All relevant patches in patches have been applied to the source tree.
@@ -115,12 +115,42 @@ endif
 
 to arch/ia64/Makefile in your kernel source tree.
 
-Please report any bugs related to binutils 2.22.51.0.1 to
+Please report any bugs related to binutils 2.22.52.0.1 to
 hjl.tools@gmail.com
 
 and
 
 http://www.sourceware.org/bugzilla/
+
+Changes from binutils 2.22.52.0.1:
+
+1. Update from binutils 2012 0131.
+2. Add x32 support to gold.
+3. Support linker arch-depedent fill.  PR 13616.
+4. Add i386 NACL support to x86 assembler.
+5. Add fake zero displacement for .d8 and .d32 suffixes to x86 assembler.
+6. Add vmfunc support to x86 assembler/disassembler.
+7. Support >2GB archive member.  PR 13534.
+8. Support R_X86_64_PC32 relocation for PIC on x32.  PR 13581.
+9. Fix LTO linker with --start-group and archive.  PR 12758.
+10. Fix linker with --build-id.  PR 12451.
+11. Improve linker dead code dependency removal on DSO.  PR 12772.
+12. Improve demangler.
+13. Fix elf64-x86-64.c build with GCC 4.7.
+14. Avoid linker -z text crash.  PR 13468.
+15. Avoid readelf crash.  PR 13622.
+16. Avoid nm crash on --size-sort --no-sort.  PR 13593.
+17. Fix linker COFF SECREL32 relocation support.  PR 13491.
+18. Improve gold.
+19. Improve mach support.
+20. Improve arm support.
+21. Improve avr support.
+22. Improve hppa support.
+23. Improve m68k support.
+24. Improve mips support.
+25. Improve ppc support.
+26. Improve rl78 support.
+27. Improve rx support.
 
 Changes from binutils 2.21.53.0.2:
 
@@ -433,7 +463,7 @@ already been defined.  PR 12001.
 16. Improve ppc support.
 17. Improve tic6x support.
 
-It is available on linux/release/2.22.51.0.1 branch at
+It is available on linux/release/2.22.52.0.1 branch at
 
 http://git.kernel.org/?p=linux/kernel/git/hjl/binutils.git;a=summary
 
@@ -442,4 +472,4 @@ Thanks.
 
 H.J. Lu
 hjl.tools@gmail.com
-11/18/2011
+01/31/2012
