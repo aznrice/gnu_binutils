@@ -423,10 +423,10 @@ ld/testsuite/
 	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index 22fcdf6..a84b030 100644
+index fb56337..64da6b8 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
-@@ -1028,6 +1028,9 @@ struct bfd_section *bfd_create_gnu_debuglink_section
+@@ -1027,6 +1027,9 @@ struct bfd_section *bfd_create_gnu_debuglink_section
  bfd_boolean bfd_fill_in_gnu_debuglink_section
     (bfd *abfd, struct bfd_section *sect, const char *filename);
  
@@ -436,7 +436,7 @@ index 22fcdf6..a84b030 100644
  /* Extracted from libbfd.c.  */
  
  /* Byte swapping macros for user section data.  */
-@@ -1556,6 +1559,9 @@ struct relax_table {
+@@ -1555,6 +1558,9 @@ struct relax_table {
  #define BFD_COM_SECTION_NAME "*COM*"
  #define BFD_IND_SECTION_NAME "*IND*"
  
@@ -446,7 +446,7 @@ index 22fcdf6..a84b030 100644
  /* The absolute section.  */
  extern asection bfd_abs_section;
  #define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
-@@ -5230,6 +5236,14 @@ enum bfd_direction
+@@ -5309,6 +5315,14 @@ enum bfd_direction
      both_direction = 3
    };
  
@@ -461,7 +461,7 @@ index 22fcdf6..a84b030 100644
  struct bfd
  {
    /* A unique identifier of the BFD  */
-@@ -5377,6 +5391,9 @@ struct bfd
+@@ -5456,6 +5470,9 @@ struct bfd
    /* The last section on the section list.  */
    struct bfd_section *section_last;
  
@@ -471,7 +471,7 @@ index 22fcdf6..a84b030 100644
    /* The number of sections.  */
    unsigned int section_count;
  
-@@ -5495,6 +5512,9 @@ struct bfd
+@@ -5574,6 +5591,9 @@ struct bfd
    /* Set if only required symbols should be added in the link hash table for
       this object.  Used by VMS linkers.  */
    unsigned int selective_search : 1;
@@ -481,7 +481,7 @@ index 22fcdf6..a84b030 100644
  };
  
  typedef enum bfd_error
-@@ -5702,6 +5722,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
+@@ -5781,6 +5801,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
  
  char *bfd_demangle (bfd *, const char *, int);
  
@@ -567,7 +567,7 @@ index 7c14c7a..45afaa8 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index dc6a9bb..8e93c7f 100644
+index 5aabeeb..22b3c56 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2086,6 +2086,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -579,10 +579,10 @@ index dc6a9bb..8e93c7f 100644
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 4f55d9a..ae56fc5 100644
+index 7f9ec60..59e439a 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
-@@ -5080,6 +5080,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
+@@ -5078,6 +5078,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
  	     something wrong with the archive.  */
  	  if (element->archive_pass != 0)
  	    {
@@ -968,10 +968,10 @@ index 7c1f750..eb50367 100644
  .extern asection bfd_abs_section;
  .#define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
-index 31ac0a2..e4ae760 100644
+index 230d3e5..ffcac5a 100644
 --- a/binutils/objcopy.c
 +++ b/binutils/objcopy.c
-@@ -901,30 +901,6 @@ is_specified_symbol (const char *name, htab_t htab)
+@@ -900,30 +900,6 @@ is_specified_symbol (const char *name, htab_t htab)
    return htab_find (htab, name) != NULL;
  }
  
@@ -1002,7 +1002,7 @@ index 31ac0a2..e4ae760 100644
  /* See if a non-group section is being removed.  */
  
  static bfd_boolean
-@@ -975,7 +951,7 @@ is_strip_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
+@@ -974,7 +950,7 @@ is_strip_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
        /* PR binutils/3181
  	 If we are going to strip the group signature symbol, then
  	 strip the group section too.  */
@@ -1011,7 +1011,7 @@ index 31ac0a2..e4ae760 100644
        if (gsym != NULL)
  	gname = gsym->name;
        else
-@@ -2563,7 +2539,7 @@ setup_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
+@@ -2562,7 +2538,7 @@ setup_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
  
    if ((isection->flags & SEC_GROUP) != 0)
      {
@@ -1021,10 +1021,10 @@ index 31ac0a2..e4ae760 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index f6fd38d..2922f36 100644
+index 560df7a..3f8c260 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
-@@ -3035,6 +3035,7 @@ get_section_type_name (unsigned int sh_type)
+@@ -3047,6 +3047,7 @@ get_section_type_name (unsigned int sh_type)
      case 0x7ffffffd:		return "AUXILIARY";
      case 0x7fffffff:		return "FILTER";
      case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
@@ -1053,7 +1053,7 @@ index 6b8b107..abcdea1 100644
 +	.section .gnu_object_only
 +	.byte 0,0,0,0
 diff --git a/include/bfdlink.h b/include/bfdlink.h
-index be85329..723dc96 100644
+index c79d8f0..5c577ce 100644
 --- a/include/bfdlink.h
 +++ b/include/bfdlink.h
 @@ -380,6 +380,12 @@ struct bfd_link_info
@@ -1070,10 +1070,10 @@ index be85329..723dc96 100644
    unsigned int allow_undefined_version: 1;
  
 diff --git a/include/elf/common.h b/include/elf/common.h
-index e46ae33..ef8d362 100644
+index 5cddc0b..56cb366 100644
 --- a/include/elf/common.h
 +++ b/include/elf/common.h
-@@ -468,6 +468,7 @@
+@@ -472,6 +472,7 @@
  #define SHT_GNU_ATTRIBUTES 0x6ffffff5	/* Object attributes */
  #define SHT_GNU_HASH	0x6ffffff6	/* GNU style symbol hash table */
  #define SHT_GNU_LIBLIST	0x6ffffff7	/* List of prelink dependencies */
@@ -1095,7 +1095,7 @@ index 21064ad..ec0965a 100644
  EOF
  
 diff --git a/ld/emultempl/armelf.em b/ld/emultempl/armelf.em
-index d29da59..e5f931a 100644
+index 21d4f59..a29a007 100644
 --- a/ld/emultempl/armelf.em
 +++ b/ld/emultempl/armelf.em
 @@ -365,7 +365,7 @@ gld${EMULATION_NAME}_after_allocation (void)
@@ -1230,10 +1230,10 @@ index 78a708b..bedd231 100644
    ${LDEMUL_OPEN_DYNAMIC_ARCHIVE-gld${EMULATION_NAME}_open_dynamic_archive},
    ${LDEMUL_PLACE_ORPHAN-gld${EMULATION_NAME}_place_orphan},
 diff --git a/ld/emultempl/ppc64elf.em b/ld/emultempl/ppc64elf.em
-index 80143a8..43549b5 100644
+index 5b637e1..1a816d9 100644
 --- a/ld/emultempl/ppc64elf.em
 +++ b/ld/emultempl/ppc64elf.em
-@@ -523,7 +523,7 @@ gld${EMULATION_NAME}_after_allocation (void)
+@@ -532,7 +532,7 @@ gld${EMULATION_NAME}_after_allocation (void)
  /* Final emulation specific call.  */
  
  static void
@@ -1242,7 +1242,7 @@ index 80143a8..43549b5 100644
  {
    /* e_entry on PowerPC64 points to the function descriptor for
       _start.  If _start is missing, default to the first function
-@@ -555,7 +555,7 @@ gld${EMULATION_NAME}_finish (void)
+@@ -564,7 +564,7 @@ gld${EMULATION_NAME}_finish (void)
      }
  
    ppc64_elf_restore_symbols (&link_info);
@@ -1251,7 +1251,7 @@ index 80143a8..43549b5 100644
  }
  
  
-@@ -802,6 +802,6 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
+@@ -856,6 +856,6 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
  #
  LDEMUL_BEFORE_ALLOCATION=ppc_before_allocation
  LDEMUL_AFTER_ALLOCATION=gld${EMULATION_NAME}_after_allocation
@@ -1260,10 +1260,10 @@ index 80143a8..43549b5 100644
  LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=ppc_create_output_section_statements
  LDEMUL_NEW_VERS_PATTERN=gld${EMULATION_NAME}_new_vers_pattern
 diff --git a/ld/emultempl/spuelf.em b/ld/emultempl/spuelf.em
-index 92f2d16..aa8585d 100644
+index 714d33d..0777258 100644
 --- a/ld/emultempl/spuelf.em
 +++ b/ld/emultempl/spuelf.em
-@@ -405,7 +405,7 @@ spu_elf_relink (void)
+@@ -416,7 +416,7 @@ spu_elf_relink (void)
  /* Final emulation specific call.  */
  
  static void
@@ -1272,7 +1272,7 @@ index 92f2d16..aa8585d 100644
  {
    if (is_spu_target ())
      {
-@@ -421,7 +421,7 @@ gld${EMULATION_NAME}_finish (void)
+@@ -432,7 +432,7 @@ gld${EMULATION_NAME}_finish (void)
  	einfo ("%P: --auto-overlay ignored with zero local store range\n");
      }
  
@@ -1281,7 +1281,7 @@ index 92f2d16..aa8585d 100644
  }
  
  static char *
-@@ -821,5 +821,5 @@ PARSE_AND_LIST_ARGS_CASES='
+@@ -832,5 +832,5 @@ PARSE_AND_LIST_ARGS_CASES='
  
  LDEMUL_AFTER_OPEN=spu_after_open
  LDEMUL_BEFORE_ALLOCATION=spu_before_allocation
@@ -1289,10 +1289,10 @@ index 92f2d16..aa8585d 100644
 +LDEMUL_FINISH=spu_finish
  LDEMUL_CHOOSE_TARGET=gld${EMULATION_NAME}_choose_target
 diff --git a/ld/ldfile.c b/ld/ldfile.c
-index c4b8912..10e8e89 100644
+index e9cb173..efafd9d 100644
 --- a/ld/ldfile.c
 +++ b/ld/ldfile.c
-@@ -329,7 +329,9 @@ success:
+@@ -328,7 +328,9 @@ success:
  	  plugin_maybe_claim (&file, entry);
  	}
      }
@@ -1303,7 +1303,7 @@ index c4b8912..10e8e89 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 2c56b56..66f3746 100644
+index 5f06418..0d88fc6 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -1433,7 +1433,7 @@ index 2c56b56..66f3746 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -8078,3 +8130,961 @@ lang_ld_feature (char *str)
+@@ -8080,3 +8132,961 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -2396,7 +2396,7 @@ index 2c56b56..66f3746 100644
 +      }
 +}
 diff --git a/ld/ldlang.h b/ld/ldlang.h
-index 95f9412..857dca6 100644
+index f37409c..1301dc6 100644
 --- a/ld/ldlang.h
 +++ b/ld/ldlang.h
 @@ -485,7 +485,7 @@ extern int lang_statement_iteration;
@@ -2455,7 +2455,7 @@ index 95f9412..857dca6 100644
 +
  #endif
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index 7aacf0f..0efeab2 100644
+index d006ed5..2f42b11 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
 @@ -213,6 +213,9 @@ main (int argc, char **argv)
@@ -2503,7 +2503,7 @@ index 7aacf0f..0efeab2 100644
 -      else
 -	{
 -	  lex_string = s;
--	  lex_redirect (s);
+-	  lex_redirect (s, _("built in linker script"), 1);
 -	}
 -      parser_input = input_script;
 -      yyparse ();
@@ -2583,7 +2583,7 @@ index 7aacf0f..0efeab2 100644
 +      else
 +	{
 +	  lex_string = s;
-+	  lex_redirect (s);
++	  lex_redirect (s, _("built in linker script"), 1);
 +	}
 +      parser_input = input_script;
 +      yyparse ();
@@ -2602,10 +2602,10 @@ index 57ce8d7..22f9885 100644
 +
  #endif
 diff --git a/ld/lexsup.c b/ld/lexsup.c
-index 20e0271..868a82f 100644
+index 7c1bc46..8fc3814 100644
 --- a/ld/lexsup.c
 +++ b/ld/lexsup.c
-@@ -173,6 +173,7 @@ enum option_values
+@@ -170,6 +170,7 @@ enum option_values
  #ifdef ENABLE_PLUGINS
    OPTION_PLUGIN,
    OPTION_PLUGIN_OPT,
@@ -2613,7 +2613,7 @@ index 20e0271..868a82f 100644
  #endif /* ENABLE_PLUGINS */
    OPTION_DEFAULT_SCRIPT,
    OPTION_PRINT_OUTPUT_FORMAT,
-@@ -284,6 +285,9 @@ static const struct ld_option ld_options[] =
+@@ -281,6 +282,9 @@ static const struct ld_option ld_options[] =
      '\0', N_("PLUGIN"), N_("Load named plugin"), ONE_DASH },
    { {"plugin-opt", required_argument, NULL, OPTION_PLUGIN_OPT},
      '\0', N_("ARG"), N_("Send arg to last-loaded plugin"), ONE_DASH },
@@ -2623,7 +2623,7 @@ index 20e0271..868a82f 100644
    { {"flto", optional_argument, NULL, OPTION_IGNORE},
      '\0', NULL, N_("Ignored for GCC LTO option compatibility"),
      ONE_DASH },
-@@ -1075,6 +1079,9 @@ parse_args (unsigned argc, char **argv)
+@@ -1071,6 +1075,9 @@ parse_args (unsigned argc, char **argv)
  	  if (plugin_opt_plugin_arg (optarg))
  	    einfo(_("%P%F: bad -plugin-opt option\n"));
  	  break;
@@ -2727,10 +2727,10 @@ index 8b3ea0a..88028f2 100644
    SBSS=".sbss         ${RELOCATING-0} :
    {
 diff --git a/ld/scripttempl/elf.sc b/ld/scripttempl/elf.sc
-index 149eec7..2415fd4 100644
+index 7994b5f..e9b5b2c 100644
 --- a/ld/scripttempl/elf.sc
 +++ b/ld/scripttempl/elf.sc
-@@ -149,7 +149,7 @@ RELA_IPLT=".rela.iplt    ${RELOCATING-0} :
+@@ -155,7 +155,7 @@ RELA_IPLT=".rela.iplt    ${RELOCATING-0} :
  DYNAMIC=".dynamic      ${RELOCATING-0} : { *(.dynamic) }"
  RODATA=".${RODATA_NAME}       ${RELOCATING-0} : { *(.${RODATA_NAME}${RELOCATING+ .${RODATA_NAME}.* .gnu.linkonce.r.*}) }"
  DATARELRO=".data.rel.ro : { *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*) *(.data.rel.ro* .gnu.linkonce.d.rel.ro.*) }"
@@ -4668,10 +4668,10 @@ index 0000000..7edca6d
 @@ -0,0 +1 @@
 +IE: 4
 diff --git a/ld/testsuite/lib/ld-lib.exp b/ld/testsuite/lib/ld-lib.exp
-index e764591..11a76e2 100644
+index 8b51123..7fa271c 100644
 --- a/ld/testsuite/lib/ld-lib.exp
 +++ b/ld/testsuite/lib/ld-lib.exp
-@@ -889,7 +889,7 @@ proc set_file_contents { filename contents } {
+@@ -914,7 +914,7 @@ proc set_file_contents { filename contents } {
  proc ar_simple_create { ar aropts target objects } {
      remote_file host delete $target
  
@@ -4680,7 +4680,7 @@ index e764591..11a76e2 100644
      set exec_output [prune_warnings $exec_output]
  
      if [string match "" $exec_output] then {
-@@ -1511,6 +1511,34 @@ proc check_plugin_api_available { } {
+@@ -1542,6 +1542,34 @@ proc check_plugin_api_available { } {
      return $plugin_api_available_saved
  }
  
