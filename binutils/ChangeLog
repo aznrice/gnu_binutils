@@ -1,3 +1,79 @@
+2012-02-21  Kai Tietz<ktietz@redhat.com>
+
+	PR binutils/13682
+	* NEWS: Mention new feature.
+	* dlltool.c (i386_x64_dljtab): New stub-code for x64
+	delayed-load feature.
+	(i386_x64_trampoline): New trampoline-code for x64
+	delayed-load feature.
+	(make_one_lib_file): Add support for x64 delayed-load
+	feature.
+	(make_delay_head): Likewis
+
+2012-02-20  Namhyung Kim  <namhyung.kim@lge.com>
+
+	* objdump.c (slurp_file): Close file if fstat fails.
+
+2012-02-14  Cary Coutant  <ccoutant@google.com>
+
+	* dwarf.c (dwarf_vmatoa64): New function.
+	(read_and_display_attr_value): Print 8-byte forms as single hex
+	numbers.
+	(process_debug_info): Print type signatures as single hex numbers.
+	* elfcomm.c (byte_get_64): New function.
+	* elfcomm.h (byte_get_64): New function.
+
+2012-02-11  Kai Tietz  <ktietz@redhat.com>
+
+	PR binutils/13657
+	* defparse.y (%union): New type id_const.
+	(opt_name2): New rule.
+	(keyword_as_name): New rule.
+	(opt_name): Adjust rule.
+	(opt_import_name): Likewise.
+	(opt_equal_name): Likewise.
+
+2012-02-11  Kai Tietz  <ktietz@redhat.com>
+
+	PR binutils/13297
+	* resrc.c (write_rc_dialog_control): Omit text dump for
+	EDITTEXT, COMBOBOX, LISTBOX, and SCROLLBAR.
+
+2012-02-09  Alan Modra  <amodra@gmail.com>
+
+	* sysdep.h: Include sys/stat.h here.
+	* ar.c: Don't include headers already included by sysdep.h.
+	* bucomm.c: Likewise.
+	* budbg.h: Likewise.
+	* dlltool.h: Likewise.
+	* elfedit.c: Likewise.
+	* nlmconv.c: Likewise.
+	* objcopy.c: Likewise.
+	* objdump.c: Likewise.
+	* objdump.h: Likewise.
+	* readelf.c: Likewise.
+	* rename.c: Likewise.
+	* resrc.c: Likewise.
+	* strings.c: Likewise.
+	* windres.c: Likewise.
+	* od-macho.c: Ensure #include sysdep.h is first.
+	* od-xcoff.c: Likewise.
+	* dllwrap.c: Remove alloca pragma handled by sysdep.h, and
+	remove duplicate headers.
+	* dlltool.c: Likewise and ensure #include sysdep.h is first.
+
+2012-02-01  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/13493
+	* ar.c (ranlib_main): Process --plugin option.
+	* doc/binutils.texi: Document --plugin support for ranlib.
+
+2012-02-01  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/13482
+	* readelf.c (process_corefile_note_segment): Fix off-by-one errors
+	verifying the contents of a note.
+
 2012-01-26  Nick Clifton  <nickc@redhat.com>
 
 	PR binutils/13622

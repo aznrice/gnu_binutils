@@ -1,5 +1,104 @@
+2012-02-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (check_hle): Use HLEPrefixNone, HLEPrefixLock,
+	HLEPrefixAny and HLEPrefixRelease.
+
+2012-02-21  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* gas/config/tc-arm.h (DOUBLESLASH_LINE_COMMENTS): Define.
+
+2012-02-21  Iain Sandoe  <idsandoe@googlemail.com>
+
+	* write.c (write_object_file): Add md_pre_output_hook.
+	* config/obj-macho.c (obj_mach_o_check_before_writing): New.
+	(obj_mach_o_pre_output_hook): New.
+	* config/obj-macho.h (md_pre_output_hook): Define.
+	(obj_mach_o_pre_output_hook): Declare.
+
+2012-02-21  Tristan Gingold  <gingold@adacore.com>
+
+	* config/tc-i386.h (OBJ_MACH_O): New section.
+	(TC_FORCE_RELOCATION): Use obj_mach_o_force_reloc.
+	(TC_FORCE_RELOCATION_SUB_SAME): New
+	(TC_FORCE_RELOCATION_SUB_LOCAL): New.
+	(TC_VALIDATE_FIX_SUB): New.
+	* frags.h (struct frag): OBJ_FRAG_TYPE, new field.
+	* symbols.c (colon): obj_frob_colon: New hook.
+	* write.c (write_object_file): md_pre_relax_hook, new
+	hook.
+	* config/obj-macho.c (obj_mach_o_frob_colon): New.
+	(obj_mach_o_frob_label): Record sub-section labels.
+	(obj_mach_o_frob_symbol): Rename from obj_macho_frob_symbol.
+	(obj_mach_o_set_subsections): New.
+	(obj_mach_o_pre_relax_hook): New.
+	(obj_mach_o_in_different_subsection): New.
+	(obj_mach_o_force_reloc_sub_same): New.
+	(obj_mach_o_force_reloc_sub_local): New.
+	(obj_mach_o_force_reloc): New.
+	* config/obj-macho.h (OBJ_SYMFIELD_TYPE): New.
+	(obj_frob_colon): New Define.
+	(obj_mach_o_frob_label): Renamed.
+	(obj_mach_o_frob_symbol): Renamed.
+	(OBJ_FRAG_TYPE): New.
+	(obj_mach_o_in_different_subsection, obj_mach_o_force_reloc,
+	 obj_mach_o_force_reloc_sub_same,
+	 obj_mach_o_force_reloc_sub_local): New declarations.
+
+2012-02-20  Iain Sandoe  <idsandoe@googlemail.com>
+
+	* config/obj-macho.c (obj_mach_o_is_frame_section): New.
+	(obj_mach_o_allow_local_subtract): New.
+	* config/obj-macho.h (md_allow_local_subtract): Define.
+	(obj_mach_o_allow_local_subtract): Declare.
+
+2012-02-20  Iain Sandoe  <idsandoe@googlemail.com>
+
+	* config/obj-macho.c (obj_mach_o_make_or_get_sect): In the absence of
+	canonical information, try to determine CODE and DEBUG section flags
+	from the mach-o section data.
+
+2012-02-20  Nick Clifton  <nickc@redhat.com>
+
+	* cgen.c (gas_cgen_parse_operand): Do not set BSF_RELC flag on
+	local symbols.
+
+2012-02-12  Iain Sandoe  <idsandoe@googlemail.com>
+
+	* config/obj-macho.c (obj_mach_o_indirect_symbol): Force promotion of
+	any local symbol used as an indirect.
+
+2012-02-10  Iain Sandoe  <idsandoe@googlemail.com>
+
+	* config/obj-macho.c (obj_mach_o_make_or_get_sect): Always fill in
+	stub size when provided.  (obj_mach_o_section): Flag that stub-size
+	has been provided.
+
+2012-02-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (HLE_PREFIX): New.
+	(check_hle): Likewise.
+	(_i386_insn): Add have_hle.
+	(cpu_arch): Add .hle and .rtm.
+	(md_assemble): Call check_hle if i.have_hle isn't zero.
+	(parse_insn): Set i.have_hle to 1 for HLE prefix.
+	(output_jump): Support up to 2 byte opcode.
+
+	* doc/c-i386.texi: Document hle/.hle and rtm/.rtm.
+
+2012-02-02  Tristan Gingold  <gingold@adacore.com>
+
+	* config/obj-macho.c (obj_mach_o_zerofill): Silent
+	uninitialized variable warning.
+
+2012-02-02  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/13224
+	* config/obj-elf.c (obj_elf_parse_section_letters): Rename 'clone'
+	to 'is_clone' to avoid shadowing a gloabl.
+	(obj_elf_section): Likewise.
+
 2012-01-31  Paul Brook  <paul@codesourcery.com>
-    
+
 	* doc/c-tic6x.c: Fix typo.
 
 2012-01-26  Alexey Makhalov  <makhaloff@gmail.com>

@@ -3183,8 +3183,7 @@ class Arm_relocate_functions : public Relocate_functions<32, big_endian>
     elfcpp::Swap<8, big_endian>::writeval(wv, val);
 
     // R_ARM_ABS8 permits signed or unsigned results.
-    int signed_x = static_cast<int32_t>(x);
-    return ((signed_x < -128 || signed_x > 255)
+    return (Bits<8>::has_signed_unsigned_overflow32(x)
 	    ? This::STATUS_OVERFLOW
 	    : This::STATUS_OKAY);
   }
@@ -3203,10 +3202,7 @@ class Arm_relocate_functions : public Relocate_functions<32, big_endian>
     Reltype x = psymval->value(object, addend);
     val = Bits<32>::bit_select32(val, x << 6, 0x7e0U);
     elfcpp::Swap<16, big_endian>::writeval(wv, val);
-
-    // R_ARM_ABS16 permits signed or unsigned results.
-    int signed_x = static_cast<int32_t>(x);
-    return ((signed_x < -32768 || signed_x > 65535)
+    return (Bits<5>::has_overflow32(x)
 	    ? This::STATUS_OVERFLOW
 	    : This::STATUS_OKAY);
   }
@@ -3245,8 +3241,7 @@ class Arm_relocate_functions : public Relocate_functions<32, big_endian>
     elfcpp::Swap_unaligned<16, big_endian>::writeval(view, val);
 
     // R_ARM_ABS16 permits signed or unsigned results.
-    int signed_x = static_cast<int32_t>(x);
-    return ((signed_x < -32768 || signed_x > 65536)
+    return (Bits<16>::has_signed_unsigned_overflow32(x)
 	    ? This::STATUS_OVERFLOW
 	    : This::STATUS_OKAY);
   }
@@ -4442,6 +4437,8 @@ Reloc_stub::stub_type_for_reloc(
     }
 
   int64_t branch_offset;
+  bool output_is_position_independent =
+      parameters->options().output_is_position_independent();
   if (r_type == elfcpp::R_ARM_THM_CALL || r_type == elfcpp::R_ARM_THM_JUMP24)
     {
       // For THUMB BLX instruction, bit 1 of target comes from bit 1 of the
@@ -4470,7 +4467,7 @@ Reloc_stub::stub_type_for_reloc(
 	      // Thumb to thumb.
 	      if (!thumb_only)
 		{
-		  stub_type = (parameters->options().shared()
+		  stub_type = (output_is_position_independent
 			       || should_force_pic_veneer)
 		    // PIC stubs.
 		    ? ((may_use_blx
@@ -4491,7 +4488,7 @@ Reloc_stub::stub_type_for_reloc(
 		}
 	      else
 		{
-		  stub_type = (parameters->options().shared()
+		  stub_type = (output_is_position_independent
 			       || should_force_pic_veneer)
 		    ? arm_stub_long_branch_thumb_only_pic	// PIC stub.
 		    : arm_stub_long_branch_thumb_only;	// non-PIC stub.
@@ -4504,7 +4501,7 @@ Reloc_stub::stub_type_for_reloc(
 	      // FIXME: We should check that the input section is from an
 	      // object that has interwork enabled.
 
-	      stub_type = (parameters->options().shared()
+	      stub_type = (output_is_position_independent
 			   || should_force_pic_veneer)
 		// PIC stubs.
 		? ((may_use_blx
@@ -4546,7 +4543,7 @@ Reloc_stub::stub_type_for_reloc(
 	      || (r_type == elfcpp::R_ARM_JUMP24)
 	      || (r_type == elfcpp::R_ARM_PLT32))
 	    {
-	      stub_type = (parameters->options().shared()
+	      stub_type = (output_is_position_independent
 			   || should_force_pic_veneer)
 		// PIC stubs.
 		? (may_use_blx
@@ -4565,7 +4562,7 @@ Reloc_stub::stub_type_for_reloc(
 	  if (branch_offset > ARM_MAX_FWD_BRANCH_OFFSET
 	      || (branch_offset < ARM_MAX_BWD_BRANCH_OFFSET))
 	    {
-	      stub_type = (parameters->options().shared()
+	      stub_type = (output_is_position_independent
 			   || should_force_pic_veneer)
 		? arm_stub_long_branch_any_arm_pic	// PIC stubs.
 		: arm_stub_long_branch_any_any;		/// non-PIC.
