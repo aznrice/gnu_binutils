@@ -1,5 +1,9 @@
 2012-03-10  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-lto-mixed-18.patch: Updated.
+
+2012-03-10  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-error-15.patch: Updated.
 
 2012-02-21  H.J. Lu  <hjl.tools@gmail.com>
