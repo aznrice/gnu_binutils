@@ -1,3 +1,108 @@
+2012-03-10  Edmar Wienskoski  <edmar@freescale.com>
+
+	* config/tc-ppc.c (md_show_usage): Document -me5500 and -me6500.
+	(ppc_handle_align): Add termination nop opcode for e500mc family.
+	* doc/as.texinfo: Document options -me5500 and -me6500.
+	* doc/c-ppc.texi: Likewise.
+
+2012-03-07  Nick Clifton  <nickc@redhat.com>
+
+	* config/tc-mn10300.c (other_registers): Add SSP and USP.
+	(md_assemble): Add support for TLS relocs.
+	(mn10300_parse_name): Likewise.
+
+2012-02-27  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-crx.c (check_range): Correct uint32_t misconceptions.
+
+2012-02-27  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-tic4x.c (tic4x_do_align): Remove ATTRIBUTE_UNUSED on
+	params.  Properly generate NOP pattern.  Comment reason for
+	subseg_text_p failure.
+
+2012-02-27  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-h8300.c (constant_fits_width_p): Trim constant to 32 bits
+	and sign extend before range tests.
+	(constant_fits_size_p): Similarly.
+	(get_specific): Trim X_add_number to 32 bits.
+	(fix_operand_size): Likewise, and use unsigned test for signed
+	ranges.
+
+2012-02-27  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-crx.c: Include bfd_stdint.h.
+	(getconstant): Remove irrelevant comment.  Don't fail due to
+	sign-extension of int mask.
+	(check_range): Rewrite using unsigned arithmetic throughout.
+
+2012-02-25  Walter Lee  <walt@tilera.com>
+
+	* tc-tilepro.c (emit_tilepro_instruction): Check if symbol is
+	non-local before checking sy_value.
+	* tc-tilegx.c (emit_tilegx_instruction): Ditto.
+
+2012-02-25  Walter Lee  <walt@tilera.com>
+
+	* tc-tilepro.c (O_tls_le): Define operator.
+	(O_tls_le_lo16): Ditto.
+	(O_tls_le_hi16): Ditto.
+	(O_tls_le_ha16): Ditto.
+	(O_tls_gd_call): Ditto.
+	(O_tls_gd_add): Ditto.
+	(O_tls_ie_load): Ditto.
+	(md_begin): Delete old operators; handle new operators.
+	(emit_tilepro_instruction): Ditto.
+	(md_apply_fix): Ditto.
+	* tc-tilegx.c (O_hw1_got): Delete operator.
+	(O_hw2_got): Ditto.
+	(O_hw3_got): Ditto.
+	(O_hw2_last_got): Ditto.
+	(O_hw1_tls_gd): Ditto.
+	(O_hw2_tls_gd): Ditto.
+	(O_hw3_tls_gd): Ditto.
+	(O_hw2_last_tls_gd): Ditto.
+	(O_hw1_tls_ie): Ditto.
+	(O_hw2_tls_ie): Ditto.
+	(O_hw3_tls_ie): Ditto.
+	(O_hw2_last_tls_ie): Ditto.
+	(O_hw0_tls_le): Define operator.
+	(O_hw0_last_tls_le): Ditto.
+	(O_hw1_last_tls_le): Ditto.
+	(O_tls_gd_call): Ditto.
+	(O_tls_gd_add): Ditto.
+	(O_tls_ie_load): Ditto.
+	(O_tls_add): Ditto.
+	(md_begin): Delete old operators; handle new operators.
+	(emit_tilegx_instruction): Ditto.
+	(md_apply_fix): Ditto.
+	* doc/c-tilegx.texi: Delete old operators; document new operators.
+	* doc/c-tilepro.texi: Ditto.
+
+2012-02-25  Walter Lee  <walt@tilera.com>
+
+	* tc-tilepro.c (apply_special_operator): delete cases for
+	got and tls operators.
+	(md_apply_fix): Ditto.
+	* tc-tilegx.c (md_begin): Set architecture and machine.
+	(tilegx_target_format): Handle big endian.
+	(OPTION_EB): Define.
+	(OPTION_EL): Define.
+	(md_longopts): Add entries for "EB" and "EL".
+	(md_parse_option): Handle OPTION_EB and OPTION_EL.
+	(md_show_usage): Add -EB and -EL.
+	(md_number_to_chars): New.
+	(apply_special_operator): delete cases for got and tls
+	operators.
+	(md_apply_fix): Ditto.
+	* tc-tilegx.h (TARGET_BYTES_BIG_ENDIAN): Guard definition with
+	ifndef.
+	(md_number_to_chars): Delete.
+	* configure.tgt (tilegx*be): Handle.
+	* doc/as.texinfo [TILE-Gx]: Document -EB and -EL.
+	* doc/c-tilegx.texi: Ditto.
+
 2012-02-21  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* config/tc-i386.c (check_hle): Use HLEPrefixNone, HLEPrefixLock,

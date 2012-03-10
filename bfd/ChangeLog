@@ -1,3 +1,253 @@
+2012-03-10  Edmar Wienskoski  <edmar@freescale.com>
+
+	* archures.c: Add bfd_mach_ppc_e5500 and bfd_mach_ppc_e6500.
+	* bfd-in2.h: Regenerate.
+	* cpu-powerpc.c (bfd_powerpc_archs): Add entries for
+	bfd_mach_ppc_e5500 and bfd_mach_ppc_e6500.
+
+2012-03-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13817
+	* bfd/elf32-i386.c (elf_i386_relocate_section): Restore
+	R_386_IRELATIVE.
+
+	* * elf64-x86-64.c (elf_x86_64_relocate_section): Restore
+	R_X86_64_IRELATIVE.
+
+2012-03-08  Tristan Gingold  <gingold@adacore.com>
+
+	* vms-lib.c (_bfd_vms_lib_write_archive_contents): Set maximum
+	keylen according to archive kind.  Set nextvbn and nextrfa lhd
+	fields.  Add comments.
+
+2012-03-07  Nick Clifton  <nickc@redhat.com>
+
+	* elf-m10300.c (elf32_mn10300_link_hash_entry): Add tls_type
+	field.
+	(elf32_mn10300_link_hash_table): Add tls_ldm_got entry;
+	(elf_mn10300_tdata): Define.
+	(elf_mn10300_local_got_tls_type): Define.
+	(elf_mn10300_howto_table): Add entries for R_MN10300_TLS_GD,
+	R_MN10300_TLS_LD, R_MN10300_TLS_LDO, R_MN10300_TLS_GOTIE,
+	R_MN10300_TLS_IE, R_MN10300_TLS_LE, R_MN10300_TLS_DPTMOD,
+	R_MN10300_TLS_DTPOFF, R_MN10300_TLS_TPOFF relocs.
+	(mn10300_reloc_map): Likewise.
+	(elf_mn10300_tls_transition): New function.
+	(dtpoff, tpoff, mn10300_do_tls_transition): New functions.
+	(mn10300_elf_check_relocs): Add TLS support.
+	(mn10300_elf_final_link_relocate): Likewise.
+	(mn10300_elf_relocate_section): Likewise.
+	(mn10300_elf_relax_section): Likewise.
+	(elf32_mn10300_link_hash_newfunc): Initialise new field.
+	(_bfd_mn10300_copy_indirect_symbol): New function.
+	(elf32_mn10300_link_hash_table_create): Initialise new fields.
+	(_bfd_mn10300_elf_size_dynamic_sections): Add TLS support.
+	(_bfd_mn10300_elf_finish_dynamic_symbol): Likewise.
+	(_bfd_mn10300_elf_reloc_type_class): Allocate an
+	elf_mn10300_obj_tdata structure.
+	(elf_backend_copy_indirect_symbol): Define.
+	* reloc.c (BFD_MN10300_TLS_GD, BFD_MN10300_TLS_LD,
+	BFD_MN10300_TLS_LDO, BFD_MN10300_TLS_GOTIE, BFD_MN10300_TLS_IE,
+	BFD_MN10300_TLS_LE, BFD_MN10300_TLS_DPTMOD,
+	BFD_MN10300_TLS_DTPOFF, BFD_MN10300_TLS_TPOFF): New relocations.
+	(BFD_RELOC_MN10300_32_PCREL, BFD_RELOC_MN10300_16_PCREL): Move to
+	alongside other MN10300 relocations.
+	* bfd-in2.h: Regenerate.
+	* libbfd.h: Regenerate.
+
+2012-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	* elf64-x86-64.c (elf_x86_64_relocate_section): For R_X86_64_RELATIVE
+	set relocate to TRUE.
+
+2012-03-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR ld/12152
+	* elfxx-sparc.c (_bfd_sparc_elf_relocate_section): Also ignore
+	overflows for R_SPARC_UA32 in .stab sections.
+
+2012-03-01  Alan Modra  <amodra@gmail.com>
+
+	* elfxx-tilegx.c (tilegx_elf_relocate_section): Silence bogus warning.
+
+2012-02-27  Alan Modra  <amodra@gmail.com>
+
+	* elf32-sh.c (sh_elf_osec_to_segment): Check for elf flavour bfd
+	before calling elf specific function.
+	(sh_elf_osec_readonly_p): Test for error return from above.
+
+2012-02-27  Alan Modra  <amodra@gmail.com>
+
+	* elf32-spu.c (build_stub): Fix malloc under-allocation.
+
+2012-02-25  Walter Lee  <walt@tilera.com>
+	* reloc.c: Add BFD_RELOC_TILEPRO_TLS_GD_CALL,
+	BFD_RELOC_TILEPRO_IMM8_X0_TLS_GD_ADD,
+	BFD_RELOC_TILEPRO_IMM8_X1_TLS_GD_ADD,
+	BFD_RELOC_TILEPRO_IMM8_Y0_TLS_GD_ADD,
+	BFD_RELOC_TILEPRO_IMM8_Y1_TLS_GD_ADD,
+	BFD_RELOC_TILEPRO_TLS_IE_LOAD, BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE,
+	BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE,
+	BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE_LO,
+	BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE_LO,
+	BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE_HI,
+	BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE_HI,
+	BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE_HA,
+	BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE_HA,
+	BFD_RELOC_TILEGX_IMM16_X0_HW0_TLS_LE,
+	BFD_RELOC_TILEGX_IMM16_X1_HW0_TLS_LE,
+	BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST_TLS_LE,
+	BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST_TLS_LE,
+	BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_TLS_LE,
+	BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_TLS_LE,
+	BFD_RELOC_TILEGX_TLS_GD_CALL, BFD_RELOC_TILEGX_IMM8_X0_TLS_GD_ADD,
+	BFD_RELOC_TILEGX_IMM8_X1_TLS_GD_ADD,
+	BFD_RELOC_TILEGX_IMM8_Y0_TLS_GD_ADD,
+	BFD_RELOC_TILEGX_IMM8_Y1_TLS_GD_ADD, BFD_RELOC_TILEGX_TLS_IE_LOAD,
+	BFD_RELOC_TILEGX_IMM8_X0_TLS_ADD,
+	BFD_RELOC_TILEGX_IMM8_X1_TLS_ADD,
+	BFD_RELOC_TILEGX_IMM8_Y0_TLS_ADD, BFD_RELOC_TILEGX_IMM8_Y1_TLS_ADD.
+	Delete BFD_RELOC_TILEGX_IMM16_X0_HW1_GOT,
+	BFD_RELOC_TILEGX_IMM16_X1_HW1_GOT,
+	BFD_RELOC_TILEGX_IMM16_X0_HW2_GOT,
+	BFD_RELOC_TILEGX_IMM16_X1_HW2_GOT,
+	BFD_RELOC_TILEGX_IMM16_X0_HW3_GOT,
+	BFD_RELOC_TILEGX_IMM16_X1_HW3_GOT,
+	BFD_RELOC_TILEGX_IMM16_X0_HW2_LAST_GOT,
+	BFD_RELOC_TILEGX_IMM16_X1_HW2_LAST_GOT,
+	BFD_RELOC_TILEGX_IMM16_X0_HW1_TLS_GD,
+	BFD_RELOC_TILEGX_IMM16_X1_HW1_TLS_GD,
+	BFD_RELOC_TILEGX_IMM16_X0_HW2_TLS_GD,
+	BFD_RELOC_TILEGX_IMM16_X1_HW2_TLS_GD,
+	BFD_RELOC_TILEGX_IMM16_X0_HW3_TLS_GD,
+	BFD_RELOC_TILEGX_IMM16_X1_HW3_TLS_GD,
+	BFD_RELOC_TILEGX_IMM16_X0_HW2_LAST_TLS_GD,
+	BFD_RELOC_TILEGX_IMM16_X1_HW2_LAST_TLS_GD,
+	BFD_RELOC_TILEGX_IMM16_X0_HW1_TLS_IE,
+	BFD_RELOC_TILEGX_IMM16_X1_HW1_TLS_IE,
+	BFD_RELOC_TILEGX_IMM16_X0_HW2_TLS_IE,
+	BFD_RELOC_TILEGX_IMM16_X1_HW2_TLS_IE,
+	BFD_RELOC_TILEGX_IMM16_X0_HW3_TLS_IE,
+	BFD_RELOC_TILEGX_IMM16_X1_HW3_TLS_IE,
+	BFD_RELOC_TILEGX_IMM16_X0_HW2_LAST_TLS_IE,
+	BFD_RELOC_TILEGX_IMM16_X1_HW2_LAST_TLS_IE.
+	* elf32-tilepro.c (tilepro_elf_howto_table): Update tilepro
+	relocations.
+	(tilepro_reloc_map): Ditto.
+	(tilepro_info_to_howto_rela): Ditto.
+	(reloc_to_create_func): Ditto.
+	(tilepro_tls_translate_to_le): New.
+	(tilepro_tls_translate_to_ie): New.
+	(tilepro_elf_tls_transition): New.
+	(tilepro_elf_check_relocs): Handle new tls relocations.
+	(tilepro_elf_gc_sweep_hook): Ditto.
+	(allocate_dynrelocs): Ditto.
+	(tilepro_elf_relocate_section): Ditto.
+	(tilepro_replace_insn): New.
+	(insn_mask_X1): New.
+	(insn_mask_X0_no_dest_no_srca): New
+	(insn_mask_X1_no_dest_no_srca): New
+	(insn_mask_Y0_no_dest_no_srca): New
+	(insn_mask_Y1_no_dest_no_srca): New
+	(srca_mask_X0): New
+	(srca_mask_X1): New
+	(insn_tls_le_move_X1): New
+	(insn_tls_le_move_zero_X0X1): New
+	(insn_tls_ie_lw_X1): New
+	(insn_tls_ie_add_X0X1): New
+	(insn_tls_ie_add_Y0Y1): New
+	(insn_tls_gd_add_X0X1): New
+	(insn_tls_gd_add_Y0Y1): New
+	* elfxx-tilegx.c (tilegx_elf_howto_table): Update tilegx
+	relocations.
+	(tilegx_reloc_map): Ditto.
+	(tilegx_info_to_howto_rela): Ditto.
+	(reloc_to_create_func): Ditto.
+	(tilegx_elf_link_hash_table): New field disable_le_transition.
+	(tilegx_tls_translate_to_le): New.
+	(tilegx_tls_translate_to_ie): New.
+	(tilegx_elf_tls_transition): New.
+	(tilegx_elf_check_relocs): Handle new tls relocations.
+	(tilegx_elf_gc_sweep_hook): Ditto.
+	(allocate_dynrelocs): Ditto.
+	(tilegx_elf_relocate_section): Ditto.
+	(tilegx_copy_bits): New.
+	(tilegx_replace_insn): New.
+	(insn_mask_X1): New.
+	(insn_mask_X0_no_dest_no_srca): New.
+	(insn_mask_X1_no_dest_no_srca): New.
+	(insn_mask_Y0_no_dest_no_srca): New.
+	(insn_mask_Y1_no_dest_no_srca): New.
+	(insn_mask_X0_no_operand): New.
+	(insn_mask_X1_no_operand): New.
+	(insn_mask_Y0_no_operand): New.
+	(insn_mask_Y1_no_operand): New.
+	(insn_tls_ie_ld_X1): New.
+	(insn_tls_ie_ld4s_X1): New.
+	(insn_tls_ie_add_X0X1): New.
+	(insn_tls_ie_add_Y0Y1): New.
+	(insn_tls_ie_addx_X0X1): New.
+	(insn_tls_ie_addx_Y0Y1): New.
+	(insn_tls_gd_add_X0X1): New.
+	(insn_tls_gd_add_Y0Y1): New.
+	(insn_move_X0X1): New.
+	(insn_move_Y0Y1): New.
+	(insn_add_X0X1): New.
+	(insn_add_Y0Y1): New.
+	(insn_addx_X0X1): New.
+	(insn_addx_Y0Y1): New.
+	* libbfd.h: Regenerate.
+	* bfd-in2.h: Regenerate.
+
+2012-02-25  Walter Lee  <walt@tilera.com>
+
+	* config.bfd (tilegx-*-*): rename little endian vector; add big
+	endian vector.
+	(tilegxbe-*-*): New case.
+	* configure.in (bfd_elf32_tilegx_vec): Rename...
+	(bfd_elf32_tilegx_le_vec): ... to this.
+	(bfd_elf32_tilegx_be_vec): New vector.
+	(bfd_elf64_tilegx_vec): Rename...
+	(bfd_elf64_tilegx_le_vec): ... to this.
+	(bfd_elf64_tilegx_be_vec): New vector.
+	* configure: Regenerate.
+	* elf32-tilegx.c (TARGET_LITTLE_SYM): Rename.
+	(TARGET_LITTLE_NAME): Ditto.
+	(TARGET_BIG_SYM): Define.
+	(TARGET_BIG_NAME): Define.
+	* elf64-tilegx.c (TARGET_LITTLE_SYM): Rename.
+	(TARGET_LITTLE_NAME): Ditto.
+	(TARGET_BIG_SYM): Define.
+	(TARGET_BIG_NAME): Define.
+	* targets.c (bfd_elf32_tilegx_vec): Rename...
+	(bfd_elf32_tilegx_le_vec): ... to this.
+	(bfd_elf32_tilegx_be_vec): Declare.
+	(bfd_elf64_tilegx_vec): Rename...
+	(bfd_elf64_tilegx_le_vec): ... to this.
+	(bfd_elf64_tilegx_be_vec): Declare.
+	(_bfd_target_vector): Add / rename above vectors.
+	* arctures.c (bfd_architecture): Define bfd_mach_tilegx32.
+	* bfd-in2.h: Regenerate.
+	* cpu-tilegx.c (bfd_tilegx32_arch): define.
+	(bfd_tilegx_arch): link to bfd_tilegx32_arch.
+
+2012-02-24  Nick Clifton  <nickc@redhat.com>
+
+	PR ld/13730
+	* reloc.c (bfd_generic_get_relocated_section_contents): Issue an
+	error message instead of aborting, when an outofrange reloc is
+	encountered.
+
+2012-02-23  Iain Sandoe  <idsandoe@googlemail.com>
+
+	* mach-o.c (bfd_mach_o_swap_in_non_scattered_reloc): New.
+	(bfd_mach_o_canonicalize_one_reloc):  Swap non-scattered reloc
+	bit-fields when target and host differ in endian-ness.  When
+	PAIRs are non-scattered	find the 'symbol' from the preceding
+	reloc.  Add FIXME re. reloc symbols on section boundaries.
+	(bfd_mach_o_swap_out_non_scattered_reloc): New.
+	(bfd_mach_o_write_relocs): Use bfd_mach_o_encode_non_scattered_reloc.
+
 2012-02-17  Iain Sandoe  <idsandoe@googlemail.com>
 
 	* mach-o-i386.c (i386_howto_table): Add support for 16 bit

@@ -1,3 +1,111 @@
+2012-03-08  Tristan Gingold  <gingold@adacore.com>
+
+	* ldexp.c (exp_print_tree): Special case for SEGMENT_START.
+	(exp_print_token): Constify.
+
+2012-03-08  Alan Modra  <amodra@gmail.com>
+
+	PR ld/10340
+	* ldfile.c (is_sysrooted_pathname): Remove notsame param.
+	(ldfile_add_library_path): Don't set sysrooted flag.
+	(ldfile_open_file_search): Likewise, and don't copy them.
+	(try_open): Delete exten and code handling such.  Add sysrooted
+	param and return whether path is in sysroot.
+	(ldfile_find_command_file): Delete extend param.  Add sysrooted
+	param.  Rename local var.  Update try_open calls.
+	(ldfile_open_command_file_1): Pass sysrooted to lex_push_file.
+	* ldfile.h (search_dirs_type): Remove sysrooted field.
+	* ldlang.c (new_afile): Always set sysrooted from input_flags.
+	(load_symbols): Don't set input_flags.sysrooted.
+	* ldlang.h (struct lang_input_statement_flags): Revise sysrooted
+	comment.
+	* ldlex.h (lex_push_file): Update prototype.
+	* ldlex.l (sysrooted_stack): New array.
+	(EOF): Pop input_flags.sysrooted.
+	(lex_push_file): Add sysrooted param.  Save and set
+	input_flags.sysrooted.
+
+2012-03-06  Alan Modra  <amodra@gmail.com>
+
+	* ldlang.h (struct lang_input_statement_flags): New, extract from..
+	(lang_input_statement_type): ..here.  New field "flags".
+	(input_flags): Declare.
+	(missing_file): Delete.
+	* ldmain.h (whole_archive): Delete.
+	(add_DT_NEEDED_for_regular, add_DT_NEEDED_for_dynamic): Delete.
+	* ld.h (ld_config_type <dynamic_link>): Delete.
+	* ldmain.c (whole_archive): Delete.
+	(add_DT_NEEDED_for_regular, add_DT_NEEDED_for_dynamic): Delete.
+	* ldlang.c (missing_file, ldlang_sysrooted_script): Delete.
+	(input_flags): New variable.  Replace all uses of config.dynamic_link,
+	missing_file, ldlang_sysrooted_script, whole_archive,
+	add_DT_NEEDED_for_regular and add_DT_NEEDED_for_dynamic with fields
+	from here.
+	* ldfile.c: Likewise.
+	* ldgram.y: Likewise.
+	* ldmain.c: Likewise.
+	* ldwrite.c: Likewise.
+	* lexsup.c: Likewise.
+	* plugin.c: Likewise.
+	* emultempl/aix.em: Likewise.
+	* emultempl/armelf.em: Likewise.
+	* emultempl/elf32.em: Likewise.
+	* emultempl/hppaelf.em: Likewise.
+	* emultempl/linux.em: Likewise.
+	* emultempl/pe.em: Likewise.
+	* emultempl/pep.em: Likewise.
+	* emultempl/ppc64elf.em: Likewise.
+	* emultempl/scoreelf.em: Likewise.
+	* emultempl/spuelf.em: Likewise.
+	* emultempl/sunos.em: Likewise.
+	* emultempl/vms.em: Likewise.
+	* ldlang.c (new_afile): Use memset to init zero fields.
+	(load_symbols): Simplify save and restore of flags around command
+	file processing.
+	* ldfile.c (is_sysrooted_pathname): Tidy.
+
+2012-03-05  Hans-Peter Nilsson  <hp@axis.com>
+
+	* configure.tgt (mips64*el-*-freebsd*, mips64*-*-freebsd*)
+	(mips*el-*-freebsd*, mips*-*-freebsd*): Correct triplets by
+	replacing trailing "-*" with "*".
+
+2012-02-25  Walter Lee  <walt@tilera.com>
+
+	* Makefile.am (ALL_EMULATION_SOURCES): Add eelf32tilegx_be.c.
+	(ALL_64_EMULATION_SOURCES): Add eelf64tilegx_be.c.
+	(eelf32tilegx_be.c): Add rule to build this file.
+	(eelf64tilegx_be.c): Ditto.
+	* Makefile.in: Regenerate.
+	* configure.tgt (tilegx-*-*): Support big endian.
+	(tilegxbe-*-*): New.
+	* emulparams/elf32tilegx.sh (OUTPUT_FORMAT): Rename.
+	(BIG_OUTPUT_FORMAT): Define.
+	(LITTLE_OUTPUT_FORMAT): Define.
+	* emulparams/elf32tilegx_be.sh: New.
+	* emulparams/elf64tilegx.sh (OUTPUT_FORMAT): Rename.
+	(BIG_OUTPUT_FORMAT): Define.
+	(LITTLE_OUTPUT_FORMAT): Define.
+	* emulparams/elf64tilegx_be.sh: New.
+
+2012-02-24  Kai Tietz  <ktietz@redhat.com>
+
+	PR binutils/13710
+	* deffilep.y (keyword_as_name): Disable LIBRARY
+	keyword.
+
+2012-02-22  Alan Modra  <amodra@gmail.com>
+
+	PR ld/13683
+	* ldlang.c (lang_process): Rerun lang_do_assignments before
+	starting garbage collection.
+	* ldexp.c (fold_name): Generate a reloc for defined symbols
+	found without an associated output section during the mark phase.
+	(exp_fold_tree_1): Continue processing an expression, even if we
+	are unable to fold it, if we are in the first two evaluation
+	phases.
+	* ldexp.h (enum lang_phase_type): Add descriptions of the phases.
+
 2012-02-19  Kai Tietz  <ktietz@redhat.com>
 
 	* deffilep.y (cmp_import_elem): Sort first by module name.

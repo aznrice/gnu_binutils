@@ -59,7 +59,7 @@ exp_print_token (token_code_type code, int infix_p)
   static const struct
   {
     token_code_type code;
-    char * name;
+    const char * name;
   }
   table[] =
   {
@@ -590,7 +590,9 @@ fold_name (etree_type *tree)
 	      output_section = h->u.def.section->output_section;
 	      if (output_section == NULL)
 		{
-		  if (expld.phase != lang_mark_phase_enum)
+		  if (expld.phase == lang_mark_phase_enum)
+		    new_rel (h->u.def.value, h->u.def.section);
+		  else
 		    einfo (_("%X%S: unresolvable symbol `%s'"
 			     " referenced in expression\n"),
 			   tree, tree->name.name);
@@ -882,7 +884,7 @@ exp_fold_tree_1 (etree_type *tree)
 
 	  exp_fold_tree_1 (tree->assign.src);
 	  if (expld.result.valid_p
-	      || (expld.phase == lang_first_phase_enum
+	      || (expld.phase <= lang_mark_phase_enum
 		  && tree->type.node_class == etree_assign
 		  && tree->assign.hidden))
 	    {
@@ -1143,6 +1145,17 @@ exp_print_tree (etree_type *tree)
 	case DATA_SEGMENT_ALIGN:
 	case DATA_SEGMENT_RELRO_END:
 	  function_like = TRUE;
+	  break;
+	case SEGMENT_START:
+	  /* Special handling because arguments are in reverse order and
+	     the segment name is quoted.  */
+	  exp_print_token (tree->type.node_code, FALSE);
+	  fputs (" (\"", config.map_file);
+	  exp_print_tree (tree->binary.rhs);
+	  fputs ("\", ", config.map_file);
+	  exp_print_tree (tree->binary.lhs);
+	  fputc (')', config.map_file);
+	  return;
 	}
       if (function_like)
 	{

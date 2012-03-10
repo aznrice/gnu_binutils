@@ -1,3 +1,49 @@
+2012-03-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13817
+	* ld-i386/pr13302.d: Updated.
+	* ld-x86-64/pr13082-5b.d: Likewise.
+	* ld-x86-64/pr13082-6a.d: Likewise.
+	* ld-x86-64/pr13082-6b.d: Likewise.
+
+2012-03-06  Alan Modra  <amodra@gmail.com>
+
+	PR ld/13683
+	* ld-gc/pr13683.d: Allow non-zero top address digit.
+
+2012-03-05  Hans-Peter Nilsson  <hp@axis.com>
+
+	PR ld/13803
+	* ld-arm/fix-arm1176-off.d, ld-arm/fix-arm1176-on.d: Regexpify
+	address of func_to_branch_to.
+
+2012-03-01  Hans-Peter Nilsson  <hp@axis.com>
+
+	PR ld/13789
+	* ld-elf/zerosize1.d: Allow xyzzy to be either OBJECT or NOTYPE.
+
+2012-02-25  Walter Lee  <walt@tilera.com>
+
+	* ld-tilegx/reloc-be.d: New.
+	* ld-tilegx/reloc-le.d: New.
+	* ld-tilegx/reloc.d: Delete.
+	* ld-tilegx/tilegx.exp: Test big and little endian.
+
+2012-02-22  Nick Clifton  <nickc@redhat.com>
+
+	PR ld/13683
+	* ld-gc/pr13683.c: New test source file.
+	* ld-gc/pr13683.d: New test control and output file.
+	* ld-gc/gc.exp: Run the pr13683 test.
+
+	* ld-cris/tls-gc-68: Update expected symbol table dump.
+	* ld-cris/tls-gc-69: Likewise.
+	* ld-cris/tls-gc-70: Likewise.
+	* ld-cris/tls-gc-71: Likewise.
+	* ld-cris/tls-gc-75: Likewise.
+	* ld-cris/tls-gc-76.d: Likewise.
+	* ld-cris/tls-gc-79.d: Likewise.
+
 2012-02-20  Thomas Schwinge <thomas@schwinge.name>
 
 	* ld-elf/comm-data.exp: Run for *-*-gnu*.
