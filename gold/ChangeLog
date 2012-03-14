@@ -1,3 +1,19 @@
+2012-03-13  Ian Lance Taylor  <iant@google.com>
+
+	* resolve.cc (Symbol_table::resolve): When merging common symbols,
+	keep the larger alignment.
+
+2012-03-12  Cary Coutant  <ccoutant@google.com>
+
+	* dwarf_reader.cc (Sized_dwarf_line_info::process_one_opcode): Fix
+	handling of DW_LNE_define_file.
+
+2012-03-12  Cary Coutant  <ccoutant@google.com>
+
+	* reduced_debug_output.cc
+	(Output_reduced_debug_info_section::get_die_end): Add new FORM
+	codes to switch.
+
 2012-02-29  Cary Coutant  <ccoutant@google.com>
 
 	* object.cc (need_decompressed_section): Add #ifdef ENABLE_THREADS.
