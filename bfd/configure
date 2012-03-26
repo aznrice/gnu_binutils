@@ -13508,6 +13508,22 @@ fi
 
 fi
 
+
+for ac_header in windows.h dlfcn.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+eval as_val=\$$as_ac_Header
+   if test "x$as_val" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether string.h and strings.h may both be included" >&5
 $as_echo_n "checking whether string.h and strings.h may both be included... " >&6; }
 if test "${gcc_cv_header_string+set}" = set; then :
@@ -15349,9 +15365,11 @@ do
     bfd_elf64_tradlittlemips_vec | bfd_elf64_tradlittlemips_freebsd_vec)
 				tb="$tb elf64-mips.lo elf64.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf ecofflink.lo"; target_size=64 ;;
     bfd_elf64_x86_64_freebsd_vec) tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
+    bfd_elf64_x86_64_nacl_vec)	tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_x86_64_sol2_vec)  tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_x86_64_vec)	tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf32_x86_64_vec)	tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo elf32.lo $elf"; target_size=64 ;;
+    bfd_elf32_x86_64_nacl_vec)	tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo elf32.lo $elf"; target_size=64 ;;
     bfd_elf64_l1om_vec)		tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_l1om_freebsd_vec) tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_k1om_vec)		tb="$tb elf64-x86-64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
@@ -18749,5 +18767,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
-
 

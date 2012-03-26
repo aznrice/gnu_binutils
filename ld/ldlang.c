@@ -3886,8 +3886,9 @@ strip_excluded_output_sections (void)
 	  asection *s;
 
 	  for (s = output_section->map_head.s; s != NULL; s = s->map_head.s)
-	    if ((s->flags & SEC_LINKER_CREATED) != 0
-		&& (s->flags & SEC_EXCLUDE) == 0)
+	    if ((s->flags & SEC_EXCLUDE) == 0
+		&& ((s->flags & SEC_LINKER_CREATED) != 0
+		    || link_info.emitrelocations))
 	      {
 		exclude = FALSE;
 		break;

@@ -1,3 +1,46 @@
+2012-03-23  Maxim Kuvyrkov  <maxim@codesourcery.com>
+
+	* config/tc-mips.c (mips_cpu_info_table): Add entry for Broadcom XLP.
+	* doc/c-mips.texi: Mention XLP.
+
+2012-03-21  Thomas Schwinge  <thomas@codesourcery.com>
+
+	[SH] Support the .uaquad and .8byte directives also for non-sh64
+	configurations.
+
+	* config/tc-sh.c (sh_cons_fix_new, md_apply_fix) [!HAVE_SH64]: Handle
+	BFD_RELOC_64.
+	* doc/c-sh64.texi (SH64 Machine Directives): Move .uaquad
+	description...
+	* doc/c-sh.texi (SH Machine Directives): ... here.
+
+2012-03-20  Nick Clifton  <nickc@redhat.com>
+
+	* config/tc-arm.c (do_vmrs): Accept priviledged mode VFP system
+	registers.
+	(do_vmsr): Likewise.
+	(arm_opcode_insns): Do not default to using the FPSCR register in
+	the VMRS and VMSR registers.
+
+2012-03-16  Roland McGrath  <mcgrathr@google.com>
+
+	* config/tc-i386.h [TE_NACL] (ELF_TARGET_FORMAT32, ELF_TARGET_FORMAT64):
+	Define for this case.
+	* configure.tgt (i386-*-nacl*): If ${cpu} is x86_64*, default to x32.
+
+2012-03-16  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* config/tc-arm.c (aeabi_set_public_attributes): Correct
+	handling of Tag_DIV_use.
+
+2012-03-15  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* doc/as.texinfo (Bundle directives): Fix typo.
+
+2012-03-14  Ryan Mansfield  <rmansfield@qnx.com>
+
+	* doc/as.texinfo (Bundle directives): Replace @defn with @dfn.
+
 2012-03-13  Roland McGrath  <mcgrathr@google.com>
 
 	* config/tc-arm.c (arm_frag_max_var): New function.
