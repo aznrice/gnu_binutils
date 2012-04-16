@@ -8908,7 +8908,8 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
   /* If this symbol should be put in the .dynsym section, then put it
      there now.  We already know the symbol index.  We also fill in
      the entry in the .hash section.  */
-  if (h->dynindx != -1
+  if (finfo->dynsym_sec != NULL
+      && h->dynindx != -1
       && elf_hash_table (finfo->info)->dynamic_sections_created)
     {
       bfd_byte *esym;
@@ -10305,7 +10306,7 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
     {
       finfo.dynsym_sec = bfd_get_section_by_name (dynobj, ".dynsym");
       finfo.hash_sec = bfd_get_section_by_name (dynobj, ".hash");
-      BFD_ASSERT (finfo.dynsym_sec != NULL);
+      /* Note that dynsym_sec can be NULL (on VMS).  */
       finfo.symver_sec = bfd_get_section_by_name (dynobj, ".gnu.version");
       /* Note that it is OK if symver_sec is NULL.  */
     }
@@ -10395,7 +10396,13 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
 	      if (sec->flags & SEC_MERGE)
 		merged = TRUE;
 
-	      if (info->relocatable || info->emitrelocations)
+	      if (esdo->this_hdr.sh_type == SHT_REL
+		  || esdo->this_hdr.sh_type == SHT_RELA)
+		/* Some backends use reloc_count in relocation sections
+		   to count particular types of relocs.  Of course,
+		   reloc sections themselves can't have relocations.  */
+		reloc_count = 0;
+	      else if (info->relocatable || info->emitrelocations)
 		reloc_count = sec->reloc_count;
 	      else if (bed->elf_backend_count_relocs)
 		reloc_count = (*bed->elf_backend_count_relocs) (info, sec);
@@ -10825,6 +10832,7 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
   symtab_hdr->sh_info = bfd_get_symcount (abfd);
 
   if (dynamic
+      && finfo.dynsym_sec != NULL
       && finfo.dynsym_sec->output_section != bfd_abs_section_ptr)
     {
       Elf_Internal_Sym sym;
@@ -11590,7 +11598,8 @@ _bfd_elf_gc_mark_reloc (struct bfd_link_info *info,
   rsec = _bfd_elf_gc_mark_rsec (info, sec, gc_mark_hook, cookie);
   if (rsec && !rsec->gc_mark)
     {
-      if (bfd_get_flavour (rsec->owner) != bfd_target_elf_flavour)
+      if (bfd_get_flavour (rsec->owner) != bfd_target_elf_flavour
+	  || (rsec->owner->flags & DYNAMIC) != 0)
 	rsec->gc_mark = 1;
       else if (!_bfd_elf_gc_mark (info, rsec, gc_mark_hook))
 	return FALSE;

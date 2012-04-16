@@ -1,3 +1,13 @@
+2012-04-12  David S. Miller  <davem@davemloft.net>
+
+	* sparc-dis.c (X_DISP10): Define.
+	(print_insn_sparc): Handle '='.
+
+2012-04-01  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-dis.c (fmtconst): Replace decimal handling with a single
+	sprintf call and the '*' field width.
+
 2012-03-23  Maxim Kuvyrkov  <maxim@codesourcery.com>
 
 	* mips-dis.c (mips_arch_choices): Add entry for Broadcom XLP.

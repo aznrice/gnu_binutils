@@ -1,3 +1,37 @@
+2012-04-12  David S. Miller  <davem@davemloft.net>
+
+	* sparc.cc (Reloc::wdisp10): New relocation method.
+	(Reloc::h34): Likewise.
+	(Target_sparc::Scan::check_non_pic): Handle R_SPARC_H34.
+	(Target_sparc::Scan::get_reference_flags): Handle R_SPARC_H34 and
+	R_SPARC_WDISP10.
+	(Target_sparc::Scan::local): Likewise.
+	(Target_sparc::Scan::global): Likewise.
+	(Target_sparc::Relocate::relocate): Likewise.
+
+2012-04-09  Cary Coutant  <ccoutant@google.com>
+
+	* gdb-index.cc (Gdb_index_info_reader::record_cu_ranges): Allow
+	low_pc == 0.
+
+2012-04-06  Ian Lance Taylor  <iant@google.com>
+
+	* timer.cc: #include <unistd.h>.
+
+2012-04-06  Roland McGrath  <mcgrathr@google.com>
+
+	* configure.in (AC_CHECK_HEADERS): Add locale.h.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+
+2012-04-05  Nick Clifton  <nickc@redhat.com>
+
+	* configure.ac (AC_CHECK_FUNCS): Add setlocale.
+	(AM_LC_MESSAGES): Add.
+	* aclocal.m4: Regenerate.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+
 2012-03-21  Cary Coutant  <ccoutant@google.com>
 
 	* Makefile.am: Add gdb-index.cc, gdb-index.h.
@@ -905,7 +939,7 @@
 	(get_section_name): New function.
 	(get_section_contents): New function.
 	(update_section_order): New function.
-	(allow_section_ordering): New function.	
+	(allow_section_ordering): New function.
 	(Plugin::load): Add the new interfaces to the transfer vector.
 	(Plugin_manager::load_plugins): New parameter.
 	(Plugin_manager::all_symbols_read): New parameter.
@@ -1971,7 +2005,7 @@
 	(Incremental_input_entry_reader::get_global_symbol_count): Rewrite.
 	(Incremental_input_entry_reader::get_output_symbol_index): Adjust
 	size of shared library info entry.
-	* layout.cc (Layout::finish_dynamic_section): Don't test for 
+	* layout.cc (Layout::finish_dynamic_section): Don't test for
 	incremental link when adding DT_NEEDED entries.
 	* object.h (Object::Object): Initialize new data member.
 	(Object::dynobj): New function.
@@ -3327,7 +3361,7 @@
 	(Arm_exidx_merge_section::section_contents_): New data member.
 	(Arm_input_section::Arm_input_section): Initialize original_contents_.
 	(Arm_input_section::~Arm_input_section): De-allocate memory.
-	(Arm_input_section::original_contents_): New data member.	
+	(Arm_input_section::original_contents_): New data member.
 	(Arm_exidx_fixup::process_exidx_section): Pass EXIDX section contents
 	in parameters instead of calling Object::section_contents without
 	locking.

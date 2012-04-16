@@ -8,8 +8,8 @@
 /* Main header file for the bfd library -- portable access to object files.
 
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011,
+   2012 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -700,14 +700,6 @@ extern int bfd_get_elf_phdrs
 extern bfd *bfd_elf_bfd_from_remote_memory
   (bfd *templ, bfd_vma ehdr_vma, bfd_vma *loadbasep,
    int (*target_read_memory) (bfd_vma vma, bfd_byte *myaddr, int len));
-
-/* Return the arch_size field of an elf bfd, or -1 if not elf.  */
-extern int bfd_get_arch_size
-  (bfd *);
-
-/* Return TRUE if address "naturally" sign extends, or -1 if not elf.  */
-extern int bfd_get_sign_extend_vma
-  (bfd *);
 
 extern struct bfd_section *_bfd_elf_tls_setup
   (bfd *, struct bfd_link_info *);
@@ -2603,6 +2595,10 @@ relocation types already defined.  */
   BFD_RELOC_SPARC_M44,
   BFD_RELOC_SPARC_L44,
   BFD_RELOC_SPARC_REGISTER,
+  BFD_RELOC_SPARC_H34,
+  BFD_RELOC_SPARC_SIZE32,
+  BFD_RELOC_SPARC_SIZE64,
+  BFD_RELOC_SPARC_WDISP10,
 
 /* SPARC little endian relocation  */
   BFD_RELOC_SPARC_REV32,

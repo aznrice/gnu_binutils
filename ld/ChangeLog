@@ -1,3 +1,70 @@
+2012-04-12  Roland McGrath  <mcgrathr@google.com>
+
+	* configure.tgt (arm*-*-nacl*, arm*b-*-nacl*): Handle them.
+	* emulparams/armelf_nacl.sh: New file.
+	* emulparams/armelfb_nacl.sh: New file.
+	* Makefile.am (ALL_EMULATION_SOURCES): Add earmelf_nacl.c
+	and earmelfb_nacl.c here.
+	(earmelf_nacl.c, earmelfb_nacl.c): New targets.
+	* Makefile.in: Regenerated.
+
+2012-04-11  Tristan Gingold  <gingold@adacore.com>
+
+	* scripttempl/ia64vms.sc: New file.
+	* emultempl/vms.em (_before_parse): Support for ia64.
+	(elf64-ia64-vms): New fragment for ia64.
+	* emulparams/elf64_ia64_vms.sh: New file.
+	* configure.tgt (ia64-*-*vms*): Add.
+	* Makefile.am (ALL_64_EMULATION_SOURCES): Add eelf64_ia64_vms.c
+	(eelf64_ia64_vms.c): New rule.
+	* Makefile.in: Regenerate.
+
+2012-04-06  Roland McGrath  <mcgrathr@google.com>
+
+	* configure.in (AC_CHECK_HEADERS): Add locale.h.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+
+2012-04-05  Nick Clifton  <nickc@redhat.com>
+
+	* configure.in (AC_CHECK_FUNCS): Add setlocale.
+	(AM_LC_MESSAGES): Add.
+	* aclocal.m4: Regenerate.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+
+2012-04-03  Roland McGrath  <mcgrathr@google.com>
+
+	* configure.tgt (i[3-7]86-*-nacl*, x86_64-*-nacl*): Handle them.
+	* emulparams/elf_nacl.sh: New file.
+	* emulparams/elf_i386_nacl.sh: New file.
+	* emulparams/elf32_x86_64_nacl.sh: New file.
+	* emulparams/elf_x86_64_nacl.sh: New file.
+	* Makefile.am (ALL_EMULATION_SOURCES): Add eelf_i386_nacl.c here.
+	(ALL_64_EMULATION_SOURCES): Add eelf32_x86_64_nacl.c and
+	eelf_x86_64_nacl.c here.
+	(eelf_i386_nacl.c, eelf32_x86_64_nacl.c, eelf_x86_64_nacl.c):
+	New targets.
+	* Makefile.in: Regenerated.
+
+	* scripttempl/elf.sc: Handle SEPARATE_CODE cases.
+
+2012-04-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* ldmisc.c (vfinfo): Assign new local str to fmt.  Delete
+	putc call.  If str and fmt are different, call fwrite on
+	the difference.
+
+2012-03-30  Nick Clifton  <nickc@redhat.com>
+
+	* po/vi.po: Updated Vietnamese translation.
+
+2012-03-27  Roland McGrath  <mcgrathr@google.com>
+
+	* configure.in: Set want64 on a 64-bit host regardless of
+	--enable-targets=all.
+	* configure: Regenerated.
+
 2012-03-26  Tristan Gingold  <gingold@adacore.com>
 
 	* lexsup.c (parse_args): Add a missing '\n'.

@@ -1,3 +1,76 @@
+2012-04-12  David S. Miller  <davem@davemloft.net>
+
+	* config/tc-sparc.c (sparc_ip): Handle '=', "%h34", "%l34", and
+	BFD_RELOC_SPARC_H34.
+	(md_apply_fix): Handle BFD_RELOC_SPARC_WDISP10 and BFD_RELOC_SPARC_H34.
+	(tc_gen_reloc): Likewise.
+
+2012-04-12  Roland McGrath  <mcgrathr@google.com>
+
+	* configure.tgt (arm-*-nacl*): Match it.
+	* config/te-nacl.h (FPU_DEFAULT, EABI_DEFAULT): Define.
+	(LOCAL_LABELS_DOLLAR): Define.
+	* config/tc-arm.c (elf32_arm_target_format) [TE_NACL]:
+	Use nacl format variants.
+
+2012-04-12  Jie Zhang  <jie@codesourcery.com>
+            Meador Inge  <meadori@codesourcery.com>
+
+	* config/tc-arm.c (only_one_reg_in_list): New function.
+	(encode_ldmstm): Ditto.
+	(do_ldmstm): Use a different encoding when pushing or poping
+	a single register.
+	(A_COND_MASK): New macro.
+	(A_PUSH_POP_OP_MASK): Ditto.
+	(A1_OPCODE_PUSH): Ditto.
+	(A2_OPCODE_PUSH): Ditto.
+	(A2_OPCODE_POP): Ditto.
+
+2012-04-06  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* doc/c-mips.texi (MIPS Opts): Correct -no-mfix-24k to
+	-mno-fix-24k.
+
+2012-04-06  Roland McGrath  <mcgrathr@google.com>
+
+	* configure.in (AC_CHECK_HEADERS): Add locale.h.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+
+2012-04-05  Nick Clifton  <nickc@redhat.com>
+
+	* configure.in (AC_CHECK_FUNCS): Add setlocale.
+	(AM_LC_MESSAGES): Add.
+	* aclocal.m4: Regenerate.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+
+2012-04-03  DJ Delorie  <dj@redhat.com>
+
+	* config/rx-parse.y: Make the .L optional for ADC and SBB.
+
+2012-04-02  DJ Delorie  <dj@redhat.com>
+
+	* config/rx-parse.y: IMM->IMM_, take an extra parameter for the
+	transfer size.
+	(IMM): New, call IMM_ with the default 32.
+	(IMMW,IMMB): Likewise, for 16 and 8.
+	(NIMM, MBIMM): Add size parameter.
+	(immediate): Likewise.  Allow 32768..65535 for 16-bit transfers.
+	(MOV.W): Use IMMW instead of IMM.
+
+	* config/rx-parse.y (ADC,SBB): ADC and SBB only allow .L.
+	(op_dp20_rm_l): New.
+	(op_dp20_rim_l): New.
+
+	* config/rx-parse.y (op_dp20_rms): Rename to op_dp20_rr, don't allow mem.
+	(ABS, NEG, NOT): These only take REG or REG,REG (rr, not rms).
+
+2012-03-29  Terry Guo  <terry.guo@arm.com>
+
+	* config/tc-arm.c (arm_cpus): Add cortex-m0plus.
+	* doc/c-arm.texi (ARM Options): Document -mcpu=cortex-m0plus.
+
 2012-03-23  Maxim Kuvyrkov  <maxim@codesourcery.com>
 
 	* config/tc-mips.c (mips_cpu_info_table): Add entry for Broadcom XLP.
