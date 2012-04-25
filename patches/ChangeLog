@@ -1,6 +1,6 @@
 2012-03-14  H.J. Lu  <hjl.tools@gmail.com>
 
-	* patches/binutils-shr-100.patch: Updated.
+	* binutils-shr-100.patch: Updated.
 
 2012-03-10  H.J. Lu  <hjl.tools@gmail.com>
 
