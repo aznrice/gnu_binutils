@@ -82,6 +82,8 @@ case ${cpu} in
   sparclet*)		cpu_type=sparc arch=sparclet ;;
   sparclite*)		cpu_type=sparc arch=sparclite ;;
   sparc*)		cpu_type=sparc arch=sparclite ;; # ??? See tc-sparc.c.
+  tilegx*be)		cpu_type=tilegx endian=big ;;
+  tilegx*)		cpu_type=tilegx endian=little ;;
   v850*)		cpu_type=v850 ;;
   x86_64*)
     cpu_type=i386
@@ -122,6 +124,7 @@ case ${generic_target} in
   arm-*-linux-*)			fmt=elf  em=linux ;;
   arm-*-uclinux*eabi*)			fmt=elf  em=armlinuxeabi ;;
   arm-*-uclinux*)			fmt=elf  em=linux ;;
+  arm-*-nacl*)				fmt=elf  em=nacl ;;
   arm-*-netbsdelf*)			fmt=elf  em=nbsd ;;
   arm-*-*n*bsd*)			fmt=aout em=nbsd ;;
   arm-*-nto*)				fmt=elf ;;
@@ -188,7 +191,10 @@ case ${generic_target} in
   i386-*-elf)				fmt=elf ;;
   i386-*-kaos*)				fmt=elf ;;
   i386-*-bsd*)				fmt=aout em=386bsd ;;
-  i386-*-nacl*)				fmt=elf  em=nacl ;;
+  i386-*-nacl*)				fmt=elf em=nacl
+    case ${cpu} in
+      x86_64*)				arch=x86_64:32 ;;
+    esac ;;
   i386-*-netbsd0.8)			fmt=aout em=386bsd ;;
   i386-*-netbsdpe*)			fmt=coff em=pe ;;
   i386-*-netbsd*-gnu* | \
@@ -411,7 +417,7 @@ case ${generic_target} in
   tic54x-*-* | c54x*-*-*)		fmt=coff bfd_gas=yes need_libm=yes;;
   tic6x-*-*)				fmt=elf ;;
 
-  tilepro-*-* | tilegx-*-*)		fmt=elf ;;
+  tilepro-*-* | tilegx*-*-*)		fmt=elf ;;
 
   v850*-*-*)				fmt=elf ;;
 

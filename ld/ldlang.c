@@ -73,7 +73,6 @@ static struct bfd_hash_table lang_definedness_table;
 static lang_statement_list_type *stat_save[10];
 static lang_statement_list_type **stat_save_ptr = &stat_save[0];
 static struct unique_sections *unique_section_list;
-static bfd_boolean ldlang_sysrooted_script = FALSE;
 static cmdline_list_type cmdline_object_only_file_list;
 static cmdline_list_type cmdline_object_only_archive_list;
 static cmdline_list_type cmdline_temp_object_only_list;
@@ -111,6 +110,7 @@ lang_statement_list_type file_chain = { NULL, NULL };
 lang_statement_list_type input_file_chain;
 struct bfd_sym_chain entry_symbol = { NULL, NULL };
 const char *entry_section = ".text";
+struct lang_input_statement_flags input_flags;
 bfd_boolean entry_from_cmdline;
 bfd_boolean undef_from_cmdline;
 bfd_boolean lang_has_input_file = FALSE;
@@ -119,7 +119,6 @@ bfd_boolean lang_float_flag = FALSE;
 bfd_boolean delete_output_file_on_failure = FALSE;
 struct lang_phdr *lang_phdr_list;
 struct lang_nocrossrefs *nocrossref_list;
-bfd_boolean missing_file = FALSE;
 
  /* Functions that traverse the linker script and might evaluate
     DEFINED() need to increment this.  */
@@ -742,7 +741,7 @@ walk_wild_section (lang_wild_statement_type *ptr,
 		   callback_t callback,
 		   void *data)
 {
-  if (file->just_syms_flag)
+  if (file->flags.just_syms)
     return;
 
   (*ptr->walk_wild_section_handler) (ptr, file, callback, data);
@@ -1057,6 +1056,8 @@ new_afile (const char *name,
 {
   lang_input_statement_type *p;
 
+  lang_has_input_file = TRUE;
+
   if (add_to_list)
     p = (lang_input_statement_type *) new_stat (lang_input_statement, stat_ptr);
   else
@@ -1067,9 +1068,14 @@ new_afile (const char *name,
       p->header.next = NULL;
     }
 
-  lang_has_input_file = TRUE;
+  memset (&p->the_bfd, 0,
+	  sizeof (*p) - offsetof (lang_input_statement_type, the_bfd));
   p->target = target;
-  p->sysrooted = FALSE;
+  p->flags.dynamic = input_flags.dynamic;
+  p->flags.add_DT_NEEDED_for_dynamic = input_flags.add_DT_NEEDED_for_dynamic;
+  p->flags.add_DT_NEEDED_for_regular = input_flags.add_DT_NEEDED_for_regular;
+  p->flags.whole_archive = input_flags.whole_archive;
+  p->flags.sysrooted = input_flags.sysrooted;
 
   if (file_type == lang_input_file_is_l_enum
       && name[0] == ':' && name[1] != '\0')
@@ -1082,70 +1088,40 @@ new_afile (const char *name,
     {
     case lang_input_file_is_symbols_only_enum:
       p->filename = name;
-      p->maybe_archive = FALSE;
-      p->real = TRUE;
       p->local_sym_name = name;
-      p->just_syms_flag = TRUE;
-      p->search_dirs_flag = FALSE;
+      p->flags.real = TRUE;
+      p->flags.just_syms = TRUE;
       break;
     case lang_input_file_is_fake_enum:
       p->filename = name;
-      p->maybe_archive = FALSE;
-      p->real = FALSE;
       p->local_sym_name = name;
-      p->just_syms_flag = FALSE;
-      p->search_dirs_flag = FALSE;
       break;
     case lang_input_file_is_l_enum:
-      p->maybe_archive = TRUE;
       p->filename = name;
-      p->real = TRUE;
       p->local_sym_name = concat ("-l", name, (const char *) NULL);
-      p->just_syms_flag = FALSE;
-      p->search_dirs_flag = TRUE;
+      p->flags.maybe_archive = TRUE;
+      p->flags.real = TRUE;
+      p->flags.search_dirs = TRUE;
       break;
     case lang_input_file_is_marker_enum:
       p->filename = name;
-      p->maybe_archive = FALSE;
-      p->real = FALSE;
       p->local_sym_name = name;
-      p->just_syms_flag = FALSE;
-      p->search_dirs_flag = TRUE;
+      p->flags.search_dirs = TRUE;
       break;
     case lang_input_file_is_search_file_enum:
-      p->sysrooted = ldlang_sysrooted_script;
       p->filename = name;
-      p->maybe_archive = FALSE;
-      p->real = TRUE;
       p->local_sym_name = name;
-      p->just_syms_flag = FALSE;
-      p->search_dirs_flag = TRUE;
+      p->flags.real = TRUE;
+      p->flags.search_dirs = TRUE;
       break;
     case lang_input_file_is_file_enum:
       p->filename = name;
-      p->maybe_archive = FALSE;
-      p->real = TRUE;
       p->local_sym_name = name;
-      p->just_syms_flag = FALSE;
-      p->search_dirs_flag = FALSE;
+      p->flags.real = TRUE;
       break;
     default:
       FAIL ();
     }
-  p->the_bfd = NULL;
-  p->next_real_file = NULL;
-  p->next = NULL;
-  p->dynamic = config.dynamic_link;
-  p->add_DT_NEEDED_for_dynamic = add_DT_NEEDED_for_dynamic;
-  p->add_DT_NEEDED_for_regular = add_DT_NEEDED_for_regular;
-  p->whole_archive = whole_archive;
-  p->loaded = FALSE;
-  p->missing_file = FALSE;
-#ifdef ENABLE_PLUGINS
-  p->claimed = FALSE;
-  p->claim_archive = FALSE;
-  p->reload = FALSE;
-#endif /* ENABLE_PLUGINS */
 
   lang_statement_append (&input_file_chain,
 			 (lang_statement_union_type *) p,
@@ -1327,12 +1303,13 @@ lang_memory_region_lookup (const char *const name, bfd_boolean create)
         {
           if (create)
             einfo (_("%P:%S: warning: redeclaration of memory region `%s'\n"),
-                   name);
+                   NULL, name);
           return r;
         }
 
   if (!create && strcmp (name, DEFAULT_MEMORY_REGION))
-    einfo (_("%P:%S: warning: memory region `%s' not declared\n"), name);
+    einfo (_("%P:%S: warning: memory region `%s' not declared\n"),
+	   NULL, name);
 
   new_region = (lang_memory_region_type *)
       stat_alloc (sizeof (lang_memory_region_type));
@@ -1366,7 +1343,7 @@ lang_memory_region_alias (const char * alias, const char * region_name)
      the default memory region.  */
   if (strcmp (region_name, DEFAULT_MEMORY_REGION) == 0
       || strcmp (alias, DEFAULT_MEMORY_REGION) == 0)
-    einfo (_("%F%P:%S: error: alias for default memory region\n"));
+    einfo (_("%F%P:%S: error: alias for default memory region\n"), NULL);
 
   /* Look for the target region and check if the alias is not already
      in use.  */
@@ -1379,15 +1356,14 @@ lang_memory_region_alias (const char * alias, const char * region_name)
         if (strcmp (n->name, alias) == 0)
           einfo (_("%F%P:%S: error: redefinition of memory region "
                    "alias `%s'\n"),
-                 alias);
+                 NULL, alias);
       }
 
   /* Check if the target region exists.  */
   if (region == NULL)
     einfo (_("%F%P:%S: error: memory region `%s' "
              "for alias `%s' does not exist\n"),
-           region_name,
-           alias);
+           NULL, region_name, alias);
 
   /* Add alias to region name list.  */
   n = (lang_memory_region_name *) stat_alloc (sizeof (lang_memory_region_name));
@@ -2027,7 +2003,7 @@ lang_map (void)
       asection *s;
 
       if ((file->the_bfd->flags & (BFD_LINKER_CREATED | DYNAMIC)) != 0
-	  || file->just_syms_flag)
+	  || file->flags.just_syms)
 	continue;
 
       for (s = file->the_bfd->sections; s != NULL; s = s->next)
@@ -2249,7 +2225,7 @@ section_already_linked (bfd *abfd, asection *sec, void *data)
 
   /* If we are only reading symbols from this object, then we want to
      discard all sections.  */
-  if (entry->just_syms_flag)
+  if (entry->flags.just_syms)
     {
       bfd_link_just_syms (abfd, sec, &link_info);
       return;
@@ -2634,7 +2610,7 @@ lookup_name (const char *name)
 
   /* If we have already added this file, or this file is not real
      don't add this file.  */
-  if (search->loaded || !search->real)
+  if (search->flags.loaded || !search->flags.real)
     return search;
 
   if (! load_symbols (search, NULL))
@@ -2712,23 +2688,20 @@ load_symbols (lang_input_statement_type *entry,
 {
   char **matching;
 
-  if (entry->loaded)
+  if (entry->flags.loaded)
     return TRUE;
 
   ldfile_open_file (entry);
 
   /* Do not process further if the file was missing.  */
-  if (entry->missing_file)
+  if (entry->flags.missing_file)
     return TRUE;
 
   if (! bfd_check_format (entry->the_bfd, bfd_archive)
       && ! bfd_check_format_matches (entry->the_bfd, bfd_object, &matching))
     {
       bfd_error_type err;
-      bfd_boolean save_ldlang_sysrooted_script;
-      bfd_boolean save_add_DT_NEEDED_for_regular;
-      bfd_boolean save_add_DT_NEEDED_for_dynamic;
-      bfd_boolean save_whole_archive;
+      struct lang_input_statement_flags save_flags;
 
       err = bfd_get_error ();
 
@@ -2754,30 +2727,27 @@ load_symbols (lang_input_statement_type *entry,
       entry->the_bfd = NULL;
 
       /* Try to interpret the file as a linker script.  */
+      save_flags = input_flags;
       ldfile_open_command_file (entry->filename);
 
       push_stat_ptr (place);
-      save_ldlang_sysrooted_script = ldlang_sysrooted_script;
-      ldlang_sysrooted_script = entry->sysrooted;
-      save_add_DT_NEEDED_for_regular = add_DT_NEEDED_for_regular;
-      add_DT_NEEDED_for_regular = entry->add_DT_NEEDED_for_regular;
-      save_add_DT_NEEDED_for_dynamic = add_DT_NEEDED_for_dynamic;
-      add_DT_NEEDED_for_dynamic = entry->add_DT_NEEDED_for_dynamic;
-      save_whole_archive = whole_archive;
-      whole_archive = entry->whole_archive;
+      input_flags.add_DT_NEEDED_for_regular
+	= entry->flags.add_DT_NEEDED_for_regular;
+      input_flags.add_DT_NEEDED_for_dynamic
+	= entry->flags.add_DT_NEEDED_for_dynamic;
+      input_flags.whole_archive = entry->flags.whole_archive;
+      input_flags.dynamic = entry->flags.dynamic;
 
       ldfile_assumed_script = TRUE;
       parser_input = input_script;
-      /* We want to use the same -Bdynamic/-Bstatic as the one for
-	 ENTRY.  */
-      config.dynamic_link = entry->dynamic;
       yyparse ();
       ldfile_assumed_script = FALSE;
 
-      ldlang_sysrooted_script = save_ldlang_sysrooted_script;
-      add_DT_NEEDED_for_regular = save_add_DT_NEEDED_for_regular;
-      add_DT_NEEDED_for_dynamic = save_add_DT_NEEDED_for_dynamic;
-      whole_archive = save_whole_archive;
+      /* missing_file is sticky.  sysrooted will already have been
+	 restored when seeing EOF in yyparse, but no harm to restore
+	 again.  */
+      save_flags.missing_file |= input_flags.missing_file;
+      input_flags = save_flags;
       pop_stat_ptr ();
 
       return TRUE;
@@ -2797,7 +2767,7 @@ load_symbols (lang_input_statement_type *entry,
 
     case bfd_object:
 #ifdef ENABLE_PLUGINS
-      if (!entry->reload)
+      if (!entry->flags.reload)
 #endif
 	ldlang_add_file (entry);
       if (trace_files || trace_file_tries)
@@ -2807,7 +2777,7 @@ load_symbols (lang_input_statement_type *entry,
     case bfd_archive:
       check_excluded_libs (entry->the_bfd);
 
-      if (entry->whole_archive)
+      if (entry->flags.whole_archive)
 	{
 	  bfd *member = NULL;
 	  bfd_boolean loaded = TRUE;
@@ -2848,18 +2818,18 @@ load_symbols (lang_input_statement_type *entry,
 		}
 	    }
 
-	  entry->loaded = loaded;
+	  entry->flags.loaded = loaded;
 	  return loaded;
 	}
       break;
     }
 
   if (bfd_link_add_symbols (entry->the_bfd, &link_info))
-    entry->loaded = TRUE;
+    entry->flags.loaded = TRUE;
   else
     einfo (_("%F%B: could not read symbols: %E\n"), entry->the_bfd);
 
-  return entry->loaded;
+  return entry->flags.loaded;
 }
 
 /* Handle a wild statement.  S->FILENAME or S->SECTION_LIST or both
@@ -3043,7 +3013,7 @@ get_first_input_target (void)
   LANG_FOR_EACH_INPUT_STATEMENT (s)
     {
       if (s->header.type == lang_input_statement_enum
-	  && s->real)
+	  && s->flags.real)
 	{
 	  ldfile_open_file (s);
 
@@ -3276,7 +3246,7 @@ open_input_bfds (lang_statement_union_type *s, enum open_bfd_mode mode)
 	  current_target = s->target_statement.target;
 	  break;
 	case lang_input_statement_enum:
-	  if (s->input_statement.real)
+	  if (s->input_statement.flags.real)
 	    {
 	      lang_statement_union_type **os_tail;
 	      lang_statement_list_type add;
@@ -3292,22 +3262,22 @@ open_input_bfds (lang_statement_union_type *s, enum open_bfd_mode mode)
 		  && ((mode & OPEN_BFD_RESCAN) == 0
 		      || plugin_insert == NULL)
 #endif
-		  && !s->input_statement.whole_archive
-		  && s->input_statement.loaded
+		  && !s->input_statement.flags.whole_archive
+		  && s->input_statement.flags.loaded
 		  && bfd_check_format (s->input_statement.the_bfd,
 				       bfd_archive))
-		s->input_statement.loaded = FALSE;
+		s->input_statement.flags.loaded = FALSE;
 #ifdef ENABLE_PLUGINS
 	      /* When rescanning, reload --as-needed shared libs.  */
 	      else if ((mode & OPEN_BFD_RESCAN) != 0
 		       && plugin_insert == NULL
-		       && s->input_statement.loaded
-		       && s->input_statement.add_DT_NEEDED_for_regular
+		       && s->input_statement.flags.loaded
+		       && s->input_statement.flags.add_DT_NEEDED_for_regular
 		       && ((s->input_statement.the_bfd->flags) & DYNAMIC) != 0
 		       && plugin_should_reload (s->input_statement.the_bfd))
 		{
-		  s->input_statement.loaded = FALSE;
-		  s->input_statement.reload = TRUE;
+		  s->input_statement.flags.loaded = FALSE;
+		  s->input_statement.flags.reload = TRUE;
 		}
 #endif
 
@@ -3358,7 +3328,7 @@ open_input_bfds (lang_statement_union_type *s, enum open_bfd_mode mode)
     }
 
   /* Exit if any of the files were missing.  */
-  if (missing_file)
+  if (input_flags.missing_file)
     einfo ("%F");
 }
 
@@ -3937,8 +3907,9 @@ strip_excluded_output_sections (void)
 	  asection *s;
 
 	  for (s = output_section->map_head.s; s != NULL; s = s->map_head.s)
-	    if ((s->flags & SEC_LINKER_CREATED) != 0
-		&& (s->flags & SEC_EXCLUDE) == 0)
+	    if ((s->flags & SEC_EXCLUDE) == 0
+		&& ((s->flags & SEC_LINKER_CREATED) != 0
+		    || link_info.emitrelocations))
 	      {
 		exclude = FALSE;
 		break;
@@ -4669,7 +4640,7 @@ size_input_section
   lang_input_section_type *is = &((*this_ptr)->input_section);
   asection *i = is->section;
 
-  if (!((lang_input_statement_type *) i->owner->usrdata)->just_syms_flag
+  if (i->sec_info_type != SEC_INFO_TYPE_JUST_SYMS
       && (i->flags & SEC_EXCLUDE) == 0)
     {
       bfd_size_type alignment_needed;
@@ -4912,7 +4883,7 @@ lang_size_sections_1
 		else if (expld.phase != lang_mark_phase_enum)
 		  einfo (_("%F%S: non constant or forward reference"
 			   " address expression for section %s\n"),
-			 os->name);
+			 os->addr_tree, os->name);
 	      }
 
 	    if (os->bfd_section == NULL)
@@ -5840,7 +5811,7 @@ lang_check (void)
     {
 #ifdef ENABLE_PLUGINS
       /* Don't check format of files claimed by plugin.  */
-      if (file->input_statement.claimed)
+      if (file->input_statement.flags.claimed)
 	continue;
 #endif /* ENABLE_PLUGINS */
       input_bfd = file->input_statement.the_bfd;
@@ -6043,7 +6014,7 @@ lang_place_orphans (void)
 	      /* This section of the file is not attached, root
 		 around for a sensible place for it to go.  */
 
-	      if (file->just_syms_flag)
+	      if (file->flags.just_syms)
 		bfd_link_just_syms (file->the_bfd, s, &link_info);
 	      else if ((s->flags & SEC_EXCLUDE) != 0)
 		s->output_section = bfd_abs_section_ptr;
@@ -6355,7 +6326,7 @@ lang_gc_sections (void)
 	{
 	  asection *sec;
 #ifdef ENABLE_PLUGINS
-	  if (f->claimed)
+	  if (f->flags.claimed)
 	    continue;
 #endif
 	  for (sec = f->the_bfd->sections; sec != NULL; sec = sec->next)
@@ -6520,8 +6491,8 @@ find_replacements_insert_point (void)
        claim1 != NULL;
        claim1 = &claim1->next->input_statement)
     {
-      if (claim1->claimed)
-	return claim1->claim_archive ? lastobject : claim1;
+      if (claim1->flags.claimed)
+	return claim1->flags.claim_archive ? lastobject : claim1;
       /* Update lastobject if this is a real object file.  */
       if (claim1->the_bfd && (claim1->the_bfd->my_archive == NULL))
 	lastobject = claim1;
@@ -6701,6 +6672,11 @@ lang_process (void)
   /* Build all sets based on the information gathered from the input
      files.  */
   ldctor_build_sets ();
+
+  /* PR 13683: We must rerun the assignments prior to running garbage
+     collection in order to make sure that all symbol aliases are resolved.  */
+  lang_do_assignments (lang_mark_phase_enum);
+  expld.phase = lang_first_phase_enum;
 
   /* Remove unreferenced sections if asked to.  */
   lang_gc_sections ();
@@ -6958,7 +6934,7 @@ lang_startup (const char *name)
     }
   first_file->filename = name;
   first_file->local_sym_name = name;
-  first_file->real = TRUE;
+  first_file->flags.real = TRUE;
 }
 
 void
@@ -7000,7 +6976,8 @@ lang_get_regions (lang_memory_region_type **region,
     *region = lang_memory_region_lookup (memspec, FALSE);
 
   if (have_lma && lma_memspec != 0)
-    einfo (_("%X%P:%S: section has both a load address and a load region\n"));
+    einfo (_("%X%P:%S: section has both a load address and a load region\n"),
+	   NULL);
 }
 
 void
@@ -7187,7 +7164,8 @@ lang_new_phdr (const char *name,
 	&& (*pp)->type == 1
 	&& !((*pp)->filehdr || (*pp)->phdrs))
       {
-	einfo (_("%X%P:%S: PHDRS and FILEHDR are not supported when prior PT_LOAD headers lack them\n"));
+	einfo (_("%X%P:%S: PHDRS and FILEHDR are not supported"
+		 " when prior PT_LOAD headers lack them\n"), NULL);
 	hdrs = FALSE;
       }
 
@@ -8885,7 +8863,7 @@ cmdline_emit_object_only_section (void)
 
   /* Call cmdline_on_object_only_archive_list_p to check which member
      should be loaded.  */
-  whole_archive = TRUE;
+  input_flags.whole_archive = TRUE;
 
   /* Set it to avoid adding more to cmdline lists.  */
   link_info.emitting_gnu_object_only = TRUE;

@@ -1,6 +1,6 @@
 /* readelf.c -- display contents of an ELF format file
    Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011
+   2008, 2009, 2010, 2011, 2012
    Free Software Foundation, Inc.
 
    Originally developed by Eric Youngdale <eric@andante.jic.com>
@@ -42,10 +42,8 @@
   ELF file than is provided by objdump.  In particular it can display DWARF
   debugging information which (at the moment) objdump cannot.  */
 
-#include "config.h"
 #include "sysdep.h"
 #include <assert.h>
-#include <sys/stat.h>
 #include <time.h>
 #ifdef HAVE_ZLIB_H
 #include <zlib.h>
@@ -10097,6 +10095,9 @@ is_16bit_abs_reloc (unsigned int reloc_type)
     case EM_XC16X:
     case EM_C166:
       return reloc_type == 2; /* R_XC16C_ABS_16.  */
+    case EM_CYGNUS_MN10300:
+    case EM_MN10300:
+      return reloc_type == 2; /* R_MN10300_16.  */
     default:
       return FALSE;
     }
@@ -13005,7 +13006,7 @@ process_corefile_note_segment (FILE * file, bfd_vma offset, bfd_vma length)
       external = next;
 
       /* Prevent out-of-bounds indexing.  */
-      if (inote.namedata + inote.namesz >= (char *) pnotes + length
+      if (inote.namedata + inote.namesz > (char *) pnotes + length
 	  || inote.namedata + inote.namesz < inote.namedata)
         {
           warn (_("corrupt note found at offset %lx into core notes\n"),
@@ -13019,7 +13020,7 @@ process_corefile_note_segment (FILE * file, bfd_vma offset, bfd_vma length)
 	 one version of Linux (RedHat 6.0) generates corefiles that don't
 	 comply with the ELF spec by failing to include the null byte in
 	 namesz.  */
-      if (inote.namedata[inote.namesz] != '\0')
+      if (inote.namedata[inote.namesz - 1] != '\0')
 	{
 	  temp = (char *) malloc (inote.namesz + 1);
 

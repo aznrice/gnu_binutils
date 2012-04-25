@@ -1767,6 +1767,10 @@ write_object_file (void)
   fragS *fragP;			/* Track along all frags.  */
 #endif
 
+#ifdef md_pre_output_hook
+  md_pre_output_hook;
+#endif
+
   /* Do we really want to write it?  */
   {
     int n_warns, n_errs;
@@ -1789,6 +1793,10 @@ write_object_file (void)
 		    n_warns, n_warns == 1 ? "" : "s");
       }
   }
+
+#ifdef md_pre_relax_hook
+  md_pre_relax_hook;
+#endif
 
   /* From now on, we don't care about sub-segments.  Build one frag chain
      for each segment. Linked thru fr_next.  */

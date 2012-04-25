@@ -1,6 +1,6 @@
 /* ELF object file format
    Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -783,10 +783,10 @@ obj_elf_change_section (const char *name,
 }
 
 static bfd_vma
-obj_elf_parse_section_letters (char *str, size_t len, bfd_boolean *clone)
+obj_elf_parse_section_letters (char *str, size_t len, bfd_boolean *is_clone)
 {
   bfd_vma attr = 0;
-  *clone = FALSE;
+  *is_clone = FALSE;
 
   while (len > 0)
     {
@@ -817,7 +817,7 @@ obj_elf_parse_section_letters (char *str, size_t len, bfd_boolean *clone)
 	  attr |= SHF_TLS;
 	  break;
 	case '?':
-	  *clone = TRUE;
+	  *is_clone = TRUE;
 	  break;
 	/* Compatibility.  */
 	case 'm':
@@ -1020,7 +1020,7 @@ obj_elf_section (int push)
 
       if (*input_line_pointer == '"')
 	{
-	  bfd_boolean clone;
+	  bfd_boolean is_clone;
 
 	  beg = demand_copy_C_string (&dummy);
 	  if (beg == NULL)
@@ -1028,7 +1028,7 @@ obj_elf_section (int push)
 	      ignore_rest_of_line ();
 	      return;
 	    }
-	  attr |= obj_elf_parse_section_letters (beg, strlen (beg), &clone);
+	  attr |= obj_elf_parse_section_letters (beg, strlen (beg), &is_clone);
 
 	  SKIP_WHITESPACE ();
 	  if (*input_line_pointer == ',')
@@ -1080,10 +1080,10 @@ obj_elf_section (int push)
 	      attr &= ~SHF_MERGE;
 	    }
 
-	  if ((attr & SHF_GROUP) != 0 && clone)
+	  if ((attr & SHF_GROUP) != 0 && is_clone)
 	    {
 	      as_warn (_("? section flag ignored with G present"));
-	      clone = FALSE;
+	      is_clone = FALSE;
 	    }
 	  if ((attr & SHF_GROUP) != 0 && *input_line_pointer == ',')
 	    {
@@ -1105,7 +1105,7 @@ obj_elf_section (int push)
 	      attr &= ~SHF_GROUP;
 	    }
 
-	  if (clone)
+	  if (is_clone)
 	    {
 	      const char *now_group = elf_group_name (now_seg);
 	      if (now_group != NULL)
