@@ -1,3 +1,45 @@
+2012-04-25  Ian Lance Taylor  <iant@google.com>
+
+	* arm.cc (Target_arm::do_is_defined_by_abi): Make sym a const
+	pointer.
+	(Stub_addend_reader::operator()): Declare Arm_relocate_functions
+	as a class, not a struct.
+	(Target_arm::scan_span_for_cortex_a8_erratum): Likewise.
+	(Target_arm::apply_cortex_a8_workaround): Likewise.
+	* gc.h: Declare Reloc_types as a struct, not a class.
+	* object.h: Declare Symbols_data as a struct.
+	* reloc.h: Declare Read_relocs_data as a struct.
+	* target.h: Declare Relocate_info as a struct.
+
+2012-04-24  David S. Miller  <davem@davemloft.net>
+
+	* sparc.cc (Target_sparc::Relocate::relax_call): New function.
+	(Target_sparc::Relocate::relocate): Call it for R_SPARC_WDISP30
+	and R_SPARC_WPLT30.
+
+2012-04-24  Cary Coutant  <ccoutant@google.com>
+
+	* incremental-dump.cc (find_input_containing_global): Replace
+	magic number with symbolic constant.
+	(dump_incremental_inputs): Update version number.
+	* incremental.cc (Output_section_incremental_inputs): Update version
+	number; import symbolic constants from Incremental_inputs_reader.
+	(Incremental_inputs::create_data_sections): Align relocations
+	section correctly for 64-bit targets.
+	(Output_section_incremental_inputs::set_final_data_size): Use symbolic
+	constants; add padding.
+	(Output_section_incremental_inputs::write_header): Add assert for
+	header_size.
+	(Output_section_incremental_inputs::write_input_files): Add assert
+	for input_entry_size.
+	(Output_section_incremental_inputs::write_info_blocks): Add padding;
+	add assert for object_info_size, input_section_entry_size,
+	global_sym_entry_size.
+	* incremental.h (Incremental_inputs_reader): Add symbolic constants
+	for data structure sizes; use them.
+	(Incremental_input_entry_reader): Import symbolic constants from
+	Incremental_inputs_reader; use them.
+
 2012-04-23  David S. Miller  <davem@davemloft.net>
 
 	* sparc.cc (class Target_sparc): Add elf_machine_, elf_flags_,
