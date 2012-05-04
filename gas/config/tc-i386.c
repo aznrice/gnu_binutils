@@ -4353,8 +4353,9 @@ check_reverse:
 	  err_msg = _("unsupported syntax");
 	  break;
 	case unsupported:
-	  err_msg = _("unsupported");
-	  break;
+	  as_bad (_("unsupported instruction `%s'"),
+		  current_templates->start->name);
+	  return NULL;
 	case invalid_vsib_address:
 	  err_msg = _("invalid VSIB address");
 	  break;
@@ -6217,7 +6218,7 @@ output_insn (void)
       unsigned int prefix;
 
       /* Since the VEX prefix contains the implicit prefix, we don't
-	  need the explicit prefix.  */
+	 need the explicit prefix.  */
       if (!i.tm.opcode_modifier.vex)
 	{
 	  switch (i.tm.opcode_length)
@@ -6256,8 +6257,7 @@ check_prefix:
 	    if (*q)
 	      FRAG_APPEND_1_CHAR (*q);
 	}
-
-      if (i.tm.opcode_modifier.vex)
+      else
 	{
 	  for (j = 0, q = i.prefix; j < ARRAY_SIZE (i.prefix); j++, q++)
 	    if (*q)

@@ -1,3 +1,24 @@
+2012-05-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure.tgt: Support x86_64-*-linux-gnux32.
+
+2012-05-03  Sean Keys  <skeys@ipdatasys.com>
+
+	* Makefile.am (ALL_EMULATIONS): Added new emulation for XGATE
+	and XGATE (elf).
+	* Makefile.in: Rebuild.
+	* configure.tgt: Recognize XGATE.
+	* scripttempl/elfxgate.sc: New file, mostly cloned from m68hc12.
+	* emulparams/xgateelf: New emulation, mostly cloned from m68hc12.
+	* NEWS: Mention new support.
+
+2012-04-26  Hans-Peter Nilsson  <hp@axis.com>
+
+	Make bfd asserts cause linker errors.
+	* ldmain.c (default_bfd_assert_handler): New variable.
+	(ld_bfd_assert_handler): New function.
+	(main): Call bfd_set_assert_handler.
+
 2012-04-24  Alan Modra  <amodra@gmail.com>
 
 	* ld/ldlang.c (size_input_section): Use sec_info_type rather than

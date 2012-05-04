@@ -66,20 +66,20 @@ class Target_sparc : public Sized_target<size, big_endian>
   {
   }
 
-  // Process the relocations to determine unreferenced sections for 
+  // Process the relocations to determine unreferenced sections for
   // garbage collection.
   void
   gc_process_relocs(Symbol_table* symtab,
-	            Layout* layout,
-	            Sized_relobj_file<size, big_endian>* object,
-	            unsigned int data_shndx,
-	            unsigned int sh_type,
-	            const unsigned char* prelocs,
-	            size_t reloc_count,
-	            Output_section* output_section,
-	            bool needs_special_offset_handling,
-	            size_t local_symbol_count,
-	            const unsigned char* plocal_symbols);
+		    Layout* layout,
+		    Sized_relobj_file<size, big_endian>* object,
+		    unsigned int data_shndx,
+		    unsigned int sh_type,
+		    const unsigned char* prelocs,
+		    size_t reloc_count,
+		    Output_section* output_section,
+		    bool needs_special_offset_handling,
+		    size_t local_symbol_count,
+		    const unsigned char* plocal_symbols);
 
   // Scan the relocations to look for symbol adjustments.
   void
@@ -248,24 +248,24 @@ class Target_sparc : public Sized_target<size, big_endian>
 
     inline bool
     local_reloc_may_be_function_pointer(Symbol_table* , Layout* ,
- 					Target_sparc* ,
-	          			Sized_relobj_file<size, big_endian>* ,
-       	          			unsigned int ,
-	          			Output_section* ,
-	          			const elfcpp::Rela<size, big_endian>& ,
+					Target_sparc* ,
+					Sized_relobj_file<size, big_endian>* ,
 					unsigned int ,
-			          	const elfcpp::Sym<size, big_endian>&)
+					Output_section* ,
+					const elfcpp::Rela<size, big_endian>& ,
+					unsigned int ,
+					const elfcpp::Sym<size, big_endian>&)
     { return false; }
 
     inline bool
     global_reloc_may_be_function_pointer(Symbol_table* , Layout* ,
-			 		 Target_sparc* ,
-		   			 Sized_relobj_file<size, big_endian>* ,
-		   			 unsigned int ,
-		   			 Output_section* ,
-		   			 const elfcpp::Rela<size,
-	 						    big_endian>& ,
- 					 unsigned int , Symbol*)
+					 Target_sparc* ,
+					 Sized_relobj_file<size, big_endian>* ,
+					 unsigned int ,
+					 Output_section* ,
+					 const elfcpp::Rela<size,
+							    big_endian>& ,
+					 unsigned int , Symbol*)
     { return false; }
 
 
@@ -326,12 +326,18 @@ class Target_sparc : public Sized_target<size, big_endian>
     // Do a TLS relocation.
     inline void
     relocate_tls(const Relocate_info<size, big_endian>*, Target_sparc* target,
-                 size_t relnum, const elfcpp::Rela<size, big_endian>&,
+		 size_t relnum, const elfcpp::Rela<size, big_endian>&,
 		 unsigned int r_type, const Sized_symbol<size>*,
 		 const Symbol_value<size>*,
 		 unsigned char*,
 		 typename elfcpp::Elf_types<size>::Elf_Addr,
 		 section_size_type);
+
+    inline void
+    relax_call(Target_sparc<size, big_endian>* target,
+	       unsigned char* view,
+	       const elfcpp::Rela<size, big_endian>& rela,
+	       section_size_type view_size);
 
     // Ignore the next relocation which should be R_SPARC_TLS_GD_ADD
     bool ignore_gd_add_;
@@ -402,7 +408,7 @@ class Target_sparc : public Sized_target<size, big_endian>
   // Copy a relocation against a global symbol.
   void
   copy_reloc(Symbol_table* symtab, Layout* layout,
-             Sized_relobj_file<size, big_endian>* object,
+	     Sized_relobj_file<size, big_endian>* object,
 	     unsigned int shndx, Output_section* output_section,
 	     Symbol* sym, const elfcpp::Rela<size, big_endian>& reloc)
   {
@@ -467,6 +473,8 @@ Target::Target_info Target_sparc<32, true>::sparc_info =
   0x00010000,		// default_text_segment_address
   64 * 1024,		// abi_pagesize (overridable by -z max-page-size)
   8 * 1024,		// common_pagesize (overridable by -z common-page-size)
+  false,                // isolate_execinstr
+  0,                    // rosegment_gap
   elfcpp::SHN_UNDEF,	// small_common_shndx
   elfcpp::SHN_UNDEF,	// large_common_shndx
   0,			// small_common_section_flags
@@ -491,6 +499,8 @@ Target::Target_info Target_sparc<64, true>::sparc_info =
   0x100000,		// default_text_segment_address
   64 * 1024,		// abi_pagesize (overridable by -z max-page-size)
   8 * 1024,		// common_pagesize (overridable by -z common-page-size)
+  false,                // isolate_execinstr
+  0,                    // rosegment_gap
   elfcpp::SHN_UNDEF,	// small_common_shndx
   elfcpp::SHN_UNDEF,	// large_common_shndx
   0,			// small_common_section_flags
@@ -2212,7 +2222,7 @@ Target_sparc<size, big_endian>::Scan::reloc_needs_plt_for_ifunc(
   int flags = Scan::get_reference_flags(r_type);
   if (flags & Symbol::TLS_REF)
     gold_error(_("%s: unsupported TLS reloc %u for IFUNC symbol"),
-               object->name().c_str(), r_type);
+	       object->name().c_str(), r_type);
   return flags != 0;
 }
 
@@ -2259,14 +2269,14 @@ Target_sparc<size, big_endian>::Scan::local(
       // an R_SPARC_RELATIVE relocation so the dynamic loader can
       // relocate it easily.
       if (parameters->options().output_is_position_independent())
-        {
-          Reloc_section* rela_dyn = target->rela_dyn_section(layout);
-          unsigned int r_sym = elfcpp::elf_r_sym<size>(reloc.get_r_info());
-          rela_dyn->add_local_relative(object, r_sym, elfcpp::R_SPARC_RELATIVE,
+	{
+	  Reloc_section* rela_dyn = target->rela_dyn_section(layout);
+	  unsigned int r_sym = elfcpp::elf_r_sym<size>(reloc.get_r_info());
+	  rela_dyn->add_local_relative(object, r_sym, elfcpp::R_SPARC_RELATIVE,
 				       output_section, data_shndx,
 				       reloc.get_r_offset(),
 				       reloc.get_r_addend(), is_ifunc);
-        }
+	}
       break;
 
     case elfcpp::R_SPARC_HIX22:
@@ -2295,26 +2305,26 @@ Target_sparc<size, big_endian>::Scan::local(
       // executable), we need to create a dynamic relocation for
       // this location.
       if (parameters->options().output_is_position_independent())
-        {
-          Reloc_section* rela_dyn = target->rela_dyn_section(layout);
-          unsigned int r_sym = elfcpp::elf_r_sym<size>(reloc.get_r_info());
+	{
+	  Reloc_section* rela_dyn = target->rela_dyn_section(layout);
+	  unsigned int r_sym = elfcpp::elf_r_sym<size>(reloc.get_r_info());
 
 	  check_non_pic(object, r_type);
-          if (lsym.get_st_type() != elfcpp::STT_SECTION)
-            {
-              rela_dyn->add_local(object, r_sym, orig_r_type, output_section,
+	  if (lsym.get_st_type() != elfcpp::STT_SECTION)
+	    {
+	      rela_dyn->add_local(object, r_sym, orig_r_type, output_section,
 				  data_shndx, reloc.get_r_offset(),
 				  reloc.get_r_addend());
-            }
-          else
-            {
-              gold_assert(lsym.get_st_value() == 0);
+	    }
+	  else
+	    {
+	      gold_assert(lsym.get_st_value() == 0);
 	      rela_dyn->add_symbolless_local_addend(object, r_sym, orig_r_type,
 						    output_section, data_shndx,
 						    reloc.get_r_offset(),
 						    reloc.get_r_addend());
-            }
-        }
+	    }
+	}
       break;
 
     case elfcpp::R_SPARC_WDISP30:
@@ -2342,9 +2352,9 @@ Target_sparc<size, big_endian>::Scan::local(
     case elfcpp::R_SPARC_GOT13:
     case elfcpp::R_SPARC_GOT22:
       {
-        // The symbol requires a GOT entry.
-        Output_data_got<size, big_endian>* got;
-        unsigned int r_sym;
+	// The symbol requires a GOT entry.
+	Output_data_got<size, big_endian>* got;
+	unsigned int r_sym;
 
 	got = target->got_section(symtab, layout);
 	r_sym = elfcpp::elf_r_sym<size>(reloc.get_r_info());
@@ -2391,7 +2401,7 @@ Target_sparc<size, big_endian>::Scan::local(
       {
 	bool output_is_shared = parameters->options().shared();
 	const tls::Tls_optimization optimized_type
-            = optimize_tls_reloc(!output_is_shared, r_type);
+	    = optimize_tls_reloc(!output_is_shared, r_type);
 	switch (r_type)
 	  {
 	  case elfcpp::R_SPARC_TLS_GD_HI22: // Global-dynamic
@@ -2400,11 +2410,11 @@ Target_sparc<size, big_endian>::Scan::local(
 	  case elfcpp::R_SPARC_TLS_GD_CALL:
 	    if (optimized_type == tls::TLSOPT_NONE)
 	      {
-	        // Create a pair of GOT entries for the module index and
-	        // dtv-relative offset.
-                Output_data_got<size, big_endian>* got
-                    = target->got_section(symtab, layout);
-                unsigned int r_sym = elfcpp::elf_r_sym<size>(reloc.get_r_info());
+		// Create a pair of GOT entries for the module index and
+		// dtv-relative offset.
+		Output_data_got<size, big_endian>* got
+		    = target->got_section(symtab, layout);
+		unsigned int r_sym = elfcpp::elf_r_sym<size>(reloc.get_r_info());
 		unsigned int shndx = lsym.get_st_shndx();
 		bool is_ordinary;
 		shndx = object->adjust_sym_shndx(r_sym, shndx, &is_ordinary);
@@ -2412,7 +2422,7 @@ Target_sparc<size, big_endian>::Scan::local(
 		  object->error(_("local symbol %u has bad shndx %u"),
 				r_sym, shndx);
 		else
-		  got->add_local_pair_with_rel(object, r_sym, 
+		  got->add_local_pair_with_rel(object, r_sym,
 					       lsym.get_st_shndx(),
 					       GOT_TYPE_TLS_PAIR,
 					       target->rela_dyn_section(layout),
@@ -2484,11 +2494,11 @@ Target_sparc<size, big_endian>::Scan::local(
 	    layout->set_has_static_tls();
 	    if (output_is_shared)
 	      {
-	        // We need to create a dynamic relocation.
-                gold_assert(lsym.get_st_type() != elfcpp::STT_SECTION);
-                unsigned int r_sym = elfcpp::elf_r_sym<size>(reloc.get_r_info());
-                Reloc_section* rela_dyn = target->rela_dyn_section(layout);
-                rela_dyn->add_symbolless_local_addend(object, r_sym, r_type,
+		// We need to create a dynamic relocation.
+		gold_assert(lsym.get_st_type() != elfcpp::STT_SECTION);
+		unsigned int r_sym = elfcpp::elf_r_sym<size>(reloc.get_r_info());
+		Reloc_section* rela_dyn = target->rela_dyn_section(layout);
+		rela_dyn->add_symbolless_local_addend(object, r_sym, r_type,
 						      output_section, data_shndx,
 						      reloc.get_r_offset(), 0);
 	      }
@@ -2590,8 +2600,8 @@ Target_sparc<size, big_endian>::Scan::global(
       // if the symbol is defined in the output file and is protected
       // or hidden.
       if (gsym->is_defined()
-          && !gsym->is_from_dynobj()
-          && !gsym->is_preemptible())
+	  && !gsym->is_from_dynobj()
+	  && !gsym->is_preemptible())
 	break;
       target->make_plt_entry(symtab, layout, gsym);
       break;
@@ -2659,24 +2669,24 @@ Target_sparc<size, big_endian>::Scan::global(
     case elfcpp::R_SPARC_6:
     case elfcpp::R_SPARC_5:
       {
-        // Make a PLT entry if necessary.
-        if (gsym->needs_plt_entry())
-          {
-            target->make_plt_entry(symtab, layout, gsym);
-            // Since this is not a PC-relative relocation, we may be
-            // taking the address of a function. In that case we need to
-            // set the entry in the dynamic symbol table to the address of
-            // the PLT entry.
-            if (gsym->is_from_dynobj() && !parameters->options().shared())
-              gsym->set_needs_dynsym_value();
-          }
-        // Make a dynamic relocation if necessary.
-        if (gsym->needs_dynamic_reloc(Scan::get_reference_flags(r_type)))
-          {
+	// Make a PLT entry if necessary.
+	if (gsym->needs_plt_entry())
+	  {
+	    target->make_plt_entry(symtab, layout, gsym);
+	    // Since this is not a PC-relative relocation, we may be
+	    // taking the address of a function. In that case we need to
+	    // set the entry in the dynamic symbol table to the address of
+	    // the PLT entry.
+	    if (gsym->is_from_dynobj() && !parameters->options().shared())
+	      gsym->set_needs_dynsym_value();
+	  }
+	// Make a dynamic relocation if necessary.
+	if (gsym->needs_dynamic_reloc(Scan::get_reference_flags(r_type)))
+	  {
 	    unsigned int r_off = reloc.get_r_offset();
 
 	    // The assembler can sometimes emit unaligned relocations
-	    // for dwarf2 cfi directives. 
+	    // for dwarf2 cfi directives.
 	    switch (r_type)
 	      {
 	      case elfcpp::R_SPARC_16:
@@ -2705,11 +2715,11 @@ Target_sparc<size, big_endian>::Scan::global(
 		break;
 	      }
 
-            if (gsym->may_need_copy_reloc())
-              {
-	        target->copy_reloc(symtab, layout, object,
-	                           data_shndx, output_section, gsym, reloc);
-              }
+	    if (gsym->may_need_copy_reloc())
+	      {
+		target->copy_reloc(symtab, layout, object,
+				   data_shndx, output_section, gsym, reloc);
+	      }
 	    else if (((size == 64 && r_type == elfcpp::R_SPARC_64)
 		      || (size == 32 && r_type == elfcpp::R_SPARC_32))
 		     && gsym->type() == elfcpp::STT_GNU_IFUNC
@@ -2731,19 +2741,19 @@ Target_sparc<size, big_endian>::Scan::global(
 						       reloc.get_r_offset(),
 						       reloc.get_r_addend());
 	      }
-            else if ((r_type == elfcpp::R_SPARC_32
+	    else if ((r_type == elfcpp::R_SPARC_32
 		      || r_type == elfcpp::R_SPARC_64)
-                     && gsym->can_use_relative_reloc(false))
-              {
-                Reloc_section* rela_dyn = target->rela_dyn_section(layout);
-                rela_dyn->add_global_relative(gsym, elfcpp::R_SPARC_RELATIVE,
+		     && gsym->can_use_relative_reloc(false))
+	      {
+		Reloc_section* rela_dyn = target->rela_dyn_section(layout);
+		rela_dyn->add_global_relative(gsym, elfcpp::R_SPARC_RELATIVE,
 					      output_section, object,
 					      data_shndx, reloc.get_r_offset(),
 					      reloc.get_r_addend(), is_ifunc);
-              }
-            else
-              {
-                Reloc_section* rela_dyn = target->rela_dyn_section(layout);
+	      }
+	    else
+	      {
+		Reloc_section* rela_dyn = target->rela_dyn_section(layout);
 
 		check_non_pic(object, r_type);
 		if (gsym->is_from_dynobj()
@@ -2759,8 +2769,8 @@ Target_sparc<size, big_endian>::Scan::global(
 							 object, data_shndx,
 							 reloc.get_r_offset(),
 							 reloc.get_r_addend());
-              }
-          }
+	      }
+	  }
       }
       break;
 
@@ -2768,8 +2778,8 @@ Target_sparc<size, big_endian>::Scan::global(
     case elfcpp::R_SPARC_GOTDATA_OP_HIX22:
     case elfcpp::R_SPARC_GOTDATA_OP_LOX10:
       if (gsym->is_defined()
-          && !gsym->is_from_dynobj()
-          && !gsym->is_preemptible()
+	  && !gsym->is_from_dynobj()
+	  && !gsym->is_preemptible()
 	  && !is_ifunc)
 	{
 	  // We will optimize this into a GOT relative relocation
@@ -2780,11 +2790,11 @@ Target_sparc<size, big_endian>::Scan::global(
     case elfcpp::R_SPARC_GOT13:
     case elfcpp::R_SPARC_GOT22:
       {
-        // The symbol requires a GOT entry.
-        Output_data_got<size, big_endian>* got;
+	// The symbol requires a GOT entry.
+	Output_data_got<size, big_endian>* got;
 
 	got = target->got_section(symtab, layout);
-        if (gsym->final_value_is_known())
+	if (gsym->final_value_is_known())
 	  {
 	    // For a STT_GNU_IFUNC symbol we want the PLT address.
 	    if (gsym->type() == elfcpp::STT_GNU_IFUNC)
@@ -2792,10 +2802,10 @@ Target_sparc<size, big_endian>::Scan::global(
 	    else
 	      got->add_global(gsym, GOT_TYPE_STANDARD);
 	  }
-        else
-          {
-            // If this symbol is not fully resolved, we need to add a
-            // GOT entry with a dynamic relocation.
+	else
+	  {
+	    // If this symbol is not fully resolved, we need to add a
+	    // GOT entry with a dynamic relocation.
 	    bool is_ifunc = gsym->type() == elfcpp::STT_GNU_IFUNC;
 
 	    // Use a GLOB_DAT rather than a RELATIVE reloc if:
@@ -2810,10 +2820,10 @@ Target_sparc<size, big_endian>::Scan::global(
 	    //
 	    // 3) This is a STT_GNU_IFUNC symbol in position dependent
 	    // code, again so that function address comparisons work.
-            Reloc_section* rela_dyn = target->rela_dyn_section(layout);
-            if (gsym->is_from_dynobj()
-                || gsym->is_undefined()
-                || gsym->is_preemptible()
+	    Reloc_section* rela_dyn = target->rela_dyn_section(layout);
+	    if (gsym->is_from_dynobj()
+		|| gsym->is_undefined()
+		|| gsym->is_preemptible()
 		|| (gsym->visibility() == elfcpp::STV_PROTECTED
 		    && parameters->options().shared())
 		|| (gsym->type() == elfcpp::STT_GNU_IFUNC
@@ -2832,8 +2842,8 @@ Target_sparc<size, big_endian>::Scan::global(
 		got->add_global_with_rel(gsym, GOT_TYPE_STANDARD, rela_dyn,
 					 r_type);
 	      }
-            else if (!gsym->has_got_offset(GOT_TYPE_STANDARD))
-              {
+	    else if (!gsym->has_got_offset(GOT_TYPE_STANDARD))
+	      {
 		unsigned int off = got->add_constant(0);
 
 		gsym->set_got_offset(GOT_TYPE_STANDARD, off);
@@ -2848,7 +2858,7 @@ Target_sparc<size, big_endian>::Scan::global(
 		rela_dyn->add_global_relative(gsym, elfcpp::R_SPARC_RELATIVE,
 					      got, off, 0, is_ifunc);
 	      }
-          }
+	  }
       }
       break;
 
@@ -2875,7 +2885,7 @@ Target_sparc<size, big_endian>::Scan::global(
       {
 	const bool is_final = gsym->final_value_is_known();
 	const tls::Tls_optimization optimized_type
-            = optimize_tls_reloc(is_final, r_type);
+	    = optimize_tls_reloc(is_final, r_type);
 	switch (r_type)
 	  {
 	  case elfcpp::R_SPARC_TLS_GD_HI22: // Global-dynamic
@@ -2884,11 +2894,11 @@ Target_sparc<size, big_endian>::Scan::global(
 	  case elfcpp::R_SPARC_TLS_GD_CALL:
 	    if (optimized_type == tls::TLSOPT_NONE)
 	      {
-                // Create a pair of GOT entries for the module index and
-                // dtv-relative offset.
-                Output_data_got<size, big_endian>* got
-                    = target->got_section(symtab, layout);
-                got->add_global_pair_with_rel(gsym, GOT_TYPE_TLS_PAIR,
+		// Create a pair of GOT entries for the module index and
+		// dtv-relative offset.
+		Output_data_got<size, big_endian>* got
+		    = target->got_section(symtab, layout);
+		got->add_global_pair_with_rel(gsym, GOT_TYPE_TLS_PAIR,
 					      target->rela_dyn_section(layout),
 					      (size == 64
 					       ? elfcpp::R_SPARC_TLS_DTPMOD64
@@ -2903,10 +2913,10 @@ Target_sparc<size, big_endian>::Scan::global(
 	      }
 	    else if (optimized_type == tls::TLSOPT_TO_IE)
 	      {
-                // Create a GOT entry for the tp-relative offset.
-                Output_data_got<size, big_endian>* got
-                    = target->got_section(symtab, layout);
-                got->add_global_with_rel(gsym, GOT_TYPE_TLS_OFFSET,
+		// Create a GOT entry for the tp-relative offset.
+		Output_data_got<size, big_endian>* got
+		    = target->got_section(symtab, layout);
+		got->add_global_with_rel(gsym, GOT_TYPE_TLS_OFFSET,
 					 target->rela_dyn_section(layout),
 					 (size == 64 ?
 					  elfcpp::R_SPARC_TLS_TPOFF64 :
@@ -3229,16 +3239,16 @@ Target_sparc<size, big_endian>::Relocate::relocate(
     case elfcpp::R_SPARC_GOT13:
     case elfcpp::R_SPARC_GOT22:
       if (gsym != NULL)
-        {
-          gold_assert(gsym->has_got_offset(GOT_TYPE_STANDARD));
-          got_offset = gsym->got_offset(GOT_TYPE_STANDARD);
-        }
+	{
+	  gold_assert(gsym->has_got_offset(GOT_TYPE_STANDARD));
+	  got_offset = gsym->got_offset(GOT_TYPE_STANDARD);
+	}
       else
-        {
-          unsigned int r_sym = elfcpp::elf_r_sym<size>(rela.get_r_info());
-          gold_assert(object->local_has_got_offset(r_sym, GOT_TYPE_STANDARD));
-          got_offset = object->local_got_offset(r_sym, GOT_TYPE_STANDARD);
-        }
+	{
+	  unsigned int r_sym = elfcpp::elf_r_sym<size>(rela.get_r_info());
+	  gold_assert(object->local_has_got_offset(r_sym, GOT_TYPE_STANDARD));
+	  got_offset = object->local_got_offset(r_sym, GOT_TYPE_STANDARD);
+	}
       break;
 
     default:
@@ -3262,7 +3272,7 @@ Target_sparc<size, big_endian>::Relocate::relocate(
       if (rela.get_r_offset() & 0x1)
 	{
 	  // The assembler can sometimes emit unaligned relocations
-	  // for dwarf2 cfi directives. 
+	  // for dwarf2 cfi directives.
 	  Reloc::ua16(view, object, psymval, addend);
 	}
       else
@@ -3276,7 +3286,7 @@ Target_sparc<size, big_endian>::Relocate::relocate(
 	  if (rela.get_r_offset() & 0x3)
 	    {
 	      // The assembler can sometimes emit unaligned relocations
-	      // for dwarf2 cfi directives. 
+	      // for dwarf2 cfi directives.
 	      Reloc::ua32(view, object, psymval, addend);
 	    }
 	  else
@@ -3304,6 +3314,8 @@ Target_sparc<size, big_endian>::Relocate::relocate(
     case elfcpp::R_SPARC_WDISP30:
     case elfcpp::R_SPARC_WPLT30:
       Reloc::wdisp30(view, object, psymval, addend, address);
+      if (target->may_relax())
+	relax_call(target, view, rela, view_size);
       break;
 
     case elfcpp::R_SPARC_WDISP22:
@@ -3427,7 +3439,7 @@ Target_sparc<size, big_endian>::Relocate::relocate(
 	  if (rela.get_r_offset() & 0x7)
 	    {
 	      // The assembler can sometimes emit unaligned relocations
-	      // for dwarf2 cfi directives. 
+	      // for dwarf2 cfi directives.
 	      Reloc::ua64(view, object, psymval, addend);
 	    }
 	  else
@@ -3641,22 +3653,22 @@ Target_sparc<size, big_endian>::Relocate::relocate_tls(
 	  break;
 	}
       else
-        {
-          unsigned int got_type = (optimized_type == tls::TLSOPT_TO_IE
-                                   ? GOT_TYPE_TLS_OFFSET
-                                   : GOT_TYPE_TLS_PAIR);
-          if (gsym != NULL)
-            {
-              gold_assert(gsym->has_got_offset(got_type));
-              value = gsym->got_offset(got_type);
-            }
-          else
-            {
-              unsigned int r_sym = elfcpp::elf_r_sym<size>(rela.get_r_info());
-              gold_assert(object->local_has_got_offset(r_sym, got_type));
-              value = object->local_got_offset(r_sym, got_type);
-            }
-          if (optimized_type == tls::TLSOPT_TO_IE)
+	{
+	  unsigned int got_type = (optimized_type == tls::TLSOPT_TO_IE
+				   ? GOT_TYPE_TLS_OFFSET
+				   : GOT_TYPE_TLS_PAIR);
+	  if (gsym != NULL)
+	    {
+	      gold_assert(gsym->has_got_offset(got_type));
+	      value = gsym->got_offset(got_type);
+	    }
+	  else
+	    {
+	      unsigned int r_sym = elfcpp::elf_r_sym<size>(rela.get_r_info());
+	      gold_assert(object->local_has_got_offset(r_sym, got_type));
+	      value = object->local_got_offset(r_sym, got_type);
+	    }
+	  if (optimized_type == tls::TLSOPT_TO_IE)
 	    {
 	      Insntype* wv = reinterpret_cast<Insntype*>(view);
 	      Insntype val;
@@ -3721,10 +3733,10 @@ Target_sparc<size, big_endian>::Relocate::relocate_tls(
 		  elfcpp::Swap<32, true>::writeval(wv, 0x9001c008);
 		  break;
 		}
-              break;
+	      break;
 	    }
-          else if (optimized_type == tls::TLSOPT_NONE)
-            {
+	  else if (optimized_type == tls::TLSOPT_NONE)
+	    {
 	      switch (r_type)
 		{
 		case elfcpp::R_SPARC_TLS_GD_HI22:
@@ -3751,8 +3763,8 @@ Target_sparc<size, big_endian>::Relocate::relocate_tls(
 		  break;
 		}
 	      break;
-            }
-        }
+	    }
+	}
       gold_error_at_location(relinfo, relnum, rela.get_r_offset(),
 			     _("unsupported reloc %u"),
 			     r_type);
@@ -3781,10 +3793,10 @@ Target_sparc<size, big_endian>::Relocate::relocate_tls(
 	  break;
 	}
       else if (optimized_type == tls::TLSOPT_NONE)
-        {
-          // Relocate the field with the offset of the GOT entry for
-          // the module index.
-          unsigned int got_offset;
+	{
+	  // Relocate the field with the offset of the GOT entry for
+	  // the module index.
+	  unsigned int got_offset;
 
 	  got_offset = target->got_mod_index_entry(NULL, NULL, NULL);
 	  switch (r_type)
@@ -3812,8 +3824,8 @@ Target_sparc<size, big_endian>::Relocate::relocate_tls(
 	      }
 	      break;
 	    }
-          break;
-        }
+	  break;
+	}
       gold_error_at_location(relinfo, relnum, rela.get_r_offset(),
 			     _("unsupported reloc %u"),
 			     r_type);
@@ -3951,6 +3963,150 @@ Target_sparc<size, big_endian>::Relocate::relocate_tls(
 	  Reloc::lox10(view, value, addend);
 	}
       break;
+    }
+}
+
+// Relax a call instruction.
+
+template<int size, bool big_endian>
+inline void
+Target_sparc<size, big_endian>::Relocate::relax_call(
+    Target_sparc<size, big_endian>* target,
+    unsigned char* view,
+    const elfcpp::Rela<size, big_endian>& rela,
+    section_size_type view_size)
+{
+  typedef typename elfcpp::Swap<32, true>::Valtype Insntype;
+  Insntype *wv = reinterpret_cast<Insntype*>(view);
+  Insntype call_insn, delay_insn, set_insn;
+  uint32_t op3, reg, off;
+
+  // This code tries to relax call instructions that meet
+  // certain criteria.
+  //
+  // The first criteria is that the call must be such that the return
+  // address which the call writes into %o7 is unused.  Two sequences
+  // meet this criteria, and are used to implement tail calls.
+  //
+  // Leaf function tail call:
+  //
+  // or %o7, %g0, %ANY_REG
+  // call FUNC
+  //  or %ANY_REG, %g0, %o7
+  //
+  // Non-leaf function tail call:
+  //
+  // call FUNC
+  //  restore
+  //
+  // The second criteria is that the call destination is close.  If
+  // the displacement can fit in a signed 22-bit immediate field of a
+  // pre-V9 branch, we can do it.  If we are generating a 64-bit
+  // object or a 32-bit object with ELF machine type EF_SPARC32PLUS,
+  // and the displacement fits in a signed 19-bit immediate field,
+  // then we can use a V9 branch.
+
+  // Make sure the delay instruction can be safely accessed.
+  if (rela.get_r_offset() + 8 > view_size)
+    return;
+
+  call_insn = elfcpp::Swap<32, true>::readval(wv);
+  delay_insn = elfcpp::Swap<32, true>::readval(wv + 1);
+
+  // Make sure it is really a call instruction.
+  if (((call_insn >> 30) & 0x3) != 1)
+    return;
+
+  if (((delay_insn >> 30) & 0x3) != 2)
+    return;
+
+  // Accept only a restore or an integer arithmetic operation whose
+  // sole side effect is to write the %o7 register (and perhaps set
+  // the condition codes, which are considered clobbered across
+  // function calls).
+  //
+  // For example, we don't want to match a tagged addition or
+  // subtraction.  We also don't want to match something like a
+  // divide.
+  //
+  // Specifically we accept add{,cc}, and{,cc}, or{,cc},
+  // xor{,cc}, sub{,cc}, andn{,cc}, orn{,cc}, and xnor{,cc}.
+
+  op3 = (delay_insn >> 19) & 0x3f;
+  reg = (delay_insn >> 25) & 0x1f;
+  if (op3 != 0x3d
+      && ((op3 & 0x28) != 0 || reg != 15))
+    return;
+
+  // For non-restore instructions, make sure %o7 isn't
+  // an input.
+  if (op3 != 0x3d)
+    {
+      // First check RS1
+      reg = (delay_insn >> 14) & 0x15;
+      if (reg == 15)
+	return;
+
+      // And if non-immediate, check RS2
+      if (((delay_insn >> 13) & 1) == 0)
+	{
+	  reg = (delay_insn & 0x1f);
+	  if (reg == 15)
+	    return;
+	}
+    }
+
+  // Now check the branch distance.  We are called after the
+  // call has been relocated, so we just have to peek at the
+  // offset contained in the instruction.
+  off = call_insn & 0x3fffffff;
+  if ((off & 0x3fe00000) != 0
+      && (off & 0x3fe00000) != 0x3fe00000)
+    return;
+
+  if ((size == 64 || target->elf_machine_ == elfcpp::EM_SPARC32PLUS)
+      && ((off & 0x3c0000) == 0
+	  || (off & 0x3c0000) == 0x3c0000))
+    {
+      // ba,pt %xcc, FUNC
+      call_insn = 0x10680000 | (off & 0x07ffff);
+    }
+  else
+    {
+      // ba FUNC
+      call_insn = 0x10800000 | (off & 0x3fffff);
+    }
+  elfcpp::Swap<32, true>::writeval(wv, call_insn);
+
+  // See if we can NOP out the delay slot instruction.  We peek
+  // at the instruction before the call to make sure we're dealing
+  // with exactly the:
+  //
+  // or %o7, %g0, %ANY_REG
+  // call
+  //  or %ANY_REG, %g0, %o7
+  //
+  // case.  Otherwise this might be a tricky piece of hand written
+  // assembler calculating %o7 in some non-trivial way, and therefore
+  // we can't be sure that NOP'ing out the delay slot is safe.
+  if (op3 == 0x02
+      && rela.get_r_offset() >= 4)
+    {
+      if ((delay_insn & ~(0x1f << 14)) != 0x9e100000)
+	return;
+
+      set_insn = elfcpp::Swap<32, true>::readval(wv - 1);
+      if ((set_insn & ~(0x1f << 25)) != 0x8013c000)
+	return;
+
+      reg = (set_insn >> 25) & 0x1f;
+      if (reg == 0 || reg == 15)
+	return;
+      if (reg != ((delay_insn >> 14) & 0x1f))
+	return;
+
+      // All tests pass, nop it out.
+      elfcpp::Swap<32, true>::writeval(wv + 1, sparc_nop);
     }
 }
 
@@ -4103,7 +4259,7 @@ Target_sparc<size, big_endian>::do_make_elf_object(
   elfcpp::Elf_Half machine = ehdr.get_e_machine();
   elfcpp::Elf_Word flags = ehdr.get_e_flags();
   elfcpp::Elf_Word omm, mm;
-  
+
   switch (machine)
     {
     case elfcpp::EM_SPARC32PLUS:
@@ -4194,7 +4350,8 @@ public:
 		      (size == 64 ? "elf64_sparc" : "elf32_sparc"))
   { }
 
-  Target* do_recognize(int machine, int, int)
+  virtual Target*
+  do_recognize(Input_file*, off_t, int machine, int, int)
   {
     switch (size)
       {
@@ -4216,7 +4373,8 @@ public:
     return this->instantiate_target();
   }
 
-  Target* do_instantiate_target()
+  virtual Target*
+  do_instantiate_target()
   { return new Target_sparc<size, big_endian>(); }
 };
 
