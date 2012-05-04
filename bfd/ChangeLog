@@ -1,3 +1,41 @@
+2012-05-03  Sean Keys  <skeys@ipdatasys.com>
+
+	* cpu-xgate.c: New file. Added XGATE support.
+	* archures.c (bfd_architecture): Add XGATE architecture.
+	(bfd_archures_list): Add reference to XGATE architecture info.
+	* elf-bfd.h (prep_headers): Handle bfd_arch_xgate.
+	* reloc.c: Add various XGATE relocation enums.
+	* targets.c (bfd_elf32_xgate_vec): Declare and add to target vector
+	list.
+	* Makefile.am: Add support for XGATE elf.
+	* configure.in: Ditto.
+	* config.bfd: Ditto.
+	* Makefile.in: Regenerate.
+	* configure: Ditto.
+	* bfd-in2.h: Ditto.
+	* libbfd.h: Ditto.
+	Added files for XGATE relocations.
+	* elf32-xgate.c: Created minimal relocation file.
+	* elf32-xgate.h: Created minimal header file for elf32-xgate.
+
+2012-05-03  Tristan Gingold  <gingold@adacore.com>
+
+	* dwarf2.c (decode_line_info): Ignore
+	DW_LNE_HP_source_file_correlation.
+
+2012-05-01  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/13121
+	* aoutx.h: Rename 'finfo' to 'flaginfo' to avoid conflicts with
+	AIX system headers.
+	* coff-ppc.c: Likewise.
+	* cofflink.c: Likewise.
+	* elf32-arm.c: Likewise.
+	* elf64-sparc.c: Likewise.
+	* elflink.c: Likewise.
+	* pdp11.c: Likewise.
+	* rescoff.c: Likewise.
+
 2012-04-26  Mark Wielaard  <mjw@redhat.com>
 
 	* dwarf2.c (scan_unit_for_symbols): Account for DW_AT_high_pc

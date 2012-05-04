@@ -1,3 +1,20 @@
+2012-05-03  Sean Keys  <skeys@ipdatasys.com>
+
+	* Makefile.in, configure: regenerate
+	* disassemble.c (disassembler): Recognize ARCH_XGATE.
+	* xgate-dis.c (read_memory, print_insn, print_insn_xgate):
+	New functions.
+	* configure.in: Recognize xgate.
+	* xgate-dis.c, xgate-opc.c: New files for support of xgate
+	* Makefile.am (CFILES, ALL_MACHINES): New files for disassembly
+	and opcode generation for xgate.
+
+2012-04-30  DJ Delorie  <dj@redhat.com>
+
+	* rx-decode.opc (MOV): Do not sign-extend immediates which are
+	already the maximum bit size.
+	* rx-decode.c: Regenerate.
+
 2012-04-27  David S. Miller  <davem@davemloft.net>
 
 	* sparc-dis.c (v9a_asr_reg_names): Add 'cfr'.
