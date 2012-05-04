@@ -43,7 +43,7 @@ ld/testsuite/
 	* ld-elf/indirect4c.c: Likewise.
 
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 5d181f7..da6a68c 100644
+index 65d3a2c..69b7755 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -893,6 +893,33 @@ elf_merge_st_other (bfd *abfd, struct elf_link_hash_entry *h,
@@ -144,7 +144,7 @@ index 5d181f7..da6a68c 100644
  		  || hi->ref_dynamic)
  		*dynsym = TRUE;
  	    }
-@@ -3834,6 +3853,7 @@ error_free_dyn:
+@@ -3832,6 +3851,7 @@ error_free_dyn:
        flagword flags;
        const char *name;
        struct elf_link_hash_entry *h;
@@ -152,7 +152,7 @@ index 5d181f7..da6a68c 100644
        bfd_boolean definition;
        bfd_boolean size_change_ok;
        bfd_boolean type_change_ok;
-@@ -4166,6 +4186,9 @@ error_free_dyn:
+@@ -4164,6 +4184,9 @@ error_free_dyn:
  	goto error_free_vers;
  
        h = *sym_hash;
@@ -162,7 +162,7 @@ index 5d181f7..da6a68c 100644
        while (h->root.type == bfd_link_hash_indirect
  	     || h->root.type == bfd_link_hash_warning)
  	h = (struct elf_link_hash_entry *) h->root.u.i.link;
-@@ -4354,25 +4377,38 @@ error_free_dyn:
+@@ -4352,25 +4375,38 @@ error_free_dyn:
  		      h->ref_dynamic = 1;
  		    }
  		}
@@ -210,7 +210,7 @@ index 5d181f7..da6a68c 100644
  		dynsym = TRUE;
  	    }
  
-@@ -8423,6 +8459,10 @@ elf_link_check_versioned_symbol (struct bfd_link_info *info,
+@@ -8435,6 +8471,10 @@ elf_link_check_versioned_symbol (struct bfd_link_info *info,
    if (!is_elf_hash_table (info->hash))
      return FALSE;
  
@@ -221,7 +221,7 @@ index 5d181f7..da6a68c 100644
    switch (h->root.type)
      {
      default:
-@@ -8644,6 +8684,11 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+@@ -8657,6 +8697,11 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
      {
        bfd *def_bfd;
        const char *msg;
@@ -233,18 +233,18 @@ index 5d181f7..da6a68c 100644
  
        if (ELF_ST_VISIBILITY (h->other) == STV_INTERNAL)
  	msg = _("%B: internal symbol `%s' in %B is referenced by DSO");
-@@ -8652,8 +8697,8 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+@@ -8665,8 +8710,8 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
        else
  	msg = _("%B: local symbol `%s' in %B is referenced by DSO");
-       def_bfd = finfo->output_bfd;
+       def_bfd = flaginfo->output_bfd;
 -      if (h->root.u.def.section != bfd_abs_section_ptr)
 -	def_bfd = h->root.u.def.section->owner;
 +      if (hi->root.u.def.section != bfd_abs_section_ptr)
 +	def_bfd = hi->root.u.def.section->owner;
-       (*_bfd_error_handler) (msg, finfo->output_bfd, def_bfd,
+       (*_bfd_error_handler) (msg, flaginfo->output_bfd, def_bfd,
  			     h->root.root.string);
        bfd_set_error (bfd_error_bad_value);
-@@ -8887,6 +8932,23 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+@@ -8903,6 +8948,23 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
      {
        bfd_byte *esym;
  
@@ -259,15 +259,15 @@ index 5d181f7..da6a68c 100644
 +	    {
 +	      (*_bfd_error_handler)
 +		(_("%B: No symbol version section for versioned symbol `%s'"),
-+		 finfo->output_bfd, h->root.root.string);
++		 flaginfo->output_bfd, h->root.root.string);
 +	      eoinfo->failed = TRUE;
 +	      return FALSE;
 +	    }
 +	}
 +
        sym.st_name = h->dynstr_index;
-       esym = finfo->dynsym_sec->contents + h->dynindx * bed->s->sizeof_sym;
-       if (! check_dynsym (finfo->output_bfd, &sym))
+       esym = flaginfo->dynsym_sec->contents + h->dynindx * bed->s->sizeof_sym;
+       if (! check_dynsym (flaginfo->output_bfd, &sym))
 diff --git a/ld/testsuite/ld-elf/indirect.exp b/ld/testsuite/ld-elf/indirect.exp
 new file mode 100644
 index 0000000..603179a
