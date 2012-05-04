@@ -4353,7 +4353,7 @@ check_reverse:
 	  err_msg = _("unsupported syntax");
 	  break;
 	case unsupported:
-	  as_bad (_("unsupported `%s'"),
+	  as_bad (_("unsupported instruction `%s'"),
 		  current_templates->start->name);
 	  return NULL;
 	case invalid_vsib_address:
@@ -6218,7 +6218,7 @@ output_insn (void)
       unsigned int prefix;
 
       /* Since the VEX prefix contains the implicit prefix, we don't
-	  need the explicit prefix.  */
+	 need the explicit prefix.  */
       if (!i.tm.opcode_modifier.vex)
 	{
 	  switch (i.tm.opcode_length)
