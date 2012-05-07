@@ -1,3 +1,18 @@
+2012-05-07  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf.c (get_TAG_name): Use get_DW_TAG_name.
+	(get_FORM_name): Use get_DW_FORM_name.
+	(get_AT_name): Use get_DW_AT_name.
+
+2012-05-07  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am (check-DEJAGNU): Clear LC_COLLATE, LC_ALL and LANG.
+	* Makefile.in: Regenerate.
+
+2012-05-05  Alan Modra  <amodra@gmail.com>
+
+	* dlltool.c (make_one_lib_file): Use bfd_und_section_ptr.
+
 2012-05-03  Sean Keys  <skeys@ipdatasys.com>
 
 	* readelf.c: Add support for XGATE.
