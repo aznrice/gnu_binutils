@@ -1,3 +1,42 @@
+2012-05-07  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am (check-DEJAGNU): Clear LC_COLLATE, LC_ALL and LANG.
+	* Makefile.in: Regenerate.
+
+2012-05-06  Arnold Metselaar <arnold_m@operamail.com>
+
+	* config/tc-z80.h(md_register_arithmetic): Define as 0.
+	* config/tc-z80.c(md_begin): Store register names in symbol table,
+	preventing usage as ordinary symbol.
+	* config/tc-z80.c(contains_register): New function.
+	* config/tc-z80.c(parse_exp2): Removed.
+	* config/tc-z80.c(parse_exp_not_indexed): New function.
+	* config/tc-z80.c(parse_exp): Add code to recogize indexed
+	addressing after parsing.
+	* config/tc-z80.c(emit_byte, emit_word): Use contains_register.
+	* config/tc-z80.c(emit_jp): Use parse_exp_not_indexed, simplify
+	condition for jump to register.
+	* config/tc-z80.c(emit_call, emit_jr, emit_ex, emit_rst): Use
+	parse_exp_not_indexed.
+
+2012-05-05  Alan Modra  <amodra@gmail.com>
+
+	* ecoff.c: Replace all uses of bfd_abs_section, bfd_com_section,
+	bfd_und_section and bfd_ind_section with their _ptr variants, or
+	use corresponding bfd_is_* macros.
+	* symbols.c: Likewise.
+	* config/obj-aout.c: Likewise.
+	* config/obj-coff-seh.h: Likewise.
+	* config/tc-hppa.c: Likewise.
+	* config/tc-hppa.h: Likewise.
+	* config/tc-ia64.c: Likewise.
+	* config/tc-m32r.c: Likewise.
+	* config/tc-microblaze.c: Likewise.
+	* config/tc-mips.c: Likewise.
+	* config/tc-score.c: Likewise.
+	* config/tc-score7.c: Likewise.
+	* config/tc-tic6x.c: Likewise.
+
 2012-05-04  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* configure.tgt: Support x86_64-*-linux-gnux32.
