@@ -567,7 +567,7 @@ index a1664b5..8ec3d6e 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index d040d14..d8e3585 100644
+index 9481c0e..dc3a825 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2086,6 +2086,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -968,10 +968,10 @@ index db7e239..3246ab1 100644
  .#define bfd_com_section_ptr (&std_section[0])
  .{* Pointer to the undefined section.  *}
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
-index bd93d00..f56dc22 100644
+index 40250ad..d0d112f 100644
 --- a/binutils/objcopy.c
 +++ b/binutils/objcopy.c
-@@ -908,30 +908,6 @@ is_specified_symbol (const char *name, htab_t htab)
+@@ -918,30 +918,6 @@ is_specified_symbol (const char *name, htab_t htab)
    return htab_find (htab, name) != NULL;
  }
  
@@ -999,10 +999,10 @@ index bd93d00..f56dc22 100644
 -  return NULL;
 -}
 -
- /* See if a non-group section is being removed.  */
+ /* Return TRUE if the section is a DWO section.  */
  
  static bfd_boolean
-@@ -982,7 +958,7 @@ is_strip_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
+@@ -1009,7 +985,7 @@ is_strip_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
        /* PR binutils/3181
  	 If we are going to strip the group signature symbol, then
  	 strip the group section too.  */
@@ -1011,7 +1011,7 @@ index bd93d00..f56dc22 100644
        if (gsym != NULL)
  	gname = gsym->name;
        else
-@@ -2579,7 +2555,7 @@ setup_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
+@@ -2608,7 +2584,7 @@ setup_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
  
    if ((isection->flags & SEC_GROUP) != 0)
      {
