@@ -1,0 +1,193 @@
+binutils/
+
+2012-05-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/14088
+	* readelf.c (dump_relocations): Always display addend as
+	signed hex number.
+
+ld/testsuite/
+
+2012-05-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/14088
+	* ld-ia64/tlspic.rd: Updated.
+	* ld-x86-64/tlsdesc-nacl.rd: Likewise.
+	* ld-x86-64/tlsdesc.rd: Likewise.
+	* ld-x86-64/tlspic-nacl.rd: Likewise.
+	* ld-x86-64/tlspic.rd: Likewise.
+
+diff --git a/binutils/readelf.c b/binutils/readelf.c
+index 937cac1..84a13a7 100644
+--- a/binutils/readelf.c
++++ b/binutils/readelf.c
+@@ -1387,9 +1387,13 @@ dump_relocations (FILE * file,
+ 	}
+       else if (is_rela)
+ 	{
+-	  printf ("%*c", is_32bit_elf ?
+-		  (do_wide ? 34 : 28) : (do_wide ? 26 : 20), ' ');
+-	  print_vma (rels[i].r_addend, LONG_HEX);
++	  bfd_signed_vma off = rels[i].r_addend;
++
++	  printf ("%*c", is_32bit_elf ? 12 : 20, ' ');
++	  if (off < 0)
++	    printf ("-%" BFD_VMA_FMT "x", - off);
++	  else
++	    printf ("%" BFD_VMA_FMT "x", off);
+ 	}
+ 
+       if (elf_header.e_machine == EM_SPARCV9
+diff --git a/ld/testsuite/ld-ia64/tlspic.rd b/ld/testsuite/ld-ia64/tlspic.rd
+index 8320365..bb2c8da 100644
+--- a/ld/testsuite/ld-ia64/tlspic.rd
++++ b/ld/testsuite/ld-ia64/tlspic.rd
+@@ -48,9 +48,9 @@ Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 6 entries:
+ [0-9a-f ]+R_IA64_DTPMOD64LSB +0+ sg1 \+ 0
+ [0-9a-f ]+R_IA64_DTPREL64LSB +0+ sg1 \+ 0
+ [0-9a-f ]+R_IA64_TPREL64LSB +0+4 sg2 \+ 0
+-[0-9a-f ]+R_IA64_DTPMOD64LSB +0+
+-[0-9a-f ]+R_IA64_TPREL64LSB +0+44
+-[0-9a-f ]+R_IA64_TPREL64LSB +0+24
++[0-9a-f ]+R_IA64_DTPMOD64LSB +0
++[0-9a-f ]+R_IA64_TPREL64LSB +44
++[0-9a-f ]+R_IA64_TPREL64LSB +24
+ 
+ Relocation section '.rela.IA_64.pltoff' at offset 0x[0-9a-f]+ contains 1 entries:
+  +Offset +Info +Type +Symbol's Value +Symbol's Name \+ Addend
+diff --git a/ld/testsuite/ld-x86-64/tlsdesc-nacl.rd b/ld/testsuite/ld-x86-64/tlsdesc-nacl.rd
+index 3a3c600..8624091 100644
+--- a/ld/testsuite/ld-x86-64/tlsdesc-nacl.rd
++++ b/ld/testsuite/ld-x86-64/tlsdesc-nacl.rd
+@@ -71,22 +71,22 @@ Dynamic section at offset 0x[0-9a-f]+ contains 16 entries:
+ 
+ Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 8 entries:
+  +Offset +Info +Type +Symbol's Value +Symbol's Name \+ Addend
+-0+10010638 +[0-9a-f]+ R_X86_64_TPOFF64 +0+24
+-0+10010640 +[0-9a-f]+ R_X86_64_TPOFF64 +0+30
+-0+10010648 +[0-9a-f]+ R_X86_64_TPOFF64 +0+64
+-0+10010658 +[0-9a-f]+ R_X86_64_TPOFF64 +0+50
+-0+10010660 +[0-9a-f]+ R_X86_64_TPOFF64 +0+70
+-0+10010670 +[0-9a-f]+ R_X86_64_TPOFF64 +0+44
++0+10010638 +[0-9a-f]+ R_X86_64_TPOFF64 +24
++0+10010640 +[0-9a-f]+ R_X86_64_TPOFF64 +30
++0+10010648 +[0-9a-f]+ R_X86_64_TPOFF64 +64
++0+10010658 +[0-9a-f]+ R_X86_64_TPOFF64 +50
++0+10010660 +[0-9a-f]+ R_X86_64_TPOFF64 +70
++0+10010670 +[0-9a-f]+ R_X86_64_TPOFF64 +44
+ 0+10010650 +[0-9a-f]+ R_X86_64_TPOFF64 +0+10 sg5 \+ 0
+ 0+10010668 +[0-9a-f]+ R_X86_64_TPOFF64 +0+4 sg2 \+ 0
+ 
+ Relocation section '.rela.plt' at offset 0x[0-9a-f]+ contains 5 entries:
+  +Offset +Info +Type +Symbol's Value +Symbol's Name \+ Addend
+ 0+100106c8 +[0-9a-f]+ R_X86_64_TLSDESC +0+ sg1 \+ 0
+-0+10010698 +[0-9a-f]+ R_X86_64_TLSDESC +0+20
+-0+100106d8 +[0-9a-f]+ R_X86_64_TLSDESC +0+40
+-0+100106a8 +[0-9a-f]+ R_X86_64_TLSDESC +0+60
+-0+100106b8 +[0-9a-f]+ R_X86_64_TLSDESC +0+
++0+10010698 +[0-9a-f]+ R_X86_64_TLSDESC +20
++0+100106d8 +[0-9a-f]+ R_X86_64_TLSDESC +40
++0+100106a8 +[0-9a-f]+ R_X86_64_TLSDESC +60
++0+100106b8 +[0-9a-f]+ R_X86_64_TLSDESC +0
+ 
+ Symbol table '\.dynsym' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+diff --git a/ld/testsuite/ld-x86-64/tlsdesc.rd b/ld/testsuite/ld-x86-64/tlsdesc.rd
+index df8d466..3c533dd 100644
+--- a/ld/testsuite/ld-x86-64/tlsdesc.rd
++++ b/ld/testsuite/ld-x86-64/tlsdesc.rd
+@@ -69,22 +69,22 @@ Dynamic section at offset 0x[0-9a-f]+ contains 16 entries:
+ 
+ Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 8 entries:
+  +Offset +Info +Type +Symbol's Value +Symbol's Name \+ Addend
+-0+201308 +[0-9a-f]+ R_X86_64_TPOFF64 +0+24
+-0+201310 +[0-9a-f]+ R_X86_64_TPOFF64 +0+30
+-0+201318 +[0-9a-f]+ R_X86_64_TPOFF64 +0+64
+-0+201328 +[0-9a-f]+ R_X86_64_TPOFF64 +0+50
+-0+201330 +[0-9a-f]+ R_X86_64_TPOFF64 +0+70
+-0+201340 +[0-9a-f]+ R_X86_64_TPOFF64 +0+44
++0+201308 +[0-9a-f]+ R_X86_64_TPOFF64 +24
++0+201310 +[0-9a-f]+ R_X86_64_TPOFF64 +30
++0+201318 +[0-9a-f]+ R_X86_64_TPOFF64 +64
++0+201328 +[0-9a-f]+ R_X86_64_TPOFF64 +50
++0+201330 +[0-9a-f]+ R_X86_64_TPOFF64 +70
++0+201340 +[0-9a-f]+ R_X86_64_TPOFF64 +44
+ 0+201320 +[0-9a-f]+ R_X86_64_TPOFF64 +0+10 sg5 \+ 0
+ 0+201338 +[0-9a-f]+ R_X86_64_TPOFF64 +0+4 sg2 \+ 0
+ 
+ Relocation section '.rela.plt' at offset 0x[0-9a-f]+ contains 5 entries:
+  +Offset +Info +Type +Symbol's Value +Symbol's Name \+ Addend
+ 0+201398 +[0-9a-f]+ R_X86_64_TLSDESC +0+ sg1 \+ 0
+-0+201368 +[0-9a-f]+ R_X86_64_TLSDESC +0+20
+-0+2013a8 +[0-9a-f]+ R_X86_64_TLSDESC +0+40
+-0+201378 +[0-9a-f]+ R_X86_64_TLSDESC +0+60
+-0+201388 +[0-9a-f]+ R_X86_64_TLSDESC +0+
++0+201368 +[0-9a-f]+ R_X86_64_TLSDESC +20
++0+2013a8 +[0-9a-f]+ R_X86_64_TLSDESC +40
++0+201378 +[0-9a-f]+ R_X86_64_TLSDESC +60
++0+201388 +[0-9a-f]+ R_X86_64_TLSDESC +0
+ 
+ Symbol table '\.dynsym' contains [0-9]+ entries:
+  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
+diff --git a/ld/testsuite/ld-x86-64/tlspic-nacl.rd b/ld/testsuite/ld-x86-64/tlspic-nacl.rd
+index 56a07bf..f04a53f 100644
+--- a/ld/testsuite/ld-x86-64/tlspic-nacl.rd
++++ b/ld/testsuite/ld-x86-64/tlspic-nacl.rd
+@@ -52,16 +52,16 @@ Program Headers:
+ 
+ Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 14 entries:
+  +Offset +Info +Type +Symbol's Value +Symbol's Name \+ Addend
+-[0-9a-f ]+R_X86_64_DTPMOD64 +0+
+-[0-9a-f ]+R_X86_64_TPOFF64 +0+24
+-[0-9a-f ]+R_X86_64_TPOFF64 +0+30
+-[0-9a-f ]+R_X86_64_DTPMOD64 +0+
+-[0-9a-f ]+R_X86_64_DTPMOD64 +0+
+-[0-9a-f ]+R_X86_64_TPOFF64 +0+64
+-[0-9a-f ]+R_X86_64_TPOFF64 +0+50
+-[0-9a-f ]+R_X86_64_TPOFF64 +0+70
+-[0-9a-f ]+R_X86_64_DTPMOD64 +0+
+-[0-9a-f ]+R_X86_64_TPOFF64 +0+44
++[0-9a-f ]+R_X86_64_DTPMOD64 +0
++[0-9a-f ]+R_X86_64_TPOFF64 +24
++[0-9a-f ]+R_X86_64_TPOFF64 +30
++[0-9a-f ]+R_X86_64_DTPMOD64 +0
++[0-9a-f ]+R_X86_64_DTPMOD64 +0
++[0-9a-f ]+R_X86_64_TPOFF64 +64
++[0-9a-f ]+R_X86_64_TPOFF64 +50
++[0-9a-f ]+R_X86_64_TPOFF64 +70
++[0-9a-f ]+R_X86_64_DTPMOD64 +0
++[0-9a-f ]+R_X86_64_TPOFF64 +44
+ [0-9a-f ]+R_X86_64_TPOFF64 +0+10 sg5 \+ 0
+ [0-9a-f ]+R_X86_64_DTPMOD64 +0+ sg1 \+ 0
+ [0-9a-f ]+R_X86_64_DTPOFF64 +0+ sg1 \+ 0
+diff --git a/ld/testsuite/ld-x86-64/tlspic.rd b/ld/testsuite/ld-x86-64/tlspic.rd
+index 177f206..b4e10e5 100644
+--- a/ld/testsuite/ld-x86-64/tlspic.rd
++++ b/ld/testsuite/ld-x86-64/tlspic.rd
+@@ -50,16 +50,16 @@ Program Headers:
+ 
+ Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 14 entries:
+  +Offset +Info +Type +Symbol's Value +Symbol's Name \+ Addend
+-[0-9a-f ]+R_X86_64_DTPMOD64 +0+
+-[0-9a-f ]+R_X86_64_TPOFF64 +0+24
+-[0-9a-f ]+R_X86_64_TPOFF64 +0+30
+-[0-9a-f ]+R_X86_64_DTPMOD64 +0+
+-[0-9a-f ]+R_X86_64_DTPMOD64 +0+
+-[0-9a-f ]+R_X86_64_TPOFF64 +0+64
+-[0-9a-f ]+R_X86_64_TPOFF64 +0+50
+-[0-9a-f ]+R_X86_64_TPOFF64 +0+70
+-[0-9a-f ]+R_X86_64_DTPMOD64 +0+
+-[0-9a-f ]+R_X86_64_TPOFF64 +0+44
++[0-9a-f ]+R_X86_64_DTPMOD64 +0
++[0-9a-f ]+R_X86_64_TPOFF64 +24
++[0-9a-f ]+R_X86_64_TPOFF64 +30
++[0-9a-f ]+R_X86_64_DTPMOD64 +0
++[0-9a-f ]+R_X86_64_DTPMOD64 +0
++[0-9a-f ]+R_X86_64_TPOFF64 +64
++[0-9a-f ]+R_X86_64_TPOFF64 +50
++[0-9a-f ]+R_X86_64_TPOFF64 +70
++[0-9a-f ]+R_X86_64_DTPMOD64 +0
++[0-9a-f ]+R_X86_64_TPOFF64 +44
+ [0-9a-f ]+R_X86_64_TPOFF64 +0+10 sg5 \+ 0
+ [0-9a-f ]+R_X86_64_DTPMOD64 +0+ sg1 \+ 0
+ [0-9a-f ]+R_X86_64_DTPOFF64 +0+ sg1 \+ 0

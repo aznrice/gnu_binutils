@@ -1,3 +1,8 @@
+2012-05-10  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr14088.patch: New.
+	* README: Apply it.
+
 2012-05-07  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-lto-mixed-18.patch: Updated.
