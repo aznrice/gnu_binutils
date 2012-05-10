@@ -9,10 +9,10 @@ index 0000000..e0bd096
 +	* objdump.c (disassemble_bytes): Print addend as signed.
 +	(dump_reloc_set): Likewise.
 diff --git a/binutils/objdump.c b/binutils/objdump.c
-index 0be662f..dbbdad1 100644
+index 02f312d..7a51d56 100644
 --- a/binutils/objdump.c
 +++ b/binutils/objdump.c
-@@ -1806,8 +1806,15 @@ disassemble_bytes (struct disassemble_info * inf,
+@@ -1836,8 +1836,15 @@ disassemble_bytes (struct disassemble_info * inf,
  
  	      if (q->addend)
  		{
@@ -30,7 +30,7 @@ index 0be662f..dbbdad1 100644
  		}
  
  	      printf ("\n");
-@@ -2901,8 +2908,15 @@ dump_reloc_set (bfd *abfd, asection *sec, arelent **relpp, long relcount)
+@@ -3013,8 +3020,15 @@ dump_reloc_set (bfd *abfd, asection *sec, arelent **relpp, long relcount)
  
        if (q->addend)
  	{
@@ -46,14 +46,18 @@ index 0be662f..dbbdad1 100644
 +	    printf ("+0x");
 +	  bfd_printf_vma (abfd, addend);
  	}
- 
-       printf ("\n");
+       if (addend2)
+ 	{
 diff --git a/gas/testsuite/ChangeLog.addend b/gas/testsuite/ChangeLog.addend
 new file mode 100644
-index 0000000..7b10497
+index 0000000..526f40b
 --- /dev/null
 +++ b/gas/testsuite/ChangeLog.addend
-@@ -0,0 +1,26 @@
+@@ -0,0 +1,30 @@
++2012-05-10  H.J. Lu  <hongjiu.lu@intel.com>
++
++	* gas/i386/ilp32/reloc64.d: Expect addend as signed.
++
 +2011-01-01  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	* gas/i386/ilp32/mixed-mode-reloc64.d: Expect addend as signed.
@@ -122,7 +126,7 @@ index c54b7d3..a48c502 100644
 -[0-9a-f]+[ 	]+R_X86_64_PLT32[ 	]+xtrn\+0xf+c[ 	]*
 +[0-9a-f]+[ 	]+R_X86_64_PLT32[ 	]+xtrn-0x0*4[ 	]*
 diff --git a/gas/testsuite/gas/i386/ilp32/reloc64.d b/gas/testsuite/gas/i386/ilp32/reloc64.d
-index 08c15e4..af75c51 100644
+index 140f24d..bbba30c 100644
 --- a/gas/testsuite/gas/i386/ilp32/reloc64.d
 +++ b/gas/testsuite/gas/i386/ilp32/reloc64.d
 @@ -14,10 +14,10 @@ Disassembly of section \.text:
@@ -179,6 +183,12 @@ index 08c15e4..af75c51 100644
  .*[ 	]+R_X86_64_DTPOFF32[ 	]+xtrn
  .*[ 	]+R_X86_64_DTPOFF32[ 	]+xtrn
  .*[ 	]+R_X86_64_DTPOFF32[ 	]+xtrn
+@@ -92,4 +92,4 @@ Disassembly of section \.data:
+ .*[ 	]+R_X86_64_PC8[ 	]+xtrn
+ .*[ 	]+R_X86_64_64[ 	]+xtrn
+ .*[ 	]+R_X86_64_64[ 	]+xtrn\+0x7fffffff
+-.*[ 	]+R_X86_64_64[ 	]+xtrn\+0x80000000
++.*[ 	]+R_X86_64_64[ 	]+xtrn\-0x80000000
 diff --git a/gas/testsuite/gas/i386/mixed-mode-reloc64.d b/gas/testsuite/gas/i386/mixed-mode-reloc64.d
 index dc50e43..9b82cb5 100644
 --- a/gas/testsuite/gas/i386/mixed-mode-reloc64.d
@@ -778,7 +788,7 @@ index 8ea8230..33fb6db 100644
  0000000000000018 <dat1>:
    18:	00 00 00 00 	\.long 0x0
 diff --git a/gas/testsuite/gas/sparc/reloc64.d b/gas/testsuite/gas/sparc/reloc64.d
-index da40d0c..70bc99d 100644
+index 07e2a10..d33f901 100644
 --- a/gas/testsuite/gas/sparc/reloc64.d
 +++ b/gas/testsuite/gas/sparc/reloc64.d
 @@ -35,13 +35,13 @@ Disassembly of section .text:
@@ -799,7 +809,7 @@ index da40d0c..70bc99d 100644
    5c:	01 00 00 00 	nop 
    60:	03 2a 61 d9 	sethi  %hi\(0xa9876400\), %g1
    64:	82 10 61 43 	or  %g1, 0x143, %g1.*
-@@ -70,7 +70,7 @@ Disassembly of section .text:
+@@ -70,9 +70,9 @@ Disassembly of section .text:
  			a0: R_SPARC_LOX10	.text
    a4:	01 00 00 00 	nop 
    a8:	03 00 00 00 	sethi  %hi\((0x|)0\), %g1
@@ -809,3 +819,5 @@ index da40d0c..70bc99d 100644
 -			ac: R_SPARC_LOX10	.text\+0xffffffff76543210
 +			ac: R_SPARC_LOX10	.text-0x89abcdf0
    b0:	01 00 00 00 	nop 
+   b4:	03 00 00 00 	sethi  %hi\((0x|)0\), %g1
+ 			b4: R_SPARC_H34	.text\+0xa9876543210
