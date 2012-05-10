@@ -9173,6 +9173,16 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
       if (disallow_64bit_reloc)
 	switch (code)
 	  {
+	  case BFD_RELOC_64:
+	    /* Check addend overflow.  */
+	    if (!fits_in_signed_long (fixp->fx_offset))
+	      {
+		as_bad_where (fixp->fx_file, fixp->fx_line,
+			      _("cannot represent relocation %s with addend %lld in x32 mode"),
+			      bfd_get_reloc_code_name (code),
+			      (long long) fixp->fx_offset);
+	      }
+	    break;
 	  case BFD_RELOC_X86_64_DTPOFF64:
 	  case BFD_RELOC_X86_64_TPOFF64:
 	  case BFD_RELOC_64_PCREL:

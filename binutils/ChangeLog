@@ -1,3 +1,36 @@
+2012-05-10  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf.c (read_and_display_attr_value): Don't look up tag from
+	abbrev for DW_FORM_ref_addr.
+
+2012-05-08  Sean Keys  <skeys@ipdatasys.com>
+	
+	* binutils/MAINTAINERS: Added my entry to the maintainers secion.
+ 
+2012-05-08  Cary Coutant  <ccoutant@google.com>
+
+	* doc/binutils.texi (objcopy): Add --strip-dwo, --extract-dwo options.
+	(strip): Add --strip-dwo option.
+	* objcopy.c (enum strip_action): Add STRIP_DWO, STRIP_NONDWO.
+	(enum command_line_switch): Add OPTION_EXTRACT_DWO, OPTION_STRIP_DWO.
+	(strip_options): Add --strip-dwo option.
+	(copy_options): Add --extract-dwo, --strip-dwo options.
+	(copy_usage): Likewise.
+	(strip_usage): Add --strip-dwo option.
+	(is_dwo_section): New function.
+	(is_strip_section_1): Check for DWO sections.
+	(copy_object): Check for --strip-dwo, --extract-dwo options.
+	(copy_relocations_in_section): Discard relocations for DWO sections.
+	Discard entire relocation section when no relocations.
+	(strip_main): Add --strip-dwo option.
+	(copy_main): Add --strip-dwo, --extract-dwo options.
+
+2012-05-08  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am (check_DEJAGNU): Export LC_ALL=C in place of other
+	LC and LANG environment vars.
+	* Makefile.in: Regenerate.
+
 2012-05-07  Tom Tromey  <tromey@redhat.com>
 
 	* dwarf.c (get_TAG_name): Use get_DW_TAG_name.
