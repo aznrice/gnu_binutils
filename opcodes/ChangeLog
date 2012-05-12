@@ -1,3 +1,18 @@
+2012-05-11  Daniel Richard G.  <skunk@iskunk.org>
+
+	PR binutils/14028
+	* configure.in: Invoke ACX_HEADER_STRING.
+	* configure: Regenerate.
+	* config.in: Regenerate.
+	* sysdep.h: If STRINGS_WITH_STRING is defined then include both
+	string.h and strings.h.
+
+2012-05-11  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/14006
+	* arm-dis.c (print_insn): Fix detection of instruction mode in
+	files containing multiple executable sections.
+
 2012-05-03  Sean Keys  <skeys@ipdatasys.com>
 
 	* Makefile.in, configure: regenerate
