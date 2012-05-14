@@ -24,6 +24,7 @@ patches="
 	binutils-lto-mixed-18.patch
 	binutils-pr12639-2.patch
 	binutils-pr13962.patch
+	binutils-pr14105.patch
 "
 
 if [ -n "$clean" ]

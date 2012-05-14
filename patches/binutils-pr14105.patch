@@ -1,0 +1,307 @@
+diff --git a/bfd/ChangeLog.pr14105 b/bfd/ChangeLog.pr14105
+new file mode 100644
+index 0000000..ebd2a46
+--- /dev/null
++++ b/bfd/ChangeLog.pr14105
+@@ -0,0 +1,15 @@
++2012-05-14  H.J. Lu  <hongjiu.lu@intel.com>
++
++	* elflink.c (bfd_elf_discard_info): Check PLT eh_frame created by
++	linker only once.
++
++2012-05-13  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/14105
++	* elf32-i386.c (elf_i386_create_dynamic_sections): Always
++	create PLT eh_frame section with SEC_LINKER_CREATED.
++	* elf64-x86-64.c (elf_x86_64_create_dynamic_sections): Likewise.
++
++	* elflink.c (not_this_section): New.
++	(bfd_elf_discard_info): Also handle PLT eh_frame created by
++	linker.
+diff --git a/bfd/elf32-i386.c b/bfd/elf32-i386.c
+index 270a7c7..31b3c57 100644
+--- a/bfd/elf32-i386.c
++++ b/bfd/elf32-i386.c
+@@ -1015,13 +1015,15 @@ elf_i386_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
+     return FALSE;
+ 
+   if (!info->no_ld_generated_unwind_info
+-      && bfd_get_section_by_name (dynobj, ".eh_frame") == NULL
++      && htab->plt_eh_frame == NULL
+       && htab->elf.splt != NULL)
+     {
+       flagword flags = get_elf_backend_data (dynobj)->dynamic_sec_flags;
+       htab->plt_eh_frame
+-	= bfd_make_section_with_flags (dynobj, ".eh_frame",
+-				       flags | SEC_READONLY);
++	= bfd_make_section_anyway_with_flags (dynobj, ".eh_frame",
++					      (flags
++					       | SEC_LINKER_CREATED
++					       | SEC_READONLY));
+       if (htab->plt_eh_frame == NULL
+ 	  || !bfd_set_section_alignment (dynobj, htab->plt_eh_frame, 2))
+ 	return FALSE;
+diff --git a/bfd/elf64-x86-64.c b/bfd/elf64-x86-64.c
+index 1111d77..aafe60d 100644
+--- a/bfd/elf64-x86-64.c
++++ b/bfd/elf64-x86-64.c
+@@ -979,15 +979,17 @@ elf_x86_64_create_dynamic_sections (bfd *dynobj,
+     abort ();
+ 
+   if (!info->no_ld_generated_unwind_info
+-      && bfd_get_section_by_name (dynobj, ".eh_frame") == NULL
++      && htab->plt_eh_frame == NULL
+       && htab->elf.splt != NULL)
+     {
+       const struct elf_x86_64_backend_data *const abed
+ 	= get_elf_x86_64_backend_data (dynobj);
+       flagword flags = get_elf_backend_data (dynobj)->dynamic_sec_flags;
+       htab->plt_eh_frame
+-	= bfd_make_section_with_flags (dynobj, ".eh_frame",
+-				       flags | SEC_READONLY);
++	= bfd_make_section_anyway_with_flags (dynobj, ".eh_frame",
++					      (flags
++					       | SEC_LINKER_CREATED
++					       | SEC_READONLY));
+       if (htab->plt_eh_frame == NULL
+ 	  || !bfd_set_section_alignment (dynobj, htab->plt_eh_frame, 3))
+ 	return FALSE;
+diff --git a/bfd/elflink.c b/bfd/elflink.c
+index 65d3a2c..0848f6f 100644
+--- a/bfd/elflink.c
++++ b/bfd/elflink.c
+@@ -12438,6 +12438,14 @@ bfd_elf_reloc_symbol_deleted_p (bfd_vma offset, void *cookie)
+   return FALSE;
+ }
+ 
++/* Return TRUE if SEC isn't DATA.  */
++
++static bfd_boolean
++not_this_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, void *data)
++{
++  return (void *) sec != data;
++}
++
+ /* Discard unneeded references to discarded sections.
+    Returns TRUE if any section's size was changed.  */
+ /* This function assumes that the relocations are in sorted order,
+@@ -12450,7 +12458,7 @@ bfd_elf_discard_info (bfd *output_bfd, struct bfd_link_info *info)
+   asection *stab, *eh;
+   const struct elf_backend_data *bed;
+   bfd *abfd;
+-  bfd_boolean ret = FALSE;
++  bfd_boolean ret = FALSE, plt_eh_frame_done = FALSE;
+ 
+   if (info->traditional_format
+       || !is_elf_hash_table (info->hash))
+@@ -12513,6 +12521,24 @@ bfd_elf_discard_info (bfd *output_bfd, struct bfd_link_info *info)
+ 						 &cookie))
+ 	    ret = TRUE;
+ 	  fini_reloc_cookie_rels (&cookie, eh);
++
++	  if (!plt_eh_frame_done)
++	    {
++	      /* Also handle PLT eh_frame created by linker.  */
++	      eh = bfd_get_section_by_name_if (abfd, ".eh_frame",
++					       not_this_section, eh);
++	      if (eh != NULL
++		  && init_reloc_cookie_rels (&cookie, info, abfd, eh))
++		{
++		  plt_eh_frame_done = TRUE;
++		  _bfd_elf_parse_eh_frame (abfd, info, eh, &cookie);
++		  if (_bfd_elf_discard_section_eh_frame (abfd, info, eh,
++							 bfd_elf_reloc_symbol_deleted_p,
++							 &cookie))
++		    ret = TRUE;
++		  fini_reloc_cookie_rels (&cookie, eh);
++		}
++	    }
+ 	}
+ 
+       if (bed->elf_backend_discard_info != NULL
+diff --git a/ld/testsuite/ChangeLog.pr14105 b/ld/testsuite/ChangeLog.pr14105
+new file mode 100644
+index 0000000..4489fb9
+--- /dev/null
++++ b/ld/testsuite/ChangeLog.pr14105
+@@ -0,0 +1,16 @@
++2012-05-14  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/14105
++	* ld-elf/eh4.d: Add PLT eh_frame.
++
++	* ld-i386/i386.exp: Run pr12570a and pr12570b.
++	* ld-x86-64/x86-64.exp: Likewise.
++
++	* ld-i386/pr12570a.d: New file.
++	* ld-i386/pr12570a.s: Likewise.
++	* ld-i386/pr12570b.s: Likewise.
++	* ld-i386/pr12570b.s: Likewise.
++	* ld-x86-64/pr12570a.d: Likewise.
++	* ld-x86-64/pr12570a.s: Likewise.
++	* ld-x86-64/pr12570b.d: Likewise.
++	* ld-x86-64/pr12570b.s: Likewise.
+diff --git a/ld/testsuite/ld-elf/eh4.d b/ld/testsuite/ld-elf/eh4.d
+index b482d03..34ce70e 100644
+--- a/ld/testsuite/ld-elf/eh4.d
++++ b/ld/testsuite/ld-elf/eh4.d
+@@ -29,6 +29,17 @@ Contents of the .eh_frame section:
+   DW_CFA_set_loc: 00000417
+   DW_CFA_def_cfa_offset: 80
+ 
+-00000048 ZERO terminator
++00000048 00000024 0000004c FDE cie=00000000 pc=00000240..00000260
++  DW_CFA_def_cfa_offset: 16
++  DW_CFA_advance_loc: 6 to 00000246
++  DW_CFA_def_cfa_offset: 24
++  DW_CFA_advance_loc: 10 to 00000250
++  DW_CFA_def_cfa_expression \(DW_OP_breg7 \(rsp\): 8; DW_OP_breg16 \(rip\): 0; DW_OP_lit15; DW_OP_and; DW_OP_lit11; DW_OP_ge; DW_OP_lit3; DW_OP_shl; DW_OP_plus\)
++  DW_CFA_nop
++  DW_CFA_nop
++  DW_CFA_nop
++  DW_CFA_nop
++
++00000070 ZERO terminator
+ #pass
+ 
+diff --git a/ld/testsuite/ld-i386/i386.exp b/ld/testsuite/ld-i386/i386.exp
+index d1031c5..47f918f 100644
+--- a/ld/testsuite/ld-i386/i386.exp
++++ b/ld/testsuite/ld-i386/i386.exp
+@@ -231,6 +231,8 @@ run_dump_test "nogot2"
+ run_dump_test "discarded1"
+ run_dump_test "pr12718"
+ run_dump_test "pr12921"
++run_dump_test "pr12570a"
++run_dump_test "pr12570b"
+ 
+ if { !([istarget "i?86-*-linux*"]
+        || [istarget "i?86-*-gnu*"]
+diff --git a/ld/testsuite/ld-i386/pr12570a.d b/ld/testsuite/ld-i386/pr12570a.d
+new file mode 100644
+index 0000000..03aeb7b
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr12570a.d
+@@ -0,0 +1,8 @@
++#name: PR ld/12570
++#as: --32
++#ld: -melf_i386 -shared
++#readelf: -wf --wide
++
++#...
++  DW_CFA_def_cfa_expression \(DW_OP_breg4 \(esp\): 4; DW_OP_breg8 \(eip\): 0; DW_OP_lit15; DW_OP_and; DW_OP_lit11; DW_OP_ge; DW_OP_lit2; DW_OP_shl; DW_OP_plus\)
++#...
+diff --git a/ld/testsuite/ld-i386/pr12570a.s b/ld/testsuite/ld-i386/pr12570a.s
+new file mode 100644
+index 0000000..38e0593
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr12570a.s
+@@ -0,0 +1,8 @@
++	.text
++	.globl foo
++	.type foo, @function
++foo:
++	.cfi_startproc
++	jmp	 bar@PLT
++	.cfi_endproc
++	.size	foo, .-foo
+diff --git a/ld/testsuite/ld-i386/pr12570b.d b/ld/testsuite/ld-i386/pr12570b.d
+new file mode 100644
+index 0000000..0532aac
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr12570b.d
+@@ -0,0 +1,9 @@
++#name: PR ld/12570
++#as: --32
++#ld: -melf_i386 -shared
++#readelf: -wf --wide
++
++#failif
++#...
++  DW_CFA_def_cfa_expression \(DW_OP_breg4 \(esp\): 4; DW_OP_breg8 \(eip\): 0; DW_OP_lit15; DW_OP_and; DW_OP_lit11; DW_OP_ge; DW_OP_lit2; DW_OP_shl; DW_OP_plus\)
++#...
+diff --git a/ld/testsuite/ld-i386/pr12570b.s b/ld/testsuite/ld-i386/pr12570b.s
+new file mode 100644
+index 0000000..e76b9f1
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr12570b.s
+@@ -0,0 +1,8 @@
++	.text
++	.globl foo
++	.type foo, @function
++foo:
++	.cfi_startproc
++	ret
++	.cfi_endproc
++	.size	foo, .-foo
+diff --git a/ld/testsuite/ld-x86-64/pr12570a.d b/ld/testsuite/ld-x86-64/pr12570a.d
+new file mode 100644
+index 0000000..6105a74
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr12570a.d
+@@ -0,0 +1,8 @@
++#name: PR ld/12570
++#as: --64
++#ld: -melf_x86_64 -shared
++#readelf: -wf --wide
++
++#...
++  DW_CFA_def_cfa_expression \(DW_OP_breg7 \(rsp\): 8; DW_OP_breg16 \(rip\): 0; DW_OP_lit15; DW_OP_and; DW_OP_lit11; DW_OP_ge; DW_OP_lit3; DW_OP_shl; DW_OP_plus\)
++#...
+diff --git a/ld/testsuite/ld-x86-64/pr12570a.s b/ld/testsuite/ld-x86-64/pr12570a.s
+new file mode 100644
+index 0000000..38e0593
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr12570a.s
+@@ -0,0 +1,8 @@
++	.text
++	.globl foo
++	.type foo, @function
++foo:
++	.cfi_startproc
++	jmp	 bar@PLT
++	.cfi_endproc
++	.size	foo, .-foo
+diff --git a/ld/testsuite/ld-x86-64/pr12570b.d b/ld/testsuite/ld-x86-64/pr12570b.d
+new file mode 100644
+index 0000000..d65f8da
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr12570b.d
+@@ -0,0 +1,9 @@
++#name: PR ld/12570
++#as: --64
++#ld: -melf_x86_64 -shared
++#readelf: -wf --wide
++
++#failif
++#...
++  DW_CFA_def_cfa_expression \(DW_OP_breg7 \(rsp\): 8; DW_OP_breg16 \(rip\): 0; DW_OP_lit15; DW_OP_and; DW_OP_lit11; DW_OP_ge; DW_OP_lit3; DW_OP_shl; DW_OP_plus\)
++#...
+diff --git a/ld/testsuite/ld-x86-64/pr12570b.s b/ld/testsuite/ld-x86-64/pr12570b.s
+new file mode 100644
+index 0000000..e76b9f1
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr12570b.s
+@@ -0,0 +1,8 @@
++	.text
++	.globl foo
++	.type foo, @function
++foo:
++	.cfi_startproc
++	ret
++	.cfi_endproc
++	.size	foo, .-foo
+diff --git a/ld/testsuite/ld-x86-64/x86-64.exp b/ld/testsuite/ld-x86-64/x86-64.exp
+index e8afbc2..7d2934f 100644
+--- a/ld/testsuite/ld-x86-64/x86-64.exp
++++ b/ld/testsuite/ld-x86-64/x86-64.exp
+@@ -206,6 +206,8 @@ run_dump_test "discarded1"
+ run_dump_test "pr12718"
+ run_dump_test "pr12921"
+ run_dump_test "pr13947"
++run_dump_test "pr12570a"
++run_dump_test "pr12570b"
+ 
+ if { ![istarget "x86_64-*-linux*"] && ![istarget "x86_64-*-nacl*"]} {
+     return
