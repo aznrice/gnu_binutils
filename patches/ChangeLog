@@ -1,3 +1,8 @@
+2012-05-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr13962.patch: New.
+	* README: Apply it.
+
 2012-05-13  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-signed-8.patch: Removed.
