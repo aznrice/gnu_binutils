@@ -1,0 +1,118 @@
+diff --git a/bfd/ChangeLog.pr13909 b/bfd/ChangeLog.pr13909
+new file mode 100644
+index 0000000..dce7c71
+--- /dev/null
++++ b/bfd/ChangeLog.pr13909
+@@ -0,0 +1,6 @@
++2012-05-14  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/13909
++	* elf32-i386.c (elf_i386_create_dynamic_sections): Create PLT
++	eh_frame section if there is an input .eh_frame section.
++	* elf64-x86-64.c (elf_x86_64_create_dynamic_sections): Likewise.
+diff --git a/bfd/elf32-i386.c b/bfd/elf32-i386.c
+index 31b3c57..49387e7 100644
+--- a/bfd/elf32-i386.c
++++ b/bfd/elf32-i386.c
+@@ -1016,7 +1016,8 @@ elf_i386_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
+ 
+   if (!info->no_ld_generated_unwind_info
+       && htab->plt_eh_frame == NULL
+-      && htab->elf.splt != NULL)
++      && htab->elf.splt != NULL
++      && bfd_get_section_by_name (dynobj, ".eh_frame") != NULL)
+     {
+       flagword flags = get_elf_backend_data (dynobj)->dynamic_sec_flags;
+       htab->plt_eh_frame
+diff --git a/bfd/elf64-x86-64.c b/bfd/elf64-x86-64.c
+index aafe60d..399cf8c 100644
+--- a/bfd/elf64-x86-64.c
++++ b/bfd/elf64-x86-64.c
+@@ -980,7 +980,8 @@ elf_x86_64_create_dynamic_sections (bfd *dynobj,
+ 
+   if (!info->no_ld_generated_unwind_info
+       && htab->plt_eh_frame == NULL
+-      && htab->elf.splt != NULL)
++      && htab->elf.splt != NULL
++      && bfd_get_section_by_name (dynobj, ".eh_frame") != NULL)
+     {
+       const struct elf_x86_64_backend_data *const abed
+ 	= get_elf_x86_64_backend_data (dynobj);
+diff --git a/ld/testsuite/ChangeLog.pr13909 b/ld/testsuite/ChangeLog.pr13909
+new file mode 100644
+index 0000000..89ddba0
+--- /dev/null
++++ b/ld/testsuite/ChangeLog.pr13909
+@@ -0,0 +1,9 @@
++2012-05-14  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/13909
++	* ld-i386/i386.exp: Run pr13909.
++	* ld-x86-64/x86-64.exp: Likewise.
++
++	* ld-i386/dummy.s: New file.
++	* ld-i386/pr13909.d: Likewise.
++	* ld-x86-64/pr13909.d: Likewise.
+diff --git a/ld/testsuite/ld-i386/dummy.s b/ld/testsuite/ld-i386/dummy.s
+new file mode 100644
+index 0000000..403f980
+--- /dev/null
++++ b/ld/testsuite/ld-i386/dummy.s
+@@ -0,0 +1 @@
++# Dummy
+diff --git a/ld/testsuite/ld-i386/i386.exp b/ld/testsuite/ld-i386/i386.exp
+index 47f918f..982e09f 100644
+--- a/ld/testsuite/ld-i386/i386.exp
++++ b/ld/testsuite/ld-i386/i386.exp
+@@ -233,6 +233,7 @@ run_dump_test "pr12718"
+ run_dump_test "pr12921"
+ run_dump_test "pr12570a"
+ run_dump_test "pr12570b"
++run_dump_test "pr13909"
+ 
+ if { !([istarget "i?86-*-linux*"]
+        || [istarget "i?86-*-gnu*"]
+diff --git a/ld/testsuite/ld-i386/pr13909.d b/ld/testsuite/ld-i386/pr13909.d
+new file mode 100644
+index 0000000..388fd56
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr13909.d
+@@ -0,0 +1,10 @@
++#name: PR ld/13909
++#source: dummy.s
++#as: --32
++#ld: -melf_i386 -shared
++#readelf: -S --wide
++
++#failif
++#...
++ +\[ [0-9]\] .eh_frame +PROGBITS +[0-9a-f]+ +[0-9a-f]+ 0+ +.*
++#...
+diff --git a/ld/testsuite/ld-x86-64/pr13909.d b/ld/testsuite/ld-x86-64/pr13909.d
+new file mode 100644
+index 0000000..137c61f
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr13909.d
+@@ -0,0 +1,10 @@
++#name: PR ld/13909
++#source: dummy.s
++#as: --64
++#ld: -melf_x86_64 -shared
++#readelf: -S --wide
++
++#failif
++#...
++ +\[ [0-9]\] .eh_frame +PROGBITS +[0-9a-f]+ +[0-9a-f]+ 0+ +.*
++#...
+diff --git a/ld/testsuite/ld-x86-64/x86-64.exp b/ld/testsuite/ld-x86-64/x86-64.exp
+index 7d2934f..42203bb 100644
+--- a/ld/testsuite/ld-x86-64/x86-64.exp
++++ b/ld/testsuite/ld-x86-64/x86-64.exp
+@@ -208,6 +208,7 @@ run_dump_test "pr12921"
+ run_dump_test "pr13947"
+ run_dump_test "pr12570a"
+ run_dump_test "pr12570b"
++run_dump_test "pr13909"
+ 
+ if { ![istarget "x86_64-*-linux*"] && ![istarget "x86_64-*-nacl*"]} {
+     return
