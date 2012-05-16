@@ -464,7 +464,7 @@ extern bfd_boolean _bfd_generic_set_section_contents
   ((bfd_boolean (*) (bfd *, struct bfd_link_info *)) \
    bfd_false)
 #define _bfd_nolink_bfd_lookup_section_flags \
-  ((void (*) (struct bfd_link_info *, struct flag_info *)) \
+  ((bfd_boolean (*) (struct bfd_link_info *, struct flag_info *, asection *)) \
    bfd_0)
 #define _bfd_nolink_bfd_merge_sections \
   ((bfd_boolean (*) (bfd *, struct bfd_link_info *)) \
@@ -1343,6 +1343,23 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_PPC_EMB_RELST_HA",
   "BFD_RELOC_PPC_EMB_BIT_FLD",
   "BFD_RELOC_PPC_EMB_RELSDA",
+  "BFD_RELOC_PPC_VLE_REL8",
+  "BFD_RELOC_PPC_VLE_REL15",
+  "BFD_RELOC_PPC_VLE_REL24",
+  "BFD_RELOC_PPC_VLE_LO16A",
+  "BFD_RELOC_PPC_VLE_LO16D",
+  "BFD_RELOC_PPC_VLE_HI16A",
+  "BFD_RELOC_PPC_VLE_HI16D",
+  "BFD_RELOC_PPC_VLE_HA16A",
+  "BFD_RELOC_PPC_VLE_HA16D",
+  "BFD_RELOC_PPC_VLE_SDA21",
+  "BFD_RELOC_PPC_VLE_SDA21_LO",
+  "BFD_RELOC_PPC_VLE_SDAREL_LO16A",
+  "BFD_RELOC_PPC_VLE_SDAREL_LO16D",
+  "BFD_RELOC_PPC_VLE_SDAREL_HI16A",
+  "BFD_RELOC_PPC_VLE_SDAREL_HI16D",
+  "BFD_RELOC_PPC_VLE_SDAREL_HA16A",
+  "BFD_RELOC_PPC_VLE_SDAREL_HA16D",
   "BFD_RELOC_PPC64_HIGHER",
   "BFD_RELOC_PPC64_HIGHER_S",
   "BFD_RELOC_PPC64_HIGHEST",
@@ -2108,6 +2125,12 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_XGATE_IMM3",
   "BFD_RELOC_XGATE_IMM4",
   "BFD_RELOC_XGATE_IMM5",
+  "BFD_RELOC_M68HC12_9B",
+  "BFD_RELOC_M68HC12_16B",
+  "BFD_RELOC_M68HC12_9_PCREL",
+  "BFD_RELOC_M68HC12_10_PCREL",
+  "BFD_RELOC_M68HC12_LO8XG",
+  "BFD_RELOC_M68HC12_HI8XG",
   "BFD_RELOC_16C_NUM08",
   "BFD_RELOC_16C_NUM08_C",
   "BFD_RELOC_16C_NUM16",
@@ -2586,8 +2609,8 @@ bfd_boolean bfd_generic_relax_section
 bfd_boolean bfd_generic_gc_sections
    (bfd *, struct bfd_link_info *);
 
-void bfd_generic_lookup_section_flags
-   (struct bfd_link_info *, struct flag_info *);
+bfd_boolean bfd_generic_lookup_section_flags
+   (struct bfd_link_info *, struct flag_info *, asection *);
 
 bfd_boolean bfd_generic_merge_sections
    (bfd *, struct bfd_link_info *);

@@ -2806,6 +2806,40 @@ ENUMX
 ENUMX
   BFD_RELOC_PPC_EMB_RELSDA
 ENUMX
+  BFD_RELOC_PPC_VLE_REL8
+ENUMX
+  BFD_RELOC_PPC_VLE_REL15
+ENUMX
+  BFD_RELOC_PPC_VLE_REL24
+ENUMX
+  BFD_RELOC_PPC_VLE_LO16A
+ENUMX
+  BFD_RELOC_PPC_VLE_LO16D
+ENUMX
+  BFD_RELOC_PPC_VLE_HI16A
+ENUMX
+  BFD_RELOC_PPC_VLE_HI16D
+ENUMX
+  BFD_RELOC_PPC_VLE_HA16A
+ENUMX
+  BFD_RELOC_PPC_VLE_HA16D
+ENUMX
+  BFD_RELOC_PPC_VLE_SDA21
+ENUMX
+  BFD_RELOC_PPC_VLE_SDA21_LO
+ENUMX
+  BFD_RELOC_PPC_VLE_SDAREL_LO16A
+ENUMX
+  BFD_RELOC_PPC_VLE_SDAREL_LO16D
+ENUMX
+  BFD_RELOC_PPC_VLE_SDAREL_HI16A
+ENUMX
+  BFD_RELOC_PPC_VLE_SDAREL_HI16D
+ENUMX
+  BFD_RELOC_PPC_VLE_SDAREL_HA16A
+ENUMX
+  BFD_RELOC_PPC_VLE_SDAREL_HA16D
+ENUMX
   BFD_RELOC_PPC64_HIGHER
 ENUMX
   BFD_RELOC_PPC64_HIGHER_S
@@ -5058,6 +5092,38 @@ ENUMDOC
   Freescale XGATE reloc.
   This is a 5-bit pc-relative reloc.
 ENUM
+  BFD_RELOC_M68HC12_9B
+ENUMDOC
+  Motorola 68HC12 reloc.
+  This is the 9 bits of a value.
+ENUM
+  BFD_RELOC_M68HC12_16B
+ENUMDOC
+  Motorola 68HC12 reloc.
+  This is the 16 bits of a value.
+ENUM
+  BFD_RELOC_M68HC12_9_PCREL
+ENUMDOC
+  Motorola 68HC12/XGATE reloc.
+  This is a PCREL9 branch.
+ENUM
+  BFD_RELOC_M68HC12_10_PCREL
+ENUMDOC
+  Motorola 68HC12/XGATE reloc.
+  This is a PCREL10 branch.
+ENUM
+  BFD_RELOC_M68HC12_LO8XG
+ENUMDOC
+  Motorola 68HC12/XGATE reloc.
+  This is the 8 bit low part of an absolute address and immediately precedes
+  a matching HI8XG part.
+ENUM
+  BFD_RELOC_M68HC12_HI8XG
+ENUMDOC
+  Motorola 68HC12/XGATE reloc.
+  This is the 8 bit high part of an absolute address and immediately follows
+  a matching LO8XG part.
+ENUM
   BFD_RELOC_16C_NUM08
 ENUMX
   BFD_RELOC_16C_NUM08_C
@@ -6349,23 +6415,26 @@ INTERNAL_FUNCTION
 	bfd_generic_lookup_section_flags
 
 SYNOPSIS
-	void bfd_generic_lookup_section_flags
-	  (struct bfd_link_info *, struct flag_info *);
+	bfd_boolean bfd_generic_lookup_section_flags
+	  (struct bfd_link_info *, struct flag_info *, asection *);
 
 DESCRIPTION
 	Provides default handling for section flags lookup
 	-- i.e., does nothing.
+	Returns FALSE if the section should be omitted, otherwise TRUE.
 */
 
-void
+bfd_boolean
 bfd_generic_lookup_section_flags (struct bfd_link_info *info ATTRIBUTE_UNUSED,
-				  struct flag_info *flaginfo) 
+				  struct flag_info *flaginfo,
+				  asection *section ATTRIBUTE_UNUSED)
 {
   if (flaginfo != NULL)
     {
       (*_bfd_error_handler) (_("INPUT_SECTION_FLAGS are not supported.\n"));
-      return;
+      return FALSE;
     }
+  return TRUE;
 }
 
 /*
