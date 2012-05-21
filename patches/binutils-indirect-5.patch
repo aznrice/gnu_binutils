@@ -43,7 +43,7 @@ ld/testsuite/
 	* ld-elf/indirect4c.c: Likewise.
 
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 65d3a2c..69b7755 100644
+index 3614575..74a1b53 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -893,6 +893,33 @@ elf_merge_st_other (bfd *abfd, struct elf_link_hash_entry *h,
@@ -221,7 +221,7 @@ index 65d3a2c..69b7755 100644
    switch (h->root.type)
      {
      default:
-@@ -8657,6 +8697,11 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+@@ -8659,6 +8699,11 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
      {
        bfd *def_bfd;
        const char *msg;
@@ -233,18 +233,18 @@ index 65d3a2c..69b7755 100644
  
        if (ELF_ST_VISIBILITY (h->other) == STV_INTERNAL)
  	msg = _("%B: internal symbol `%s' in %B is referenced by DSO");
-@@ -8665,8 +8710,8 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+@@ -8667,8 +8712,8 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
        else
  	msg = _("%B: local symbol `%s' in %B is referenced by DSO");
-       def_bfd = flaginfo->output_bfd;
+       def_bfd = flinfo->output_bfd;
 -      if (h->root.u.def.section != bfd_abs_section_ptr)
 -	def_bfd = h->root.u.def.section->owner;
 +      if (hi->root.u.def.section != bfd_abs_section_ptr)
 +	def_bfd = hi->root.u.def.section->owner;
-       (*_bfd_error_handler) (msg, flaginfo->output_bfd, def_bfd,
+       (*_bfd_error_handler) (msg, flinfo->output_bfd, def_bfd,
  			     h->root.root.string);
        bfd_set_error (bfd_error_bad_value);
-@@ -8903,6 +8948,23 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+@@ -8905,6 +8950,23 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
      {
        bfd_byte *esym;
  
@@ -259,15 +259,15 @@ index 65d3a2c..69b7755 100644
 +	    {
 +	      (*_bfd_error_handler)
 +		(_("%B: No symbol version section for versioned symbol `%s'"),
-+		 flaginfo->output_bfd, h->root.root.string);
++		 flinfo->output_bfd, h->root.root.string);
 +	      eoinfo->failed = TRUE;
 +	      return FALSE;
 +	    }
 +	}
 +
        sym.st_name = h->dynstr_index;
-       esym = flaginfo->dynsym_sec->contents + h->dynindx * bed->s->sizeof_sym;
-       if (! check_dynsym (flaginfo->output_bfd, &sym))
+       esym = flinfo->dynsym_sec->contents + h->dynindx * bed->s->sizeof_sym;
+       if (!check_dynsym (flinfo->output_bfd, &sym))
 diff --git a/ld/testsuite/ld-elf/indirect.exp b/ld/testsuite/ld-elf/indirect.exp
 new file mode 100644
 index 0000000..603179a
