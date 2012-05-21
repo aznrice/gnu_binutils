@@ -1,3 +1,63 @@
+2012-05-19  Alan Modra  <amodra@gmail.com>
+
+	* ld-elf/elf.exp (note-3.so): xfail tic6x due to non-pic warnings.
+
+2012-05-19  Alan Modra  <amodra@gmail.com>
+
+	* ld-powerpc/vle.ld: New.
+	* ld-powerpc/powerpc.exp (vle reloc tests): Link using vle.ld.
+
+2012-05-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-i386/tlsdesc-nacl.rd: Update for dynamic sym changes.
+	* ld-i386/tlsdesc.rd: Likewise.
+	* ld-i386/tlsgdesc-nacl.rd: Likewise.
+	* ld-i386/tlsgdesc.rd: Likewise.
+	* ld-i386/tlsnopic-nacl.rd: Likewise.
+	* ld-i386/tlsnopic.rd: Likewise.
+	* ld-i386/tlspic-nacl.rd: Likewise.
+	* ld-i386/tlspic.rd: Likewise.
+	* ld-x86-64/tlsdesc-nacl.rd: Likewise.
+	* ld-x86-64/tlsdesc.rd: Likewise.
+	* ld-x86-64/tlsgdesc-nacl.rd: Likewise.
+	* ld-x86-64/tlsgdesc.rd: Likewise.
+	* ld-x86-64/tlspic-nacl.rd: Likewise.
+	* ld-x86-64/tlspic.rd: Likewise.
+
+2012-05-18  Alan Modra  <amodra@gmail.com>
+
+	* ld-tic6x/mvk-reloc-local-r.d: Adjust for signed addend.
+	* ld-tic6x/unwind-6.d: Typo fix.
+
+2012-05-18  Alan Modra  <amodra@gmail.com>
+
+	* ld-elf/init-mixed.c: Include config.h first.
+
+2012-05-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-arm/emit-relocs1-vxworks.d: Expect addend as signed.
+	* ld-spu/pic.d: Likewise.
+
+2012-05-17  Hans-Peter Nilsson  <hp@axis.com>
+
+	* lib/ld-lib.exp (run_dump_test): For options "warning" and
+	"error", append to earlier option values without adding a space.
+
+2012-05-17  Alan Modra  <amodra@gmail.com>
+
+	* ld-m68k/tls-ld-1.d: Update.
+
+2012-05-17  Alan Modra  <amodra@gmail.com>
+
+	* ld-powerpc/tlsso.r: Update for dynamic sym changes.
+	* ld-powerpc/tlsso32.d: Likewise.
+	* ld-powerpc/tlsso32.r: Likewise.
+	* ld-powerpc/tlstocso.r: Likewise.
+
+2012-05-16  Meador Inge  <meadori@codesourcery.com>
+
+	* ld-arm/gc-hidden-1.d: Fix disassembly pattern.
+
 2012-05-15  James Murray <jsm@jsm-net.demon.co.uk>
 
 	* ld-m68hc11/xgate-link.s: New.

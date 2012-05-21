@@ -1,5 +1,5 @@
 /* PowerPC-specific support for 64-bit ELF.
-   Copyright 2003, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 2003, 2005, 2007, 2009, 2012 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -26,7 +26,6 @@ enum ppc_elf_plt_type
   PLT_VXWORKS
 };
 
-bfd_boolean is_ppc_vle (asection *);
 int ppc_elf_select_plt_layout (bfd *, struct bfd_link_info *,
 			       enum ppc_elf_plt_type, int);
 asection *ppc_elf_tls_setup (bfd *, struct bfd_link_info *, int);

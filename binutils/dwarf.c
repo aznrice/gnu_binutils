@@ -2061,8 +2061,8 @@ process_debug_info (struct dwarf_section *section,
 		  dwarf_vmatoa ("x", compunit.cu_length),
 		  offset_size == 8 ? "64-bit" : "32-bit");
 	  printf (_("   Version:       %d\n"), compunit.cu_version);
-	  printf (_("   Abbrev Offset: %s\n"),
-		  dwarf_vmatoa ("d", compunit.cu_abbrev_offset));
+	  printf (_("   Abbrev Offset: 0x%s\n"),
+		  dwarf_vmatoa ("x", compunit.cu_abbrev_offset));
 	  printf (_("   Pointer Size:  %d\n"), compunit.cu_pointer_size);
 	  if (do_types)
 	    {
@@ -3681,14 +3681,17 @@ display_debug_abbrev (struct dwarf_section *section,
 
   do
     {
+      unsigned char *last;
+
       free_abbrevs ();
 
+      last = start;
       start = process_abbrev_section (start, end);
 
       if (first_abbrev == NULL)
 	continue;
 
-      printf (_("  Number TAG\n"));
+      printf (_("  Number TAG (0x%lx)\n"), (long) (last - section->start));
 
       for (entry = first_abbrev; entry; entry = entry->next)
 	{
@@ -4419,6 +4422,7 @@ display_debug_ranges (struct dwarf_section *section,
 		      void *file ATTRIBUTE_UNUSED)
 {
   unsigned char *start = section->start;
+  unsigned char *last_start = start;
   unsigned long bytes;
   unsigned char *section_begin = start;
   unsigned int num_range_list, i;
@@ -4502,11 +4506,16 @@ display_debug_ranges (struct dwarf_section *section,
 		  (unsigned long) (start - section_begin),
 		  (unsigned long) (next - section_begin), section->name);
 	  else if (start > next)
-	    warn (_("There is an overlap [0x%lx - 0x%lx] in %s section.\n"),
-		  (unsigned long) (start - section_begin),
-		  (unsigned long) (next - section_begin), section->name);
+	    {
+	      if (next == last_start)
+		continue;
+	      warn (_("There is an overlap [0x%lx - 0x%lx] in %s section.\n"),
+		    (unsigned long) (start - section_begin),
+		    (unsigned long) (next - section_begin), section->name);
+	    }
 	}
       start = next;
+      last_start = next;
 
       while (1)
 	{

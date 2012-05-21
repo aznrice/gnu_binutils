@@ -1,3 +1,40 @@
+2012-05-18  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* aclocal.m4: Regenerate.
+	* configure: Regenerate.
+	* config.in: Regenerate.
+	* Makefile.in: Regenerate.
+
+2012-05-17  Daniel Richard G.  <skunk@iskunk.org>
+	    Nick Clifton  <nickc@redhat.com>
+
+	PR 14072
+	* configure.in: Add check that sysdep.h has been included before
+	any system header files.
+	* configure: Regenerate.
+	* config.in: Regenerate.
+	* unwind-ia64.h: Include config.h.
+
+2012-05-17  Alan Modra  <amodra@gmail.com>
+
+	* dwarf.c (process_debug_info): Display abbrev offset in hex.
+	(display_debug_abbrev): Show offset of abbrev.
+
+2012-05-17  Alan Modra  <amodra@gmail.com>
+
+	* dwarf.c (display_debug_ranges): Don't report more than one use
+	of the same range set as an overlap.
+
+2012-05-16  Daniel Richard G.  <skunk@iskunk.org>
+
+	PR binutils/13558
+	* Makefile.am (CFILES): Add syslex_wrap.c.
+	(sysinfo): Depend upon syslex_wrap.o.
+	(syslex_wrap.o): New rule.
+	(syslex.o): Delete rule.
+	* syslex_wrap.c: New file.
+	* Makefile.in: Regenerate.
+
 2012-05-15  James Murray <jsm@jsm-net.demon.co.uk>
 
 	* readelf.c (get_machine_name): Update m68hc12 entry.
