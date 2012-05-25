@@ -1,5 +1,9 @@
 2012-05-25  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-shr-100.patch: Updated.
+
+2012-05-25  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-pr13909.patch: Removed.
 	* README: Likewise.
 
