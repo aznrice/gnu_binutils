@@ -1,5 +1,44 @@
 2012-05-22  H.J. Lu  <hongjiu.lu@intel.com>
 
+	* ld-elf/eh1.d: Don't skip x86_64-*-linux-gnux32.
+	* ld-elf/eh2.d: Likewise.
+	* ld-elf/eh3.d: Likewise.
+	* ld-elf/eh4.d: Likewise.
+
+2012-05-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-x86-64/ilp32-11.s Add ".space 0x1000" before func.
+	(func): Make it global and hidden.
+	* ld-x86-64/ilp32-11.d: Updated.
+
+2012-05-22  Roland McGrath  <mcgrathr@google.com>
+
+	* ld-elf/eh4.d: Revert last change.
+	Loosen CFI-matching regexps so they match x86_64-*-nacl* variant too.
+
+	* ld-x86-64/pr12570a.d (name): Distinguish it from pr12570b.d case.
+	Loosen CFI-matching regexp so it matches x86_64-*-nacl* variant too.
+	* ld-x86-64/pr12570b.d: Likewise.
+	* ld-x86-64/x86-64.exp: Revert last change.
+
+2012-05-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/eh4.d: Skip x86_64-*-nacl*.
+
+	* ld-x86-64/x86-64.exp: Xfail pr12570a for x86_64-*-nacl*.
+
+2012-05-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13909
+	* ld-i386/i386.exp: Revert the last change.
+	* ld-x86-64/x86-64.exp: Likewise.
+
+	* ld-i386/dummy.s: Removed.
+	* ld-i386/pr13909.d: Likewise.
+	* ld-x86-64/pr13909.d: Likewise.
+
+2012-05-22  H.J. Lu  <hongjiu.lu@intel.com>
+
 	PR ld/13909
 	* ld-i386/i386.exp: Run pr13909.
 	* ld-x86-64/x86-64.exp: Likewise.
