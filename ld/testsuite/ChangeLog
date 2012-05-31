@@ -1,3 +1,60 @@
+2012-05-30  Nick Clifton  <nickc@redhat.com>
+
+	* ld-tic6x/shlib-1b.rd: Revert previous delta.
+	* ld-tic6x/shlib-1rb.rd: Likewise.
+	* ld-tic6x/shlib-1.rd: Likewise.
+	* ld-tic6x/shlib-1r.rd: Likewise.
+	* ld-tic6x/shlib-app-1b.rd: Likewise.
+	* ld-tic6x/shlib-app-1rb.rd: Likewise.
+	* ld-tic6x/shlib-app-1.rd: Likewise.
+	* ld-tic6x/shlib-app-1r.rd: Likewise.
+	* ld-tic6x/shlib-noindex.rd: Likewise.
+	* ld-tic6x/static-app-1b.rd: Likewise.
+	* ld-tic6x/static-app-1rb.rd: Likewise.
+	* ld-tic6x/static-app-1.rd: Likewise.
+	* ld-tic6x/static-app-1r.rd: Likewise.
+
+2012-05-29  Nick Clifton  <nickc@redhat.com>
+
+	* ld-tic6x/shlib-1b.rd: Update expected readelf output.
+	* ld-tic6x/shlib-1rb.rd: Likewise.
+	* ld-tic6x/shlib-1.rd: Likewise.
+	* ld-tic6x/shlib-1r.rd: Likewise.
+	* ld-tic6x/shlib-app-1b.rd: Likewise.
+	* ld-tic6x/shlib-app-1rb.rd: Likewise.
+	* ld-tic6x/shlib-app-1.rd: Likewise.
+	* ld-tic6x/shlib-app-1r.rd: Likewise.
+	* ld-tic6x/shlib-noindex.rd: Likewise.
+	* ld-tic6x/static-app-1b.rd: Likewise.
+	* ld-tic6x/static-app-1rb.rd: Likewise.
+	* ld-tic6x/static-app-1.rd: Likewise.
+	* ld-tic6x/static-app-1r.rd: Likewise.
+
+2012-05-28  Nick Clifton  <nickc@redhat.com>
+
+	* ld-ifunc/ifunc-13a-i386.s: Fix use of .global directive.
+	* ld-ifunc/ifunc-15a-i385.s: Likewise.
+
+2012-05-28  Alan Modra  <amodra@gmail.com>
+
+	PR ld/14170
+	* ld-elf/pr14170a.s: Put foo, bar address in .data.
+	* ld-elf/elf.exp: Don't run pr14170 test on hppa64-hpux.  Ignore
+	tic6x warnings.
+
+2012-05-27  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14170
+	* ld-elf/elf.exp: Add a test for PR ld/14170.
+
+	* ld-elf/pr14170a.s: New file.
+	* ld-elf/pr14170b.s: Likewise.
+	* ld-elf/pr14170c.s: Likewise.
+
+2012-05-26  Alan Modra  <amodra@gmail.com>
+
+	* ld-srec/srec.exp: Remove powerpc64 flag setting.
+
 2012-05-22  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ld-elf/eh1.d: Don't skip x86_64-*-linux-gnux32.
