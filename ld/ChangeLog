@@ -1,3 +1,8 @@
+2012-06-02  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* Makefile.am (TEXINFO_TEX): Remove $(top_srcdir) prefix.
+	* Makefile.in: Regenerate.
+
 2012-05-30  Alan Modra  <amodra@gmail.com>
 
 	* ldlang.h (lang_output_section_statement_type): Rename
@@ -8,8 +13,8 @@
 
 2012-05-26  Alan Modra  <amodra@gmail.com>
 
-	* lexsup.c (enum option_values): Move from..
-	* ldlex.h: ..here.
+	* ldlex.h (enum option_values): Move from..
+	* lexsup.c: ..here.
 	* emultempl/ppc32elf.em: Include ldlex.h.
 	(PARSE_AND_LIST_ARGS_CASES): Disable optimisations when
 	--traditional-format.
