@@ -1,3 +1,7 @@
+2012-06-04  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-lto-mixed-18.patch: Fix ar/nm/ranlib --plugin.
+
 2012-05-25  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-lto-mixed-18.patch: Updated.

@@ -1,5 +1,10 @@
 bfd/
 
+2012-06-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* plugin.c (add_symbols): Set tdata.plugin_data before calling
+	bfd_plugin_get_symbols_in_object_only.
+
 2011-10-16  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* plugin.c (add_symbols): Call
@@ -106,8 +111,8 @@ ld/
 
 2011-05-15  H.J. Lu  <hongjiu.lu@intel.com>
 
-	* lexsup.c (option_values): Add OPTION_PLUGIN_SAVE_TEMPS.
-	(ld_options): Add -plugin-save-temps.
+	* ldlex.h (option_values): Add OPTION_PLUGIN_SAVE_TEMPS.
+	* lexsup.c (ld_options): Add -plugin-save-temps.
 	(parse_args): Handle OPTION_PLUGIN_SAVE_TEMPS.
 
 	* plugin.c (plugin_save_temps): New.
@@ -423,7 +428,7 @@ ld/testsuite/
 	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index efd542f..3a41dbe 100644
+index 585a54a..3429d96 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
 @@ -1028,6 +1028,9 @@ struct bfd_section *bfd_create_gnu_debuglink_section
@@ -567,7 +572,7 @@ index 640b420..9cdac38 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index c5b04ac..5da9d6f 100644
+index ac7be2c..cb5d6c9 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2104,6 +2104,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -579,10 +584,10 @@ index c5b04ac..5da9d6f 100644
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 7f35e7f..633146e 100644
+index e715942..ce80bc2 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
-@@ -5078,6 +5078,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
+@@ -5085,6 +5085,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
  	     something wrong with the archive.  */
  	  if (element->archive_pass != 0)
  	    {
@@ -653,10 +658,10 @@ index 66b9051..181ac05 100644
      }
  
 diff --git a/bfd/opncls.c b/bfd/opncls.c
-index 9d33f39..673c7f8 100644
+index 7c1d2f9..75d498b 100644
 --- a/bfd/opncls.c
 +++ b/bfd/opncls.c
-@@ -1529,3 +1529,69 @@ bfd_fill_in_gnu_debuglink_section (bfd *abfd,
+@@ -1543,3 +1543,69 @@ bfd_fill_in_gnu_debuglink_section (bfd *abfd,
  
    return TRUE;
  }
@@ -727,7 +732,7 @@ index 9d33f39..673c7f8 100644
 +  return name;
 +}
 diff --git a/bfd/plugin.c b/bfd/plugin.c
-index 8d2c4b2..ef356f1 100644
+index 8d2c4b2..1e6d82b 100644
 --- a/bfd/plugin.c
 +++ b/bfd/plugin.c
 @@ -130,6 +130,139 @@ register_claim_file (ld_plugin_claim_file_handler handler)
@@ -870,18 +875,23 @@ index 8d2c4b2..ef356f1 100644
  static enum ld_plugin_status
  add_symbols (void * handle,
  	     int nsyms,
-@@ -142,7 +275,9 @@ add_symbols (void * handle,
+@@ -142,10 +275,13 @@ add_symbols (void * handle,
    plugin_data->nsyms = nsyms;
    plugin_data->syms = syms;
  
 -  if (nsyms != 0)
++  abfd->tdata.plugin_data = plugin_data;
++
 +  bfd_plugin_get_symbols_in_object_only (abfd);
 +
 +  if ((nsyms + plugin_data->object_only_nsyms) != 0)
      abfd->flags |= HAS_SYMS;
  
-   abfd->tdata.plugin_data = plugin_data;
-@@ -389,7 +524,8 @@ static long
+-  abfd->tdata.plugin_data = plugin_data;
+   return LDPS_OK;
+ }
+ 
+@@ -389,7 +525,8 @@ static long
  bfd_plugin_get_symtab_upper_bound (bfd *abfd)
  {
    struct plugin_data_struct *plugin_data = abfd->tdata.plugin_data;
@@ -891,7 +901,7 @@ index 8d2c4b2..ef356f1 100644
  
    BFD_ASSERT (nsyms >= 0);
  
-@@ -423,12 +559,7 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
+@@ -423,12 +560,7 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
    struct plugin_data_struct *plugin_data = abfd->tdata.plugin_data;
    long nsyms = plugin_data->nsyms;
    const struct ld_plugin_symbol *syms = plugin_data->syms;
@@ -905,7 +915,7 @@ index 8d2c4b2..ef356f1 100644
  
    for (i = 0; i < nsyms; i++)
      {
-@@ -441,10 +572,11 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
+@@ -441,10 +573,11 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
        s->name = syms[i].name;
        s->value = 0;
        s->flags = convert_flags (&syms[i]);
@@ -918,7 +928,7 @@ index 8d2c4b2..ef356f1 100644
  	  break;
  	case LDPK_UNDEF:
  	case LDPK_WEAKUNDEF:
-@@ -452,15 +584,18 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
+@@ -452,15 +585,18 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
  	  break;
  	case LDPK_DEF:
  	case LDPK_WEAKDEF:
@@ -1021,10 +1031,10 @@ index 40250ad..d0d112f 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index 212f70e..3f13117 100644
+index 527edf2..296d977 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
-@@ -3055,6 +3055,7 @@ get_section_type_name (unsigned int sh_type)
+@@ -3052,6 +3052,7 @@ get_section_type_name (unsigned int sh_type)
      case 0x7ffffffd:		return "AUXILIARY";
      case 0x7fffffff:		return "FILTER";
      case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
@@ -1230,10 +1240,10 @@ index 2b7a352..afbc719 100644
    ${LDEMUL_OPEN_DYNAMIC_ARCHIVE-gld${EMULATION_NAME}_open_dynamic_archive},
    ${LDEMUL_PLACE_ORPHAN-gld${EMULATION_NAME}_place_orphan},
 diff --git a/ld/emultempl/ppc64elf.em b/ld/emultempl/ppc64elf.em
-index 40882ab..139000f 100644
+index d578f7f..bad3e2c 100644
 --- a/ld/emultempl/ppc64elf.em
 +++ b/ld/emultempl/ppc64elf.em
-@@ -532,7 +532,7 @@ gld${EMULATION_NAME}_after_allocation (void)
+@@ -533,7 +533,7 @@ gld${EMULATION_NAME}_after_allocation (void)
  /* Final emulation specific call.  */
  
  static void
@@ -1242,7 +1252,7 @@ index 40882ab..139000f 100644
  {
    /* e_entry on PowerPC64 points to the function descriptor for
       _start.  If _start is missing, default to the first function
-@@ -564,7 +564,7 @@ gld${EMULATION_NAME}_finish (void)
+@@ -565,7 +565,7 @@ gld${EMULATION_NAME}_finish (void)
      }
  
    ppc64_elf_restore_symbols (&link_info);
@@ -1251,7 +1261,7 @@ index 40882ab..139000f 100644
  }
  
  
-@@ -856,6 +856,6 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
+@@ -867,6 +867,6 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
  #
  LDEMUL_BEFORE_ALLOCATION=ppc_before_allocation
  LDEMUL_AFTER_ALLOCATION=gld${EMULATION_NAME}_after_allocation
@@ -1303,7 +1313,7 @@ index 41ace36..9e59927 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index f4eb703..b370d89 100644
+index 4e75624..9674f2e 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -1394,7 +1404,7 @@ index f4eb703..b370d89 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6584,7 +6605,38 @@ lang_process (void)
+@@ -6583,7 +6604,38 @@ lang_process (void)
  	  open_input_bfds (statement_list.head, OPEN_BFD_RESCAN);
  	}
      }
@@ -1433,7 +1443,7 @@ index f4eb703..b370d89 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -8044,3 +8096,961 @@ lang_ld_feature (char *str)
+@@ -8046,3 +8098,961 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -2396,7 +2406,7 @@ index f4eb703..b370d89 100644
 +      }
 +}
 diff --git a/ld/ldlang.h b/ld/ldlang.h
-index b5d50c5..62b6802 100644
+index 7f1e743..a973fcb 100644
 --- a/ld/ldlang.h
 +++ b/ld/ldlang.h
 @@ -486,7 +486,7 @@ extern lang_statement_list_type input_file_chain;
@@ -2454,6 +2464,18 @@ index b5d50c5..62b6802 100644
 +extern void cmdline_remove_object_only_files (void);
 +
  #endif
+diff --git a/ld/ldlex.h b/ld/ldlex.h
+index 5e3d2fc..e14107c 100644
+--- a/ld/ldlex.h
++++ b/ld/ldlex.h
+@@ -132,6 +132,7 @@ enum option_values
+ #ifdef ENABLE_PLUGINS
+   OPTION_PLUGIN,
+   OPTION_PLUGIN_OPT,
++  OPTION_PLUGIN_SAVE_TEMPS,
+ #endif /* ENABLE_PLUGINS */
+   OPTION_DEFAULT_SCRIPT,
+   OPTION_PRINT_OUTPUT_FORMAT,
 diff --git a/ld/ldmain.c b/ld/ldmain.c
 index 3bdaf4d..0692e57 100644
 --- a/ld/ldmain.c
@@ -2602,18 +2624,10 @@ index 527d3f2..3a357c2 100644
 +
  #endif
 diff --git a/ld/lexsup.c b/ld/lexsup.c
-index ea34104..05d0edb 100644
+index b5e3468..95eb477 100644
 --- a/ld/lexsup.c
 +++ b/ld/lexsup.c
-@@ -170,6 +170,7 @@ enum option_values
- #ifdef ENABLE_PLUGINS
-   OPTION_PLUGIN,
-   OPTION_PLUGIN_OPT,
-+  OPTION_PLUGIN_SAVE_TEMPS,
- #endif /* ENABLE_PLUGINS */
-   OPTION_DEFAULT_SCRIPT,
-   OPTION_PRINT_OUTPUT_FORMAT,
-@@ -281,6 +282,9 @@ static const struct ld_option ld_options[] =
+@@ -168,6 +168,9 @@ static const struct ld_option ld_options[] =
      '\0', N_("PLUGIN"), N_("Load named plugin"), ONE_DASH },
    { {"plugin-opt", required_argument, NULL, OPTION_PLUGIN_OPT},
      '\0', N_("ARG"), N_("Send arg to last-loaded plugin"), ONE_DASH },
@@ -2623,7 +2637,7 @@ index ea34104..05d0edb 100644
    { {"flto", optional_argument, NULL, OPTION_IGNORE},
      '\0', NULL, N_("Ignored for GCC LTO option compatibility"),
      ONE_DASH },
-@@ -1071,6 +1075,9 @@ parse_args (unsigned argc, char **argv)
+@@ -958,6 +961,9 @@ parse_args (unsigned argc, char **argv)
  	  if (plugin_opt_plugin_arg (optarg))
  	    einfo(_("%P%F: bad -plugin-opt option\n"));
  	  break;
