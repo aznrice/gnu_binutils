@@ -517,9 +517,6 @@ CODE_FRAGMENT
 .  {* The BFD which owns the section.  *}
 .  bfd *owner;
 .
-.  {* INPUT_SECTION_FLAGS if specified in the linker script.  *}
-.  struct flag_info *section_flag_info;
-.
 .  {* A symbol which points at this section only.  *}
 .  struct bfd_symbol *symbol;
 .  struct bfd_symbol **symbol_ptr_ptr;
@@ -698,9 +695,6 @@ CODE_FRAGMENT
 .  {* target_index, used_by_bfd, constructor_chain, owner,          *}	\
 .     0,            NULL,        NULL,              NULL,		\
 .									\
-.  {* flag_info,						    *}  \
-.     NULL,								\
-.									\
 .  {* symbol,                    symbol_ptr_ptr,                    *}	\
 .     (struct bfd_symbol *) SYM, &SEC.symbol,				\
 .									\
@@ -854,14 +848,8 @@ SYNOPSIS
 	asection *bfd_get_section_by_name (bfd *abfd, const char *name);
 
 DESCRIPTION
-	Run through @var{abfd} and return the one of the
-	<<asection>>s whose name matches @var{name}, otherwise <<NULL>>.
-	@xref{Sections}, for more information.
-
-	This should only be used in special cases; the normal way to process
-	all sections of a given name is to use <<bfd_map_over_sections>> and
-	<<strcmp>> on the name (or better yet, base it on the section flags
-	or something else) for each section.
+	Return the most recently created section attached to @var{abfd}
+	named @var{name}.  Return NULL if no such section exists.
 */
 
 asection *
@@ -872,6 +860,41 @@ bfd_get_section_by_name (bfd *abfd, const char *name)
   sh = section_hash_lookup (&abfd->section_htab, name, FALSE, FALSE);
   if (sh != NULL)
     return &sh->section;
+
+  return NULL;
+}
+
+/*
+FUNCTION
+       bfd_get_next_section_by_name
+
+SYNOPSIS
+       asection *bfd_get_next_section_by_name (asection *sec);
+
+DESCRIPTION
+       Given @var{sec} is a section returned by @code{bfd_get_section_by_name},
+       return the next most recently created section attached to the same
+       BFD with the same name.  Return NULL if no such section exists.
+*/
+
+asection *
+bfd_get_next_section_by_name (asection *sec)
+{
+  struct section_hash_entry *sh;
+  const char *name;
+  unsigned long hash;
+
+  sh = ((struct section_hash_entry *)
+	((char *) sec - offsetof (struct section_hash_entry, section)));
+
+  hash = sh->root.hash;
+  name = sec->name;
+  for (sh = (struct section_hash_entry *) sh->root.next;
+       sh != NULL;
+       sh = (struct section_hash_entry *) sh->root.next)
+    if (sh->root.hash == hash
+       && strcmp (sh->root.string, name) == 0)
+      return &sh->section;
 
   return NULL;
 }

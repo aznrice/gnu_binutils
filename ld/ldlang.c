@@ -247,9 +247,6 @@ walk_wild_consider_section (lang_wild_statement_type *ptr,
 {
   struct name_list *list_tmp;
 
-  /* Propagate the section_flag_info from the wild statement to the section.  */
-  s->section_flag_info = ptr->section_flag_list;
-
   /* Don't process sections from files which were excluded.  */
   for (list_tmp = sec->spec.exclude_name_list;
        list_tmp;
@@ -276,7 +273,7 @@ walk_wild_consider_section (lang_wild_statement_type *ptr,
 	return;
     }
 
-  (*callback) (ptr, sec, s, file, data);
+  (*callback) (ptr, sec, s, ptr->section_flag_list, file, data);
 }
 
 /* Lowest common denominator routine that can handle everything correctly,
@@ -295,7 +292,7 @@ walk_wild_section_general (lang_wild_statement_type *ptr,
     {
       sec = ptr->section_list;
       if (sec == NULL)
-	(*callback) (ptr, sec, s, file, data);
+	(*callback) (ptr, sec, s, ptr->section_flag_list, file, data);
 
       while (sec != NULL)
 	{
@@ -517,6 +514,7 @@ static void
 output_section_callback_fast (lang_wild_statement_type *ptr,
 			      struct wildcard_list *sec,
 			      asection *section,
+			      struct flag_info *sflag_list ATTRIBUTE_UNUSED,
 			      lang_input_statement_type *file,
 			      void *output)
 {
@@ -549,7 +547,7 @@ output_section_callback_tree_to_list (lang_wild_statement_type *ptr,
   if (tree->left)
     output_section_callback_tree_to_list (ptr, tree->left, output);
 
-  lang_add_section (&ptr->children, tree->section,
+  lang_add_section (&ptr->children, tree->section, NULL,
 		    (lang_output_section_statement_type *) output);
 
   if (tree->right)
@@ -1824,7 +1822,7 @@ lang_insert_orphan (asection *s,
 
   if (add_child == NULL)
     add_child = &os->children;
-  lang_add_section (add_child, s, os);
+  lang_add_section (add_child, s, NULL, os);
 
   if (after && (s->flags & (SEC_LOAD | SEC_ALLOC)) != 0)
     {
@@ -2242,16 +2240,15 @@ section_already_linked (bfd *abfd, asection *sec, void *data)
    foo.o(.text, .data).  */
 
 /* Add SECTION to the output section OUTPUT.  Do this by creating a
-   lang_input_section statement which is placed at PTR.  FILE is the
-   input file which holds SECTION.  */
+   lang_input_section statement which is placed at PTR.  */
 
 void
 lang_add_section (lang_statement_list_type *ptr,
 		  asection *section,
+		  struct flag_info *sflag_info,
 		  lang_output_section_statement_type *output)
 {
   flagword flags = section->flags;
-  struct flag_info *sflag_info = section->section_flag_info;
 
   bfd_boolean discard;
   lang_input_section_type *new_section;
@@ -2283,24 +2280,11 @@ lang_add_section (lang_statement_list_type *ptr,
 
   if (sflag_info)
     {
-      if (sflag_info->flags_initialized == FALSE)
-	bfd_lookup_section_flags (&link_info, sflag_info);
+      bfd_boolean keep;
 
-      if (sflag_info->only_with_flags != 0
-	  && sflag_info->not_with_flags != 0
-          && ((sflag_info->not_with_flags & flags) != 0
-	       || (sflag_info->only_with_flags & flags)
-                   != sflag_info->only_with_flags))
-	return;
-
-      if (sflag_info->only_with_flags != 0
-	  && (sflag_info->only_with_flags & flags)
-              != sflag_info->only_with_flags)
-	return;
-
-      if (sflag_info->not_with_flags != 0
-          && (sflag_info->not_with_flags & flags) != 0)
-	return;
+      keep = bfd_lookup_section_flags (&link_info, sflag_info, section);
+      if (!keep)
+        return;
     }
 
   if (section->output_section != NULL)
@@ -2513,6 +2497,7 @@ static void
 output_section_callback (lang_wild_statement_type *ptr,
 			 struct wildcard_list *sec,
 			 asection *section,
+			 struct flag_info *sflag_info,
 			 lang_input_statement_type *file,
 			 void *output)
 {
@@ -2533,14 +2518,14 @@ output_section_callback (lang_wild_statement_type *ptr,
      of the current list.  */
 
   if (before == NULL)
-    lang_add_section (&ptr->children, section, os);
+    lang_add_section (&ptr->children, section, sflag_info, os);
   else
     {
       lang_statement_list_type list;
       lang_statement_union_type **pp;
 
       lang_list_init (&list);
-      lang_add_section (&list, section, os);
+      lang_add_section (&list, section, sflag_info, os);
 
       /* If we are discarding the section, LIST.HEAD will
 	 be NULL.  */
@@ -2566,6 +2551,7 @@ static void
 check_section_callback (lang_wild_statement_type *ptr ATTRIBUTE_UNUSED,
 			struct wildcard_list *sec ATTRIBUTE_UNUSED,
 			asection *section,
+			struct flag_info *sflag_info ATTRIBUTE_UNUSED,
 			lang_input_statement_type *file ATTRIBUTE_UNUSED,
 			void *output)
 {
@@ -3924,8 +3910,7 @@ strip_excluded_output_sections (void)
 	{
 	  /* We don't set bfd_section to NULL since bfd_section of the
 	     removed output section statement may still be used.  */
-	  if (!os->section_relative_symbol
-	      && !os->update_dot_tree)
+	  if (!os->update_dot)
 	    os->ignored = TRUE;
 	  output_section->flags |= SEC_EXCLUDE;
 	  bfd_section_list_remove (link_info.output_bfd, output_section);
@@ -5288,7 +5273,7 @@ lang_size_sections_1
 		 || tree->type.node_class == etree_assign)
 		&& (tree->assign.dst [0] != '.'
 		    || tree->assign.dst [1] != '\0'))
-	      output_section_statement->section_relative_symbol = 1;
+	      output_section_statement->update_dot = 1;
 
 	    if (!output_section_statement->ignored)
 	      {
@@ -6031,7 +6016,7 @@ lang_place_orphans (void)
 			  = lang_output_section_statement_lookup (".bss", 0,
 								  TRUE);
 		      lang_add_section (&default_common_section->children, s,
-					default_common_section);
+					NULL, default_common_section);
 		    }
 		}
 	      else
@@ -6053,7 +6038,7 @@ lang_place_orphans (void)
 			  && (link_info.relocatable
 			      || (s->flags & (SEC_LOAD | SEC_ALLOC)) == 0))
 			os->addr_tree = exp_intop (0);
-		      lang_add_section (&os->children, s, os);
+		      lang_add_section (&os->children, s, NULL, os);
 		    }
 		}
 	    }
@@ -6274,6 +6259,7 @@ static void
 gc_section_callback (lang_wild_statement_type *ptr,
 		     struct wildcard_list *sec ATTRIBUTE_UNUSED,
 		     asection *section,
+		     struct flag_info *sflag_info ATTRIBUTE_UNUSED,
 		     lang_input_statement_type *file ATTRIBUTE_UNUSED,
 		     void *data ATTRIBUTE_UNUSED)
 {
@@ -6345,6 +6331,7 @@ static void
 find_relro_section_callback (lang_wild_statement_type *ptr ATTRIBUTE_UNUSED,
 			     struct wildcard_list *sec ATTRIBUTE_UNUSED,
 			     asection *section,
+			     struct flag_info *sflag_info ATTRIBUTE_UNUSED,
 			     lang_input_statement_type *file ATTRIBUTE_UNUSED,
 			     void *data)
 {
@@ -7454,8 +7441,11 @@ lang_leave_overlay (etree_type *lma_expr,
   /* After setting the size of the last section, set '.' to end of the
      overlay region.  */
   if (overlay_list != NULL)
-    overlay_list->os->update_dot_tree
-      = exp_assign (".", exp_binop ('+', overlay_vma, overlay_max));
+    {
+      overlay_list->os->update_dot = 1;
+      overlay_list->os->update_dot_tree
+	= exp_assign (".", exp_binop ('+', overlay_vma, overlay_max));
+    }
 
   l = overlay_list;
   while (l != NULL)

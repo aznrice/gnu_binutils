@@ -69,22 +69,22 @@ Dynamic section at offset 0x[0-9a-f]+ contains 16 entries:
 
 Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 8 entries:
  +Offset +Info +Type +Symbol's Value +Symbol's Name \+ Addend
-0+201308 +[0-9a-f]+ R_X86_64_TPOFF64 +0+24
-0+201310 +[0-9a-f]+ R_X86_64_TPOFF64 +0+30
-0+201318 +[0-9a-f]+ R_X86_64_TPOFF64 +0+64
-0+201328 +[0-9a-f]+ R_X86_64_TPOFF64 +0+50
-0+201330 +[0-9a-f]+ R_X86_64_TPOFF64 +0+70
-0+201340 +[0-9a-f]+ R_X86_64_TPOFF64 +0+44
+0+201308 +[0-9a-f]+ R_X86_64_TPOFF64 +24
+0+201310 +[0-9a-f]+ R_X86_64_TPOFF64 +30
+0+201318 +[0-9a-f]+ R_X86_64_TPOFF64 +64
+0+201328 +[0-9a-f]+ R_X86_64_TPOFF64 +50
+0+201330 +[0-9a-f]+ R_X86_64_TPOFF64 +70
+0+201340 +[0-9a-f]+ R_X86_64_TPOFF64 +44
 0+201320 +[0-9a-f]+ R_X86_64_TPOFF64 +0+10 sg5 \+ 0
 0+201338 +[0-9a-f]+ R_X86_64_TPOFF64 +0+4 sg2 \+ 0
 
 Relocation section '.rela.plt' at offset 0x[0-9a-f]+ contains 5 entries:
  +Offset +Info +Type +Symbol's Value +Symbol's Name \+ Addend
 0+201398 +[0-9a-f]+ R_X86_64_TLSDESC +0+ sg1 \+ 0
-0+201368 +[0-9a-f]+ R_X86_64_TLSDESC +0+20
-0+2013a8 +[0-9a-f]+ R_X86_64_TLSDESC +0+40
-0+201378 +[0-9a-f]+ R_X86_64_TLSDESC +0+60
-0+201388 +[0-9a-f]+ R_X86_64_TLSDESC +0+
+0+201368 +[0-9a-f]+ R_X86_64_TLSDESC +20
+0+2013a8 +[0-9a-f]+ R_X86_64_TLSDESC +40
+0+201378 +[0-9a-f]+ R_X86_64_TLSDESC +60
+0+201388 +[0-9a-f]+ R_X86_64_TLSDESC +0
 
 Symbol table '\.dynsym' contains [0-9]+ entries:
  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
@@ -129,7 +129,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 0+3c +0 +TLS +LOCAL +DEFAULT +8 sl8
  +[0-9]+: 0+60 +0 +TLS +LOCAL +DEFAULT +9 sH1
  +[0-9]+: 0+ +0 +TLS +LOCAL +DEFAULT +8 _TLS_MODULE_BASE_
- +[0-9]+: 0+2011b8 +0 +OBJECT +LOCAL +DEFAULT +ABS _DYNAMIC
+ +[0-9]+: 0+2011b8 +0 +OBJECT +LOCAL +DEFAULT +10 _DYNAMIC
  +[0-9]+: 0+48 +0 +TLS +LOCAL +DEFAULT +8 sh3
  +[0-9]+: 0+64 +0 +TLS +LOCAL +DEFAULT +9 sH2
  +[0-9]+: 0+78 +0 +TLS +LOCAL +DEFAULT +9 sH7
@@ -143,7 +143,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 0+74 +0 +TLS +LOCAL +DEFAULT +9 sH6
  +[0-9]+: 0+7c +0 +TLS +LOCAL +DEFAULT +9 sH8
  +[0-9]+: 0+40 +0 +TLS +LOCAL +DEFAULT +8 sh1
- +[0-9]+: 0+201350 +0 +OBJECT +LOCAL +DEFAULT +ABS _GLOBAL_OFFSET_TABLE_
+ +[0-9]+: 0+201350 +0 +OBJECT +LOCAL +DEFAULT +12 _GLOBAL_OFFSET_TABLE_
  +[0-9]+: 0+44 +0 +TLS +LOCAL +DEFAULT +8 sh2
  +[0-9]+: 0+54 +0 +TLS +LOCAL +DEFAULT +8 sh6
  +[0-9]+: 0+1c +0 +TLS +GLOBAL +DEFAULT +8 sg8

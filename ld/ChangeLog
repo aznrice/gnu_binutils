@@ -1,3 +1,115 @@
+2012-06-02  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* Makefile.am (TEXINFO_TEX): Remove $(top_srcdir) prefix.
+	* Makefile.in: Regenerate.
+
+2012-05-30  Alan Modra  <amodra@gmail.com>
+
+	* ldlang.h (lang_output_section_statement_type): Rename
+	"section_relative_symbol" field to "update_dot".
+	* ldlang.c: Update all uses.
+	(strip_excluded_output_sections): Don't test update_dot_tree here..
+	(lang_leave_overlay): ..set update_dot here.
+
+2012-05-26  Alan Modra  <amodra@gmail.com>
+
+	* ldlex.h (enum option_values): Move from..
+	* lexsup.c: ..here.
+	* emultempl/ppc32elf.em: Include ldlex.h.
+	(PARSE_AND_LIST_ARGS_CASES): Disable optimisations when
+	--traditional-format.
+	* emultempl/ppc64elf.em: Likewise.
+
+2012-05-25  Alan Modra  <amodra@gmail.com>
+
+	PR ld/13909
+	* emultempl/elf32.em (gld${EMULATION_NAME}_after_open): Handle
+	multiple .eh_frame sections attached to bfd.
+
+2012-05-23  Cary Coutant  <ccoutant@google.com>
+
+	* scripttempl/armbpabi.sc: Match .data.rel.ro.* sections more
+	carefully.  Fix typo where .rela.data.rel.ro matches
+	.rel.data.rel.ro.
+	* scripttempl/mep.sc: Likewise.
+	* scripttempl/elf.sc: Match .data.rel.ro.* sections more carefully.
+	* scripttempl/elf64hppa.sc: Likewise.
+	* scripttempl/elfxtensa.sc: Likewise.
+
+2012-05-17  Daniel Richard G.  <skunk@iskunk.org>
+	    Nick Clifton  <nickc@redhat.com>
+
+	PR 14072
+	* configure.in: Add check that sysdep.h has been included before
+	any system header files.
+	* configure: Regenerate.
+	* config.in: Regenerate.
+	* sysdep.h: Generate an error if included before config.h.
+
+2012-05-16  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* emultempl/m68hc1xelf.em (hook_in_stub): Pass proper `bfd'
+	as the first argument for `bfd_get_section_name'.
+
+2012-05-16  Samuel Thibault  <samuel.thibault@ens-lyon.org>
+
+	PR ld/14069
+	* emultempl/elf32.em: Include *-*-gnu* targets in ld.so.conf
+	support.
+
+2012-05-15  James Murray <jsm@jsm-net.demon.co.uk>
+
+	* NEWS: Mention the support for S12X processors.
+
+2012-05-14  James Lemke  <jwlemke@codesourcery.com>
+
+	* ldlang.c (walk_wild_consider_section): Don't copy section_flag_list.
+	Pass it to callback.
+	(walk_wild_section_general): Pass section_flag_list to callback.
+	(lang_add_section): Add sflag_list parm.
+	Move out logic to keep / omit a section & call bfd_lookup_section_flags.
+	(output_section_callback_fast): Add sflag_list parm.
+	Add new parm to lang_add_section calls.
+	(output_section_callback): Likewise.
+	(check_section_callback): Add sflag_list parm.
+	(lang_place_orphans): Add new parm to lang_add_section calls.
+	(gc_section_callback): Add sflag_list parm.
+	(find_relro_section_callback): Likewise.
+	* ldlang.h (callback_t): Add flag_info parm.
+	(lang_add_section): Add sflag_list parm.
+	* emultempl/armelf.em (elf32_arm_add_stub_section):
+	Add lang_add_section parm.
+	* emultempl/beos.em (gld*_place_orphan): Likewise.
+	* emultempl/elf32.em (gld*_place_orphan): Likewise.
+	* emultempl/hppaelf.em (hppaelf_add_stub_section): Likewise.
+	* emultempl/m68hc1xelf.em (m68hc11elf_add_stub_section): Likewise.
+	* emultempl/mipself.em (mips_add_stub_section): Likewise.
+	* emultempl/mmo.em (mmo_place_orphan): Likewise.
+	* emultempl/pe.em (gld_*_place_orphan): Likewise.
+	* emultempl/pep.em (gld_*_place_orphan): Likewise.
+	* emultempl/ppc64elf.em (ppc_add_stub_section): Likewise.
+	* emultempl/spuelf.em (spu_place_special_section): Likewise.
+	* emultempl/vms.em (vms_place_orphan): Likewise.
+
+2012-05-14  Catherine Moore  <clm@codesourcery.com>
+
+	* NEWS:  Mention PowerPC VLE port.
+
+2012-05-11  Daniel Richard G.  <skunk@iskunk.org>
+
+	PR binutils/14028
+	* configure.in: Invoke ACX_HEADER_STRING.
+	* configure: Regenerate.
+	* config.in: Regenerate.
+	* sysdep.h: If STRINGS_WITH_STRING is defined then include both
+	string.h and strings.h.
+
+2012-05-08  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am (check_DEJAGNU): Export LC_ALL=C in place of other
+	LC and LANG environment vars.
+	* Makefile.in: Regenerate.
+
 2012-05-07  Tristan Gingold  <gingold@adacore.com>
 
 	* pe-dll.c (udef_table): Make it static.
@@ -30,14 +142,14 @@
 
 2012-04-24  Alan Modra  <amodra@gmail.com>
 
-	* ld/ldlang.c (size_input_section): Use sec_info_type rather than
+	* ldlang.c (size_input_section): Use sec_info_type rather than
 	usrdata->flags.just_syms.
-	* ld/ldwrite.c (build_link_order): Likewise.
-	* ld/emultempl/hppaelf.em (build_section_lists): Likewise.
-	* ld/emultempl/ppc64elf.em (build_toc_list): Likewise.
-	* ld/emultempl/armelf.em (build_section_lists): Likewise.
+	* ldwrite.c (build_link_order): Likewise.
+	* emultempl/hppaelf.em (build_section_lists): Likewise.
+	* emultempl/ppc64elf.em (build_toc_list): Likewise.
+	* emultempl/armelf.em (build_section_lists): Likewise.
 	(after_allocation): Update for renamed sec_info_type value.
-	* ld/emultempl/tic6xdsbt.em: Likewise.
+	* emultempl/tic6xdsbt.em: Likewise.
 
 2012-04-12  Roland McGrath  <mcgrathr@google.com>
 
@@ -113,7 +225,7 @@
 2012-03-25  Alan Modra  <amodra@gmail.com>
 
 	* ldemul.c (before_allocation_default): Revert last change.
-	ldlang.c (lang_add_section): Likewise.
+	* ldlang.c (lang_add_section): Likewise.
 	(strip_excluded_output_sections): Don't strip output sections with
 	user input sections when emitrelocations, unless all are SEC_EXCLUDE.
 

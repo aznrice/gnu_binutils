@@ -365,8 +365,9 @@ Symbol::should_add_dynsym_entry(Symbol_table* symtab) const
 
   // If the symbol was forced dynamic in a --dynamic-list file
   // or an --export-dynamic-symbol option, add it.
-  if (parameters->options().in_dynamic_list(this->name())
-      || parameters->options().is_export_dynamic_symbol(this->name()))
+  if (!this->is_from_dynobj()
+      && (parameters->options().in_dynamic_list(this->name())
+	  || parameters->options().is_export_dynamic_symbol(this->name())))
     {
       if (!this->is_forced_local())
         return true;
@@ -1681,6 +1682,7 @@ Symbol_table::define_special_symbol(const char** pname, const char** pversion,
 				    bool* resolve_oldsym)
 {
   *resolve_oldsym = false;
+  *poldsym = NULL;
 
   // If the caller didn't give us a version, see if we get one from
   // the version script.

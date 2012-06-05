@@ -1,3 +1,70 @@
+2012-06-04  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-lto-mixed-18.patch: Fix ar/nm/ranlib --plugin.
+
+2012-05-25  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-lto-mixed-18.patch: Updated.
+
+2012-05-25  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-shr-100.patch: Updated.
+
+2012-05-25  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr13909.patch: Removed.
+	* README: Likewise.
+
+2012-05-23  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr13909.patch: Updated.
+
+2012-05-22  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr13909.patch: Updated.
+
+	* binutils-pr14105.patch: Removed.
+	* README: Likewise.
+
+2012-05-21  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-indirect-5.patch: Updated.
+
+2012-05-15  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr13962.patch: Removed.
+	* README: Likewise.
+
+2012-05-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr13909.patch: New.
+	* README: Apply it.
+
+2012-05-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr14105.patch: New.
+	* README: Apply it.
+
+2012-05-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr13962.patch: New.
+	* README: Apply it.
+
+2012-05-13  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-signed-8.patch: Removed.
+	* README: Likewise.
+
+2012-05-12  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr14088.patch: Removed.
+	* README: Likewise.
+
+2012-05-10  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr14088.patch: New.
+	* README: Apply it.
+
 2012-05-07  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-lto-mixed-18.patch: Updated.

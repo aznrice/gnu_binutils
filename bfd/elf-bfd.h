@@ -1186,7 +1186,7 @@ struct elf_backend_data
      see elf.c, elfcode.h.  */
   bfd *(*elf_backend_bfd_from_remote_memory)
      (bfd *templ, bfd_vma ehdr_vma, bfd_vma *loadbasep,
-      int (*target_read_memory) (bfd_vma vma, bfd_byte *myaddr, int len));
+      int (*target_read_memory) (bfd_vma vma, bfd_byte *myaddr, size_t len));
 
   /* This function is used by `_bfd_elf_get_synthetic_symtab';
      see elf.c.  */
@@ -1222,10 +1222,11 @@ struct elf_backend_data
   /* Return TRUE if type is a function symbol type.  */
   bfd_boolean (*is_function_type) (unsigned int type);
 
-  /* Return TRUE if symbol may be a function.  Set *CODE_SEC and *CODE_VAL
-     to the function's entry point.  */
-  bfd_boolean (*maybe_function_sym) (const asymbol *sym,
-				     asection **code_sec, bfd_vma *code_off);
+  /* If the ELF symbol SYM might be a function in SEC, return the
+     function size and set *CODE_OFF to the function's entry point,
+     otherwise return zero.  */
+  bfd_size_type (*maybe_function_sym) (const asymbol *sym, asection *sec,
+				       bfd_vma *code_off);
 
   /* Used to handle bad SHF_LINK_ORDER input.  */
   bfd_error_handler_type link_order_error_handler;
@@ -1366,6 +1367,9 @@ struct bfd_elf_section_data
 {
   /* The ELF header for this section.  */
   Elf_Internal_Shdr this_hdr;
+
+  /* INPUT_SECTION_FLAGS if specified in the linker script.  */
+  struct flag_info *section_flag_info;
 
   /* Information about the REL and RELA reloc sections associated
      with this section, if any.  */
@@ -1947,6 +1951,8 @@ extern bfd_boolean _bfd_elf_write_section_eh_frame
   (bfd *, struct bfd_link_info *, asection *, bfd_byte *);
 extern bfd_boolean _bfd_elf_write_section_eh_frame_hdr
   (bfd *, struct bfd_link_info *);
+extern bfd_boolean _bfd_elf_eh_frame_present
+  (struct bfd_link_info *);
 extern bfd_boolean _bfd_elf_maybe_strip_eh_frame_hdr
   (struct bfd_link_info *);
 
@@ -2224,13 +2230,13 @@ extern bfd_boolean _bfd_elf_map_sections_to_segments
 
 extern bfd_boolean _bfd_elf_is_function_type (unsigned int);
 
-extern bfd_boolean _bfd_elf_maybe_function_sym (const asymbol *,
-						asection **, bfd_vma *);
+extern bfd_size_type _bfd_elf_maybe_function_sym (const asymbol *, asection *,
+						  bfd_vma *);
 
 extern int bfd_elf_get_default_section_type (flagword);
 
-extern void bfd_elf_lookup_section_flags
-  (struct bfd_link_info *, struct flag_info *);
+extern bfd_boolean bfd_elf_lookup_section_flags
+  (struct bfd_link_info *, struct flag_info *, asection *);
 
 extern Elf_Internal_Phdr * _bfd_elf_find_segment_containing_section
   (bfd * abfd, asection * section);
@@ -2277,10 +2283,10 @@ extern char *elfcore_write_register_note
 
 extern bfd *_bfd_elf32_bfd_from_remote_memory
   (bfd *templ, bfd_vma ehdr_vma, bfd_vma *loadbasep,
-   int (*target_read_memory) (bfd_vma, bfd_byte *, int));
+   int (*target_read_memory) (bfd_vma, bfd_byte *, size_t));
 extern bfd *_bfd_elf64_bfd_from_remote_memory
   (bfd *templ, bfd_vma ehdr_vma, bfd_vma *loadbasep,
-   int (*target_read_memory) (bfd_vma, bfd_byte *, int));
+   int (*target_read_memory) (bfd_vma, bfd_byte *, size_t));
 
 extern bfd_vma bfd_elf_obj_attr_size (bfd *);
 extern void bfd_elf_set_obj_attr_contents (bfd *, bfd_byte *, bfd_vma);

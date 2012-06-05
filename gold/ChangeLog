@@ -1,3 +1,56 @@
+2012-05-25  Sriraman Tallam  <tmsriram@google.com>
+
+	* symtab.cc (Symbol_table::define_special_symbol):
+	Initialize *poldsym to prevent uninitialized variable errors.
+
+2012-05-23  Cary Coutant  <ccoutant@google.com>
+
+	* layout.cc (Layout::section_name_mapping): Add rules to handle
+	exact match on .data.rel.ro.local or .data.rel.ro.
+	(Layout::output_section_name): Check for exact matches.
+
+2012-05-23  Cary Coutant  <ccoutant@google.com>
+
+	* layout.cc (Layout::section_name_mapping): Match .data.rel.ro.*
+	more carefully.
+
+2012-05-22  Cary Coutant  <ccoutant@google.com>
+
+	* symtab.cc (Symbol::should_add_dynsym_entry): Check for relocatable
+	object before exporting symbol.
+
+2012-05-21  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* testsuite/tls_test.cc: Include "config.h" first.
+	* testsuite/tls_test_c.c: Likewise.
+
+2012-05-17  Daniel Richard G.  <skunk@iskunk.org>
+	    Nick Clifton  <nickc@redhat.com>
+
+	PR 14072
+	* configure.in: Add check that sysdep.h has been included before
+	any system header files.
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
+2012-05-14  Cary Coutant  <ccoutant@google.com>
+
+	* layout.cc (Layout::make_output_section): Mark .tdata section
+	as RELRO.
+	* testsuite/relro_test.cc: Add a TLS variable.
+
+2012-05-10  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gold/14091
+	* x86_64.cc (Target_x86_64::Scan::local): For x32, generate
+	R_X86_64_RELATIVE64 instead of R_X86_64_RELATIVE in case of
+	R_X86_64_64.
+
+2012-05-08  Cary Coutant  <ccoutant@google.com>
+
+	* layout.cc (gdb_sections): Update GDB version, add .debug_addr.
+	(lines_only_debug_sections): Likewise.
+
 2012-05-02  Roland McGrath  <mcgrathr@google.com>
 
 	* nacl.cc: New file.

@@ -2,7 +2,7 @@
 
 AUTOMAKE_OPTIONS = dejagnu no-texinfo.tex no-dist foreign
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
-TEXINFO_TEX = $(top_srcdir)/../texinfo/texinfo.tex
+TEXINFO_TEX = ../texinfo/texinfo.tex
 
 SUBDIRS = po
 
@@ -2113,7 +2113,7 @@ TESTBFDLIB = @TESTBFDLIB@
 check-DEJAGNU: site.exp
 	srcroot=`cd $(srcdir) && pwd`; export srcroot; \
 	r=`pwd`; export r; \
-	LC_COLLATE=; LC_ALL=; LANG=; export LC_COLLATE LC_ALL LANG; \
+	LC_ALL=C; export LC_ALL; \
 	EXPECT=$(EXPECT); export EXPECT; \
 	runtest=$(RUNTEST); \
 	if $(SHELL) -c "$$runtest --version" > /dev/null 2>&1; then \

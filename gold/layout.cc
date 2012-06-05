@@ -455,32 +455,36 @@ Layout::Hash_key::operator()(const Layout::Key& k) const
 
 // Returns whether the given section is in the list of
 // debug-sections-used-by-some-version-of-gdb.  Currently,
-// we've checked versions of gdb up to and including 6.7.1.
+// we've checked versions of gdb up to and including 7.4.
 
 static const char* gdb_sections[] =
 { ".debug_abbrev",
-  // ".debug_aranges",   // not used by gdb as of 6.7.1
+  ".debug_addr",         // Fission extension
+  // ".debug_aranges",   // not used by gdb as of 7.4
   ".debug_frame",
   ".debug_info",
   ".debug_types",
   ".debug_line",
   ".debug_loc",
   ".debug_macinfo",
-  // ".debug_pubnames",  // not used by gdb as of 6.7.1
+  // ".debug_pubnames",  // not used by gdb as of 7.4
+  // ".debug_pubtypes",  // not used by gdb as of 7.4
   ".debug_ranges",
   ".debug_str",
 };
 
 static const char* lines_only_debug_sections[] =
 { ".debug_abbrev",
-  // ".debug_aranges",   // not used by gdb as of 6.7.1
+  // ".debug_addr",      // Fission extension
+  // ".debug_aranges",   // not used by gdb as of 7.4
   // ".debug_frame",
   ".debug_info",
   // ".debug_types",
   ".debug_line",
   // ".debug_loc",
   // ".debug_macinfo",
-  // ".debug_pubnames",  // not used by gdb as of 6.7.1
+  // ".debug_pubnames",  // not used by gdb as of 7.4
+  // ".debug_pubtypes",  // not used by gdb as of 7.4
   // ".debug_ranges",
   ".debug_str",
 };
@@ -1426,7 +1430,9 @@ Layout::make_output_section(const char* name, elfcpp::Elf_Word type,
     {
       if (type == elfcpp::SHT_PROGBITS)
 	{
-	  if (strcmp(name, ".data.rel.ro") == 0)
+	  if ((flags & elfcpp::SHF_TLS) != 0)
+	    is_relro = true;
+	  else if (strcmp(name, ".data.rel.ro") == 0)
 	    is_relro = true;
 	  else if (strcmp(name, ".data.rel.ro.local") == 0)
 	    {
@@ -4563,12 +4569,15 @@ Layout::set_dynamic_symbol_size(const Symbol_table* symtab)
 // based on the GNU linker default ELF linker script.
 
 #define MAPPING_INIT(f, t) { f, sizeof(f) - 1, t, sizeof(t) - 1 }
+#define MAPPING_INIT_EXACT(f, t) { f, 0, t, sizeof(t) - 1 }
 const Layout::Section_name_mapping Layout::section_name_mapping[] =
 {
   MAPPING_INIT(".text.", ".text"),
   MAPPING_INIT(".rodata.", ".rodata"),
-  MAPPING_INIT(".data.rel.ro.local", ".data.rel.ro.local"),
-  MAPPING_INIT(".data.rel.ro", ".data.rel.ro"),
+  MAPPING_INIT(".data.rel.ro.local.", ".data.rel.ro.local"),
+  MAPPING_INIT_EXACT(".data.rel.ro.local", ".data.rel.ro.local"),
+  MAPPING_INIT(".data.rel.ro.", ".data.rel.ro"),
+  MAPPING_INIT_EXACT(".data.rel.ro", ".data.rel.ro"),
   MAPPING_INIT(".data.", ".data"),
   MAPPING_INIT(".bss.", ".bss"),
   MAPPING_INIT(".tdata.", ".tdata"),
@@ -4607,6 +4616,7 @@ const Layout::Section_name_mapping Layout::section_name_mapping[] =
   MAPPING_INIT(".gnu.linkonce.armexidx.", ".ARM.exidx"),
 };
 #undef MAPPING_INIT
+#undef MAPPING_INIT_EXACT
 
 const int Layout::section_name_mapping_count =
   (sizeof(Layout::section_name_mapping)
@@ -4658,10 +4668,21 @@ Layout::output_section_name(const Relobj* relobj, const char* name,
   const Section_name_mapping* psnm = section_name_mapping;
   for (int i = 0; i < section_name_mapping_count; ++i, ++psnm)
     {
-      if (strncmp(name, psnm->from, psnm->fromlen) == 0)
+      if (psnm->fromlen > 0)
 	{
-	  *plen = psnm->tolen;
-	  return psnm->to;
+	  if (strncmp(name, psnm->from, psnm->fromlen) == 0)
+	    {
+	      *plen = psnm->tolen;
+	      return psnm->to;
+	    }
+	}
+      else
+	{
+	  if (strcmp(name, psnm->from) == 0)
+	    {
+	      *plen = psnm->tolen;
+	      return psnm->to;
+	    }
 	}
     }
 

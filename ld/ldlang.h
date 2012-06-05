@@ -163,8 +163,8 @@ typedef struct lang_output_section_statement_struct
   unsigned int all_input_readonly : 1;
   /* If this section should be ignored.  */
   unsigned int ignored : 1; 
-  /* If there is a symbol relative to this section.  */
-  unsigned int section_relative_symbol : 1; 
+  /* If this section should update "dot".  Prevents section being ignored.  */
+  unsigned int update_dot : 1; 
 } lang_output_section_statement_type;
 
 typedef struct
@@ -314,7 +314,8 @@ typedef struct
 typedef struct lang_wild_statement_struct lang_wild_statement_type;
 
 typedef void (*callback_t) (lang_wild_statement_type *, struct wildcard_list *,
-			    asection *, lang_input_statement_type *, void *);
+			    asection *, struct flag_info *,
+			    lang_input_statement_type *, void *);
 
 typedef void (*walk_wild_section_handler_t) (lang_wild_statement_type *,
 					     lang_input_statement_type *,
@@ -616,7 +617,7 @@ extern void lang_leave_group
   (void);
 extern void lang_add_section
   (lang_statement_list_type *, asection *,
-   lang_output_section_statement_type *);
+   struct flag_info *, lang_output_section_statement_type *);
 extern void lang_new_phdr
   (const char *, etree_type *, bfd_boolean, bfd_boolean, etree_type *,
    etree_type *);
