@@ -1,3 +1,22 @@
+2012-06-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/all/gas.exp: Don't run rept.
+
+	* gas/all/rept.d: Moved to ...
+	* gas/i386/rept.d: Here.
+	* gas/all/rept.s: Moved to ...
+	* gas/i386/rept.s: Here.
+
+	* gas/i386/i386.exp: Run rept.
+
+2012-06-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/14201
+	* gas/all/gas.exp: Run rept.
+
+	* gas/all/rept.d: New file.
+	* gas/all/rept.s: Likewise.
+
 2012-05-29  Roland McGrath  <mcgrathr@google.com>
 
 	* gas/i386/bundle-bad.s: Remove nested .bundle_lock case.
