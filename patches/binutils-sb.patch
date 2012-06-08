@@ -1,40 +1,134 @@
-2012-06-07  H.J. Lu  <hongjiu.lu@intel.com>
+2012-06-08  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* input-scrub.c (input_scrub_include_sb): Use sb_build to
 	allocate sufficient space for from_sb.
-	* read.c (do_repeat): Use sb_build to allocate sufficient space
+	* read.c (read_a_source_file): Use sb_build to allocate
+	sufficient space and replace sb_add_string with sb_add_buffer.
+	(s_macro): Likewise.
+	(input_scrub_insert_line): Likewise.
+	(s_irp): Use sb_build to allocate sufficient space.
+	(do_repeat): Use sb_build to allocate sufficient space
 	for many.
 	* sb.c (sb_build): Remove static.
+	(sb_check): Double the buffer size only if needed.
 	* sb.h (sb_build): New prototype.
 
 diff --git a/gas/input-scrub.c b/gas/input-scrub.c
-index 46dd244..78b6a8d 100644
+index 46dd244..1b09b73 100644
 --- a/gas/input-scrub.c
 +++ b/gas/input-scrub.c
-@@ -277,7 +277,7 @@ input_scrub_include_sb (sb *from, char *position, int is_expansion)
+@@ -264,6 +264,8 @@ input_scrub_include_file (char *filename, char *position)
+ void
+ input_scrub_include_sb (sb *from, char *position, int is_expansion)
+ {
++  int newline;
++
+   if (macro_nest > max_macro_nest)
+     as_fatal (_("macros nested too deeply"));
+   ++macro_nest;
+@@ -277,9 +279,11 @@ input_scrub_include_sb (sb *from, char *position, int is_expansion)
  
    next_saved_file = input_scrub_push (position);
  
 -  sb_new (&from_sb);
-+  sb_build (&from_sb, from->len + 1);
++  /* Allocate sufficient space: from->len + optional newline + '\0'.  */
++  newline = from->len >= 1 && from->ptr[0] != '\n';
++  sb_build (&from_sb, from->len + newline + 1);
    from_sb_is_expansion = is_expansion;
-   if (from->len >= 1 && from->ptr[0] != '\n')
+-  if (from->len >= 1 && from->ptr[0] != '\n')
++  if (newline)
      {
+       /* Add the sentinel required by read.c.  */
+       sb_add_char (&from_sb, '\n');
 diff --git a/gas/read.c b/gas/read.c
-index 2b37173..7119d50 100644
+index 2b37173..21c42b2 100644
 --- a/gas/read.c
 +++ b/gas/read.c
-@@ -3207,7 +3207,7 @@ do_repeat (int count, const char *start, const char *end)
+@@ -1181,7 +1181,6 @@ read_a_source_file (char *name)
+ 	      bump_line_counters ();
+ 	      s += 4;
+ 
+-	      sb_new (&sbuf);
+ 	      ends = strstr (s, "#NO_APP\n");
+ 
+ 	      if (!ends)
+@@ -1262,7 +1261,9 @@ read_a_source_file (char *name)
+ 		 actual macro expansion (possibly nested) and other
+ 		 input expansion work.  Beware that in messages, line
+ 		 numbers and possibly file names will be incorrect.  */
+-	      sb_add_string (&sbuf, new_buf);
++	      new_length = strlen (new_buf);
++	      sb_build (&sbuf, new_length);
++	      sb_add_buffer (&sbuf, new_buf, new_length);
+ 	      input_scrub_include_sb (&sbuf, input_line_pointer, 0);
+ 	      sb_kill (&sbuf);
+ 	      buffer_limit = input_scrub_next_buffer (&input_line_pointer);
+@@ -2437,8 +2438,8 @@ s_irp (int irpc)
+ 
+   as_where (&file, &line);
+ 
+-  sb_new (&s);
+   eol = find_end_of_line (input_line_pointer, 0);
++  sb_build (&s, eol - input_line_pointer);
+   sb_add_buffer (&s, input_line_pointer, eol - input_line_pointer);
+   input_line_pointer = eol;
+ 
+@@ -2773,17 +2774,20 @@ s_macro (int ignore ATTRIBUTE_UNUSED)
+ 
+   as_where (&file, &line);
+ 
+-  sb_new (&s);
+   eol = find_end_of_line (input_line_pointer, 0);
++  sb_build (&s, eol - input_line_pointer);
+   sb_add_buffer (&s, input_line_pointer, eol - input_line_pointer);
+   input_line_pointer = eol;
+ 
+   if (line_label != NULL)
+     {
+       sb label;
++      size_t len;
+ 
+-      sb_new (&label);
+-      sb_add_string (&label, S_GET_NAME (line_label));
++      name = S_GET_NAME (line_label);
++      len = strlen (name);
++      sb_build (&label, len);
++      sb_add_buffer (&label, name, len);
+       err = define_macro (0, &s, &label, get_macro_line_sb, file, line, &name);
+       sb_kill (&label);
+     }
+@@ -3207,7 +3211,7 @@ do_repeat (int count, const char *start, const char *end)
        return;
      }
  
 -  sb_new (&many);
-+  sb_build (&many, count * one.len + 1);
++  sb_build (&many, count * one.len);
    while (count-- > 0)
      sb_add_sb (&many, &one);
  
+@@ -3247,7 +3251,7 @@ do_repeat_with_expander (int count,
+ 	  char * sub;
+ 	  sb processed;
+ 
+-	  sb_new (& processed);
++	  sb_build (& processed, one.len);
+ 	  sb_add_sb (& processed, & one);
+ 	  sub = strstr (processed.ptr, expander);
+ 	  len = sprintf (sub, "%d", count);
+@@ -6167,8 +6171,9 @@ void
+ input_scrub_insert_line (const char *line)
+ {
+   sb newline;
+-  sb_new (&newline);
+-  sb_add_string (&newline, line);
++  size_t len = strlen (line);
++  sb_build (&newline, len);
++  sb_add_buffer (&newline, line, len);
+   input_scrub_include_sb (&newline, input_line_pointer, 0);
+   sb_kill (&newline);
+   buffer_limit = input_scrub_next_buffer (&input_line_pointer);
 diff --git a/gas/sb.c b/gas/sb.c
-index f345fe1..3872881 100644
+index f345fe1..ebfd77f 100644
 --- a/gas/sb.c
 +++ b/gas/sb.c
 @@ -44,7 +44,7 @@ static void sb_check (sb *, size_t);
@@ -46,6 +140,15 @@ index f345fe1..3872881 100644
  sb_build (sb *ptr, size_t size)
  {
    ptr->ptr = xmalloc (size + 1);
+@@ -116,7 +116,7 @@ sb_check (sb *ptr, size_t len)
+ {
+   size_t max = ptr->max;
+ 
+-  while (ptr->len + len >= max)
++  while (ptr->len + len > max)
+     {
+       max <<= 1;
+       if (max == 0)
 diff --git a/gas/sb.h b/gas/sb.h
 index cc11ef6..ea010ee 100644
 --- a/gas/sb.h
