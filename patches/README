@@ -23,7 +23,6 @@ patches="
 	bfd-64k-2.patch
 	binutils-lto-mixed-18.patch
 	binutils-pr12639-2.patch
-	binutils-sb.patch
 "
 
 if [ -n "$clean" ]
