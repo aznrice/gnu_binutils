@@ -1,3 +1,25 @@
+2012-06-22  Roland McGrath  <mcgrathr@google.com>
+
+	* ld-elf/ehdr_start.s: New file.
+	* ld-elf/ehdr_start.d: New file.
+
+2012-06-21  Alan Modra  <amodra@gmail.com>
+
+	* ld-gc/start.d: Update.
+
+2012-06-18  Hans-Peter Nilsson  <hp@axis.com>
+
+	* ld-cris/dso-pltdis1.d, ld-cris/dso-pltdis2.d, dsofng.s
+	dsofn4g.s: New tests.
+
+2012-06-17  Hans-Peter Nilsson  <hp@axis.com>
+
+	* ld-cris/tls-e-tpiecomm1.d, ld-cris/tls-e-tpiecomm1.s: New test.
+	* ld-cris/tls-dso-tpoffgotcomm1.d,
+	ld-cris/tls-dso-tpoffgotcomm1.s: Ditto.
+
+	* ld-cris/tls-e-tpoffgotcomm1.d: New test.
+
 2012-06-16  Alan Modra  <amodra@gmail.com>
 
 	* ld-alpha/emptygot.nm, * ld-alpha/tlsbin.rd, * ld-alpha/tlsbinr.rd,
