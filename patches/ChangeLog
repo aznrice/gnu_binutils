@@ -1,3 +1,8 @@
+2012-06-24  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-lto-mixed-18.patch: Properly test if LTO works with
+	the new linker.
+
 2012-06-09  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-sb.patch: Removed.

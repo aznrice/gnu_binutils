@@ -219,6 +219,11 @@ ld/
 
 ld/testsuite/
 
+2012-06-24  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* lib/ld-lib.exp (check_lto_available): Test the new linker to
+	build DSO.
+
 2011-10-21  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/13287
@@ -428,10 +433,10 @@ ld/testsuite/
 	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index 585a54a..3429d96 100644
+index 8798ae4..6308a58 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
-@@ -1028,6 +1028,9 @@ struct bfd_section *bfd_create_gnu_debuglink_section
+@@ -1029,6 +1029,9 @@ struct bfd_section *bfd_create_gnu_debuglink_section
  bfd_boolean bfd_fill_in_gnu_debuglink_section
     (bfd *abfd, struct bfd_section *sect, const char *filename);
  
@@ -441,7 +446,7 @@ index 585a54a..3429d96 100644
  /* Extracted from libbfd.c.  */
  
  /* Byte swapping macros for user section data.  */
-@@ -1553,6 +1556,9 @@ extern asection std_section[4];
+@@ -1554,6 +1557,9 @@ extern asection std_section[4];
  #define BFD_COM_SECTION_NAME "*COM*"
  #define BFD_IND_SECTION_NAME "*IND*"
  
@@ -451,7 +456,7 @@ index 585a54a..3429d96 100644
  /* Pointer to the common section.  */
  #define bfd_com_section_ptr (&std_section[0])
  /* Pointer to the undefined section.  */
-@@ -5438,6 +5444,14 @@ enum bfd_direction
+@@ -5439,6 +5445,14 @@ enum bfd_direction
      both_direction = 3
    };
  
@@ -466,7 +471,7 @@ index 585a54a..3429d96 100644
  struct bfd
  {
    /* A unique identifier of the BFD  */
-@@ -5585,6 +5599,9 @@ struct bfd
+@@ -5586,6 +5600,9 @@ struct bfd
    /* The last section on the section list.  */
    struct bfd_section *section_last;
  
@@ -476,7 +481,7 @@ index 585a54a..3429d96 100644
    /* The number of sections.  */
    unsigned int section_count;
  
-@@ -5703,6 +5720,9 @@ struct bfd
+@@ -5704,6 +5721,9 @@ struct bfd
    /* Set if only required symbols should be added in the link hash table for
       this object.  Used by VMS linkers.  */
    unsigned int selective_search : 1;
@@ -486,7 +491,7 @@ index 585a54a..3429d96 100644
  };
  
  typedef enum bfd_error
-@@ -5919,6 +5939,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
+@@ -5920,6 +5940,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
  
  char *bfd_demangle (bfd *, const char *, int);
  
@@ -572,7 +577,7 @@ index 640b420..9cdac38 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index ac7be2c..cb5d6c9 100644
+index 1a53548..ee5357f 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2104,6 +2104,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -584,7 +589,7 @@ index ac7be2c..cb5d6c9 100644
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index e715942..ce80bc2 100644
+index a9d95bd..8fb2ae3 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -5085,6 +5085,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
@@ -1313,7 +1318,7 @@ index 41ace36..9e59927 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 4e75624..9674f2e 100644
+index ddf3be2..13473ce 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -1391,7 +1396,7 @@ index 4e75624..9674f2e 100644
      einfo (_("%P%F: can not create hash table: %E\n"));
  }
  
-@@ -2768,6 +2783,12 @@ load_symbols (lang_input_statement_type *entry,
+@@ -2763,6 +2778,12 @@ load_symbols (lang_input_statement_type *entry,
  		  loaded = FALSE;
  		}
  
@@ -1404,7 +1409,7 @@ index 4e75624..9674f2e 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6583,7 +6604,38 @@ lang_process (void)
+@@ -6681,7 +6702,38 @@ lang_process (void)
  	  open_input_bfds (statement_list.head, OPEN_BFD_RESCAN);
  	}
      }
@@ -1443,7 +1448,7 @@ index 4e75624..9674f2e 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -8046,3 +8098,961 @@ lang_ld_feature (char *str)
+@@ -8081,3 +8133,961 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -2406,10 +2411,10 @@ index 4e75624..9674f2e 100644
 +      }
 +}
 diff --git a/ld/ldlang.h b/ld/ldlang.h
-index 7f1e743..a973fcb 100644
+index d5ea8d2..89c11d3 100644
 --- a/ld/ldlang.h
 +++ b/ld/ldlang.h
-@@ -486,7 +486,7 @@ extern lang_statement_list_type input_file_chain;
+@@ -488,7 +488,7 @@ extern lang_statement_list_type input_file_chain;
  extern int lang_statement_iteration;
  
  extern void lang_init
@@ -2648,7 +2653,7 @@ index b5e3468..95eb477 100644
  	case 'q':
  	  link_info.emitrelocations = TRUE;
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 2515888..4445ab2 100644
+index 7e3d2a3..3e28013 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -39,6 +39,9 @@
@@ -2679,7 +2684,7 @@ index 2515888..4445ab2 100644
    newarg = xmalloc (sizeof *newarg);
    newarg->arg = arg;
    newarg->next = NULL;
-@@ -866,6 +880,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
+@@ -868,6 +882,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
    close (file->fd);
    if (claimed)
      {
@@ -2689,7 +2694,7 @@ index 2515888..4445ab2 100644
        /* Discard the real file's BFD and substitute the dummy one.  */
  
        /* BFD archive handling caches elements so we can't call
-@@ -919,13 +936,16 @@ plugin_call_cleanup (void)
+@@ -921,13 +938,16 @@ plugin_call_cleanup (void)
      {
        if (curplug->cleanup_handler && !curplug->cleanup_done)
  	{
@@ -2741,7 +2746,7 @@ index ea01ce2..43a7018 100644
    SBSS=".sbss         ${RELOCATING-0} :
    {
 diff --git a/ld/scripttempl/elf.sc b/ld/scripttempl/elf.sc
-index 37a3124..0470bb7 100644
+index 1a92466..157e2f0 100644
 --- a/ld/scripttempl/elf.sc
 +++ b/ld/scripttempl/elf.sc
 @@ -158,7 +158,7 @@ RELA_IPLT=".rela.iplt    ${RELOCATING-0} :
@@ -4682,7 +4687,7 @@ index 0000000..7edca6d
 @@ -0,0 +1 @@
 +IE: 4
 diff --git a/ld/testsuite/lib/ld-lib.exp b/ld/testsuite/lib/ld-lib.exp
-index a481ce7..5f21757 100644
+index a481ce7..8d1ea2f 100644
 --- a/ld/testsuite/lib/ld-lib.exp
 +++ b/ld/testsuite/lib/ld-lib.exp
 @@ -934,7 +934,7 @@ proc set_file_contents { filename contents } {
@@ -4710,11 +4715,11 @@ index a481ce7..5f21757 100644
 +	}
 +	set basename "lto"
 +	set src ${basename}[pid].c
-+	set output ${basename}[pid].s
++	set output ${basename}[pid].so
 +	set f [open $src "w"]
 +	puts $f ""
 +	close $f
-+	set status [remote_exec host $CC "-S -flto -fuse-linker-plugin $src -o $output"]
++	set status [remote_exec host $CC "-shared -B[pwd]/tmpdir/ld/ -flto -fuse-linker-plugin $src -o $output"]
 +	if { [lindex $status 0] == 0 } {
 +	    set lto_available_saved 1
 +	} else {
