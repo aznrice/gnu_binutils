@@ -1,5 +1,11 @@
 bfd/
 
+2012-06-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14272
+	* elflink.c (_bfd_elf_fix_symbol_flags): Mark the plugin symbol
+	undefined if it is referenced from a non-IR file.
+
 2012-06-04  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* plugin.c (add_symbols): Set tdata.plugin_data before calling
@@ -589,10 +595,29 @@ index 1a53548..ee5357f 100644
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index a9d95bd..8fb2ae3 100644
+index a9d95bd..4a0f858 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
-@@ -5085,6 +5085,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
+@@ -2451,6 +2451,18 @@ _bfd_elf_fix_symbol_flags (struct elf_link_hash_entry *h,
+     }
+   else
+     {
++      /* If a plugin symbol is referenced from a non-IR file, mark
++	 the symbol as undefined.  */         
++      if (h->root.non_ir_ref
++	  && (h->root.type == bfd_link_hash_defined
++	      || h->root.type == bfd_link_hash_defweak)
++	  && h->root.u.def.section->owner != NULL
++	  && (h->root.u.def.section->owner->flags & BFD_PLUGIN) != 0)
++	{
++	  h->root.type = bfd_link_hash_undefined;
++	  h->root.u.undef.abfd = h->root.u.def.section->owner;
++	}
++
+       /* Unfortunately, NON_ELF is only correct if the symbol
+ 	 was first seen in a non-ELF file.  Fortunately, if the symbol
+ 	 was first seen in an ELF file, we're probably OK unless the
+@@ -5085,6 +5097,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
  	     something wrong with the archive.  */
  	  if (element->archive_pass != 0)
  	    {
@@ -1085,7 +1110,7 @@ index d900b47..d0b5606 100644
    unsigned int allow_undefined_version: 1;
  
 diff --git a/include/elf/common.h b/include/elf/common.h
-index 5cddc0b..56cb366 100644
+index 58e489a..5622c5e 100644
 --- a/include/elf/common.h
 +++ b/include/elf/common.h
 @@ -472,6 +472,7 @@
@@ -1318,7 +1343,7 @@ index 41ace36..9e59927 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index ddf3be2..13473ce 100644
+index e94d261..18b9e48 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -1396,7 +1421,7 @@ index ddf3be2..13473ce 100644
      einfo (_("%P%F: can not create hash table: %E\n"));
  }
  
-@@ -2763,6 +2778,12 @@ load_symbols (lang_input_statement_type *entry,
+@@ -2767,6 +2782,12 @@ load_symbols (lang_input_statement_type *entry,
  		  loaded = FALSE;
  		}
  
@@ -1409,7 +1434,7 @@ index ddf3be2..13473ce 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6681,7 +6702,38 @@ lang_process (void)
+@@ -6686,7 +6707,38 @@ lang_process (void)
  	  open_input_bfds (statement_list.head, OPEN_BFD_RESCAN);
  	}
      }
@@ -1448,7 +1473,7 @@ index ddf3be2..13473ce 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -8081,3 +8133,961 @@ lang_ld_feature (char *str)
+@@ -8086,3 +8138,961 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -3682,7 +3707,7 @@ index 0000000..4b5bcf8
 +#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..92932f3
+index 0000000..7554c75
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
 @@ -0,0 +1,342 @@
@@ -3992,7 +4017,7 @@ index 0000000..92932f3
 +# Check expected LTO linker errors.
 +set testname "PR ld/12365"
 +set exec_output [run_host_cmd "$CC" "$gcc_gas_flag $gcc_ld_flag -O2 -flto -fuse-linker-plugin tmpdir/pr12365a.o tmpdir/pr12365b.o tmpdir/pr12365c.o"]
-+if { [ regexp "`my_bcopy' referenced in .* defined in discarded section" $exec_output ] } {
++if { [ regexp "undefined reference to `my_bcopy'" $exec_output ] } {
 +    pass $testname
 +} {
 +    fail $testname

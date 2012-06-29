@@ -1,5 +1,10 @@
 2012-06-29  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-lto-mixed-18.patch: Mark the plugin symbol undefined
+	if it is referenced from a non-IR file.
+
+2012-06-29  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-pr14156-1.patch: New.
 	* README: Apply it.
 
