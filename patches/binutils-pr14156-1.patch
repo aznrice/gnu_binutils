@@ -1,0 +1,432 @@
+ld/
+
+2012-06-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14156
+	* NEWS: Mention SORT_NONE.
+
+	* ld.h (sort_type): Add by_none.
+
+	* ld.texinfo: Document SORT_NONE.
+
+	* ldgram.y: Handle SORT_NONE.
+
+	* ldlang.c (update_wild_statements): Handle by_none.  Don't
+	sort .init/.fini sections.
+
+	* ldlex.l: Add SORT_NONE.
+
+ld/testsuite/
+
+2012-06-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14156
+	* ld-elf/fini0.s: New file.
+	* ld-elf/fini1.s: Likewise.
+	* ld-elf/fini2.s: Likewise.
+	* ld-elf/fini3.s: Likewise.
+	* ld-elf/finin.s: Likewise.
+	* ld-elf/foo0.s: Likewise.
+	* ld-elf/foo1.s: Likewise.
+	* ld-elf/foo2.s: Likewise.
+	* ld-elf/foo3.s: Likewise.
+	* ld-elf/foon.s: Likewise.
+	* ld-elf/init0.s: Likewise.
+	* ld-elf/init1.s: Likewise.
+	* ld-elf/init2.s: Likewise.
+	* ld-elf/init3.s: Likewise.
+	* ld-elf/initn.s: Likewise.
+	* ld-elf/pr14156a.d: Likewise.
+	* ld-elf/pr14156b.d: Likewise.
+	* ld-elf/pr14156c.d: Likewise.
+	* ld-elf/pr14156c.t: Likewise.
+
+diff --git a/ld/NEWS b/ld/NEWS
+index 8701c5c..06f1f77 100644
+--- a/ld/NEWS
++++ b/ld/NEWS
+@@ -1,5 +1,7 @@
+ -*- text -*-
+ 
++* Added SORT_NONE to the linker script language to disable section sorting.
++
+ * Add a linker-provided symbol when producing ELF output, '__ehdr_start'
+   to point to the ELF file header (and nearby program headers) in the
+   program's memory image.
+diff --git a/ld/ld.h b/ld/ld.h
+index f5e031b..b8273a4 100644
+--- a/ld/ld.h
++++ b/ld/ld.h
+@@ -87,7 +87,7 @@ typedef enum {sort_none, sort_ascending, sort_descending} sort_order;
+ 
+ typedef enum {
+   none, by_name, by_alignment, by_name_alignment, by_alignment_name,
+-  by_init_priority
++  by_none, by_init_priority
+ } sort_type;
+ 
+ extern sort_type sort_section;
+diff --git a/ld/ld.texinfo b/ld/ld.texinfo
+index 6c74ff5..da23caa 100644
+--- a/ld/ld.texinfo
++++ b/ld/ld.texinfo
+@@ -4038,6 +4038,10 @@ treated as nested sorting command.
+ If the section sorting command in linker script is nested, the
+ command line option will be ignored.
+ 
++@cindex SORT_NONE
++@code{SORT_NONE} disables section sorting by ignoring the command line
++section sorting option.
++
+ If you ever get confused about where input sections are going, use the
+ @samp{-M} linker option to generate a map file.  The map file shows
+ precisely how input sections are mapped to output sections.
+diff --git a/ld/ldgram.y b/ld/ldgram.y
+index 923ac0f..6e00118 100644
+--- a/ld/ldgram.y
++++ b/ld/ldgram.y
+@@ -129,7 +129,7 @@ static int error_index;
+ %token <token> ALIGN_K BLOCK BIND QUAD SQUAD LONG SHORT BYTE
+ %token SECTIONS PHDRS INSERT_K AFTER BEFORE
+ %token DATA_SEGMENT_ALIGN DATA_SEGMENT_RELRO_END DATA_SEGMENT_END
+-%token SORT_BY_NAME SORT_BY_ALIGNMENT
++%token SORT_BY_NAME SORT_BY_ALIGNMENT SORT_NONE
+ %token SORT_BY_INIT_PRIORITY
+ %token '{' '}'
+ %token SIZEOF_HEADERS OUTPUT_FORMAT FORCE_COMMON_ALLOCATION OUTPUT_ARCH
+@@ -467,6 +467,13 @@ wildcard_spec:
+ 			  $$.exclude_name_list = NULL;
+ 			  $$.section_flag_list = NULL;
+ 			}
++	|	SORT_NONE '(' wildcard_name ')'
++			{
++			  $$.name = $3;
++			  $$.sorted = by_none;
++			  $$.exclude_name_list = NULL;
++			  $$.section_flag_list = NULL;
++			}
+ 	|	SORT_BY_NAME '(' SORT_BY_ALIGNMENT '(' wildcard_name ')' ')'
+ 			{
+ 			  $$.name = $5;
+diff --git a/ld/ldlang.c b/ld/ldlang.c
+index 7dd2fa4..1c1d6c5 100644
+--- a/ld/ldlang.c
++++ b/ld/ldlang.c
+@@ -3511,6 +3511,8 @@ update_wild_statements (lang_statement_union_type *s)
+ 		      if (sort_section == by_name)
+ 			sec->spec.sorted = by_alignment_name;
+ 		      break;
++		    case by_none:
++		      sec->spec.sorted = none;
+ 		    default:
+ 		      break;
+ 		    }
+@@ -3522,8 +3524,11 @@ update_wild_statements (lang_statement_union_type *s)
+ 	      break;
+ 
+ 	    case lang_output_section_statement_enum:
+-	      update_wild_statements
+-		(s->output_section_statement.children.head);
++	      /* Don't sort .init/.fini sections.  */
++	      if (strcmp (s->output_section_statement.name, ".init") != 0
++		  && strcmp (s->output_section_statement.name, ".fini") != 0)
++		update_wild_statements
++		  (s->output_section_statement.children.head);
+ 	      break;
+ 
+ 	    case lang_group_statement_enum:
+diff --git a/ld/ldlex.l b/ld/ldlex.l
+index 7da611f..c24d1ab 100644
+--- a/ld/ldlex.l
++++ b/ld/ldlex.l
+@@ -302,6 +302,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
+ <BOTH,SCRIPT>"SORT_BY_ALIGNMENT"	{ RTOKEN(SORT_BY_ALIGNMENT); }
+ <BOTH,SCRIPT>"SORT"			{ RTOKEN(SORT_BY_NAME); }
+ <BOTH,SCRIPT>"SORT_BY_INIT_PRIORITY"	{ RTOKEN(SORT_BY_INIT_PRIORITY); }
++<BOTH,SCRIPT>"SORT_NONE"		{ RTOKEN(SORT_NONE); }
+ <EXPRESSION,BOTH,SCRIPT>"NOLOAD"	{ RTOKEN(NOLOAD);}
+ <EXPRESSION,BOTH,SCRIPT>"DSECT"		{ RTOKEN(DSECT);}
+ <EXPRESSION,BOTH,SCRIPT>"COPY"		{ RTOKEN(COPY);}
+diff --git a/ld/testsuite/ld-elf/fini0.s b/ld/testsuite/ld-elf/fini0.s
+new file mode 100644
+index 0000000..f2ccfb7
+--- /dev/null
++++ b/ld/testsuite/ld-elf/fini0.s
+@@ -0,0 +1,16 @@
++	.text
++	.global start	/* Used by SH targets.  */
++start:
++	.global _start
++_start:
++	.global __start
++__start:
++	.global main	/* Used by HPPA targets.  */
++main:
++	.dc.a 0
++
++	.section .fini
++	.p2align 2
++.globl foo
++	.type	foo,%function
++foo:
+diff --git a/ld/testsuite/ld-elf/fini1.s b/ld/testsuite/ld-elf/fini1.s
+new file mode 100644
+index 0000000..b65d18d
+--- /dev/null
++++ b/ld/testsuite/ld-elf/fini1.s
+@@ -0,0 +1,6 @@
++	.section .fini
++	.p2align 2
++	.type	foo1,%function
++foo1:
++	.dc.a	0x0
++	.size	foo1,.-foo1
+diff --git a/ld/testsuite/ld-elf/fini2.s b/ld/testsuite/ld-elf/fini2.s
+new file mode 100644
+index 0000000..b8d7457
+--- /dev/null
++++ b/ld/testsuite/ld-elf/fini2.s
+@@ -0,0 +1,6 @@
++	.section .fini
++	.p2align 6
++	.type	foo2,%function
++foo2:
++	.dc.a	0x0
++	.size	foo2,.-foo2
+diff --git a/ld/testsuite/ld-elf/fini3.s b/ld/testsuite/ld-elf/fini3.s
+new file mode 100644
+index 0000000..7f797c5
+--- /dev/null
++++ b/ld/testsuite/ld-elf/fini3.s
+@@ -0,0 +1,6 @@
++	.section .fini
++	.p2align 4
++	.type	foo3,%function
++foo3:
++	.dc.a	0x0
++	.size	foo3,.-foo3
+diff --git a/ld/testsuite/ld-elf/finin.s b/ld/testsuite/ld-elf/finin.s
+new file mode 100644
+index 0000000..9085080
+--- /dev/null
++++ b/ld/testsuite/ld-elf/finin.s
+@@ -0,0 +1,6 @@
++	.section .fini
++	.p2align 8
++	.type	last,%function
++last:
++	.dc.a	0x0
++	.size	last,.-last
+diff --git a/ld/testsuite/ld-elf/foo0.s b/ld/testsuite/ld-elf/foo0.s
+new file mode 100644
+index 0000000..d6fc9c3
+--- /dev/null
++++ b/ld/testsuite/ld-elf/foo0.s
+@@ -0,0 +1,16 @@
++	.text
++	.global start	/* Used by SH targets.  */
++start:
++	.global _start
++_start:
++	.global __start
++__start:
++	.global main	/* Used by HPPA targets.  */
++main:
++	.dc.a 0
++
++	.section .foo,"ax",@progbits
++	.p2align 2
++.globl foo
++	.type	foo,%function
++foo:
+diff --git a/ld/testsuite/ld-elf/foo1.s b/ld/testsuite/ld-elf/foo1.s
+new file mode 100644
+index 0000000..4a6d4f4
+--- /dev/null
++++ b/ld/testsuite/ld-elf/foo1.s
+@@ -0,0 +1,6 @@
++	.section .foo,"ax",@progbits
++	.p2align 2
++	.type	foo1,%function
++foo1:
++	.dc.a	0x0
++	.size	foo1,.-foo1
+diff --git a/ld/testsuite/ld-elf/foo2.s b/ld/testsuite/ld-elf/foo2.s
+new file mode 100644
+index 0000000..f95a91b
+--- /dev/null
++++ b/ld/testsuite/ld-elf/foo2.s
+@@ -0,0 +1,6 @@
++	.section .foo,"ax",@progbits
++	.p2align 6
++	.type	foo2,%function
++foo2:
++	.dc.a	0x0
++	.size	foo2,.-foo2
+diff --git a/ld/testsuite/ld-elf/foo3.s b/ld/testsuite/ld-elf/foo3.s
+new file mode 100644
+index 0000000..03a32a9
+--- /dev/null
++++ b/ld/testsuite/ld-elf/foo3.s
+@@ -0,0 +1,6 @@
++	.section .foo,"ax",@progbits
++	.p2align 4
++	.type	foo3,%function
++foo3:
++	.dc.a	0x0
++	.size	foo3,.-foo3
+diff --git a/ld/testsuite/ld-elf/foon.s b/ld/testsuite/ld-elf/foon.s
+new file mode 100644
+index 0000000..3a41ec2
+--- /dev/null
++++ b/ld/testsuite/ld-elf/foon.s
+@@ -0,0 +1,6 @@
++	.section .foo,"ax",@progbits
++	.p2align 8
++	.type	last,%function
++last:
++	.dc.a	0x0
++	.size	last,.-last
+diff --git a/ld/testsuite/ld-elf/init0.s b/ld/testsuite/ld-elf/init0.s
+new file mode 100644
+index 0000000..3c8cf8c
+--- /dev/null
++++ b/ld/testsuite/ld-elf/init0.s
+@@ -0,0 +1,16 @@
++	.text
++	.global start	/* Used by SH targets.  */
++start:
++	.global _start
++_start:
++	.global __start
++__start:
++	.global main	/* Used by HPPA targets.  */
++main:
++	.dc.a 0
++
++	.section .init
++	.p2align 2
++.globl foo
++	.type	foo,%function
++foo:
+diff --git a/ld/testsuite/ld-elf/init1.s b/ld/testsuite/ld-elf/init1.s
+new file mode 100644
+index 0000000..5d24ec2
+--- /dev/null
++++ b/ld/testsuite/ld-elf/init1.s
+@@ -0,0 +1,6 @@
++	.section .init
++	.p2align 2
++	.type	foo1,%function
++foo1:
++	.dc.a	0x0
++	.size	foo1,.-foo1
+diff --git a/ld/testsuite/ld-elf/init2.s b/ld/testsuite/ld-elf/init2.s
+new file mode 100644
+index 0000000..2c5c353
+--- /dev/null
++++ b/ld/testsuite/ld-elf/init2.s
+@@ -0,0 +1,6 @@
++	.section .init
++	.p2align 6
++	.type	foo2,%function
++foo2:
++	.dc.a	0x0
++	.size	foo2,.-foo2
+diff --git a/ld/testsuite/ld-elf/init3.s b/ld/testsuite/ld-elf/init3.s
+new file mode 100644
+index 0000000..d6639ce
+--- /dev/null
++++ b/ld/testsuite/ld-elf/init3.s
+@@ -0,0 +1,6 @@
++	.section .init
++	.p2align 4
++	.type	foo3,%function
++foo3:
++	.dc.a	0x0
++	.size	foo3,.-foo3
+diff --git a/ld/testsuite/ld-elf/initn.s b/ld/testsuite/ld-elf/initn.s
+new file mode 100644
+index 0000000..8931e52
+--- /dev/null
++++ b/ld/testsuite/ld-elf/initn.s
+@@ -0,0 +1,6 @@
++	.section .init
++	.p2align 8
++	.type	last,%function
++last:
++	.dc.a	0x0
++	.size	last,.-last
+diff --git a/ld/testsuite/ld-elf/pr14156a.d b/ld/testsuite/ld-elf/pr14156a.d
+new file mode 100644
+index 0000000..6476857
+--- /dev/null
++++ b/ld/testsuite/ld-elf/pr14156a.d
+@@ -0,0 +1,15 @@
++#source: init0.s
++#source: init1.s
++#source: init2.s
++#source: init3.s
++#source: initn.s
++#ld: --sort-section=alignment
++#nm: -n
++
++#...
++[0-9a-f]+ T foo
++[0-9a-f]+ t foo1
++[0-9a-f]+ t foo2
++[0-9a-f]+ t foo3
++[0-9a-f]+ t last
++#pass
+diff --git a/ld/testsuite/ld-elf/pr14156b.d b/ld/testsuite/ld-elf/pr14156b.d
+new file mode 100644
+index 0000000..ae9fa05
+--- /dev/null
++++ b/ld/testsuite/ld-elf/pr14156b.d
+@@ -0,0 +1,15 @@
++#source: fini0.s
++#source: fini1.s
++#source: fini2.s
++#source: fini3.s
++#source: finin.s
++#ld: --sort-section=alignment
++#nm: -n
++
++#...
++[0-9a-f]+ T foo
++[0-9a-f]+ t foo1
++[0-9a-f]+ t foo2
++[0-9a-f]+ t foo3
++[0-9a-f]+ t last
++#pass
+diff --git a/ld/testsuite/ld-elf/pr14156c.d b/ld/testsuite/ld-elf/pr14156c.d
+new file mode 100644
+index 0000000..90ca401
+--- /dev/null
++++ b/ld/testsuite/ld-elf/pr14156c.d
+@@ -0,0 +1,15 @@
++#source: foo0.s
++#source: foo1.s
++#source: foo2.s
++#source: foo3.s
++#source: foon.s
++#ld: --sort-section=alignment -T pr14156c.t
++#nm: -n
++
++#...
++[0-9a-f]+ T foo
++[0-9a-f]+ t foo1
++[0-9a-f]+ t foo2
++[0-9a-f]+ t foo3
++[0-9a-f]+ t last
++#pass
+diff --git a/ld/testsuite/ld-elf/pr14156c.t b/ld/testsuite/ld-elf/pr14156c.t
+new file mode 100644
+index 0000000..97ad77d
+--- /dev/null
++++ b/ld/testsuite/ld-elf/pr14156c.t
+@@ -0,0 +1,4 @@
++SECTIONS {
++  .foo : { *(SORT_NONE(.foo)) }
++  /DISCARD/ : { *(.*) }
++}
