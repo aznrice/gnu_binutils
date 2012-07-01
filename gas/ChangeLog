@@ -1,3 +1,19 @@
+2012-06-30  Alan Modra  <amodra@gmail.com>
+
+	PR gas/14315
+	* config/obj-elf.c (obj_elf_weak): Don't set local.
+
+2012-06-30  Johan Olmutz Nielsen  <jnielsen@ddci.com>
+
+	* frags.h (frag_offset_fixed_p): Update prototype.
+	* frags.c (frag_offset_fixed_p): Change type of "offset" to offsetT.
+	* expr.c (expr, resolve_expression): Likewise for frag_off var.
+
+2012-06-29  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/14263
+	* config/tc-arm.c (parse_operands): Initialise val.
+
 2012-06-28  Nick Clifton  <nickc@redhat.com>
 
 	PR gas/14260
