@@ -16,7 +16,6 @@ dir=`dirname $0`
 clean=$1
 
 patches="
-	binutils-indirect-5.patch
 	binutils-shr-100.patch
 	binutils-error-15.patch
 	binutils-weakdef-2.patch
@@ -25,6 +24,8 @@ patches="
 	binutils-pr12639-2.patch
 	binutils-pr14156-1.patch
 	binutils-pr14319-1.patch
+	binutils-secondary-1.patch
+	binutils-indirect-5.patch
 "
 
 if [ -n "$clean" ]

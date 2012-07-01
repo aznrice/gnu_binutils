@@ -1,5 +1,14 @@
 2012-07-01  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-secondary-1.patch: New.
+
+	* binutils-indirect-5.patch: Updated for STB_SECONDARY support.
+
+	* README: Apply binutils-indirect-5.patch after
+	binutils-secondary-1.patch.
+
+2012-07-01  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-pr14319-1.patch: New.
 	* README: Apply it.
 
