@@ -18,13 +18,6 @@ bfd/
 
 ld/testsuite/
 
-2011-09-17  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/13195
-	* ld-elf/pr13195.d: New.
-	* ld-elf/pr13195.s: Likewise.
-	* ld-elf/pr13195.t: Likewise.
-
 2006-10-17  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/3351
