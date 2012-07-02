@@ -1,3 +1,9 @@
+2012-07-02  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-weakdef-2.patch: Renamed to ...
+	* binutils-pr14323-1.patch: This.  Updated.
+	* README: Likewise.
+
 2012-07-01  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-secondary-1.patch: New.

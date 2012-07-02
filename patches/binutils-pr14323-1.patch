@@ -1,0 +1,144 @@
+bfd/
+
+2012-07-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14323
+	* elflink.c (elf_sort_symbol): Also check symbol size.
+	(elf_link_add_object_symbols): Also check symbol size for
+	symbol alias in a dynamic object.
+
+ld/testsuite/
+
+2012-07-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14323
+	* ld-elf/pr14323-1.c: New.
+	* ld-elf/pr14323-2.c: Likewise.
+
+	* ld-elf/shared.exp (build_tests): Add libpr14323-2.so.
+	(run_tests): Add pr14323.
+
+diff --git a/bfd/elflink.c b/bfd/elflink.c
+index d9e1abe..3e812e1 100644
+--- a/bfd/elflink.c
++++ b/bfd/elflink.c
+@@ -3126,7 +3126,7 @@ on_needed_list (const char *soname, struct bfd_link_needed_list *needed)
+   return FALSE;
+ }
+ 
+-/* Sort symbol by value and section.  */
++/* Sort symbol by value, section and size.  */
+ static int
+ elf_sort_symbol (const void *arg1, const void *arg2)
+ {
+@@ -3145,7 +3145,8 @@ elf_sort_symbol (const void *arg1, const void *arg2)
+       if (sdiff != 0)
+ 	return sdiff > 0 ? 1 : -1;
+     }
+-  return 0;
++  vdiff = h1->size - h2->size;
++  return vdiff == 0 ? 0 : vdiff > 0 ? 1 : -1;
+ }
+ 
+ /* This function is used to adjust offsets into .dynstr for
+@@ -4690,6 +4691,7 @@ error_free_dyn:
+ 	  struct elf_link_hash_entry *hlook;
+ 	  asection *slook;
+ 	  bfd_vma vlook;
++	  bfd_size_type sizelook;
+ 	  long ilook;
+ 	  size_t i, j, idx;
+ 
+@@ -4703,6 +4705,7 @@ error_free_dyn:
+ 		      || hlook->root.type == bfd_link_hash_indirect);
+ 	  slook = hlook->root.u.def.section;
+ 	  vlook = hlook->root.u.def.value;
++	  sizelook = hlook->size;
+ 
+ 	  ilook = -1;
+ 	  i = 0;
+@@ -4726,8 +4729,16 @@ error_free_dyn:
+ 		    i = idx + 1;
+ 		  else
+ 		    {
+-		      ilook = idx;
+-		      break;
++		      vdiff = sizelook - h->size;
++		      if (vdiff < 0)
++			j = idx;
++		      else if (vdiff > 0)
++			i = idx + 1;
++		      else
++			{
++			  ilook = idx;
++			  break;
++			}
+ 		    }
+ 		}
+ 	    }
+diff --git a/ld/testsuite/ld-elf/pr14323-1.c b/ld/testsuite/ld-elf/pr14323-1.c
+new file mode 100644
+index 0000000..9f63f4c
+--- /dev/null
++++ b/ld/testsuite/ld-elf/pr14323-1.c
+@@ -0,0 +1,17 @@
++#include <stdlib.h>
++#include <stdio.h>
++
++extern int foo_alias;
++extern char *bar ();
++
++int
++main ()
++{
++  if (foo_alias != 0)
++    abort ();
++  bar ();
++  if (foo_alias != -1)
++    abort ();
++  printf ("PASS\n");
++  return 0;
++}
+diff --git a/ld/testsuite/ld-elf/pr14323-2.c b/ld/testsuite/ld-elf/pr14323-2.c
+new file mode 100644
+index 0000000..34753d1
+--- /dev/null
++++ b/ld/testsuite/ld-elf/pr14323-2.c
+@@ -0,0 +1,13 @@
++int foo __attribute__ ((section ("_data_foo"))) = 0;
++extern int foo_alias __attribute__ ((weak, alias ("foo")));
++extern char __start__data_foo;
++asm (".type __start__data_foo,%object");
++int x1 = 1;
++int x2 = 2;
++
++char *
++bar ()
++{
++  foo = -1;
++  return &__start__data_foo;
++}
+diff --git a/ld/testsuite/ld-elf/shared.exp b/ld/testsuite/ld-elf/shared.exp
+index aaaa85b..c00f3e5 100644
+--- a/ld/testsuite/ld-elf/shared.exp
++++ b/ld/testsuite/ld-elf/shared.exp
+@@ -170,6 +170,9 @@ set build_tests {
+   {"Build libpr13250-3.o"
+    "-r -nostdlib" ""
+    {pr13250-3.c} {} "libpr13250-3.o"}
++  {"Build libpr14323-2.so"
++   "-shared" "-fPIC"
++   {pr14323-2.c} {} "libpr14323-2.so"}
+ }
+ 
+ run_cc_link_tests $build_tests
+@@ -302,6 +305,9 @@ set run_tests {
+     {"Run with pr13250-3.c, libpr13250-1.so and libpr13250-2.so"
+      "--as-needed tmpdir/pr13250-3.o tmpdir/libpr13250-1.so tmpdir/libpr13250-2.so" ""
+      {dummy.c} "pr13250" "pass.out"}
++    {"Run with pr14323-1.c pr14323-2.so"
++     "tmpdir/libpr14323-2.so" ""
++     {pr14323-1.c} "pr14323" "pass.out"}
+ }
+ 
+ # NetBSD ELF systems do not currently support the .*_array sections.
