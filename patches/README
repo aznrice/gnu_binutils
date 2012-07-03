@@ -25,7 +25,6 @@ patches="
 	binutils-pr14156-1.patch
 	binutils-pr14319-1.patch
 	binutils-secondary-1.patch
-	binutils-indirect-5.patch
 "
 
 if [ -n "$clean" ]

@@ -1,3 +1,10 @@
+2012-07-03  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-secondary-1.patch: Updated.
+
+	* binutils-indirect-5.patch: Removed.
+	* README: Likewise.
+
 2012-07-02  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-weakdef-2.patch: Renamed to ...
