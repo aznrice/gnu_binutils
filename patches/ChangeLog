@@ -1,5 +1,11 @@
 2012-07-05  H.J. Lu  <hjl.tools@gmail.com>
 
+	* ld-multilib.patch: Removed.
+	* libtool-dso.patch: Likewise.
+	* libtool-gnu.patch: Likewise.
+
+2012-07-05  H.J. Lu  <hjl.tools@gmail.com>
+
 	* bfd-64k-2.patch: Removed.
 	* README: Likewise.
 
