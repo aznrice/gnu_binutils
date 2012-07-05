@@ -19,7 +19,6 @@ patches="
 	binutils-shr-100.patch
 	binutils-error-15.patch
 	binutils-pr14323-1.patch
-	bfd-64k-2.patch
 	binutils-lto-mixed-18.patch
 	binutils-pr12639-2.patch
 	binutils-pr14156-1.patch
