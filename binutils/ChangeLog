@@ -1,3 +1,42 @@
+2012-07-30  Nick Clifton  <nickc@redhat.com>
+
+	* po/binutils.pot: Updated template.
+	* po/bg.po: Updated Bulgarian translation.
+	* po/es.po: Updated Spanish translation.
+	* po/fi.po: Updated Finnish translation.
+	* po/fr.po: Updated French translation.
+	* po/uk.po: Updated Ukranian translation.
+
+2012-07-28  Kai Tietz  <ktietz@redhat.com>
+
+	* rcparse.y (FILEVERSION): Use optcnumexpr instead of cnumexpr.
+	(PRODUCTVERSION): Likewise.
+
+2012-07-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.in (BFD_VERSION): Run bfd/configure --version and
+	parse the output of that.
+	* configure: Regenerate.
+
+2012-07-27  Tristan Gingold  <gingold@adacore.com>
+
+	* NEWS: Add marker for 2.23.
+
+2012-07-24  Teresa Johnson  <tejohnson@google.com>
+
+	* addr2line.c (find_address_in_section): Invoke
+        bfd_find_nearest_line_discriminator to get the discriminator.
+	(find_offset_in_section): Likewise.
+	(translate_addresses): Print discriminator if it is non-zero.
+	* objdump.c (show_line): Invoke
+        bfd_find_nearest_line_discriminator to get the discriminator,
+        and keep track of prev_discriminator. Print discriminator
+        if it is non-zero.
+	(disassemble_data): Initialize prev_discriminator.
+	(dump_reloc_set): Invoke bfd_find_nearest_line_discriminator
+        to get the discriminator, and keep track of last_discriminator.
+        Print discriminator if it is non-zero.
+
 2012-07-17  Nick Clifton  <nickc@redhat.com>
 
 	* elfcomm.c (setup_archive): Extract index table and symbol table

@@ -1,3 +1,31 @@
+2012-07-30  Nick Clifton  <nickc@redhat.com>
+
+	* po/opcodes.pot: Updated template.
+	* po/es.po: Updated Spanish translation.
+	* po/fi.po: Updated Finnish translation.
+
+2012-07-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.in (BFD_VERSION): Run bfd/configure --version and
+	parse the output of that.
+	* configure: Regenerate.
+
+2012-07-25  James Lemke  <jwlemke@codesourcery.com>
+
+	* ppc-opc.c (powerpc_opcodes): Add/remove PPCVLE for some 32-bit insns.
+
+2012-07-24  Stephan McCamant  <smcc@cs.berkeley.edu>
+	    Dr David Alan Gilbert  <dave@treblig.org>
+
+	PR binutils/13135
+	* arm-dis.c: Add necessary casts for printing integer values.
+	Use %s when printing string values.
+	* hppa-dis.c: Likewise.
+	* m68k-dis.c: Likewise.
+	* microblaze-dis.c: Likewise.
+	* mips-dis.c: Likewise.
+	* sparc-dis.c: Likewise.
+
 2012-07-19  Michael Zolotukhin  <michael.v.zolotukhin@intel.com>
 
 	PR binutils/14355

@@ -1,3 +1,46 @@
+2012-07-30  Nick Clifton  <nickc@redhat.com>
+
+	* po/gas.pot: Updated template.
+	* po/es.po: Updated Spanish translation.
+	* po/fi.po: Updated Finnish translation.
+	* po/fr.po: Updated French translation.
+
+2012-07-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.in (BFD_VERSION): Run bfd/configure --version and
+	parse the output of that.
+	* configure: Regenerate.
+
+2012-07-27  Tristan Gingold  <gingold@adacore.com>
+
+	* NEWS: Add marker for 2.23.
+
+2012-07-26  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	* listing.c (struct list_message): New.
+	(struct list_info_struct): Delete "message".  Add "messages"
+	and "last_message".
+	(listing_message): Adjust.
+	(listing_newline): Adjust.
+	(print_lines): Adjust.
+
+2012-07-24  Jan Beulich <jbeulich@suse.com>
+
+	* config/tc-i386-intel.c (i386_intel_simplify_register): Handle
+	xmm/ymm index register being specified first as well as esp/rsp
+	base register being specified last in a memory operand.
+
+2012-07-24  Jan Beulich <jbeulich@suse.com>
+
+	* config/tc-i386-intel.c (i386_intel_simplify_register):
+	Replace literal 4 by corresponding ESP_REG_NUM.
+
+2012-07-24  Sandra Loosemore  <sandra@codesourcery.com>
+	    Jie Zhang  <jzhang918@gmail.com>
+
+	* config/tc-arm.c (md_apply_fix): Use encoding A2 of ADR
+	if offset is negative.
+
 2012-07-16  Michael Zolotukhin  <michael.v.zolotukhin@intel.com>
 
 	* config/tc-i386.c: Add ADX, RDSEED and PRFCHW asm directives.
