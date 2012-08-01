@@ -1,3 +1,37 @@
+2012-07-31  Maciej W. Rozycki  <macro@codesourcery.com>
+            Chao-Ying Fu  <fu@mips.com>
+            Catherine Moore  <clm@codesourcery.com>
+
+	* config/tc-mips.c (ISA_SUPPORTS_DSP_ASE): Also set if microMIPS
+	mode.
+	(ISA_SUPPORTS_DSPR2_ASE): Likewise.
+	(macro_build) <'2'>: Handle microMIPS.
+	(macro) <M_BALIGN>: Update error handling.
+	(validate_micromips_insn) <'2', '3', '4', '5', '6'>: New cases.
+	<'7', '8', '0', '@', '^'>: Likewise.
+	(mips_ip) <'2', '3', '4', '5', '6', '7', '8'>: Handle microMIPS.
+	<'9'>: Fix formatting.
+	<'0', '@'>: Handle microMIPS.
+	<'^'>: New case.
+
+2012-07-31  Jan Beulich <jbeulich@suse.com>
+
+	* config/tc-i386.c (match_template): Adjust error message
+	for 'bad_imm4' case.
+
+2012-07-31  Jan Beulich <jbeulich@suse.com>
+
+	* config/tc-i386.c (check_byte_reg): Check for I/O port
+	register earlier, and just once. Drop diagnostic that got
+	issued only for some registers.
+
+2012-07-31  Jan Beulich <jbeulich@suse.com>
+
+	* config/tc-i386.c (match_template): New local variable
+	'specific_error'. Set it from i.error after failed
+	check_VecOperands or VEX_check_operands. Use it if set in
+	preference to i.error when actually issuing disagnostic.
+
 2012-07-30  Nick Clifton  <nickc@redhat.com>
 
 	* po/gas.pot: Updated template.
@@ -50,6 +84,10 @@
 	* config/tc-i386.c: Add ADX, RDSEED and PRFCHW asm directives.
 	* doc/c-i386.texi: Document the new directives.
 
+2012-07-05  Sean Keys  <skeys@ipdatasys.com>
+        * config/tc-xgate.c: Revised assembler so that operands
+        are collected before the addressing mode is determined.
+
 2012-07-02  Nick Clifton  <nickc@redhat.com>
 
 	* write.c (fixup_segment): Only perform the subtraction of an
@@ -94,6 +132,12 @@
 	cannot be resolved but is valid, then prevent bogus range warnings
 	by pre-biasing add_number.
 	* config/tc-h8300.h (DWARF2_USE_FIXED_ADVANCE_PC): Define to 0.
+
+2012-06-28  Sean Keys  <skeys@ipdatasys.com>
+
+        * config/tc-xgate.h: Defined tc_frob_symbol.
+        * config/tc-xgate.c (xgate_frob_symbol): Wrote new function to mark
+        symbols as being XGATE by setting st_target_internal value.
 
 2012-06-22  Roland McGrath  <mcgrathr@google.com>
 
@@ -176,6 +220,10 @@
 	* app.c: ..or ptrdiff_t.
 	* input-file.c (input_file_get): Use ferror.
 	(input_file_give_next_buffer): Use input_file_get.
+
+2012-05-31  Sean Keys  <skeys@ipdatasys.com>
+
+        * config/tc-xgate.c (md_begin): Refactored code.
 
 2012-05-29  Roland McGrath  <mcgrathr@google.com>
 
