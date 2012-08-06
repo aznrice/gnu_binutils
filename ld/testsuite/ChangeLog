@@ -1,3 +1,29 @@
+2012-08-05  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* ld-vax-elf: New directory.
+	* ld-vax-elf/plt-local-lib.dd: New test.
+	* ld-vax-elf/plt-local-lib.ld: New test linker script.
+	* ld-vax-elf/plt-local-lib.s: New test source.
+	* ld-vax-elf/plt-local.dd: New test.
+	* ld-vax-elf/plt-local.ld: New test linker script.
+	* ld-vax-elf/plt-local.s: New test source.
+	* ld-vax-elf/plt-local-hidden-pic.s: New test source.
+	* ld-vax-elf/plt-local-rehidden-pic.s: New test source.
+	* ld-vax-elf/vax-elf.exp: New test script.
+
+2012-08-03  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* lib/ld-lib.exp (at_least_gcc_version): Accept more version
+	number formats; avoid throwing exceptions in any case.
+
+2012-08-03  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* ld-mips-elf/mode-change-error-1.d: Update the error message.
+
+2012-08-02  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* ld-mips-elf/got-vers-1.rd: Fix a typo.
+
 2012-08-01  James Lemke  <jwlemke@codesourcery.com>
 
 	* ld-gc/pr13683.d: XFAIL for powerpc*-*-eabivle.
