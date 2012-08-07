@@ -1,5 +1,5 @@
-This is the beta release of binutils 2.22.52.0.4 for Linux, which is
-based on binutils 2012 0604 in CVS on sourceware.org plus various
+This is the beta release of binutils 2.23.51.0.1 for Linux, which is
+based on binutils 2012 0806 in CVS on sourceware.org plus various
 changes. It is purely for Linux.
 
 All relevant patches in patches have been applied to the source tree.
@@ -115,12 +115,48 @@ endif
 
 to arch/ia64/Makefile in your kernel source tree.
 
-Please report any bugs related to binutils 2.22.52.0.4 to
+Please report any bugs related to binutils 2.23.51.0.1 to
 hjl.tools@gmail.com
 
 and
 
 http://www.sourceware.org/bugzilla/
+
+Changes from binutils 2.22.52.0.4:
+
+1. Update from binutils 2012 0806.
+2. Add Intel ADX, RDSEED and PRFCHW new instruction support.
+3. Support 'rep bsf', 'rep bsr', and 'rep ret' syntax in x86 assembler.
+4. Mark 256-bit vmovntdqa as AVX2 instruction for x86 assembler.
+5. Improve x86 assembler error handling.
+6. Improve the repeat directive support in assembler.  PR 14201.
+7. Improve x86-64 disassembler on superfluous prefixes.
+8. Fix x86 disassembler crash on bad XOP instructions.  PR 14355.
+9. Support STB_SECONDARY:
+
+https://groups.google.com/forum/?hl=en&fromgroups#!forum/generic-abi
+
+10. Added SORT_NONE to the linker script language to disable section
+sorting and properly handle .init/.fini sections.  PR 14156.
+11. Fix a weak alias linker bug.  PR 14323.
+12. Fix the NULL GNU_RELRO segment linker bug.  PR 14207.
+13. Fix the bad GNU_RELRO segment linker bug.  PR 14215.
+14. Add linker support of __ehdr_start symbol for the ELF file header.
+15. Add IFUNC support to s390 linker.
+16. Fix ar for >4GB member.  PR 14302.
+17. Fix objcopy --compress-debug-sections on empty debug section.  PR
+14319.
+18. Fix readelf/objdup to display null bytes in DWARF debug info.  PR
+14420.
+19. Improve gold.
+20. Improve arm support.
+21. Improve avr support.
+22. Improve cris support.
+23. Improve m68k support.
+24. Improve mips support.
+25. Improve ppc support.
+26. Improve vax support.
+27. Improve xgate support.
 
 Changes from binutils 2.22.52.0.3:
 
@@ -528,13 +564,13 @@ already been defined.  PR 12001.
 
 The file list:
 
-1. binutils-2.22.52.0.4.tar.bz2.  Source code.
+1. binutils-2.23.51.0.1.tar.bz2.  Source code.
 
 The primary sites for the beta Linux binutils are:
 
 1. http://www.kernel.org/pub/linux/devel/binutils/
 
-It is also available on linux/release/2.22.52.0.4 branch at
+It is also available on linux/release/2.23.51.0.1 branch at
 
 http://git.kernel.org/?p=linux/kernel/git/hjl/binutils.git;a=summary
 
@@ -543,4 +579,4 @@ Thanks.
 
 H.J. Lu
 hjl.tools@gmail.com
-06/05/2012
+08/07/2012
