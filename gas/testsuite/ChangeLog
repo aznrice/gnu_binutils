@@ -1,3 +1,245 @@
+2012-08-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/mips.exp: Set has_newabi for all Linux targets.
+	* gas/mips/cfi-n64-1.d: Adjust for targets that do not infer the
+	ISA from the ABI.
+	* gas/mips/elf-rel-got-n32.d: Likewise.
+	* gas/mips/elf-rel-got-n64.d: Likewise.
+	* gas/mips/elf-rel-xgot-n32.d: Likewise.
+	* gas/mips/elf-rel-xgot-n64.d: Likewise.
+	* gas/mips/elf-rel18.d: Likewise.
+	* gas/mips/elf-rel28-n32.d: Likewise.
+	* gas/mips/elf-rel28-n64.d: Likewise.
+	* gas/mips/jal-newabi.d: Likewise.
+	* gas/mips/ldstla-n64-shared.d: Likewise.
+	* gas/mips/ldstla-n64-sym32.d: Likewise.
+	* gas/mips/ldstla-n64.d: Likewise.
+	* gas/mips/macro-warn-1-n32.d: Likewise.
+	* gas/mips/macro-warn-2-n32.d: Likewise.
+	* gas/mips/n32-consec.d: Likewise.
+
+2012-08-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/mips.exp: Set has_newabi for mips*-sde-elf* too.
+	* gas/mips/elf-rel-got-n32.s: Adjust padding.
+	* gas/mips/elf-rel-got-n64.s: Likewise.
+	* gas/mips/elf-rel23.s: Likewise.
+	* gas/mips/elf-rel28.s: Likewise.
+	* gas/mips/n32-consec.s: Likewise.
+	* gas/mips/elf-rel-xgot-n32.d: Adjust output expected.
+	* gas/mips/elf-rel-xgot-n64.d: Likewise.
+	* gas/mips/elf-rel23.d: Likewise.
+	* gas/mips/elf-rel23a.d: Likewise.
+	* gas/mips/elf-rel23b.d: Likewise.
+	* gas/mips/elf-rel28-n32.d: Likewise.
+
+2012-08-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/branch-swap-2.l: New list test.
+	* gas/mips/branch-swap-2.s: New test source.
+	* gas/mips/mips.exp: Run the new test.
+
+2012-08-06  Roland McGrath  <mcgrathr@google.com>
+
+	* gas/i386/x86-64-stack.s: Add cases for push segment register.
+	* gas/i386/x86-64-stack.d: Updated.
+	* gas/i386/x86-64-stack-suffix.d: Updated.
+	* gas/i386/x86-64-stack-intel.d: Updated.
+	* gas/i386/ilp32/x86-64-stack.d: Updated.
+	* gas/i386/ilp32/x86-64-stack-suffix.d: Updated.
+	* gas/i386/ilp32/x86-64-stack-intel.d: Updated.
+
+	* gas/i386/x86-64-stack.s: Add cases for push immediate.
+	* gas/testsuite/gas/i386/ilp32/x86-64-stack-intel.d: Updated.
+	* gas/testsuite/gas/i386/ilp32/x86-64-stack-suffix.d: Updated.
+	* gas/testsuite/gas/i386/ilp32/x86-64-stack.d: Updated.
+	* gas/testsuite/gas/i386/x86-64-stack-intel.d: Updated.
+	* gas/testsuite/gas/i386/x86-64-stack-suffix.d: Updated.
+	* gas/testsuite/gas/i386/x86-64-stack.d: Updated.
+
+	* gas/i386/x86-64-stack.s (try): Also try just rex.W (0x48) prefix.
+	* gas/testsuite/gas/i386/ilp32/x86-64-stack-intel.d: Updated.
+	* gas/testsuite/gas/i386/ilp32/x86-64-stack-suffix.d: Updated.
+	* gas/testsuite/gas/i386/ilp32/x86-64-stack.d: Updated.
+	* gas/testsuite/gas/i386/x86-64-stack-intel.d: Updated.
+	* gas/testsuite/gas/i386/x86-64-stack-suffix.d: Updated.
+	* gas/testsuite/gas/i386/x86-64-stack.d: Updated.
+
+2012-08-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/14420
+	* gas/elf/dwarf2-1.d: Updated.
+	* gas/elf/dwarf2-2.d: Likwise.
+	* gas/i386/dw2-compress-1.d: Likwise.
+
+2012-08-01  James Lemke  <jwlemke@codesourcery.com>
+
+	* gas/cfi/cfi-ppc-1.d: Allow for code alignment of 2 or 4.
+
+2012-07-31  Catherine Moore  <clm@codesourcery.com>
+	    Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/micromips@mips32-dsp.d: New test.
+	* gas/mips/micromips@mips32-dspr2.d: New test.
+	* gas/mips/mips32-dsp.d: Remove -mips32r2.
+	* gas/mips/mips32-dspr2.d: Likewise.
+	* gas/mips/mips32-dsp.s: Update padding.
+	* gas/mips/mips32-dspr2.s: Likewise.
+	* gas/mips/mips.exp: Use run_dump_test_arches to run MIPS32 DSP
+	tests.
+
+2012-07-31  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/d30v/bittest.l: Updated.
+
+2012-07-31  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/rdseed-intel.d: Append "#pass".
+
+2012-07-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/inval-equ-2.l: Updated.
+
+2012-07-27  Sean Keys  <skeys@ipdatasys.com>
+
+	* gas/xgate/xgate.exp: Added hi/lo test.
+	* gas/xgate/hilo.d: New test file
+	* gas/xgate/hilo.s: Net test source file.
+
+2012-07-24  Sandra Loosemore  <sandra@codesourcery.com>
+	    Jie Zhang  <jzhang918@gmail.com>
+
+	* gas/arm/adr.d: New test.
+	* gas/arm/adr.s: New test.
+
+2012-07-16  Michael Zolotukhin  <michael.v.zolotukhin@intel.com>
+
+	* gas/i386/i386.exp: Run adx, rdseed and prefetchw tests.
+	* gas/i386/x86-64-arch-2.s: Use prefetchw as 3dnow and Prfchw tests.
+	* gas/i386/arch-10.s: Likewise.
+	* gas/i386/arch-10-1.l: Changed correspondingly.
+	* gas/i386/arch-10-2.l: Likewise.
+	* gas/i386/arch-10-3.l: Likewise.
+	* gas/i386/arch-10-4.l: Likewise.
+	* gas/i386/arch-10.d: Likewise.
+	* gas/i386/arch-10-lzcnt.d: Likewise.
+	* gas/i386/x86-64-arch-2.d: Likewise.
+	* gas/i386/x86-64-arch-2-lzcnt.d: Likewise.
+	* gas/i386/ilp32/x86-64-arch-2.d: Likewise.
+	* gas/i386/arch-10-prefetchw.d: New file.
+	* gas/i386/x86-64-arch-2-prefetchw.d: Likewise.
+	* gas/i386/rdseed.s: Likewise.
+	* gas/i386/rdseed.d: Likewise.
+	* gas/i386/rdseed-intel.d: Likewise.
+	* gas/i386/adx.s: Likewise.
+	* gas/i386/adx.d: Likewise.
+	* gas/i386/adx-intel.d: Likewise.
+	* gas/i386/x86-64-rdseed.s: Likewise.
+	* gas/i386/x86-64-rdseed.d: Likewise.
+	* gas/i386/x86-64-rdseed-intel.d: Likewise.
+	* gas/i386/x86-64-adx.s: Likewise.
+	* gas/i386/x86-64-adx.d: Likewise.
+	* gas/i386/x86-64-adx-intel.d: Likewise.
+
+2012-07-02  Roland McGrath  <mcgrathr@google.com>
+
+	* gas/i386/rep-suffix.s: Add 'rep nop' case.
+	* gas/i386/x86-64-rep-suffix.s: Likewise.
+	* gas/i386/rep-suffix.d: Updated.
+	* gas/i386/x86-64-rep-suffix.d: Likewise.
+	* gas/i386/ilp32/x86-64-rep-suffix.d: Likewise.
+
+2012-07-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/i386.exp: Don't run rep-bsf nor rep-ret.
+
+	* gas/i386/rep-bsf.d: Removed.
+	* gas/i386/rep-bsf.s: Likewise.
+	* gas/i386/rep-ret.d: Likewise.
+	* gas/i386/rep-ret.s: Likewise.
+
+	* gas/i386/rep-suffix.d: Updated.
+	* gas/i386/x86-64-rep-suffix.d: Likewise.
+	* gas/i386/ilp32/x86-64-rep-suffix.d: Likewise.
+
+	* gas/i386/rep-suffix.s: Add tests for bsf, bsr and ret.
+	* gas/i386/x86-64-rep-suffix.s: Likewise.
+
+2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/14315
+	* gas/elf/common1.d: New file.
+	* gas/elf/common1.l: Likewise.
+	* gas/elf/common1.s: Likewise.
+	* gas/elf/common2.d: Likewise.
+	* gas/elf/common2.l: Likewise.
+	* gas/elf/common2.s: Likewise.
+
+	* gas/elf/elf.exp: Run common1 and common2.
+
+2012-06-29  Alan Modra  <amodra@gmail.com>
+
+	* gas/lns/lns.exp (lns-common-1): Add crx to alt target list.
+
+2012-06-28  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/14260
+	* gas/arm/ldr-t-bad.s: Add test of bogus use of literal pool
+	addressing.
+	* gas/arm/ldr-t-bad.l: Update expected assembler error message
+	output.
+
+2012-06-28  Nick Clifton  <nickc@redhat.com>
+
+	* gas/lns/lns.exp: Use alternate lns-common test for targets
+	enabling linker relaxation.
+	* gas/lns/lns-big-delta.d: Allow for output from architectures
+	with 32-bit addresses.
+
+2012-06-27  Alan Modra  <amodra@gmail.com>
+
+	* gas/i386/rep-ret.s: Zero pad section.
+	* gas/i386/rep-ret.d: Update.
+
+2012-06-22  Roland McGrath  <mcgrathr@google.com>
+
+	* gas/i386/rep-ret.d: New file.
+	* gas/i386/rep-ret.s: New file.
+	* gas/i386/i386.exp: Add the new test.
+
+	* gas/i386/rep-bsf.d: New file.
+	* gas/i386/rep-bsf.s: New file.
+	* gas/i386/i386.exp: Add the new test.
+
+2012-06-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/ilp32/x86-64-dc_a.d: New.
+	* gas/i386/ilp32/x86-64-dc_a.s: Likewise.
+
+2012-06-11  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* gas/ppc/e500mc.d: Update.
+	* gas/ppc/476.d: Update.
+
+2012-06-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/all/gas.exp: Don't run rept.
+
+	* gas/all/rept.d: Moved to ...
+	* gas/i386/rept.d: Here.
+	* gas/all/rept.s: Moved to ...
+	* gas/i386/rept.s: Here.
+
+	* gas/i386/i386.exp: Run rept.
+
+2012-06-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/14201
+	* gas/all/gas.exp: Run rept.
+
+	* gas/all/rept.d: New file.
+	* gas/all/rept.s: Likewise.
+
 2012-05-29  Roland McGrath  <mcgrathr@google.com>
 
 	* gas/i386/bundle-bad.s: Remove nested .bundle_lock case.
@@ -350,7 +592,7 @@
 	* gas/arm/thumbrel.d: Likewise.
 
 2012-04-12  Jie Zhang  <jie@codesourcery.com>
-            Meador Inge  <meadori@codesourcery.com>
+	    Meador Inge  <meadori@codesourcery.com>
 
 	* gas/arm/push-pop.d: New testcase.
 	* gas/arm/push-pop.s: Ditto.

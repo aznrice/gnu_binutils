@@ -16,13 +16,11 @@ dir=`dirname $0`
 clean=$1
 
 patches="
-	binutils-indirect-5.patch
 	binutils-shr-100.patch
 	binutils-error-15.patch
-	binutils-weakdef-2.patch
-	bfd-64k-2.patch
 	binutils-lto-mixed-18.patch
 	binutils-pr12639-2.patch
+	binutils-secondary-1.patch
 "
 
 if [ -n "$clean" ]

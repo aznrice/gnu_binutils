@@ -1,3 +1,109 @@
+2012-08-03  Tom Tromey  <tromey@redhat.com>
+
+	* dlltool.c (scan_obj_file): Close arfile after calling
+	bfd_openr_next_archived_file.
+
+2012-08-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/14420
+	* dwarf.c (process_abbrev_section): Add attribute terminator.
+	Warn missing section terminator.
+	(get_FORM_name): Special check for 0 value.
+	(get_AT_name): Likewise.
+	(process_debug_info): Display zero abbrev number.  Check
+	attribute terminator.
+
+2012-07-30  Nick Clifton  <nickc@redhat.com>
+
+	* po/binutils.pot: Updated template.
+	* po/bg.po: Updated Bulgarian translation.
+	* po/es.po: Updated Spanish translation.
+	* po/fi.po: Updated Finnish translation.
+	* po/fr.po: Updated French translation.
+	* po/uk.po: Updated Ukranian translation.
+
+2012-07-28  Kai Tietz  <ktietz@redhat.com>
+
+	* rcparse.y (FILEVERSION): Use optcnumexpr instead of cnumexpr.
+	(PRODUCTVERSION): Likewise.
+
+2012-07-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.in (BFD_VERSION): Run bfd/configure --version and
+	parse the output of that.
+	* configure: Regenerate.
+
+2012-07-27  Tristan Gingold  <gingold@adacore.com>
+
+	* NEWS: Add marker for 2.23.
+
+2012-07-24  Teresa Johnson  <tejohnson@google.com>
+
+	* addr2line.c (find_address_in_section): Invoke
+        bfd_find_nearest_line_discriminator to get the discriminator.
+	(find_offset_in_section): Likewise.
+	(translate_addresses): Print discriminator if it is non-zero.
+	* objdump.c (show_line): Invoke
+        bfd_find_nearest_line_discriminator to get the discriminator,
+        and keep track of prev_discriminator. Print discriminator
+        if it is non-zero.
+	(disassemble_data): Initialize prev_discriminator.
+	(dump_reloc_set): Invoke bfd_find_nearest_line_discriminator
+        to get the discriminator, and keep track of last_discriminator.
+        Print discriminator if it is non-zero.
+
+2012-07-17  Nick Clifton  <nickc@redhat.com>
+
+	* elfcomm.c (setup_archive): Extract index table and symbol table
+	scanning code into...
+	(process_archive_index_and_symbols): ... this function and add
+	support for 64-bit index tables.
+	* elfcomm.h (struct archive_info): Change type of index_num and
+	index_array to elf_vma.
+	Add 'uses_64bit_indicies' field.
+	* readelf.c (process_archive): Fix support for 64-bit indicies.
+
+2012-07-03  Nick Clifton  <nickc@redhat.com>
+
+	* readelf.c (process_archive): Display member indicies when
+	dumping index.
+
+2012-07-02  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf.c: Include gdb-index.h.
+	(display_gdb_index): Handle version 7.
+
+2012-06-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* nm.c (filter_symbols): Simplify global symbol handling.
+
+2012-06-29  Francois Gouget  <fgouget@codeweavers.com>
+
+	PR binutils/14302
+	* bucomm.c (print_arelt_descr): Correctly report the archive size
+	field (for 'ar tv').
+	* ar.c (print_contents): Use correct types for archive element
+	sizes (for 'ar p').
+	(extract_file): Likewise (for 'ar x').
+
+2012-06-29  Alan Modra  <amodra@gmail.com>
+
+	* readelf.c (is_16bit_abs_reloc): Handle mn10200 reloc.
+
+2012-06-12  Tom Tromey  <tromey@redhat.com>
+
+	* dwarf-mode.el: Add final comment.  Bump version.
+	(dwarf-insert-substructure-button): Use string-to-number.
+	(dwarf-browse): Fix autoload cookie.
+
+2012-06-08  Jakub Jelinek  <jakub@redhat.com>
+
+	* dwarf.c (read_and_display_attr_value): Handle
+	DW_FORM_GNU_ref_alt and DW_FORM_GNU_strp_alt.
+	(display_debug_macro): Handle DW_MACRO_GNU_define_indirect_alt,
+	DW_MACRO_GNU_undef_indirect_alt and
+	DW_MACRO_GNU_transparent_include_alt.
+
 2012-06-01  Alan Modra  <amodra@gmail.com>
 
 	* addr2line.c (translate_addresses): Truncate input addresses to

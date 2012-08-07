@@ -304,7 +304,7 @@ if {![string match "" $catch_output]} {
 # Check expected LTO linker errors.
 set testname "PR ld/12365"
 set exec_output [run_host_cmd "$CC" "$gcc_gas_flag $gcc_ld_flag -O2 -flto -fuse-linker-plugin tmpdir/pr12365a.o tmpdir/pr12365b.o tmpdir/pr12365c.o"]
-if { [ regexp "`my_bcopy' referenced in .* defined in discarded section" $exec_output ] } {
+if { [ regexp "undefined reference to `my_bcopy'" $exec_output ] } {
     pass $testname
 } {
     fail $testname

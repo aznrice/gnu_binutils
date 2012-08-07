@@ -1,3 +1,27 @@
+2012-08-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/14420
+	* binutils-all/i386/compressed-1a.d: Updated.
+	* binutils-all/objdump.W: Likewise.
+	* binutils-all/readelf.wa: Likewise.
+	* binutils-all/x86-64/compressed-1a.d: Likewise.
+
+2012-07-28  Kai Tietz  <ktietz@redhat.com>
+
+	* binutils-all/windres/version_small.rc: New test.
+	* binutils-all/windres/version_small.rsd: Likewise.
+
+2012-07-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/14319
+	* binutils-all/compress.exp: Test compress empty debug sections.
+
+	* binutils-all/dw2-empty.S: New file.
+
+2012-06-07  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* binutils-all/i386/i386.exp: Don't skip for x86_64-*-linux*.
+
 2012-05-17  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* binutils-all/hppa/objdump.exp: Expect addend as signed.

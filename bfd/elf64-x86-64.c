@@ -975,14 +975,14 @@ elf_x86_64_create_dynamic_sections (bfd *dynobj,
   if (htab == NULL)
     return FALSE;
 
-  htab->sdynbss = bfd_get_section_by_name (dynobj, ".dynbss");
+  htab->sdynbss = bfd_get_linker_section (dynobj, ".dynbss");
   if (!info->shared)
     {
-      htab->srelbss = bfd_get_section_by_name (dynobj, ".rela.bss");
+      htab->srelbss = bfd_get_linker_section (dynobj, ".rela.bss");
       htab->sdynsharablebss
-	= bfd_get_section_by_name (dynobj, ".dynsharablebss");
+	= bfd_get_linker_section (dynobj, ".dynsharablebss");
       htab->srelsharablebss
-	= bfd_get_section_by_name (dynobj, ".rela.sharable_bss");
+	= bfd_get_linker_section (dynobj, ".rela.sharable_bss");
     }
 
   if (!htab->sdynbss
@@ -2619,7 +2619,7 @@ elf_x86_64_size_dynamic_sections (bfd *output_bfd,
       /* Set the contents of the .interp section to the interpreter.  */
       if (info->executable)
 	{
-	  s = bfd_get_section_by_name (dynobj, ".interp");
+	  s = bfd_get_linker_section (dynobj, ".interp");
 	  if (s == NULL)
 	    abort ();
 	  s->size = htab->dynamic_interpreter_size;
@@ -4232,13 +4232,16 @@ elf_x86_64_relocate_section (bfd *output_bfd,
 	       && h->def_dynamic)
 	  && _bfd_elf_section_offset (output_bfd, info, input_section,
 				      rel->r_offset) != (bfd_vma) -1)
-	(*_bfd_error_handler)
-	  (_("%B(%A+0x%lx): unresolvable %s relocation against symbol `%s'"),
-	   input_bfd,
-	   input_section,
-	   (long) rel->r_offset,
-	   howto->name,
-	   h->root.root.string);
+	{
+	  (*_bfd_error_handler)
+	    (_("%B(%A+0x%lx): unresolvable %s relocation against symbol `%s'"),
+	     input_bfd,
+	     input_section,
+	     (long) rel->r_offset,
+	     howto->name,
+	     h->root.root.string);
+	  return FALSE;
+	}
 
 do_relocation:
       r = _bfd_final_link_relocate (howto, input_bfd, input_section,
@@ -4592,7 +4595,7 @@ elf_x86_64_finish_dynamic_sections (bfd *output_bfd,
     return FALSE;
 
   dynobj = htab->elf.dynobj;
-  sdyn = bfd_get_section_by_name (dynobj, ".dynamic");
+  sdyn = bfd_get_linker_section (dynobj, ".dynamic");
 
   if (htab->elf.dynamic_sections_created)
     {

@@ -633,14 +633,9 @@ elf_object_p (bfd *abfd)
       if (i_ehdrp->e_shnum == SHN_UNDEF)
 	{
 	  i_ehdrp->e_shnum = i_shdr.sh_size;
-	  if (i_ehdrp->e_shnum >= SHN_LORESERVE)
-	    {
-	      _bfd_error_handler (_("%B: too many sections: %u"),
-				  abfd, i_ehdrp->e_shnum);
-	      abort ();
-	    }
-	  else if (i_ehdrp->e_shnum != i_shdr.sh_size
-		   || i_ehdrp->e_shnum  == 0)
+	  if (i_ehdrp->e_shnum >= SHN_LORESERVE
+	      || i_ehdrp->e_shnum != i_shdr.sh_size
+	      || i_ehdrp->e_shnum  == 0)
 	    goto got_wrong_format_error;
 	}
 
@@ -1316,6 +1311,9 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bfd_boolean dynamic)
 	    case STB_WEAK:
 	      sym->symbol.flags |= BSF_WEAK;
 	      break;
+	    case STB_SECONDARY:
+	      sym->symbol.flags |= BSF_SECONDARY;
+	      break;
 	    case STB_GNU_UNIQUE:
 	      sym->symbol.flags |= BSF_GNU_UNIQUE;
 	      break;
@@ -1639,7 +1637,7 @@ NAME(_bfd_elf,bfd_from_remote_memory)
   (bfd *templ,
    bfd_vma ehdr_vma,
    bfd_vma *loadbasep,
-   int (*target_read_memory) (bfd_vma, bfd_byte *, size_t))
+   int (*target_read_memory) (bfd_vma, bfd_byte *, bfd_size_type))
 {
   Elf_External_Ehdr x_ehdr;	/* Elf file header, external form */
   Elf_Internal_Ehdr i_ehdr;	/* Elf file header, internal form */

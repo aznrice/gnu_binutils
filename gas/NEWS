@@ -1,5 +1,7 @@
 -*- text -*-
 
+Changes in 2.23:
+
 * Add support for S12X processor.
 
 * Add support for the VLE extension to the PowerPC architecture.
@@ -12,6 +14,8 @@
 * Add support for the Renesas RL78 architecture.
 
 * Add support for the Adapteva EPIPHANY architecture.
+
+* For x86, allow 'rep bsf', 'rep bsr', and 'rep ret' syntax.
 
 Changes in 2.22:
 

@@ -1186,7 +1186,8 @@ struct elf_backend_data
      see elf.c, elfcode.h.  */
   bfd *(*elf_backend_bfd_from_remote_memory)
      (bfd *templ, bfd_vma ehdr_vma, bfd_vma *loadbasep,
-      int (*target_read_memory) (bfd_vma vma, bfd_byte *myaddr, size_t len));
+      int (*target_read_memory) (bfd_vma vma, bfd_byte *myaddr,
+				 bfd_size_type len));
 
   /* This function is used by `_bfd_elf_get_synthetic_symtab';
      see elf.c.  */
@@ -1875,9 +1876,16 @@ extern bfd_boolean _bfd_elf_set_arch_mach
 extern bfd_boolean _bfd_elf_find_nearest_line
   (bfd *, asection *, asymbol **, bfd_vma, const char **, const char **,
    unsigned int *);
+extern bfd_boolean _bfd_elf_find_nearest_line_discriminator
+  (bfd *, asection *, asymbol **, bfd_vma, const char **, const char **,
+   unsigned int *, unsigned int *);
 extern bfd_boolean _bfd_elf_find_line
   (bfd *, asymbol **, asymbol *, const char **, unsigned int *);
+extern bfd_boolean _bfd_elf_find_line_discriminator
+  (bfd *, asymbol **, asymbol *, const char **, unsigned int *, unsigned int *);
 #define _bfd_generic_find_line _bfd_elf_find_line
+#define _bfd_generic_find_nearest_line_discriminator \
+        _bfd_elf_find_nearest_line_discriminator
 extern bfd_boolean _bfd_elf_find_inliner_info
   (bfd *, const char **, const char **, unsigned int *);
 #define _bfd_elf_read_minisymbols _bfd_generic_read_minisymbols
@@ -2283,10 +2291,10 @@ extern char *elfcore_write_register_note
 
 extern bfd *_bfd_elf32_bfd_from_remote_memory
   (bfd *templ, bfd_vma ehdr_vma, bfd_vma *loadbasep,
-   int (*target_read_memory) (bfd_vma, bfd_byte *, size_t));
+   int (*target_read_memory) (bfd_vma, bfd_byte *, bfd_size_type));
 extern bfd *_bfd_elf64_bfd_from_remote_memory
   (bfd *templ, bfd_vma ehdr_vma, bfd_vma *loadbasep,
-   int (*target_read_memory) (bfd_vma, bfd_byte *, size_t));
+   int (*target_read_memory) (bfd_vma, bfd_byte *, bfd_size_type));
 
 extern bfd_vma bfd_elf_obj_attr_size (bfd *);
 extern void bfd_elf_set_obj_attr_contents (bfd *, bfd_byte *, bfd_vma);

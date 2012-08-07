@@ -4308,7 +4308,7 @@ create_got_section (bfd *abfd, struct bfd_link_info *info)
       if (! _bfd_elf_create_got_section (htab->elf.dynobj, info))
 	return FALSE;
 
-      htab->got = bfd_get_section_by_name (htab->elf.dynobj, ".got");
+      htab->got = bfd_get_linker_section (htab->elf.dynobj, ".got");
       if (!htab->got)
 	abort ();
     }
@@ -4347,12 +4347,12 @@ ppc64_elf_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
     return FALSE;
 
   if (!htab->got)
-    htab->got = bfd_get_section_by_name (dynobj, ".got");
-  htab->plt = bfd_get_section_by_name (dynobj, ".plt");
-  htab->relplt = bfd_get_section_by_name (dynobj, ".rela.plt");
-  htab->dynbss = bfd_get_section_by_name (dynobj, ".dynbss");
+    htab->got = bfd_get_linker_section (dynobj, ".got");
+  htab->plt = bfd_get_linker_section (dynobj, ".plt");
+  htab->relplt = bfd_get_linker_section (dynobj, ".rela.plt");
+  htab->dynbss = bfd_get_linker_section (dynobj, ".dynbss");
   if (!info->shared)
-    htab->relbss = bfd_get_section_by_name (dynobj, ".rela.bss");
+    htab->relbss = bfd_get_linker_section (dynobj, ".rela.bss");
 
   if (!htab->got || !htab->plt || !htab->relplt || !htab->dynbss
       || (!info->shared && !htab->relbss))
@@ -6468,7 +6468,7 @@ ppc64_elf_func_desc_adjust (bfd *obfd ATTRIBUTE_UNUSED,
 {
   struct ppc_link_hash_table *htab;
   unsigned int i;
-  const struct sfpr_def_parms funcs[] =
+  static const struct sfpr_def_parms funcs[] =
     {
       { "_savegpr0_", 14, 31, savegpr0, savegpr0_tail },
       { "_restgpr0_", 14, 29, restgpr0, restgpr0_tail },
@@ -6494,9 +6494,10 @@ ppc64_elf_func_desc_adjust (bfd *obfd ATTRIBUTE_UNUSED,
 
   /* Provide any missing _save* and _rest* functions.  */
   htab->sfpr->size = 0;
-  for (i = 0; i < sizeof (funcs) / sizeof (funcs[0]); i++)
-    if (!sfpr_define (info, &funcs[i]))
-      return FALSE;
+  if (!info->relocatable)
+    for (i = 0; i < sizeof (funcs) / sizeof (funcs[0]); i++)
+      if (!sfpr_define (info, &funcs[i]))
+	return FALSE;
 
   elf_link_hash_traverse (&htab->elf, func_desc_adjust, info);
 
@@ -9139,7 +9140,7 @@ ppc64_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       /* Set the contents of the .interp section to the interpreter.  */
       if (info->executable)
 	{
-	  s = bfd_get_section_by_name (dynobj, ".interp");
+	  s = bfd_get_linker_section (dynobj, ".interp");
 	  if (s == NULL)
 	    abort ();
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
@@ -10553,7 +10554,9 @@ ppc64_elf_next_toc_section (struct bfd_link_info *info, asection *isec)
   if (!htab->second_toc_pass)
     {
       /* Keep track of the first .toc or .got section for this input bfd.  */
-      if (htab->toc_bfd != isec->owner)
+      bfd_boolean new_bfd = htab->toc_bfd != isec->owner;
+
+      if (new_bfd)
 	{
 	  htab->toc_bfd = isec->owner;
 	  htab->toc_first_sec = isec;
@@ -10581,7 +10584,8 @@ ppc64_elf_next_toc_section (struct bfd_link_info *info, asection *isec)
 
       /* Die if someone uses a linker script that doesn't keep input
 	 file .toc and .got together.  */
-      if (elf_gp (isec->owner) != 0
+      if (new_bfd
+	  && elf_gp (isec->owner) != 0
 	  && elf_gp (isec->owner) != off)
 	return FALSE;
 
@@ -14034,7 +14038,7 @@ ppc64_elf_finish_dynamic_sections (bfd *output_bfd,
     return FALSE;
 
   dynobj = htab->elf.dynobj;
-  sdyn = bfd_get_section_by_name (dynobj, ".dynamic");
+  sdyn = bfd_get_linker_section (dynobj, ".dynamic");
 
   if (htab->elf.dynamic_sections_created)
     {

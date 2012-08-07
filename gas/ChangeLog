@@ -1,3 +1,263 @@
+2012-08-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (append_insn): Also handle moving delay-slot
+	instruction across frags for fixed branches.
+
+2012-08-03  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* frags.c (frag_grow): Never shrink the obstack size requested
+	below the default.
+
+2012-08-02  Sean Keys  <skeys@ipdatasys.com>
+
+	* config/tc-m68hc11.c (s_m68hc11_parse_pseudo_instruction):
+	New function to parse pseudo ops that are unreleated to
+	existing pseudo ops.
+
+2012-08-01  Catherine Moore  <clm@codesourcery.com>
+	    Sandra Loosemore  <sandra@codesourcery.com>
+
+	* config/mips/tc-mips.c (mips_cpu_info):  Add the 34kn.
+	* doc/c-mips.texi (MIPS Opts): Document it.
+
+2012-08-01  James Lemke  <jwlemke@codesourcery.com>
+
+	* dwarf2dbg.c (out_set_addr): Allow for non-constant value of
+	DWARF2_LINE_MIN_INSN_LENGTH
+	* config/tc-ppc.c (ppc_dwarf2_line_min_insn_length): Declare
+	and initialize.
+	(md_apply_fix): Branch addr can be a multiple of 2 or 4.
+	* config/tc-ppc.h (DWARF2_LINE_MIN_INSN_LENGTH): Now a
+	variable reference.
+
+2012-07-31  Maciej W. Rozycki  <macro@codesourcery.com>
+	    Chao-Ying Fu  <fu@mips.com>
+	    Catherine Moore  <clm@codesourcery.com>
+
+	* config/tc-mips.c (ISA_SUPPORTS_DSP_ASE): Also set if microMIPS
+	mode.
+	(ISA_SUPPORTS_DSPR2_ASE): Likewise.
+	(macro_build) <'2'>: Handle microMIPS.
+	(macro) <M_BALIGN>: Update error handling.
+	(validate_micromips_insn) <'2', '3', '4', '5', '6'>: New cases.
+	<'7', '8', '0', '@', '^'>: Likewise.
+	(mips_ip) <'2', '3', '4', '5', '6', '7', '8'>: Handle microMIPS.
+	<'9'>: Fix formatting.
+	<'0', '@'>: Handle microMIPS.
+	<'^'>: New case.
+
+2012-07-31  Jan Beulich <jbeulich@suse.com>
+
+	* config/tc-i386.c (match_template): Adjust error message
+	for 'bad_imm4' case.
+
+2012-07-31  Jan Beulich <jbeulich@suse.com>
+
+	* config/tc-i386.c (check_byte_reg): Check for I/O port
+	register earlier, and just once. Drop diagnostic that got
+	issued only for some registers.
+
+2012-07-31  Jan Beulich <jbeulich@suse.com>
+
+	* config/tc-i386.c (match_template): New local variable
+	'specific_error'. Set it from i.error after failed
+	check_VecOperands or VEX_check_operands. Use it if set in
+	preference to i.error when actually issuing disagnostic.
+
+2012-07-30  Nick Clifton  <nickc@redhat.com>
+
+	* po/gas.pot: Updated template.
+	* po/es.po: Updated Spanish translation.
+	* po/fi.po: Updated Finnish translation.
+	* po/fr.po: Updated French translation.
+
+2012-07-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.in (BFD_VERSION): Run bfd/configure --version and
+	parse the output of that.
+	* configure: Regenerate.
+
+2012-07-27  Tristan Gingold  <gingold@adacore.com>
+
+	* NEWS: Add marker for 2.23.
+
+2012-07-27  James Murray  <jsm@jsm-net.demon.co.uk>
+
+	* config/tc-m68hc11.c: Replace binary with hex for cygwin.
+
+2012-07-26  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	* listing.c (struct list_message): New.
+	(struct list_info_struct): Delete "message".  Add "messages"
+	and "last_message".
+	(listing_message): Adjust.
+	(listing_newline): Adjust.
+	(print_lines): Adjust.
+
+2012-07-24  Jan Beulich <jbeulich@suse.com>
+
+	* config/tc-i386-intel.c (i386_intel_simplify_register): Handle
+	xmm/ymm index register being specified first as well as esp/rsp
+	base register being specified last in a memory operand.
+
+2012-07-24  Jan Beulich <jbeulich@suse.com>
+
+	* config/tc-i386-intel.c (i386_intel_simplify_register):
+	Replace literal 4 by corresponding ESP_REG_NUM.
+
+2012-07-24  Sandra Loosemore  <sandra@codesourcery.com>
+	    Jie Zhang  <jzhang918@gmail.com>
+
+	* config/tc-arm.c (md_apply_fix): Use encoding A2 of ADR
+	if offset is negative.
+
+2012-07-16  Michael Zolotukhin  <michael.v.zolotukhin@intel.com>
+
+	* config/tc-i386.c: Add ADX, RDSEED and PRFCHW asm directives.
+	* doc/c-i386.texi: Document the new directives.
+
+2012-07-05  Sean Keys  <skeys@ipdatasys.com>
+
+	* config/tc-xgate.c: Revised assembler so that operands
+	are collected before the addressing mode is determined.
+
+2012-07-02  Nick Clifton  <nickc@redhat.com>
+
+	* write.c (fixup_segment): Only perform the subtraction of an
+	fx_subsy symbol if MD_APPLY_SYM_VALUE allows it and the symbol is
+	properly defined.
+	* config/tc-msp430.h (MD_APPLY_SYM_VALUE): Define.
+
+2012-06-30  Alan Modra  <amodra@gmail.com>
+
+	PR gas/14315
+	* config/obj-elf.c (obj_elf_weak): Don't set local.
+
+2012-06-30  Johan Olmutz Nielsen  <jnielsen@ddci.com>
+
+	* frags.h (frag_offset_fixed_p): Update prototype.
+	* frags.c (frag_offset_fixed_p): Change type of "offset" to offsetT.
+	* expr.c (expr, resolve_expression): Likewise for frag_off var.
+
+2012-06-29  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/14263
+	* config/tc-arm.c (parse_operands): Initialise val.
+
+2012-06-28  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/14260
+	* config/tc-arm.c (encode_arm_addr_mode_common): Generate an error
+	message if literal pool addressing is used.
+
+2012-06-28  Nick Clifton  <nickc@redhat.com>
+
+	* dwarf2dbg.c (DWARF2_USE_FIXED_ADVANCE_PC): Enable when using
+	linker relaxation.
+	(dwarf2_gen_line_info): Generate real, local, labels for line
+	numbers.
+	(dwarf2dbg_convert_frag): Do not finalize the computation of the
+	frag's symbol value when linker relaxation is enabled.
+	(ADDR_DELTA_LIMIT): Define.
+	(size_fixed_inc_line_addr): Use ADDR_DELTA_LIMIT.
+	(emit_fixed_inc_line_addr): Likewise.
+	* write.c (fixup_segment): If the subtraction of two symbols
+	cannot be resolved but is valid, then prevent bogus range warnings
+	by pre-biasing add_number.
+	* config/tc-h8300.h (DWARF2_USE_FIXED_ADVANCE_PC): Define to 0.
+
+2012-06-28  Sean Keys  <skeys@ipdatasys.com>
+
+	* config/tc-xgate.h: Defined tc_frob_symbol.
+	* config/tc-xgate.c (xgate_frob_symbol): Wrote new function to mark
+	symbols as being XGATE by setting st_target_internal value.
+
+2012-06-22  Roland McGrath  <mcgrathr@google.com>
+
+	* NEWS: Mention 'rep ret' too.
+
+	* config/tc-i386.c (parse_insn): Don't complain about REP prefix
+	when the template has opcode_modifier.repprefixok set.
+	* NEWS: Mention the change.
+
+2012-06-18  Iain Sandoe  <iain@codesourcery.com>
+
+	* configure.in: Check DECLS for free, getenv, malloc, realloc,
+	* configure: Regenerate.
+	* config.in: Likewise.
+
+2012-06-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (x86_address_bytes): New.
+	* config/tc-i386.h (TC_ADDRESS_BYTES): Likewise.
+	(x86_address_bytes): Likewise.
+
+2012-06-13  Zhenqiang Chen  <zhenqiang.chen@linaro.org>
+
+	PR gas/12698
+	* config/tc-arm.c (do_t_mrs): Do not require an m-profile
+	architecure when assembling for all archiectures.
+	(do_t_msr): Likewise.
+
+2012-06-11  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR 13503
+	* config/tc-avr.c (exp_mod): Fix typo introduced in 1.82
+	from 2012-05-16.
+
+2012-06-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* input-scrub.c (input_scrub_include_sb): Use sb_build to
+	allocate sufficient space for from_sb.  Use sb_terminate to
+	terminate string.
+	* read.c (read_a_source_file): Use sb_build to allocate
+	sufficient space and replace sb_add_string with sb_add_buffer.
+	(s_macro): Likewise.
+	(input_scrub_insert_line): Likewise.
+	(s_irp): Use sb_build to allocate sufficient space.
+	(do_repeat): Use sb_build to allocate sufficient space
+	for many.
+	* sb.c (sb_build): Remove static.
+	* sb.h (sb_build): New prototype.
+
+2012-06-09  Alan Modra  <amodra@gmail.com>
+
+	* sb.c: Include limits.h.
+	(dsize): Delete.
+	(MALLOC_OVERHEAD, INIT_ALLOC): Define.
+	(sb_new): Use INIT_ALLOC.
+	(sb_check): Modify allocation strategy using MALLOC_OVERHEAD.
+	(sb_terminate): Don't use sb_add_char.
+
+2012-06-07  Alan Modra  <amodra@gmail.com>
+
+	PR gas/14201
+	* sb.h (sb_max_power_two): Delete.
+	(struct sb): Delete "item" and "pot".  Make "len" a size_t.  Add "max".
+	(sb_element): Delete.
+	(sb_add_char, sb_add_buffer, sb_skip_comma, sb_skip_write): Update
+	prototypes.
+	* sb.c (string_count, free_list): Delete.
+	(sb_build, sb_kill, sb_check): Rewrite.
+	(scrub_from_sb, sb_add_char, sb_add_string, sb_add_buffer,
+	sb_skip_white, sb_skip_comma): Replace assorted int params,
+	vars and return types with size_t.
+	* input-scrub.c: Likewise.
+	* macro.c: Likewise.
+	* macro.h: Likewise.
+	* as.c: Likewise.
+	* as.h: Likewise.
+	* input-file.h: Likewise.
+	* input-file.c: Likewise.
+	* read.c: Likewise.
+	* app.c: ..or ptrdiff_t.
+	* input-file.c (input_file_get): Use ferror.
+	(input_file_give_next_buffer): Use input_file_get.
+
+2012-05-31  Sean Keys  <skeys@ipdatasys.com>
+
+	* config/tc-xgate.c (md_begin): Refactored code.
+
 2012-05-29  Roland McGrath  <mcgrathr@google.com>
 
 	* read.c [HANDLE_BUNDLE] (bundle_lock_depth): New variable.
@@ -379,7 +639,7 @@
 	Use nacl format variants.
 
 2012-04-12  Jie Zhang  <jie@codesourcery.com>
-            Meador Inge  <meadori@codesourcery.com>
+	    Meador Inge  <meadori@codesourcery.com>
 
 	* config/tc-arm.c (only_one_reg_in_list): New function.
 	(encode_ldmstm): Ditto.

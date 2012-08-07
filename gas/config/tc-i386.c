@@ -767,6 +767,12 @@ static const arch_entry cpu_arch[] =
     CPU_BMI_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".tbm"), PROCESSOR_UNKNOWN,
     CPU_TBM_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN (".adx"), PROCESSOR_UNKNOWN,
+    CPU_ADX_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN (".rdseed"), PROCESSOR_UNKNOWN,
+    CPU_RDSEED_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN (".prfchw"), PROCESSOR_UNKNOWN,
+    CPU_PRFCHW_FLAGS, 0, 0 },
 };
 
 #ifdef I386COFF
@@ -3528,13 +3534,13 @@ skip:
       as_warn (_("use .code16 to ensure correct addressing mode"));
     }
 
-  /* Check for rep/repne without a string instruction.  */
+  /* Check for rep/repne without a string (or other allowed) instruction.  */
   if (expecting_string_instruction)
     {
       static templates override;
 
       for (t = current_templates->start; t < current_templates->end; ++t)
-	if (t->opcode_modifier.isstring)
+	if (t->opcode_modifier.repprefixok)
 	  break;
       if (t >= current_templates->end)
 	{
@@ -3543,7 +3549,7 @@ skip:
 	  return NULL;
 	}
       for (override.start = t; t < current_templates->end; ++t)
-	if (!t->opcode_modifier.isstring)
+	if (!t->opcode_modifier.repprefixok)
 	  break;
       override.end = t;
       current_templates = &override;
@@ -4009,6 +4015,7 @@ match_template (void)
   unsigned int j;
   unsigned int found_cpu_match;
   unsigned int check_register;
+  enum i386_error specific_error = 0;
 
 #if MAX_OPERANDS != 5
 # error "MAX_OPERANDS must be 5."
@@ -4305,13 +4312,12 @@ check_reverse:
 	  continue;
 	}
 
-      /* Check if vector operands are valid.  */
-      if (check_VecOperands (t))
-	continue;
-
-      /* Check if VEX operands are valid.  */
-      if (VEX_check_operands (t))
-	continue;
+      /* Check if vector and VEX operands are valid.  */
+      if (check_VecOperands (t) || VEX_check_operands (t))
+	{
+	  specific_error = i.error;
+	  continue;
+	}
 
       /* We've found a match; break out of loop.  */
       break;
@@ -4321,7 +4327,7 @@ check_reverse:
     {
       /* We found no match.  */
       const char *err_msg;
-      switch (i.error)
+      switch (specific_error ? specific_error : i.error)
 	{
 	default:
 	  abort ();
@@ -4341,7 +4347,7 @@ check_reverse:
 	  err_msg = _("invalid instruction suffix");
 	  break;
 	case bad_imm4:
-	  err_msg = _("Imm4 isn't the first operand");
+	  err_msg = _("constant doesn't fit in 4 bits");
 	  break;
 	case old_gcc_only:
 	  err_msg = _("only supported with old gcc");
@@ -4728,6 +4734,10 @@ check_byte_reg (void)
       if (i.types[op].bitfield.reg8)
 	continue;
 
+      /* I/O port address operands are OK too.  */
+      if (i.tm.operand_types[op].bitfield.inoutportreg)
+	continue;
+
       /* crc32 doesn't generate this warning.  */
       if (i.tm.base_opcode == 0xf20f38f0)
 	continue;
@@ -4735,21 +4745,13 @@ check_byte_reg (void)
       if ((i.types[op].bitfield.reg16
 	   || i.types[op].bitfield.reg32
 	   || i.types[op].bitfield.reg64)
-	  && i.op[op].regs->reg_num < 4)
+	  && i.op[op].regs->reg_num < 4
+	  /* Prohibit these changes in 64bit mode, since the lowering
+	     would be more complicated.  */
+	  && flag_code != CODE_64BIT)
 	{
-	  /* Prohibit these changes in the 64bit mode, since the
-	     lowering is more complicated.  */
-	  if (flag_code == CODE_64BIT
-	      && !i.tm.operand_types[op].bitfield.inoutportreg)
-	    {
-	      as_bad (_("incorrect register `%s%s' used with `%c' suffix"),
-		      register_prefix, i.op[op].regs->reg_name,
-		      i.suffix);
-	      return 0;
-	    }
 #if REGISTER_WARNINGS
-	  if (!quiet_warnings
-	      && !i.tm.operand_types[op].bitfield.inoutportreg)
+	  if (!quiet_warnings)
 	    as_warn (_("using `%s%s' instead of `%s%s' due to `%c' suffix"),
 		     register_prefix,
 		     (i.op[op].regs + (i.types[op].bitfield.reg16
@@ -6617,6 +6619,17 @@ x86_cons_fix_new (fragS *frag, unsigned int off, unsigned int len,
 #endif
 
   fix_new_exp (frag, off, len, exp, 0, r);
+}
+
+/* Export the ABI address size for use by TC_ADDRESS_BYTES for the
+   purpose of the `.dc.a' internal pseudo-op.  */
+
+int
+x86_address_bytes (void)
+{
+  if ((stdoutput->arch_info->mach & bfd_mach_x64_32))
+    return 4;
+  return stdoutput->arch_info->bits_per_address / 8;
 }
 
 #if !(defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF) || defined (OBJ_MACH_O)) \

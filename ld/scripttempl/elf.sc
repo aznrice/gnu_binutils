@@ -497,7 +497,7 @@ cat <<EOF
   .init         ${RELOCATING-0} :
   {
     ${RELOCATING+${INIT_START}}
-    KEEP (*(.init))
+    KEEP (*(SORT_NONE(.init)))
     ${RELOCATING+${INIT_END}}
   } ${FILL}
 
@@ -518,7 +518,7 @@ cat <<EOF
   .fini         ${RELOCATING-0} :
   {
     ${RELOCATING+${FINI_START}}
-    KEEP (*(.fini))
+    KEEP (*(SORT_NONE(.fini)))
     ${RELOCATING+${FINI_END}}
   } ${FILL}
   ${RELOCATING+PROVIDE (__${ETEXT_NAME} = .);}
@@ -603,12 +603,13 @@ cat <<EOF
   ${SMALL_DATA_CTOR+${RELOCATING+${CTOR}}}
   ${SMALL_DATA_DTOR+${RELOCATING+${DTOR}}}
   ${DATA_PLT+${PLT_BEFORE_GOT+${PLT}}}
-  ${SDATA_GOT+${RELOCATING+${OTHER_GOT_SYMBOLS}}}
+  ${SDATA_GOT+${RELOCATING+${OTHER_GOT_SYMBOLS+. = .; ${OTHER_GOT_SYMBOLS}}}}
   ${SDATA_GOT+${GOT}}
   ${SDATA_GOT+${OTHER_GOT_SECTIONS}}
   ${SDATA}
   ${OTHER_SDATA_SECTIONS}
   ${RELOCATING+${DATA_END_SYMBOLS-${USER_LABEL_PREFIX}_edata = .; PROVIDE (${USER_LABEL_PREFIX}edata = .);}}
+  ${RELOCATING+. = .;}
   ${RELOCATING+${USER_LABEL_PREFIX}__bss_start = .;}
   ${RELOCATING+${OTHER_BSS_SYMBOLS}}
   ${SBSS}
@@ -683,6 +684,9 @@ cat <<EOF
   .debug_pubtypes 0 : { *(.debug_pubtypes) }
   .debug_ranges   0 : { *(.debug_ranges) }
 
+  /* DWARF Extension.  */
+  .debug_macro    0 : { *(.debug_macro) } 
+  
   ${TINY_DATA_SECTION}
   ${TINY_BSS_SECTION}
 

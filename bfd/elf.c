@@ -1025,7 +1025,7 @@ _bfd_elf_make_section_from_shdr (bfd *abfd,
       else
 	{
 	  /* Normal section.  Check if we should compress.  */
-	  if ((abfd->flags & BFD_COMPRESS))
+	  if ((abfd->flags & BFD_COMPRESS) && newsect->size != 0)
 	    action = compress;
 	}
 
@@ -1038,7 +1038,7 @@ _bfd_elf_make_section_from_shdr (bfd *abfd,
 	  if (!bfd_init_section_compress_status (abfd, newsect))
 	    {
 	      (*_bfd_error_handler)
-		(_("%B: unable to initialize commpress status for section %s"),
+		(_("%B: unable to initialize compress status for section %s"),
 		 abfd, name);
 	      return FALSE;
 	    }
@@ -1058,7 +1058,7 @@ _bfd_elf_make_section_from_shdr (bfd *abfd,
 	  if (!bfd_init_section_decompress_status (abfd, newsect))
 	    {
 	      (*_bfd_error_handler)
-		(_("%B: unable to initialize decommpress status for section %s"),
+		(_("%B: unable to initialize decompress status for section %s"),
 		 abfd, name);
 	      return FALSE;
 	    }
@@ -3263,7 +3263,10 @@ sym_is_global (bfd *abfd, asymbol *sym)
   if (bed->elf_backend_sym_is_global)
     return (*bed->elf_backend_sym_is_global) (abfd, sym);
 
-  return ((sym->flags & (BSF_GLOBAL | BSF_WEAK | BSF_GNU_UNIQUE)) != 0
+  return ((sym->flags & (BSF_GLOBAL
+			 | BSF_WEAK
+			 | BSF_SECONDARY
+			 | BSF_GNU_UNIQUE)) != 0
 	  || bfd_is_und_section (bfd_get_section (sym))
 	  || bfd_is_com_section (bfd_get_section (sym)));
 }
@@ -4262,18 +4265,25 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
 	{
 	  for (m = mfirst; m != NULL; m = m->next)
 	    {
-	      if (m->p_type == PT_LOAD)
+	      if (m->p_type == PT_LOAD
+		  && m->count != 0
+		  && m->sections[0]->vma >= info->relro_start
+		  && m->sections[0]->vma < info->relro_end)
 		{
-		  asection *last = m->sections[m->count - 1];
-		  bfd_vma vaddr = m->sections[0]->vma;
-		  bfd_vma filesz = last->vma - vaddr + last->size;
+		  i = m->count;
+		  while (--i != (unsigned) -1)
+		    if ((m->sections[i]->flags & (SEC_LOAD | SEC_HAS_CONTENTS))
+			== (SEC_LOAD | SEC_HAS_CONTENTS))
+		      break;
 
-		  if (vaddr < info->relro_end
-		      && vaddr >= info->relro_start
-		      && (vaddr + filesz) >= info->relro_end)
+		  if (i == (unsigned) -1)
+		    continue;
+
+		  if (m->sections[i]->vma + m->sections[i]->size
+		      >= info->relro_end)
 		    break;
 		}
-	      }
+	    }
 
 	  /* Make a PT_GNU_RELRO segment only when it isn't empty.  */
 	  if (m != NULL)
@@ -4678,8 +4688,6 @@ assign_file_positions_for_load_sections (bfd *abfd,
 	  p->p_memsz = bed->s->sizeof_ehdr;
 	  if (m->count > 0)
 	    {
-	      BFD_ASSERT (p->p_type == PT_LOAD);
-
 	      if (p->p_vaddr < (bfd_vma) off)
 		{
 		  (*_bfd_error_handler)
@@ -4706,7 +4714,6 @@ assign_file_positions_for_load_sections (bfd *abfd,
 
 	      if (m->count > 0)
 		{
-		  BFD_ASSERT (p->p_type == PT_LOAD);
 		  p->p_vaddr -= off - p->p_offset;
 		  if (!m->p_paddr_valid)
 		    p->p_paddr -= off - p->p_offset;
@@ -4930,6 +4937,7 @@ assign_file_positions_for_non_load_sections (bfd *abfd,
   Elf_Internal_Phdr *phdrs;
   Elf_Internal_Phdr *p;
   struct elf_segment_map *m;
+  struct elf_segment_map *hdrs_segment;
   bfd_vma filehdr_vaddr, filehdr_paddr;
   bfd_vma phdrs_vaddr, phdrs_paddr;
   file_ptr off;
@@ -4987,6 +4995,7 @@ assign_file_positions_for_non_load_sections (bfd *abfd,
   filehdr_paddr = 0;
   phdrs_vaddr = bed->maxpagesize + bed->s->sizeof_ehdr;
   phdrs_paddr = 0;
+  hdrs_segment = NULL;
   phdrs = elf_tdata (abfd)->phdr;
   for (m = elf_tdata (abfd)->segment_map, p = phdrs;
        m != NULL;
@@ -5007,9 +5016,56 @@ assign_file_positions_for_non_load_sections (bfd *abfd,
 	  phdrs_paddr = p->p_paddr;
 	  if (m->includes_filehdr)
 	    {
+	      hdrs_segment = m;
 	      phdrs_vaddr += bed->s->sizeof_ehdr;
 	      phdrs_paddr += bed->s->sizeof_ehdr;
 	    }
+	}
+    }
+
+  if (hdrs_segment != NULL && link_info != NULL)
+    {
+      /* There is a segment that contains both the file headers and the
+	 program headers, so provide a symbol __ehdr_start pointing there.
+	 A program can use this to examine itself robustly.  */
+
+      struct elf_link_hash_entry *hash
+	= elf_link_hash_lookup (elf_hash_table (link_info), "__ehdr_start",
+				FALSE, FALSE, TRUE);
+      /* If the symbol was referenced and not defined, define it.  */
+      if (hash != NULL
+	  && (hash->root.type == bfd_link_hash_new
+	      || hash->root.type == bfd_link_hash_undefined
+	      || hash->root.type == bfd_link_hash_undefweak
+	      || hash->root.type == bfd_link_hash_common))
+	{
+	  asection *s = NULL;
+	  if (hdrs_segment->count != 0)
+	    /* The segment contains sections, so use the first one.  */
+	    s = hdrs_segment->sections[0];
+	  else
+	    /* Use the first (i.e. lowest-addressed) section in any segment.  */
+	    for (m = elf_tdata (abfd)->segment_map; m != NULL; m = m->next)
+	      if (m->count != 0)
+		{
+		  s = m->sections[0];
+		  break;
+		}
+
+	  if (s != NULL)
+	    {
+	      hash->root.u.def.value = filehdr_vaddr - s->vma;
+	      hash->root.u.def.section = s;
+	    }
+	  else
+	    {
+	      hash->root.u.def.value = filehdr_vaddr;
+	      hash->root.u.def.section = bfd_abs_section_ptr;
+	    }
+
+	  hash->root.type = bfd_link_hash_defined;
+	  hash->def_regular = 1;
+	  hash->non_elf = 0;
 	}
     }
 
@@ -5020,21 +5076,27 @@ assign_file_positions_for_non_load_sections (bfd *abfd,
       if (p->p_type == PT_GNU_RELRO)
 	{
 	  const Elf_Internal_Phdr *lp;
-
-	  BFD_ASSERT (!m->includes_filehdr && !m->includes_phdrs);
+	  struct elf_segment_map *lm;
 
 	  if (link_info != NULL)
 	    {
 	      /* During linking the range of the RELRO segment is passed
 		 in link_info.  */
-	      for (lp = phdrs; lp < phdrs + count; ++lp)
+	      for (lm = elf_tdata (abfd)->segment_map, lp = phdrs;
+		   lm != NULL;
+		   lm = lm->next, lp++)
 		{
 		  if (lp->p_type == PT_LOAD
-		      && lp->p_vaddr >= link_info->relro_start
 		      && lp->p_vaddr < link_info->relro_end
-		      && lp->p_vaddr + lp->p_filesz >= link_info->relro_end)
+		      && lp->p_vaddr + lp->p_filesz >= link_info->relro_end
+		      && lm->count != 0
+		      && lm->sections[0]->vma >= link_info->relro_start)
 		    break;
 		}
+
+	      /* PR ld/14207.  If the RELRO segment doesn't fit in the
+		 LOAD segment, it should be removed.  */
+	      BFD_ASSERT (lm != NULL);
 	    }
 	  else
 	    {
@@ -5060,14 +5122,15 @@ assign_file_positions_for_non_load_sections (bfd *abfd,
 	      else
 		abort ();
 	      p->p_memsz = p->p_filesz;
-          /* Preserve the alignment and flags if they are valid. The gold
-             linker generates RW/4 for the PT_GNU_RELRO section. It is better
-             for objcopy/strip to honor these attributes otherwise gdb will
-             choke when using separate debug files. */
-          if (!m->p_align_valid)
-            p->p_align = 1;
-          if (!m->p_flags_valid)
-            p->p_flags = (lp->p_flags & ~PF_W);
+	      /* Preserve the alignment and flags if they are valid. The
+	         gold linker generates RW/4 for the PT_GNU_RELRO section.
+		 It is better for objcopy/strip to honor these attributes
+		 otherwise gdb will choke when using separate debug files.
+	       */
+	      if (!m->p_align_valid)
+		p->p_align = 1;
+	      if (!m->p_flags_valid)
+		p->p_flags = (lp->p_flags & ~PF_W);
 	    }
 	  else
 	    {
@@ -6886,8 +6949,9 @@ Unable to find equivalent output section for symbol '%s' from section '%s'"),
 #endif
 	    sym.st_info = ELF_ST_INFO (STB_GLOBAL, type);
 	}
+      /* Output undefined secondary symbols as weak.  */
       else if (bfd_is_und_section (syms[idx]->section))
-	sym.st_info = ELF_ST_INFO (((flags & BSF_WEAK)
+	sym.st_info = ELF_ST_INFO (((flags & (BSF_WEAK | BSF_SECONDARY))
 				    ? STB_WEAK
 				    : STB_GLOBAL),
 				   type);
@@ -6901,6 +6965,8 @@ Unable to find equivalent output section for symbol '%s' from section '%s'"),
 	    bind = STB_LOCAL;
 	  else if (flags & BSF_GNU_UNIQUE)
 	    bind = STB_GNU_UNIQUE;
+	  else if (flags & BSF_SECONDARY)
+	    bind = STB_SECONDARY;
 	  else if (flags & BSF_WEAK)
 	    bind = STB_WEAK;
 	  else if (flags & BSF_GLOBAL)
@@ -7611,6 +7677,23 @@ _bfd_elf_find_nearest_line (bfd *abfd,
 			    const char **functionname_ptr,
 			    unsigned int *line_ptr)
 {
+  return _bfd_elf_find_nearest_line_discriminator (abfd, section, symbols,
+                                                   offset, filename_ptr,
+                                                   functionname_ptr,
+                                                   line_ptr,
+                                                   NULL);
+}
+
+bfd_boolean
+_bfd_elf_find_nearest_line_discriminator (bfd *abfd,
+                                          asection *section,
+                                          asymbol **symbols,
+                                          bfd_vma offset,
+                                          const char **filename_ptr,
+                                          const char **functionname_ptr,
+                                          unsigned int *line_ptr,
+                                          unsigned int *discriminator_ptr)
+{
   bfd_boolean found;
 
   if (_bfd_dwarf1_find_nearest_line (abfd, section, symbols, offset,
@@ -7628,7 +7711,7 @@ _bfd_elf_find_nearest_line (bfd *abfd,
   if (_bfd_dwarf2_find_nearest_line (abfd, dwarf_debug_sections,
                                      section, symbols, offset,
 				     filename_ptr, functionname_ptr,
-				     line_ptr, 0,
+				     line_ptr, discriminator_ptr, 0,
 				     &elf_tdata (abfd)->dwarf2_find_line_info))
     {
       if (!*functionname_ptr)
@@ -7664,8 +7747,19 @@ bfd_boolean
 _bfd_elf_find_line (bfd *abfd, asymbol **symbols, asymbol *symbol,
 		    const char **filename_ptr, unsigned int *line_ptr)
 {
+  return _bfd_elf_find_line_discriminator (abfd, symbols, symbol,
+		                           filename_ptr, line_ptr,
+                                           NULL);
+}
+
+bfd_boolean
+_bfd_elf_find_line_discriminator (bfd *abfd, asymbol **symbols, asymbol *symbol,
+                                  const char **filename_ptr,
+                                  unsigned int *line_ptr,
+                                  unsigned int *discriminator_ptr)
+{
   return _bfd_dwarf2_find_line (abfd, symbols, symbol,
-				filename_ptr, line_ptr, 0,
+				filename_ptr, line_ptr, discriminator_ptr, 0,
 				&elf_tdata (abfd)->dwarf2_find_line_info);
 }
 
@@ -9682,7 +9776,7 @@ bfd_elf_bfd_from_remote_memory
   (bfd *templ,
    bfd_vma ehdr_vma,
    bfd_vma *loadbasep,
-   int (*target_read_memory) (bfd_vma, bfd_byte *, size_t))
+   int (*target_read_memory) (bfd_vma, bfd_byte *, bfd_size_type))
 {
   return (*get_elf_backend_data (templ)->elf_backend_bfd_from_remote_memory)
     (templ, ehdr_vma, loadbasep, target_read_memory);

@@ -8706,6 +8706,7 @@ get_symbol_binding (unsigned int binding)
     case STB_LOCAL:	return "LOCAL";
     case STB_GLOBAL:	return "GLOBAL";
     case STB_WEAK:	return "WEAK";
+    case STB_SECONDARY:	return "SECOND";
     default:
       if (binding >= STB_LOPROC && binding <= STB_HIPROC)
 	snprintf (buff, sizeof (buff), _("<processor specific>: %d"),
@@ -10104,6 +10105,9 @@ is_16bit_abs_reloc (unsigned int reloc_type)
     case EM_XC16X:
     case EM_C166:
       return reloc_type == 2; /* R_XC16C_ABS_16.  */
+    case EM_CYGNUS_MN10200:
+    case EM_MN10200:
+      return reloc_type == 2; /* R_MN10200_16.  */
     case EM_CYGNUS_MN10300:
     case EM_MN10300:
       return reloc_type == 2; /* R_MN10300_16.  */
@@ -13450,7 +13454,7 @@ process_archive (char * file_name, FILE * file, bfd_boolean is_thin_archive)
 	  unsigned long current_pos;
 
 	  printf (_("Index of archive %s: (%ld entries, 0x%lx bytes in the symbol table)\n"),
-		  file_name, arch.index_num, arch.sym_size);
+		  file_name, (long) arch.index_num, arch.sym_size);
 	  current_pos = ftell (file);
 
 	  for (i = l = 0; i < arch.index_num; i++)
@@ -13467,7 +13471,9 @@ process_archive (char * file_name, FILE * file, bfd_boolean is_thin_archive)
 
                       if (qualified_name != NULL)
                         {
-		          printf (_("Binary %s contains:\n"), qualified_name);
+		          printf (_("Contents of binary %s at offset "), qualified_name);
+			  (void) print_vma (arch.index_array[i], PREFIX_HEX);
+			  putchar ('\n');
 		          free (qualified_name);
 		        }
 		    }
@@ -13483,11 +13489,14 @@ process_archive (char * file_name, FILE * file, bfd_boolean is_thin_archive)
 	      l += strlen (arch.sym_table + l) + 1;
 	    }
 
-          if (l & 01)
-            ++l;
+	  if (arch.uses_64bit_indicies)
+	    l = (l + 7) & ~ 7;
+	  else
+	    l += l & 1;
+
 	  if (l < arch.sym_size)
-	    error (_("%s: symbols remain in the index symbol table, but without corresponding entries in the index table\n"),
-		   file_name);
+	    error (_("%s: %ld bytes remain in the symbol table, but without corresponding entries in the index table\n"),
+		   file_name, arch.sym_size - l);
 
 	  if (fseek (file, current_pos, SEEK_SET) != 0)
 	    {

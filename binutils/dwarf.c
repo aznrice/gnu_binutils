@@ -28,6 +28,7 @@
 #include "elf/common.h"
 #include "dwarf2.h"
 #include "dwarf.h"
+#include "gdb/gdb-index.h"
 
 static const char *regname (unsigned int regno, int row);
 
@@ -646,11 +647,13 @@ process_abbrev_section (unsigned char *start, unsigned char *end)
 	  form = read_leb128 (start, & bytes_read, 0);
 	  start += bytes_read;
 
-	  if (attribute != 0)
-	    add_abbrev_attr (attribute, form);
+	  add_abbrev_attr (attribute, form);
 	}
       while (attribute != 0);
     }
+
+  /* Report the missing single zero which ends the section.  */
+  error (_(".debug_abbrev section not zero terminated\n"));
 
   return NULL;
 }
@@ -674,8 +677,12 @@ get_TAG_name (unsigned long tag)
 static const char *
 get_FORM_name (unsigned long form)
 {
-  const char *name = get_DW_FORM_name (form);
+  const char *name;
+  
+  if (form == 0)
+    return "DW_FORM value: 0";
 
+  name = get_DW_FORM_name (form);
   if (name == NULL)
     {
       static char buffer[100];
@@ -1284,6 +1291,8 @@ read_and_display_attr_value (unsigned long attribute,
 
     case DW_FORM_strp:
     case DW_FORM_sec_offset:
+    case DW_FORM_GNU_ref_alt:
+    case DW_FORM_GNU_strp_alt:
       uvalue = byte_get (data, offset_size);
       data += offset_size;
       break;
@@ -1347,6 +1356,11 @@ read_and_display_attr_value (unsigned long attribute,
     case DW_FORM_ref_addr:
       if (!do_loc)
 	printf (" <0x%s>", dwarf_vmatoa ("x",uvalue));
+      break;
+
+    case DW_FORM_GNU_ref_alt:
+      if (!do_loc)
+	printf (" <alt 0x%s>", dwarf_vmatoa ("x",uvalue));
       break;
 
     case DW_FORM_ref1:
@@ -1456,6 +1470,12 @@ read_and_display_attr_value (unsigned long attribute,
                   dwarf_vmatoa ("x", uvalue),
                   fetch_indexed_string (uvalue, offset_size, dwo));
         }
+      break;
+
+    case DW_FORM_GNU_strp_alt:
+      if (!do_loc)
+	printf (_(" (alt indirect string, offset: 0x%s)"),
+		dwarf_vmatoa ("x", uvalue));
       break;
 
     case DW_FORM_indirect:
@@ -1796,7 +1816,8 @@ read_and_display_attr_value (unsigned long attribute,
 
     case DW_AT_import:
       {
-        if (form == DW_FORM_ref_sig8)
+	if (form == DW_FORM_ref_sig8
+	    || form == DW_FORM_GNU_ref_alt)
           break;
 
 	if (form == DW_FORM_ref1
@@ -1844,6 +1865,9 @@ static const char *
 get_AT_name (unsigned long attribute)
 {
   const char *name;
+
+  if (attribute == 0)
+    return "DW_AT value: 0";
 
   /* One value is shared by the MIPS and HP extensions:  */
   if (attribute == DW_AT_MIPS_fde)
@@ -2146,6 +2170,10 @@ process_debug_info (struct dwarf_section *section,
 		    break;
 		}
 
+	      if (!do_loc && die_offset >= dwarf_start_die)
+		printf (_(" <%d><%lx>: Abbrev Number: 0\n"),
+			level, die_offset);
+
 	      --level;
 	      if (level < 0)
 		{
@@ -2223,7 +2251,9 @@ process_debug_info (struct dwarf_section *section,
 	      break;
 	    }
 
-	  for (attr = entry->first_attr; attr; attr = attr->next)
+	  for (attr = entry->first_attr;
+	       attr && attr->attribute;
+	       attr = attr->next)
 	    {
 	      debug_info *arg;
 
@@ -3626,6 +3656,31 @@ display_debug_macro (struct dwarf_section *section,
 	      offset = byte_get (curr, offset_size);
 	      curr += offset_size;
 	      printf (_(" DW_MACRO_GNU_transparent_include - offset : 0x%lx\n"),
+		      (unsigned long) offset);
+	      break;
+
+	    case DW_MACRO_GNU_define_indirect_alt:
+	      lineno = read_leb128 (curr, &bytes_read, 0);
+	      curr += bytes_read;
+	      offset = byte_get (curr, offset_size);
+	      curr += offset_size;
+	      printf (_(" DW_MACRO_GNU_define_indirect_alt - lineno : %d macro offset : 0x%lx\n"),
+		      lineno, (unsigned long) offset);
+	      break;
+
+	    case DW_MACRO_GNU_undef_indirect_alt:
+	      lineno = read_leb128 (curr, &bytes_read, 0);
+	      curr += bytes_read;
+	      offset = byte_get (curr, offset_size);
+	      curr += offset_size;
+	      printf (_(" DW_MACRO_GNU_undef_indirect_alt - lineno : %d macro offset : 0x%lx\n"),
+		      lineno, (unsigned long) offset);
+	      break;
+
+	    case DW_MACRO_GNU_transparent_include_alt:
+	      offset = byte_get (curr, offset_size);
+	      curr += offset_size;
+	      printf (_(" DW_MACRO_GNU_transparent_include_alt - offset : 0x%lx\n"),
 		      (unsigned long) offset);
 	      break;
 
@@ -5637,23 +5692,19 @@ display_gdb_index (struct dwarf_section *section,
 
   /* Prior versions are obsolete, and future versions may not be
      backwards compatible.  */
-  switch (version)
+  if (version < 3 || version > 7)
     {
-    case 3:
-      warn (_("The address table data in version 3 may be wrong.\n"));
-      break;
-    case 4:
-      warn (_("Version 4 does not support case insensitive lookups.\n"));
-      break;
-    case 5:
-      warn (_("Version 5 does not include inlined functions.\n"));
-      break;
-    case 6:
-      break;
-    default:
       warn (_("Unsupported version %lu.\n"), (unsigned long) version);
       return 0;
     }
+  if (version < 4)
+    warn (_("The address table data in version 3 may be wrong.\n"));
+  if (version < 5)
+    warn (_("Version 4 does not support case insensitive lookups.\n"));
+  if (version < 6)
+    warn (_("Version 5 does not include inlined functions.\n"));
+  if (version < 7)
+      warn (_("Version 6 does not include symbol attributes.\n"));
 
   cu_list_offset = byte_get_little_endian (start + 4, 4);
   tu_list_offset = byte_get_little_endian (start + 8, 4);
@@ -5733,16 +5784,48 @@ display_gdb_index (struct dwarf_section *section,
 
 	  printf ("[%3u] %s:", i, constant_pool + name_offset);
 	  num_cus = byte_get_little_endian (constant_pool + cu_vector_offset, 4);
+	  if (num_cus > 1)
+	    printf ("\n");
 	  for (j = 0; j < num_cus; ++j)
 	    {
+	      gdb_index_symbol_kind kind;
+
 	      cu = byte_get_little_endian (constant_pool + cu_vector_offset + 4 + j * 4, 4);
+	      kind = GDB_INDEX_SYMBOL_KIND_VALUE (cu);
+	      cu = GDB_INDEX_CU_VALUE (cu);
 	      /* Convert to TU number if it's for a type unit.  */
 	      if (cu >= cu_list_elements / 2)
-		printf (" T%lu", (unsigned long) (cu - cu_list_elements / 2));
+		printf ("%cT%lu", num_cus > 1 ? '\t' : ' ',
+			(unsigned long) (cu - cu_list_elements / 2));
 	      else
-		printf (" %lu", (unsigned long) cu);
+		printf ("%c%lu", num_cus > 1 ? '\t' : ' ', (unsigned long) cu);
+
+	      switch (kind)
+		{
+		case GDB_INDEX_SYMBOL_KIND_NONE:
+		  printf (_(" [no symbol information]"));
+		  break;
+		case GDB_INDEX_SYMBOL_KIND_TYPE:
+		  printf (_(" [type]"));
+		  break;
+		case GDB_INDEX_SYMBOL_KIND_VARIABLE:
+		  printf (_(" [variable]"));
+		  break;
+		case GDB_INDEX_SYMBOL_KIND_FUNCTION:
+		  printf (_(" [function]"));
+		  break;
+		case GDB_INDEX_SYMBOL_KIND_OTHER:
+		  printf (_(" [other]"));
+		  break;
+		default:
+		  printf (_(" [unknown: %d]"), kind);
+		  break;
+		}
+	      if (num_cus > 1)
+		printf ("\n");
 	    }
-	  printf ("\n");
+	  if (num_cus <= 1)
+	    printf ("\n");
 	}
     }
 

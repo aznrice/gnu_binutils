@@ -1768,7 +1768,7 @@ static reloc_howto_type elf_mips16_howto_table_rela[] =
 	 _bfd_mips_elf_generic_reloc, /* special_function */
 	 "R_MIPS16_TLS_GD",	/* name */
 	 FALSE,			/* partial_inplace */
-	 0x0000ffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
@@ -1783,7 +1783,7 @@ static reloc_howto_type elf_mips16_howto_table_rela[] =
 	 _bfd_mips_elf_generic_reloc, /* special_function */
 	 "R_MIPS16_TLS_LDM",	/* name */
 	 FALSE,			/* partial_inplace */
-	 0x0000ffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
@@ -1798,7 +1798,7 @@ static reloc_howto_type elf_mips16_howto_table_rela[] =
 	 _bfd_mips_elf_generic_reloc, /* special_function */
 	 "R_MIPS16_TLS_DTPREL_HI16",	/* name */
 	 FALSE,			/* partial_inplace */
-	 0x0000ffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
@@ -1813,7 +1813,7 @@ static reloc_howto_type elf_mips16_howto_table_rela[] =
 	 _bfd_mips_elf_generic_reloc, /* special_function */
 	 "R_MIPS16_TLS_DTPREL_LO16",	/* name */
 	 FALSE,			/* partial_inplace */
-	 0x0000ffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
@@ -1828,7 +1828,7 @@ static reloc_howto_type elf_mips16_howto_table_rela[] =
 	 _bfd_mips_elf_generic_reloc, /* special_function */
 	 "R_MIPS16_TLS_GOTTPREL",	/* name */
 	 FALSE,			/* partial_inplace */
-	 0x0000ffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
@@ -1843,7 +1843,7 @@ static reloc_howto_type elf_mips16_howto_table_rela[] =
 	 _bfd_mips_elf_generic_reloc, /* special_function */
 	 "R_MIPS16_TLS_TPREL_HI16", /* name */
 	 FALSE,			/* partial_inplace */
-	 0x0000ffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
@@ -1858,7 +1858,7 @@ static reloc_howto_type elf_mips16_howto_table_rela[] =
 	 _bfd_mips_elf_generic_reloc, /* special_function */
 	 "R_MIPS16_TLS_TPREL_LO16", /* name */
 	 FALSE,			/* partial_inplace */
-	 0x0000ffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x0000ffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 };
@@ -3153,7 +3153,10 @@ mips_elf_sym_is_global (bfd *abfd ATTRIBUTE_UNUSED, asymbol *sym)
   if (SGI_COMPAT (abfd))
     return (sym->flags & BSF_SECTION_SYM) == 0;
   else
-    return ((sym->flags & (BSF_GLOBAL | BSF_WEAK | BSF_GNU_UNIQUE)) != 0
+    return ((sym->flags & (BSF_GLOBAL
+			   | BSF_WEAK
+			   | BSF_SECONDARY
+			   | BSF_GNU_UNIQUE)) != 0
 	    || bfd_is_und_section (bfd_get_section (sym))
 	    || bfd_is_com_section (bfd_get_section (sym)));
 }

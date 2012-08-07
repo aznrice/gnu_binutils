@@ -414,7 +414,7 @@ fragment <<EOF
   /* First strip off everything before the last '/'.  */
   soname = lbasename (abfd->filename);
 
-  if (trace_file_tries)
+  if (verbose)
     info_msg (_("found %s at %s\n"), soname, name);
 
   global_found = NULL;
@@ -1218,7 +1218,7 @@ gld${EMULATION_NAME}_after_open (void)
       n.by = l->by;
       n.name = l->name;
       nn.by = l->by;
-      if (trace_file_tries)
+      if (verbose)
 	info_msg (_("%s needed by %B\n"), l->name, l->by);
 
       /* As-needed libs specified on the command line (or linker script)
@@ -2372,6 +2372,8 @@ fragment <<EOF
 	link_info.error_textrel = FALSE;
       else if (strcmp (optarg, "textoff") == 0)
 	link_info.error_textrel = FALSE;
+      else if (strcmp (optarg, "secondary") == 0)
+	link_info.emit_secondary = TRUE;
 EOF
 fi
 
@@ -2494,6 +2496,8 @@ fragment <<EOF
                                 processing at runtime\n"));
   fprintf (file, _("\
   -z relro                    Create RELRO program header\n"));
+  fprintf (file, _("\
+  -z secondary                Emit secondary symbols\n"));
 EOF
 fi
 

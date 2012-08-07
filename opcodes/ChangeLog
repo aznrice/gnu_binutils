@@ -1,3 +1,161 @@
+2012-08-06  Roland McGrath  <mcgrathr@google.com>
+
+	* i386-dis.c (print_insn): Print spaces between multiple excess
+	prefixes.  Return actual number of excess prefixes consumed,
+	not always one.
+
+	* i386-dis.c (OP_REG): Ignore REX_B for segment register cases.
+
+2012-08-06  Roland McGrath  <mcgrathr@google.com>
+	    Victor Khimenko  <khim@google.com>
+	    H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386-dis.c (OP_sI): In b_T_mode and v_mode, REX_W trumps DFLAG.
+	(putop): For 'T', 'U', and 'V', treat REX_W like DFLAG.
+	(intel_operand_size): For stack_v_mode, treat REX_W like DFLAG.
+	(OP_E_register): Likewise.
+	(OP_REG): For low 8 whole registers, treat REX_W like DFLAG.
+
+2012-08-02  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
+
+	* configure.in: Formatting.
+	* configure: Regenerate.
+
+2012-08-01  Alan Modra  <amodra@gmail.com>
+
+	* h8300-dis.c: Fix printf arg warnings.
+	* i960-dis.c: Likewise.
+	* mips-dis.c: Likewise.
+	* pdp11-dis.c: Likewise.
+	* sh-dis.c: Likewise.
+	* v850-dis.c: Likewise.
+	* configure.in: Formatting.
+	* configure: Regenerate.
+	* rl78-decode.c: Regenerate.
+	* po/POTFILES.in: Regenerate.
+
+2012-07-31  Chao-Ying Fu  <fu@mips.com>
+            Catherine Moore  <clm@codesourcery.com>
+            Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* micromips-opc.c (WR_a, RD_a, MOD_a): New macros.
+	(DSP_VOLA): Likewise.
+	(D32, D33): Likewise.
+	(micromips_opcodes): Add DSP ASE instructions.
+	* mips-dis.c (print_insn_micromips) <'2', '3'>: New cases.
+	<'4', '5', '6', '7', '8', '0', '^', '@'>: Likewise.
+
+2012-07-31  Jan Beulich <jbeulich@suse.com>
+
+	* i386-opc.tbl (vmovntdqa): Move up into 256-bit integer AVX2
+	instruction group. Mark as requiring AVX2.
+	* i386-tbl.h: Re-generate.
+
+2012-07-30  Nick Clifton  <nickc@redhat.com>
+
+	* po/opcodes.pot: Updated template.
+	* po/es.po: Updated Spanish translation.
+	* po/fi.po: Updated Finnish translation.
+
+2012-07-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.in (BFD_VERSION): Run bfd/configure --version and
+	parse the output of that.
+	* configure: Regenerate.
+
+2012-07-25  James Lemke  <jwlemke@codesourcery.com>
+
+	* ppc-opc.c (powerpc_opcodes): Add/remove PPCVLE for some 32-bit insns.
+
+2012-07-24  Stephan McCamant  <smcc@cs.berkeley.edu>
+	    Dr David Alan Gilbert  <dave@treblig.org>
+
+	PR binutils/13135
+	* arm-dis.c: Add necessary casts for printing integer values.
+	Use %s when printing string values.
+	* hppa-dis.c: Likewise.
+	* m68k-dis.c: Likewise.
+	* microblaze-dis.c: Likewise.
+	* mips-dis.c: Likewise.
+	* sparc-dis.c: Likewise.
+
+2012-07-19  Michael Zolotukhin  <michael.v.zolotukhin@intel.com>
+
+	PR binutils/14355
+	* i386-dis.c (VEX_LEN_0FXOP_08_CC): New.
+	(VEX_LEN_0FXOP_08_CD): Likewise.
+	(VEX_LEN_0FXOP_08_CE): Likewise.
+	(VEX_LEN_0FXOP_08_CF): Likewise.
+	(VEX_LEN_0FXOP_08_EC): Likewise.
+	(VEX_LEN_0FXOP_08_ED): Likewise.
+	(VEX_LEN_0FXOP_08_EE): Likewise.
+	(VEX_LEN_0FXOP_08_EF): Likewise.
+	(xop_table): Fix entries for vpcomb, vpcomw, vpcomd, vpcomq,
+	vpcomub, vpcomuw, vpcomud, vpcomuq.
+	(vex_len_table): Add entries for VEX_LEN_0FXOP_08_CC,
+	VEX_LEN_0FXOP_08_CD, VEX_LEN_0FXOP_08_CE, VEX_LEN_0FXOP_08_CF,
+	VEX_LEN_0FXOP_08_EC, VEX_LEN_0FXOP_08_ED, VEX_LEN_0FXOP_08_EE,
+	VEX_LEN_0FXOP_08_EF.
+
+2012-07-16  Michael Zolotukhin  <michael.v.zolotukhin@intel.com>
+
+	* i386-dis.c (PREFIX_0F38F6): New.
+	(prefix_table): Add adcx, adox instructions.
+	(three_byte_table): Use PREFIX_0F38F6.
+	(mod_table): Add rdseed instruction.
+	* i386-gen.c (cpu_flag_init): Add CpuADX, CpuRDSEED, CpuPRFCHW.
+	(cpu_flags): Likewise.
+	* i386-opc.h: Add CpuADX, CpuRDSEED, CpuPRFCHW.
+	(i386_cpu_flags): Add fields cpurdseed, cpuadx, cpuprfchw.
+	* i386-opc.tbl: Add instrcutions adcx, adox, rdseed. Extend
+	prefetchw.
+	* i386-tbl.h: Regenerate.
+	* i386-init.h: Likewise.
+
+2012-07-05  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* mips-dis.c: Remove gratuitous newline.
+
+2012-07-05  Sean Keys  <skeys@ipdatasys.com>
+
+	* xgate-dis.c: Removed an IF statement that will
+        always be false due to overlapping operand masks.
+        * xgate-opc.c: Corrected 'com' opcode entry and
+        fixed spacing.
+
+2012-07-02  Roland McGrath  <mcgrathr@google.com>
+
+	* i386-opc.tbl: Add RepPrefixOk to nop.
+	* i386-tbl.h: Regenerate.
+
+2012-06-28  Nick Clifton  <nickc@redhat.com>
+
+	* po/vi.po: Updated Vietnamese translation.
+
+2012-06-22  Roland McGrath  <mcgrathr@google.com>
+
+	* i386-opc.tbl: Add RepPrefixOk to ret.
+	* i386-tbl.h: Regenerate.
+
+	* i386-opc.h (RepPrefixOk): New enum constant.
+	(i386_opcode_modifier): New bitfield 'repprefixok'.
+	* i386-gen.c (opcode_modifiers): Add RepPrefixOk.
+	* i386-opc.tbl: Add RepPrefixOk to bsf, bsr, and to all
+	instructions that have IsString.
+	* i386-tbl.h: Regenerate.
+
+2012-06-11  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* ppc-opc.c (lvsl, lvebx, isellt, icbt, ldepx, lwepx, lvsr, lvehx)
+	(iselgt, lvewx, iseleq, isel, dcbst, dcbstep, dcbfl, dcbf, lbepx)
+	(lvx, dcbfep, dcbtstls, stvebx, dcbtstlse, stdepx, stwepx, dcbtls)
+	(stvehx, dcbtlse, stvewx, stbepx, icblc, stvx, dcbtstt, dcbtst)
+	(dcbtst, dcbtstep, dcbtt, dcbt, dcbt, lhepx, eciwx, dcbtep)
+	(dcread, lxvdsx, lvxl, dcblc, sthepx, ecowx, dcbi, dcread, icbtls)
+	(stvxl, lxsdx, lfdepx, stxsdx, stfdepx, dcba, dcbal, lxvw4x)
+	(tlbivax, lfdpx, lxvd2x, tlbsrx., stxvw4x, tlbsx, tlbsx., stfdpx)
+	(stfqx, stxvd2x, icbi, icbiep, icread, dcbzep): Change RA to RA0.
+
 2012-05-19  Alan Modra  <amodra@gmail.com>
 
 	* ppc-dis.c: Don't include elf32-ppc.h, do include elf/ppc.h.

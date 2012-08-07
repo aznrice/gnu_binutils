@@ -1215,7 +1215,7 @@ parse_args (unsigned argc, char **argv)
 	case OPTION_VERBOSE:
 	  ldversion (1);
 	  version_printed = TRUE;
-	  trace_file_tries = TRUE;
+	  verbose = TRUE;
 	  overflow_cutoff_limit = -2;
 	  if (optarg != NULL)
 	    {
@@ -1446,40 +1446,6 @@ parse_args (unsigned argc, char **argv)
 	command_line.check_section_addresses = 0;
       if (link_info.shared)
 	einfo (_("%P%F: -r and -shared may not be used together\n"));
-    }
-
-  if (link_info.shared)
-    {
-      char *dynamic = getenv ("LD_DYNAMIC_LIST");
-      if (dynamic)
-	{
-	  bfd_boolean first = TRUE;
-
-	  do
-	    {
-	      bfd_boolean set;
-
-	      dynamic = strtok (dynamic, ":");
-	      if (dynamic == NULL)
-		break;
-	      set = strcasecmp (dynamic, "cpp_new") == 0;
-	      if (set)
-		lang_append_dynamic_list_cpp_new ();
-	      if (set && first)
-		{
-		  if (command_line.dynamic_list != dynamic_list_data)
-		    command_line.dynamic_list = dynamic_list;
-		  if (command_line.symbolic == symbolic)
-		    command_line.symbolic = symbolic_unset;
-		  first = FALSE;
-		}
-	      else
-		einfo (_("%P%F: unknown LD_DYNAMIC_LIST option `%s'\n"),
-		       dynamic);
-	      dynamic = NULL;
-	    }
-	  while (1);
-	}
     }
 
   /* We may have -Bsymbolic, -Bsymbolic-functions, --dynamic-list-data,

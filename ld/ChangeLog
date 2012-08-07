@@ -1,3 +1,178 @@
+2012-07-31  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14156
+	* ldlang.c (wild_sort): Properly handle by_none.
+
+	* scripttempl/elf.sc: Add SORT_NONE to .init and .fini sections.
+	* scripttempl/elf32msp430.sc: Likewise.
+	* scripttempl/elf32msp430_3.sc: Likewise. 
+	* scripttempl/elfd10v.sc: Likewise.
+	* scripttempl/elfd30v.sc: Likewise.
+	* scripttempl/elfxtensa.sc: Likewise.
+
+2012-07-30  Nick Clifton  <nickc@redhat.com>
+
+	* po/ld.pot: Updated template.
+	* po/bg.po: Updated Bulgarian translation.
+	* po/es.po: Updated Spanish translation.
+	* po/fi.po: Updated Finnish translation.
+
+2012-07-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.in (BFD_VERSION): Run bfd/configure --version and
+	parse the output of that.
+	* configure: Regenerate.
+
+2012-07-27  Tristan Gingold  <gingold@adacore.com>
+
+	* NEWS: Add marker for 2.23.
+
+2012-07-24  Jan Waclawek <konfera@efton.sk>
+
+	PR ld/14058
+	* emultempl/avrelf.em (avr_elf_after_allocation): Call
+	elf32_avr_size_stubs with is_prealloc_run as TRUE.
+
+2012-07-13  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* emulparams/elf_s390.sh (IREL_IN_PLT): Define.
+	* emulparams/elf64_s390.sh (IREL_IN_PLT): Define.
+
+2012-07-13  Nick Clifton  <nickc@redhat.com>
+
+	PR ld/14357
+	* ldmain.c (trace_file_tries): Rename to 'verbose'.
+	* ldfile.c: Likewise.
+	* ldlang.c: Likewise.
+	* ldmain.h: Likewise.
+	* lexsup.c: Likewise.
+	* emultempl/elf32.em: Likewise.
+	* emultemp/spuelf.em: Likewise.
+	* pe-dll.c (pe_dll_generate_implib): Only print creation message
+	in verbose mode.
+
+2012-07-10  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14156
+	* NEWS: Mention SORT_NONE.
+
+	* ld.h (sort_type): Add by_none.
+
+	* ld.texinfo: Document SORT_NONE.
+
+	* ldgram.y: Handle SORT_NONE.
+
+	* ldlang.c (update_wild_statements): Handle by_none.  Don't
+	sort .init/.fini sections.
+
+	* ldlex.l: Add SORT_NONE.
+
+2012-07-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld.texinfo: Replace __end_SECNAME with __stop_SECNAME.
+
+2012-06-29  Nick Clifton  <nickc@redhat.com>
+
+	* scripttempl/alphavms.sc: Add .debug_macro section.
+	* scripttempl/elf.sc: Likewise.
+	* scripttempl/elf64hppa.sc: Likewise.
+	* scripttempl/elf_chaos.sc: Likewise.
+	* scripttempl/elfxtensa.sc: Likewise.
+	* scripttempl/ia64vms.sc: Likewise.
+
+	* scripttempl/armbpabi.sc: Add .debug_pubtypes, .debug_ranges and
+	.debug_macro sections.
+	* scripttempl/avr.sc: Likewise.
+	* scripttempl/elf32cr16.sc: Likewise.
+	* scripttempl/elf32crx.sc: Likewise.
+	* scripttempl/elf32msp430.sc: Likewise.
+	* scripttempl/elf32msp430_3.sc: Likewise.
+	* scripttempl/elf32sh-symbian.sc: Likewise.
+	* scripttempl/elfd30v.sc: Likewise.
+	* scripttempl/elfi370.sc: Likewise.
+	* scripttempl/elfm68hc11.sc: Likewise.
+	* scripttempl/elfm68hc12.sc: Likewise.
+	* scripttempl/elfxgate.sc: Likewise.
+	* scripttempl/i386beos.sc: Likewise.
+	* scripttempl/i386go32.sc: Likewise.
+	* scripttempl/ip2k.sc: Likewise.
+	* scripttempl/iq2000.sc: Likewise.
+	* scripttempl/mep.sc: Likewise.
+	* scripttempl/mmo.sc: Likewise.
+	* scripttempl/v850.sc: Likewise.
+	* scripttempl/xstormy16.sc: Likewise.
+
+2012-06-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ldlang.c (update_wild_statements): Remove redundant statement.
+
+2012-06-25  Alan Modra  <amodra@gmail.com>
+
+	* ldlang.c (load_symbols): Close file and set flags.loaded
+	after parsing script file.
+	(open_input_bfds): Don't segv on closed script.
+
+2012-06-24  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure.tgt: Enable elf_k1om for x86_64-*-linux-gnux32.
+	Remove x32 in tdir_i386linux and tdir_elf_i386.
+
+2012-06-22  Roland McGrath  <mcgrathr@google.com>
+
+	* NEWS: Mention __ehdr_start.
+
+2012-06-21  Alan Modra  <amodra@gmail.com>
+
+	* ldlang.c (lang_insert_orphan): Don't make __start_<sec> symbol
+	absolute, and remove unnecessary alignment.
+
+2012-06-16  Alan Modra  <amodra@gmail.com>
+
+	* ldlang.h (lang_output_section_statement_type): Add after_end field.
+	(lang_abs_symbol_at_beginning_of, lang_abs_symbol_at_end_of): Delete.
+	(section_for_dot): Declare.
+	* ldlang.c (lang_size_sections_1): Correct comment.
+	(current_section): Move earlier.
+	(current_assign, prefer_next_section): New static vars.
+	(lang_do_assignments_1): Add found_end param.  Detect _end
+	assignment to set found_end.  Set os->after_end.  Set above statics.
+	(lang_do_assignments): Adjust lang_do_assignments_1 call.  Init
+	vars.
+	(section_for_dot): New function.
+	(lang_set_startof): Don't make an absolute symbol.
+	(lang_abs_symbol_at_beginning_of, lang_abs_symbol_at_end_of): Delete.
+	* ldexp.c (new_rel_from_abs): Use section_for_dot.
+	* emultempl/lnk960.em (symbol_at_beginning_of): New function.
+	(symbol_at_end_of): Likewise.
+	(lnk960_after_allocation): Use them.
+	* scripttempl/elf.sc: Precede OTHER_GOT_SYMBOLS with . = .; and
+	likewise before __bss_start.
+
+2012-06-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* plugin.c (set_tv_header): Handle link_info.pie.
+
+2012-06-11  Alan Modra  <amodra@gmail.com>
+
+	PR ld/14215
+	* ldexp.c (fold_name <SIZEOF, ALIGNOF>): Allow forward section
+	references.
+	* emulparams/elf32_x86_64.sh (SEPARATE_GOTPLT): Depend on size of
+	.got.plt.
+	* emulparams/elf32mb_linux.sh (SEPARATE_GOTPLT): Likewise.
+	* emulparams/elf32tilegx.sh (SEPARATE_GOTPLT): Likewise.
+	* emulparams/elf32tilepro.sh (SEPARATE_GOTPLT): Likewise.
+	* emulparams/elf64tilegx.sh (SEPARATE_GOTPLT): Likewise.
+	* emulparams/elf_i386.sh (SEPARATE_GOTPLT): Likewise.
+	* emulparams/elf_k1om.sh (SEPARATE_GOTPLT): Likewise.
+	* emulparams/elf_l1om.sh (SEPARATE_GOTPLT): Likewise.
+	* emulparams/elf_x86_64.sh (SEPARATE_GOTPLT): Likewise.
+
+2012-06-07  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR 13697
+	* scripttempl/avr.sc (.data): Keep it.
+
 2012-06-02  Andreas Schwab  <schwab@linux-m68k.org>
 
 	* Makefile.am (TEXINFO_TEX): Remove $(top_srcdir) prefix.

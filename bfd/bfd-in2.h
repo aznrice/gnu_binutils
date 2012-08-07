@@ -705,7 +705,8 @@ extern int bfd_get_elf_phdrs
    the remote memory.  */
 extern bfd *bfd_elf_bfd_from_remote_memory
   (bfd *templ, bfd_vma ehdr_vma, bfd_vma *loadbasep,
-   int (*target_read_memory) (bfd_vma vma, bfd_byte *myaddr, size_t len));
+   int (*target_read_memory) (bfd_vma vma, bfd_byte *myaddr,
+			      bfd_size_type len));
 
 extern struct bfd_section *_bfd_elf_tls_setup
   (bfd *, struct bfd_link_info *);
@@ -1711,6 +1712,8 @@ void bfd_section_list_clear (bfd *);
 asection *bfd_get_section_by_name (bfd *abfd, const char *name);
 
 asection *bfd_get_next_section_by_name (asection *sec);
+
+asection *bfd_get_linker_section (bfd *abfd, const char *name);
 
 asection *bfd_get_section_by_name_if
    (bfd *abfd,
@@ -4297,6 +4300,9 @@ in .byte hlo8(symbol)  */
   BFD_RELOC_390_GOTPLT20,
   BFD_RELOC_390_TLS_GOTIE20,
 
+/* STT_GNU_IFUNC relocation.  */
+  BFD_RELOC_390_IRELATIVE,
+
 /* Score relocations
 Low 16 bit for load/store  */
   BFD_RELOC_SCORE_GPREL15,
@@ -5374,6 +5380,10 @@ typedef struct bfd_symbol
      with this name and type in use.  BSF_OBJECT must also be set.  */
 #define BSF_GNU_UNIQUE         (1 << 23)
 
+  /* A secondary global symbol, overridable without warnings by
+     a regular or weak global symbol of the same name.  */
+#define BSF_SECONDARY          (1 << 24)
+
   flagword flags;
 
   /* A pointer to the section to which this symbol is
@@ -5824,6 +5834,11 @@ bfd_boolean bfd_set_private_flags (bfd *abfd, flagword flags);
        BFD_SEND (abfd, _bfd_find_nearest_line, \
                  (abfd, sec, syms, off, file, func, line))
 
+#define bfd_find_nearest_line_discriminator(abfd, sec, syms, off, file, func, \
+                                            line, disc) \
+       BFD_SEND (abfd, _bfd_find_nearest_line_discriminator, \
+                 (abfd, sec, syms, off, file, func, line, disc))
+
 #define bfd_find_line(abfd, syms, sym, file, line) \
        BFD_SEND (abfd, _bfd_find_line, \
                  (abfd, syms, sym, file, line))
@@ -6207,6 +6222,7 @@ typedef struct bfd_target
   NAME##_bfd_is_target_special_symbol, \
   NAME##_get_lineno, \
   NAME##_find_nearest_line, \
+  _bfd_generic_find_nearest_line_discriminator, \
   _bfd_generic_find_line, \
   NAME##_find_inliner_info, \
   NAME##_bfd_make_debug_symbol, \
@@ -6230,6 +6246,9 @@ typedef struct bfd_target
   bfd_boolean (*_bfd_find_nearest_line)
     (bfd *, struct bfd_section *, struct bfd_symbol **, bfd_vma,
      const char **, const char **, unsigned int *);
+  bfd_boolean (*_bfd_find_nearest_line_discriminator)
+    (bfd *, struct bfd_section *, struct bfd_symbol **, bfd_vma,
+     const char **, const char **, unsigned int *, unsigned int *);
   bfd_boolean (*_bfd_find_line)
     (bfd *, struct bfd_symbol **, struct bfd_symbol *,
      const char **, unsigned int *);
