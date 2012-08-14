@@ -104,6 +104,14 @@ include/elf/
 
 ld/
 
+2012-08-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* emultempl/aarch64elf.em (gld${EMULATION_NAME}_finish): Renamed
+	to ...
+	(aarch64_finish): This.  Replace finish_default with
+	gld${EMULATION_NAME}_finish.
+	(LDEMUL_FINISH): Set to aarch64_finish.
+
 2011-10-15  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/13298
@@ -439,10 +447,10 @@ ld/testsuite/
 	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index 11f3e49..6cd342e 100644
+index e496083..fda0d97 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
-@@ -1029,6 +1029,9 @@ struct bfd_section *bfd_create_gnu_debuglink_section
+@@ -1055,6 +1055,9 @@ struct bfd_section *bfd_create_gnu_debuglink_section
  bfd_boolean bfd_fill_in_gnu_debuglink_section
     (bfd *abfd, struct bfd_section *sect, const char *filename);
  
@@ -452,7 +460,7 @@ index 11f3e49..6cd342e 100644
  /* Extracted from libbfd.c.  */
  
  /* Byte swapping macros for user section data.  */
-@@ -1554,6 +1557,9 @@ extern asection std_section[4];
+@@ -1580,6 +1583,9 @@ extern asection std_section[4];
  #define BFD_COM_SECTION_NAME "*COM*"
  #define BFD_IND_SECTION_NAME "*IND*"
  
@@ -462,7 +470,7 @@ index 11f3e49..6cd342e 100644
  /* Pointer to the common section.  */
  #define bfd_com_section_ptr (&std_section[0])
  /* Pointer to the undefined section.  */
-@@ -5441,6 +5447,14 @@ enum bfd_direction
+@@ -5686,6 +5692,14 @@ enum bfd_direction
      both_direction = 3
    };
  
@@ -477,7 +485,7 @@ index 11f3e49..6cd342e 100644
  struct bfd
  {
    /* A unique identifier of the BFD  */
-@@ -5588,6 +5602,9 @@ struct bfd
+@@ -5833,6 +5847,9 @@ struct bfd
    /* The last section on the section list.  */
    struct bfd_section *section_last;
  
@@ -487,7 +495,7 @@ index 11f3e49..6cd342e 100644
    /* The number of sections.  */
    unsigned int section_count;
  
-@@ -5706,6 +5723,9 @@ struct bfd
+@@ -5951,6 +5968,9 @@ struct bfd
    /* Set if only required symbols should be added in the link hash table for
       this object.  Used by VMS linkers.  */
    unsigned int selective_search : 1;
@@ -497,7 +505,7 @@ index 11f3e49..6cd342e 100644
  };
  
  typedef enum bfd_error
-@@ -5922,6 +5942,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
+@@ -6172,6 +6192,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
  
  char *bfd_demangle (bfd *, const char *, int);
  
@@ -507,7 +515,7 @@ index 11f3e49..6cd342e 100644
  symindex bfd_get_next_mapent
     (bfd *abfd, symindex previous, carsym **sym);
 diff --git a/bfd/bfd.c b/bfd/bfd.c
-index 640b420..9cdac38 100644
+index eed1896..1a6624a 100644
 --- a/bfd/bfd.c
 +++ b/bfd/bfd.c
 @@ -43,6 +43,14 @@ CODE_FRAGMENT
@@ -545,7 +553,7 @@ index 640b420..9cdac38 100644
  .};
  .
  */
-@@ -2021,3 +2035,36 @@ bfd_demangle (bfd *abfd, const char *name, int options)
+@@ -2026,3 +2040,36 @@ bfd_demangle (bfd *abfd, const char *name, int options)
  
    return res;
  }
@@ -583,7 +591,7 @@ index 640b420..9cdac38 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index 48e5d68..d89d6d3 100644
+index 0208e05..06cd236 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2104,6 +2104,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -595,7 +603,7 @@ index 48e5d68..d89d6d3 100644
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 574b6e2..3a1c586 100644
+index 7335114..920449f 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -2469,6 +2469,18 @@ _bfd_elf_fix_symbol_flags (struct elf_link_hash_entry *h,
@@ -688,10 +696,10 @@ index 66b9051..181ac05 100644
      }
  
 diff --git a/bfd/opncls.c b/bfd/opncls.c
-index 7c1d2f9..75d498b 100644
+index b2ed9be..0908c41 100644
 --- a/bfd/opncls.c
 +++ b/bfd/opncls.c
-@@ -1543,3 +1543,69 @@ bfd_fill_in_gnu_debuglink_section (bfd *abfd,
+@@ -1535,3 +1535,69 @@ bfd_fill_in_gnu_debuglink_section (bfd *abfd,
  
    return TRUE;
  }
@@ -994,7 +1002,7 @@ index 3091f97..2db087f 100644
  plugin_data_struct;
  
 diff --git a/bfd/section.c b/bfd/section.c
-index a3b7c56..f24e2da 100644
+index ab5635b..ad8f27e 100644
 --- a/bfd/section.c
 +++ b/bfd/section.c
 @@ -552,6 +552,9 @@ CODE_FRAGMENT
@@ -1061,10 +1069,10 @@ index 40250ad..d0d112f 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index 2fcd582..f41d71f 100644
+index 5423c7f..81946a0 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
-@@ -3052,6 +3052,7 @@ get_section_type_name (unsigned int sh_type)
+@@ -3089,6 +3089,7 @@ get_section_type_name (unsigned int sh_type)
      case 0x7ffffffd:		return "AUXILIARY";
      case 0x7fffffff:		return "FILTER";
      case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
@@ -1110,7 +1118,7 @@ index d900b47..d0b5606 100644
    unsigned int allow_undefined_version: 1;
  
 diff --git a/include/elf/common.h b/include/elf/common.h
-index 58e489a..5622c5e 100644
+index 1c681d5..71fbbe0 100644
 --- a/include/elf/common.h
 +++ b/include/elf/common.h
 @@ -472,6 +472,7 @@
@@ -1121,6 +1129,34 @@ index 58e489a..5622c5e 100644
  
  /* The next three section types are defined by Solaris, and are named
     SHT_SUNW*.  We use them in GNU code, so we also define SHT_GNU*
+diff --git a/ld/emultempl/aarch64elf.em b/ld/emultempl/aarch64elf.em
+index 4c03ffd..a9adb16 100644
+--- a/ld/emultempl/aarch64elf.em
++++ b/ld/emultempl/aarch64elf.em
+@@ -263,7 +263,7 @@ gld${EMULATION_NAME}_after_allocation (void)
+ }
+ 
+ static void
+-gld${EMULATION_NAME}_finish (void)
++aarch64_finish (void)
+ {
+   if (! link_info.relocatable)
+     {
+@@ -275,7 +275,7 @@ gld${EMULATION_NAME}_finish (void)
+ 	}
+     }
+ 
+-  finish_default ();
++  gld${EMULATION_NAME}_finish ();
+ }
+ 
+ /* This is a convenient point to tell BFD about target specific flags.
+@@ -412,4 +412,4 @@ LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=aarch64_elf_create_output_section_statem
+ LDEMUL_BEFORE_PARSE=gld"${EMULATION_NAME}"_before_parse
+ 
+ # Call the extra arm-elf function
+-LDEMUL_FINISH=gld${EMULATION_NAME}_finish
++LDEMUL_FINISH=aarch64_finish
 diff --git a/ld/emultempl/alphaelf.em b/ld/emultempl/alphaelf.em
 index 21064ad..ec0965a 100644
 --- a/ld/emultempl/alphaelf.em
@@ -1300,7 +1336,7 @@ index d578f7f..bad3e2c 100644
  LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=ppc_create_output_section_statements
  LDEMUL_NEW_VERS_PATTERN=gld${EMULATION_NAME}_new_vers_pattern
 diff --git a/ld/emultempl/spuelf.em b/ld/emultempl/spuelf.em
-index eef57aa..d5387a9 100644
+index 1b35612..5f3ca22 100644
 --- a/ld/emultempl/spuelf.em
 +++ b/ld/emultempl/spuelf.em
 @@ -416,7 +416,7 @@ spu_elf_relink (void)
@@ -1343,7 +1379,7 @@ index e9091e9..2362f11 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 5a4eef7..c362d4b 100644
+index 0c97898..101e713 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -1421,7 +1457,7 @@ index 5a4eef7..c362d4b 100644
      einfo (_("%P%F: can not create hash table: %E\n"));
  }
  
-@@ -2767,6 +2782,12 @@ load_symbols (lang_input_statement_type *entry,
+@@ -2769,6 +2784,12 @@ load_symbols (lang_input_statement_type *entry,
  		  loaded = FALSE;
  		}
  
@@ -2771,7 +2807,7 @@ index 575d47c..2f3d6ec 100644
    SBSS=".sbss         ${RELOCATING-0} :
    {
 diff --git a/ld/scripttempl/elf.sc b/ld/scripttempl/elf.sc
-index 17c2cf1..56ea806 100644
+index 51a655e..281baa0 100644
 --- a/ld/scripttempl/elf.sc
 +++ b/ld/scripttempl/elf.sc
 @@ -158,7 +158,7 @@ RELA_IPLT=".rela.iplt    ${RELOCATING-0} :
@@ -2810,7 +2846,7 @@ index 18090e6..46e8bb4 100644
    SBSS=".sbss         ${RELOCATING-0} :
    {
 diff --git a/ld/scripttempl/elfxtensa.sc b/ld/scripttempl/elfxtensa.sc
-index d330230..0ba1402 100644
+index 5e03797..7556efa 100644
 --- a/ld/scripttempl/elfxtensa.sc
 +++ b/ld/scripttempl/elfxtensa.sc
 @@ -140,7 +140,7 @@ fi
@@ -2836,10 +2872,10 @@ index 3fc1352..fa8ddb4 100644
    SBSS=".sbss         ${RELOCATING-0} :
    {
 diff --git a/ld/scripttempl/pe.sc b/ld/scripttempl/pe.sc
-index 3a27952..b44fe8b 100644
+index 5b9bd61..27c787f 100644
 --- a/ld/scripttempl/pe.sc
 +++ b/ld/scripttempl/pe.sc
-@@ -148,6 +148,7 @@ SECTIONS
+@@ -150,6 +150,7 @@ SECTIONS
      *(.drectve)
      ${RELOCATING+ *(.note.GNU-stack)}
      ${RELOCATING+ *(.gnu.lto_*)}
@@ -2848,10 +2884,10 @@ index 3a27952..b44fe8b 100644
  
    .idata ${RELOCATING+BLOCK(__section_alignment__)} :
 diff --git a/ld/scripttempl/pep.sc b/ld/scripttempl/pep.sc
-index b2113fe..fcc3c83 100644
+index ff11153..763267c 100644
 --- a/ld/scripttempl/pep.sc
 +++ b/ld/scripttempl/pep.sc
-@@ -154,6 +154,7 @@ SECTIONS
+@@ -156,6 +156,7 @@ SECTIONS
      *(.drectve)
      ${RELOCATING+ *(.note.GNU-stack)}
      ${RELOCATING+ *(.gnu.lto_*)}
@@ -4712,10 +4748,10 @@ index 0000000..7edca6d
 @@ -0,0 +1 @@
 +IE: 4
 diff --git a/ld/testsuite/lib/ld-lib.exp b/ld/testsuite/lib/ld-lib.exp
-index a481ce7..8d1ea2f 100644
+index bb4cb0d..371dfbf 100644
 --- a/ld/testsuite/lib/ld-lib.exp
 +++ b/ld/testsuite/lib/ld-lib.exp
-@@ -934,7 +934,7 @@ proc set_file_contents { filename contents } {
+@@ -975,7 +975,7 @@ proc set_file_contents { filename contents } {
  proc ar_simple_create { ar aropts target objects } {
      remote_file host delete $target
  
@@ -4724,7 +4760,7 @@ index a481ce7..8d1ea2f 100644
      set exec_output [prune_warnings $exec_output]
  
      if [string match "" $exec_output] then {
-@@ -1562,6 +1562,34 @@ proc check_plugin_api_available { } {
+@@ -1604,6 +1604,34 @@ proc check_plugin_api_available { } {
      return $plugin_api_available_saved
  }
  
