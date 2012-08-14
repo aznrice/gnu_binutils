@@ -1,3 +1,92 @@
+2012-08-14  Nick Clifton  <nickc@redhat.com>
+
+	PR ld/14265
+	* script-sections.cc (Sections_element::output_section_name): Add
+	keep return parameter.
+	(Output_section_element::match_name): Add keep return parameter.
+	Return the value of the keep_ member.
+	* script-sections.h (class Output_section): Update
+	output_section_name prototype.
+	* layout.cc (Layout::keep_input_section): New public member
+	function.
+	(Layout::choose_output_section): Pass keep parameter to
+	output_section_name.
+	* layout.h (class Layout): Add keep_input_section.
+	* object.cc (Sized_relobj_file::do_layout): Check for kept input
+	sections.
+	* testsuite/Makefile.am: Add a test.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/pr14265.c: Source file for the test.
+	* testsuite/pr14265.t: Linker script for the test.
+	* testsuite/pr14265.sh: Shell script for the test.
+
+2012-08-14  Alan Modra  <amodra@gmail.com>
+
+	* target.h (Target::output_section_name): New function.
+	(Target::do_output_section_name): New function.
+	* layout.cc (Layout::choose_output_section): Call the above.
+	* powerpc.cc (Target_powerpc::do_output_section_name): New function.
+
+2012-08-14  Alan Modra  <amodra@gmail.com>
+
+	* powerpc.cc: Update for renamed R_PPC_REL16 relocs.
+	(Output_data_got_powerpc::do_write): Don't rely on base class lookup
+	for replace_constant call.
+	(Output_data_plt_powerpc::do_print_to_mapfile): New function.
+	(Output_data_glink::do_print_to_mapfile): New function.
+	(Target_powerpc::Scan::local): Ignore R_PPC64_TOCSAVE.
+	(Target_powerpc::Relocate::relocate): Likewise.
+
+2012-08-14  Alan Modra  <amodra@gmail.com>
+
+	* powerpc.cc (Powerpc_relobj::set_got2_shndx): Delete.
+	(Powerpc_relobj::do_find_special_sections): Don't use set_got2_shndx.
+	(Output_data_glink::add_entry,find_entry): Remove shndx param.
+	(class Glink_sym_ent): Rename from struct Glink_sym_ent.  Remove
+	all references to shndx_.  Handle special case for R_PPC_PLTREL24
+	here.
+	(class Glink_sym_ent_hash): Rename from struct Glink_sym_ent_hash.
+	(Output_data_glink::do_write): Retrieve got2_shdnx from object.
+	(Target_powerpc::make_plt_entry): Don't special case R_PPC_PLTREL24
+	here.
+	(Target_powerpc::Scan::global): Nor on make_plt_entry call.
+	(Target_powerpc::Relocate::relocate): Nor on glink->find_entry call.
+
+2012-08-12  Alan Modra  <amodra@gmail.com>
+
+	* powerpc.cc: Whitespace fixes.  Wrap overly long lines.
+	(glink insn constants): Use uint32_t.
+	(Output_data_glink::add_entry): Use insert, not [] operator.
+
+2012-08-11  Alan Modra  <amodra@gmail.com>
+
+	* object.h (Sized_relobj_file::find_shdr): New function.
+	(Sized_relobj_file::find_special_sections): New function.
+	* object.cc (Sized_relobj_file::find_shdr): New function.
+	(Sized_relobj_file::find_eh_frame): Use find_shdr.
+	(Sized_relobj_file::find_special_sections): New function, split out..
+	(Sized_relobj_file::do_read_symbols): ..from here.
+	* output.h (Output_data_got::replace_constant): New function.
+	(Output_data_got::num_entries): New function.
+	(Output_data_got::last_got_offset,set_got_size): Use num_entries.
+	(Output_data_got::got_offset): Protected rather than private.
+	(Output_data_got::replace_got_entry): New function.
+	* output.cc (Output_data_got::replace_got_entry): New function.
+	* powerpc.cc (class Powerpc_relobj): New.
+	(class Powerpc_relocate_functions): Delete all psymval variants or
+	convert to value,addend type.  Delete pcrela, pcrela_unaligned.
+	Implement _ha functions using corresponding _hi function.
+	(Powerpc_relobj::find_special_sections): New function.
+	(Target_powerpc::do_make_elf_object): New function.
+	(class Output_data_got_powerpc): New.
+	(class Output_data_glink): New.
+	(class Powerpc_scan_relocatable_reloc): New.
+	Many more changes througout file.
+
+2012-08-09  Nick Clifton  <nickc@redhat.com>
+
+	* po/vi.po: Updated Vietnamese translation.
+
 2012-08-07  Ian Lance Taylor  <iant@google.com>
 
 	* layout.cc (Layout::add_target_dynamic_tags): If
