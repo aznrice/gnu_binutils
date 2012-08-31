@@ -1,3 +1,59 @@
+2012-08-31  Alan Modra  <amodra@gmail.com>
+
+	* powerpc.cc (Powerpc_relobj): Add and use Address typedef.
+	(Powerpc_relobj::toc_base_offset): New stub function.
+	(Target_powerpc): Add tp_offset, dtp_offset.  Rename
+	got_mod_index_offset to tlsld_got_offset.  Update all refs.
+	(Target_powerpc::Relocate::enum skip_tls): New.
+	(Target_powerpc::call_tls_get_addr_): New var.
+	(Target_powerpc::is_branch_reloc): Move to file scope.
+	(Target_powerpc::relocate_tls, optimize_tls_reloc): Delete.
+	(Target_powerpc::optimize_tls_gd, optimize_tls_ld, optimize_tls_ie):
+	New functions.
+	(Target_powerpc::enum Got_type): Delete old values, add new ones.
+	(powerpc_info): Correct common_pagesize for ppc64.
+	(at_tls_transform, needs_dynamic_reloc, use_plt_offset): New functions.
+	(Powerpc_relocate_functions): Add overflow check enums and functions.
+	Add non-shift version of rela, rela_ua.  Delete all rel public
+	functions.  Delete addr16_lo.  Add addr64, addr64_u, addr32,
+	addr32_u, addr24, addr16_u, addr16_hi2, addr16_ha2, addr16_hi3,
+	addr16_ha3, addr14 functions.
+	(Output_data_got_powerpc::add_constant_pair): New function.
+	(Output_data_got_powerpc::got_base_offset): Likewise.
+	(Output_data_got_powerpc::do_write): Correct 64-bit got header.
+	(instruction constants): Sort, add some more.
+	(Output_data_glink::do_write): Add and use Address typedef.  Use
+	object->toc_base_offset() stub for 64-bit.
+	(Target_powerpc::tlsld_got_offset): Use add_constant_pair.
+	(Target_powerpc::Scan::get_reference_flags): Handle more relocs.
+	(Target_powerpc::Scan::local, global): Emit relative dynamic reloc
+	for R_PPC64_TOC.  Handle more relocs.  Generate got entries for TLS.
+	Always treat .opd relocs as against locally defined symbol.
+	Correct condition for RELATIVE relocs.
+	(Target_powerpc::do_finalize_sections): Test for NULL sections.
+	(Target_powerpc::Relocate::relocate): Use plt call stub as value
+	for 32-bit syms with a plt entry.  Correct ppc64 toc base
+	calculations.  Handle TLS relocs, and more.  Add overflow
+	checking and adjust for Powerpc_relocate_functions changes.
+	(Target_powerpc::relocate_for_relocatable): Handle zero r_sym.
+	Reinstate --emit-relocs code with FIXME.
+
+2012-08-30  Alan Modra  <amodra@gmail.com>
+
+	* layout.cc (Layout::set_segment_offsets): Set p_align to
+	abi_pagesize, not common_pagesize.
+	(Layout::relaxation_loop_body): Similarly use abi_pagesize
+	to determine whether file header can go in segment.
+
+2012-08-30  Alan Modra  <amodra@gmail.com>
+
+	* output.h (Output_reloc::Output_reloc <output section>): Add
+	is_relative param.  Adjust calls.
+	(Output_reloc::add_output_section_relative): New functions.
+	* output.cc (Output_reloc::Output_reloc <output section>): Handle
+	is_relative.
+	(Output_reloc::symbol_value): Handle SECTION_CODE.
+
 2012-08-24  Sriraman Tallam  <tmsriram@google.com>
 
 	* gold.cc (queue_middle_tasks): Call layout again when unique
@@ -8,7 +64,7 @@
 	(Layout::layout): Make output section for mapping to a unique segment.
 	(Layout::insert_section_segment_map): New function.
 	(Layout::attach_allocated_section_to_segment): Make unique segment for
-	output sections marked so. 
+	output sections marked so.
 	(Layout::segment_precedes): Check for unique segments when sorting.
 	* layout.h (Layout::Unique_segment_info): New struct.
 	(Layout::Section_segment_map): New typedef.
@@ -52,7 +108,6 @@
 	(unique_segment_for_sections): New global.
 	(claim_file_hook): Call allow_unique_segment_for_sections.
 	(all_symbols_read_hook): Call unique_segment_for_sections.
-	
 
 2012-08-22  Cary Coutant  <ccoutant@google.com>
 
@@ -5546,7 +5601,7 @@
 
 2010-05-26  Rafael Espindola  <espindola@google.com>
 
-       PR 11604
+	PR 11604
 	* gold/object.cc(Sized_relobj::do_layout_deferred_sections): Avoid
 	adding sections the garbage collector removed.
 	* gold/testsuite/Makefile.am: Add test.
@@ -7300,48 +7355,48 @@
 2010-01-08  Doug Kwan  <dougkwan@google.com>
 
 	* arm.cc (Stub_table::Stub_table): Initalize cortex_a8_stubs_,
-	  prev_data_size_ and prev_addralign_.  Remove initializer for
-	  deleted data member has_been_changed_.
-	  (Stub_table::empty): Look at both reloc_stubs_ and cortex_a8_stubs_
-	  to determine if the table is empty.
-	  (Stub_table::has_been_changed, Stub_table_set_has_been_changed):
-	  Remove.
-	  (Stub_table::add_reloc_stub): Define method in class definition
-	  instead of just declaring it there.
-	  (Stub_table::add_cortex_a8_stub): New method definition.
-	  (Stub_table::update_data_size_and_addralign): Ditto.
-	  (Stub_table::finalize_stubs): Ditto.
-	  (Stub_table::apply_cortex_a8_workaround_to_address_range): Ditto.
-	  (Stub_table::do_addralign_): Return address alignment in the
-	  (Stub_table::do_reset_address_and_file_offset): Define method in
-	  class definition instead of declaring it there.  Set current data
-	  size to be the data size of the previous pass.
-	  (Stub_table::set_final_data_size): Use current data size as the
-	  final data size.
-	  (Stub_table::relocate_stub): Change parameter type of stub from
-	  Reloc_stub pointer to Stub pointer.
-	  (Stub_table::addralign_, Stub_table::has_been_changed_): Remove.
-	  (Stub_table::Cortex_a8_stub_list): New typedef.
-	  (Stub_table::cortex_a8_stubs_, Stub_table::prev_data_size_,
-	   Stub_table::prev_addralign_): New data member.
-	  (Arm_relobj::Arm_relobj): Initialize data member
-	  section_has_cortex_a8_workaround_.
-	  (Arm_relobj::section_has_cortex_a8_workaround,
-	   Arm_relobj::mark_section_for_cortex_a8_workaround): New method
-	   definitions.
-	  (Arm_relobj::section_has_cortex_a8_workaround_): New data member
-	  declarations.
-	  (Target_arm::relocate_stub): Change parameter type of stub from
-	  Reloc_stub pointer to Stub pointer.
-	  (Insn_template::size, Insn_template::alignment): Handle
-	  THUMB16_SPECIAL_TYPE.
-	  (Stub_table::remove_all_cortex_a8_stubs, Stub_table::finalize_stubs,
-	   Stub_table::update_data_size_and_addralign,
-	   Stub_table::apply_cortex_a8_workaround_to_address_range): New method
-	  definitions.
-	  (Stub_table::relocate_stubs): Handle Cortex-A8 stubs.
-	  (Stub_table::do_write): Ditto.
-	  (Target_arm::do_relax): Adjust code for changes in Stub_table.
+	prev_data_size_ and prev_addralign_.  Remove initializer for
+	deleted data member has_been_changed_.
+	(Stub_table::empty): Look at both reloc_stubs_ and cortex_a8_stubs_
+	to determine if the table is empty.
+	(Stub_table::has_been_changed, Stub_table_set_has_been_changed):
+	Remove.
+	(Stub_table::add_reloc_stub): Define method in class definition
+	instead of just declaring it there.
+	(Stub_table::add_cortex_a8_stub): New method definition.
+	(Stub_table::update_data_size_and_addralign): Ditto.
+	(Stub_table::finalize_stubs): Ditto.
+	(Stub_table::apply_cortex_a8_workaround_to_address_range): Ditto.
+	(Stub_table::do_addralign_): Return address alignment in the
+	(Stub_table::do_reset_address_and_file_offset): Define method in
+	class definition instead of declaring it there.  Set current data
+	size to be the data size of the previous pass.
+	(Stub_table::set_final_data_size): Use current data size as the
+	final data size.
+	(Stub_table::relocate_stub): Change parameter type of stub from
+	Reloc_stub pointer to Stub pointer.
+	(Stub_table::addralign_, Stub_table::has_been_changed_): Remove.
+	(Stub_table::Cortex_a8_stub_list): New typedef.
+	(Stub_table::cortex_a8_stubs_, Stub_table::prev_data_size_,
+	 Stub_table::prev_addralign_): New data member.
+	(Arm_relobj::Arm_relobj): Initialize data member
+	section_has_cortex_a8_workaround_.
+	(Arm_relobj::section_has_cortex_a8_workaround,
+	 Arm_relobj::mark_section_for_cortex_a8_workaround): New method
+	 definitions.
+	(Arm_relobj::section_has_cortex_a8_workaround_): New data member
+	declarations.
+	(Target_arm::relocate_stub): Change parameter type of stub from
+	Reloc_stub pointer to Stub pointer.
+	(Insn_template::size, Insn_template::alignment): Handle
+	THUMB16_SPECIAL_TYPE.
+	(Stub_table::remove_all_cortex_a8_stubs, Stub_table::finalize_stubs,
+	 Stub_table::update_data_size_and_addralign,
+	 Stub_table::apply_cortex_a8_workaround_to_address_range): New method
+	definitions.
+	(Stub_table::relocate_stubs): Handle Cortex-A8 stubs.
+	(Stub_table::do_write): Ditto.
+	(Target_arm::do_relax): Adjust code for changes in Stub_table.
 
 2010-01-08  Ian Lance Taylor  <iant@google.com>
 
@@ -8246,7 +8301,7 @@
 
 2009-12-01  Rafael Avila de Espindola  <espindola@google.com>
 
-       * incremental-dump.cc (main): Fix typos.
+	* incremental-dump.cc (main): Fix typos.
 
 2009-11-27  Rafael Avila de Espindola  <espindola@google.com>
 
@@ -10374,12 +10429,12 @@
 	(Incremental_inputs::sized_create_incremental_inputs_data): New method.
 	* incremental.h: New file.
 	* layout.cc (Layout::Layout): Handle new incremental_inputs_.
-       (Layout::finalize): Create incremental inputs section in
+	(Layout::finalize): Create incremental inputs section in
 	incremental builds.
-       (Layout::create_incremental_info_sections): New method.
+	(Layout::create_incremental_info_sections): New method.
 	* layout.h (Layout::incremental_inputs): New method.
-       (Layout::create_incremental_info_sections): New method.
-       (Layout::incremental_inputs_): New field.
+	(Layout::create_incremental_info_sections): New method.
+	(Layout::incremental_inputs_): New field.
 	* main.cc (main): Notify Incremental_input of the command line.
 
 2009-04-01  Ian Lance Taylor  <iant@google.com>
