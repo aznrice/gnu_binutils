@@ -1,3 +1,8 @@
+2012-09-05  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-secondary-1.patch: Don't set symbol weak on secondary
+	symbol.
+
 2012-09-04  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-pr14493-1.patch: Removed.
