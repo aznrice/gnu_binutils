@@ -1,5 +1,10 @@
 2012-09-06  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-secondary-1.patch: If secondary symbols are ignored,
+	count function and common symbols as global definition.
+
+2012-09-06  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-secondary-1.patch: Ignore another secondary
 	definition.
 
