@@ -135,6 +135,17 @@ include/elf/
 
 ld/
 
+2012-09-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld.texinfo: Change "-z secondary" to "-z nosecondary".
+
+	* ldmain.c (main): Initialize link_info.emit_secondary to TRUE.
+
+	* emultempl/elf32.em (gld${EMULATION_NAME}_handle_option): Set
+	to link_info.emit_secondary to FALSE for "-z nosecondary".
+	(gld${EMULATION_NAME}_list_options): Replace "-z secondary" with
+	"-z nosecondary".
+
 2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ld.texinfo: Document "-z secondary".
@@ -144,6 +155,11 @@ ld/
 	(gld${EMULATION_NAME}_list_options): Add "-z secondary".
 
 ld/testsuite/
+
+2012-09-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/secondary.exp: Update -Wl,-z,secondary with
+	-Wl,-z,nosecondary.
 
 2012-09-06  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -1231,15 +1247,15 @@ index 1c681d5..fef60c0 100644
  #define STB_GNU_UNIQUE	10		/* Symbol is unique in namespace */
  #define STB_HIOS	12		/* OS-specific semantics */
 diff --git a/ld/emultempl/elf32.em b/ld/emultempl/elf32.em
-index de51050..7dabc5d 100644
+index de51050..17e284c 100644
 --- a/ld/emultempl/elf32.em
 +++ b/ld/emultempl/elf32.em
 @@ -2334,6 +2334,8 @@ fragment <<EOF
  	link_info.error_textrel = FALSE;
        else if (strcmp (optarg, "textoff") == 0)
  	link_info.error_textrel = FALSE;
-+      else if (strcmp (optarg, "secondary") == 0)
-+	link_info.emit_secondary = TRUE;
++      else if (strcmp (optarg, "nosecondary") == 0)
++	link_info.emit_secondary = FALSE;
  EOF
  fi
  
@@ -1248,27 +1264,37 @@ index de51050..7dabc5d 100644
    fprintf (file, _("\
    -z relro                    Create RELRO program header\n"));
 +  fprintf (file, _("\
-+  -z secondary                Emit secondary symbols\n"));
++  -z nosecondary              Convert secondary symbols to weak symbols\n"));
  EOF
  fi
  
 diff --git a/ld/ld.texinfo b/ld/ld.texinfo
-index dd3149c..f02955f 100644
+index dd3149c..6d0495a 100644
 --- a/ld/ld.texinfo
 +++ b/ld/ld.texinfo
-@@ -1087,6 +1087,12 @@ Marks the object may contain $ORIGIN.
+@@ -1087,6 +1087,10 @@ Marks the object may contain $ORIGIN.
  @item relro
  Create an ELF @code{PT_GNU_RELRO} segment header in the object.
  
-+@item secondary
-+By default, the linker converts secondary symbols to weak symbols.  This
-+option disables secondary symbol conversion and emits secondary symbols
-+when generating a shared library.  The resulting shared library requires
-+secondary symbol support in the dynamic linker.
++@item nosecondary
++Convert secondary symbols to weak symbols when generating a shared
++library.
 +
  @item max-page-size=@var{value}
  Set the emulation maximum page size to @var{value}.
  
+diff --git a/ld/ldmain.c b/ld/ldmain.c
+index 15f8ebf..5720480 100644
+--- a/ld/ldmain.c
++++ b/ld/ldmain.c
+@@ -278,6 +278,7 @@ main (int argc, char **argv)
+   link_info.combreloc = TRUE;
+   link_info.strip_discarded = TRUE;
+   link_info.emit_hash = TRUE;
++  link_info.emit_secondary = TRUE;
+   link_info.callbacks = &link_callbacks;
+   link_info.input_bfds_tail = &link_info.input_bfds;
+   /* SVR4 linkers seem to set DT_INIT and DT_FINI based on magic _init
 diff --git a/ld/testsuite/ld-elf/library1.c b/ld/testsuite/ld-elf/library1.c
 new file mode 100644
 index 0000000..28e255d
@@ -1481,7 +1507,7 @@ index 0000000..6d64ed7
 +}
 diff --git a/ld/testsuite/ld-elf/secondary.exp b/ld/testsuite/ld-elf/secondary.exp
 new file mode 100644
-index 0000000..92cf664
+index 0000000..106c13a
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/secondary.exp
 @@ -0,0 +1,163 @@
@@ -1530,16 +1556,16 @@ index 0000000..92cf664
 +   "-r -nostdlib" ""
 +   {secondary.c} {{readelf {-s} secondary.rd}} "secondary1.o"}
 +  {"Build secondary1.so"
-+   "-shared" "-fPIC"
++   "-Wl,-z,nosecondary -shared" "-fPIC"
 +   {secondary.c} {{readelf {--dyn-syms} secondary1.rd}} "secondary1.so"}
 +  {"Build secondary2.so"
-+   "-Wl,-z,secondary -shared" "-fPIC"
++   "-shared" "-fPIC"
 +   {secondary.c} {{readelf {--dyn-syms} secondary2.rd}} "secondary2.so"}
 +  {"Build libfoo.so"
 +   "-shared" "-fPIC"
 +   {secondary-foo.c} {} "libfoo.so"}
 +  {"Build secondary-main with secondary.o"
-+   "-Wl,-z,secondary tmpdir/secondary.o tmpdir/libfoo.so" ""
++   "tmpdir/secondary.o tmpdir/libfoo.so" ""
 +   {secondary-main.c} {{readelf {--dyn-syms} secondary1.rd}} "secondary"}
 +  {"Build library1.so"
 +   "-shared" "-fPIC -DSHARED"

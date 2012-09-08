@@ -1,3 +1,8 @@
+2012-09-08  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-secondary-1.patch: Replace "-z secondary" with
+	"-z nosecondary".
+
 2012-09-06  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-secondary-1.patch: If secondary symbols are ignored,
