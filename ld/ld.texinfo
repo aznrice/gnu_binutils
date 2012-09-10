@@ -1087,11 +1087,9 @@ Marks the object may contain $ORIGIN.
 @item relro
 Create an ELF @code{PT_GNU_RELRO} segment header in the object.
 
-@item secondary
-By default, the linker converts secondary symbols to weak symbols.  This
-option disables secondary symbol conversion and emits secondary symbols
-when generating a shared library.  The resulting shared library requires
-secondary symbol support in the dynamic linker.
+@item nosecondary
+Convert secondary symbols to weak symbols when generating a shared
+library.
 
 @item max-page-size=@var{value}
 Set the emulation maximum page size to @var{value}.

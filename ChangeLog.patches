@@ -134,6 +134,11 @@ diff --git a/bfd/elf-bfd.h b/bfd/elf-bfd.h
 index 889ce12..fdcfa92 100644
 bfd/
 
+2012-08-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf64-aarch64.c (elf64_aarch64_relocate_section): Add an
+	argument for error ignored.
+
 2012-04-25  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* elf64-ia64-vms.c (elf64_ia64_relocate_section): Add an
@@ -236,7 +241,7 @@ ld/testsuite/
 	* ld-ia64/error4.d: Likewise.
 
 diff --git a/bfd/elf-bfd.h b/bfd/elf-bfd.h
-index 4821eaf..f9caf61 100644
+index 6a44912..1f3574f 100644
 bfd/
 
 2012-06-28  H.J. Lu  <hongjiu.lu@intel.com>
@@ -342,6 +347,14 @@ include/elf/
 	* common.h (SHT_GNU_OBJECT_ONLY): New.
 
 ld/
+
+2012-08-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* emultempl/aarch64elf.em (gld${EMULATION_NAME}_finish): Renamed
+	to ...
+	(aarch64_finish): This.  Replace finish_default with
+	gld${EMULATION_NAME}_finish.
+	(LDEMUL_FINISH): Set to aarch64_finish.
 
 2011-10-15  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -678,7 +691,7 @@ ld/testsuite/
 	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index 11f3e49..6cd342e 100644
+index e496083..fda0d97 100644
 bfd/
 
 2011-04-06  H.J. Lu  <hongjiu.lu@intel.com>
@@ -697,6 +710,32 @@ diff --git a/bfd/elfcode.h b/bfd/elfcode.h
 index 28b6b90..c56b4f1 100644
 bfd/
 
+2012-09-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elflink.c (is_global_data_symbol_definition): Renamed to ...
+	(is_global_symbol_definition): This.  If secondary symbols are
+	ignored, count function and common symbols as global definition.
+	(elf_link_is_defined_archive_symbol): Updated.
+
+2012-09-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elflink.c (is_global_data_symbol_definition): Add an argument
+	to ignore secondary symbols.
+	(elf_link_is_defined_archive_symbol): Likewise and pass it to
+	is_global_data_symbol_definition.
+	(elf_link_add_archive_symbols): Ignore another secondary
+	definition.
+
+2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elflink.c (elf_link_output_extsym): Generate STB_SECONDARY
+	symbols if needed.
+
+2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf.c (swap_out_syms): Output undefined secondary symbols
+	as weak.
+
 2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* elflink.c (_bfd_elf_merge_symbol): Allow overriding secondary
@@ -705,8 +744,8 @@ bfd/
 	symbols.  Allow overriding secondary symbols.
 	(elf_link_add_archive_symbols): Keep searching if a definition
 	is secondary. 
-	(elf_link_output_extsym): Generate STB_SECONDARY symbols if
-	needed.  Treat undefined secondary symbols as weak symbols.
+	(elf_link_output_extsym): Treat secondary symbols as weak
+	symbols.
 	* linker.c (_bfd_generic_link_add_one_symbol): Treat secondary
 	symbol as weak symbol.  Mark secondary symbol.
 
@@ -738,6 +777,16 @@ binutils/
 
 gas/
 
+2012-09-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/obj-elf.c (obj_elf_weak): Don't set symbol weak on
+	secondary symbol.
+
+2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/obj-elf.c (elf_frob_symbol): Handle secondary symbol
+	for .symver.  Also remove the unused secondary symbol.
+
 2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* symbols.c (S_IS_SECONDARY): New.
@@ -753,14 +802,13 @@ gas/
 
 	* config/obj-elf.c (obj_elf_secondary): New.
 	(elf_pseudo_table): Add "secondary".
-	(elf_frob_symbol): Handle secondary symbol for .symver.  Remove
-	the unused secondary symbol.  Check secondary symbols.
+	(elf_frob_symbol): Also check secondary symbols.
 
 	* doc/as.texinfo: Document .secondary directive.
 
 gas/testsuite/
 
-2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+2012-09-05  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* gas/elf/common3.d: New file.
 	* gas/elf/common3.l: Likewise.
@@ -768,10 +816,13 @@ gas/testsuite/
 	* gas/elf/common4.d: Likewise.
 	* gas/elf/common4.l: Likewise.
 	* gas/elf/common4.s: Likewise.
-	* gas/elf/secondary.e: Likewise.
-	* gas/elf/secondary.s: Likewise.
+	* gas/elf/secondary1.e: Likewise.
+	* gas/elf/secondary1.s: Likewise.
+	* gas/elf/secondary2.e: Likewise.
+	* gas/elf/secondary2.s: Likewise.
 
-	* gas/elf/elf.exp: Run common3, common4 and secondary.
+	* gas/elf/elf.exp: Run common3, common4, secondary1 and
+	secondary2.
 
 	* gas/elf/type.s: Add .secondary tests.
 	* gas/elf/type.e: Updated.
@@ -780,8 +831,11 @@ include/
 
 2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
 
+	* bfdlink.h (bfd_link_info): Add emit_secondary.
+
+2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
 	* bfdlink.h (bfd_link_hash_entry): Add secondary.
-	(bfd_link_info): Add emit_secondary.
 
 include/elf/
 
@@ -790,6 +844,17 @@ include/elf/
 	* common.h (STB_SECONDARY): New.
 
 ld/
+
+2012-09-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld.texinfo: Change "-z secondary" to "-z nosecondary".
+
+	* ldmain.c (main): Initialize link_info.emit_secondary to TRUE.
+
+	* emultempl/elf32.em (gld${EMULATION_NAME}_handle_option): Set
+	to link_info.emit_secondary to FALSE for "-z nosecondary".
+	(gld${EMULATION_NAME}_list_options): Replace "-z secondary" with
+	"-z nosecondary".
 
 2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -801,7 +866,12 @@ ld/
 
 ld/testsuite/
 
-2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+2012-09-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/secondary.exp: Update -Wl,-z,secondary with
+	-Wl,-z,nosecondary.
+
+2012-09-06  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ld-elf/library1.c: New file.
 	* ld-elf/library1.out: Likewise.
@@ -809,6 +879,14 @@ ld/testsuite/
 	* ld-elf/library2.out: Likewise.
 	* ld-elf/library3.out: Likewise.
 	* ld-elf/library4.out: Likewise.
+	* ld-elf/library5a.c: Likewise.
+	* ld-elf/library5b.c: Likewise.
+	* ld-elf/library6a.c: Likewise.
+	* ld-elf/library6b.c: Likewise.
+	* ld-elf/library6c.c: Likewise.
+	* ld-elf/library7a.c: Likewise.
+	* ld-elf/library7b.c: Likewise.
+	* ld-elf/library7c.c: Likewise.
 	* ld-elf/secondary-foo.c: Likewise.
 	* ld-elf/secondary-main.c: Likewise.
 	* ld-elf/secondary.c: Likewise.
@@ -822,6 +900,12 @@ ld/testsuite/
 	* ld-elf/secondary3b.s: Likewise.
 	* ld-elf/secondary4.rd: Likewise.
 	* ld-elf/secondary4.s: Likewise.
+	* ld-elf/secondary5.c: Likewise.
+	* ld-elf/secondary5.out: Likewise.
+	* ld-elf/secondary6.c: Likewise.
+	* ld-elf/secondary6.out: Likewise.
+	* ld-elf/secondary7.c: Likewise.
+	* ld-elf/secondary7.out: Likewise.
 
 diff --git a/bfd/archive.c b/bfd/archive.c
-index 0620452..f7f4134 100644
+index 8e8fd2d..de294a7 100644

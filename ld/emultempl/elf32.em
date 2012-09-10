@@ -2372,8 +2372,8 @@ fragment <<EOF
 	link_info.error_textrel = FALSE;
       else if (strcmp (optarg, "textoff") == 0)
 	link_info.error_textrel = FALSE;
-      else if (strcmp (optarg, "secondary") == 0)
-	link_info.emit_secondary = TRUE;
+      else if (strcmp (optarg, "nosecondary") == 0)
+	link_info.emit_secondary = FALSE;
 EOF
 fi
 
@@ -2497,7 +2497,7 @@ fragment <<EOF
   fprintf (file, _("\
   -z relro                    Create RELRO program header\n"));
   fprintf (file, _("\
-  -z secondary                Emit secondary symbols\n"));
+  -z nosecondary              Convert secondary symbols to weak symbols\n"));
 EOF
 fi
 

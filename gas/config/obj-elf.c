@@ -507,7 +507,8 @@ obj_elf_weak (int ignore ATTRIBUTE_UNUSED)
     {
       symbolP = get_sym_from_input_line_and_check ();
       c = *input_line_pointer;
-      S_SET_WEAK (symbolP);
+      if (!S_IS_SECONDARY (symbolP))
+	S_SET_WEAK (symbolP);
       if (c == ',')
 	{
 	  input_line_pointer++;

@@ -43,16 +43,16 @@ set build_tests {
    "-r -nostdlib" ""
    {secondary.c} {{readelf {-s} secondary.rd}} "secondary1.o"}
   {"Build secondary1.so"
-   "-shared" "-fPIC"
+   "-Wl,-z,nosecondary -shared" "-fPIC"
    {secondary.c} {{readelf {--dyn-syms} secondary1.rd}} "secondary1.so"}
   {"Build secondary2.so"
-   "-Wl,-z,secondary -shared" "-fPIC"
+   "-shared" "-fPIC"
    {secondary.c} {{readelf {--dyn-syms} secondary2.rd}} "secondary2.so"}
   {"Build libfoo.so"
    "-shared" "-fPIC"
    {secondary-foo.c} {} "libfoo.so"}
   {"Build secondary-main with secondary.o"
-   "-Wl,-z,secondary tmpdir/secondary.o tmpdir/libfoo.so" ""
+   "tmpdir/secondary.o tmpdir/libfoo.so" ""
    {secondary-main.c} {{readelf {--dyn-syms} secondary1.rd}} "secondary"}
   {"Build library1.so"
    "-shared" "-fPIC -DSHARED"
@@ -75,6 +75,39 @@ set build_tests {
   {"Build secondary4.so"
    "-nostdlib -shared tmpdir/secondary3a.o" ""
    {secondary4.s} {{readelf {--dyn-syms} secondary4.rd}} "secondary4.so"}
+  {"Build library5a.a"
+   "" ""
+   {library5a.c} {} "library5a.a"}
+  {"Build library5b.a"
+   "" ""
+   {library5b.c} {} "library5b.a"}
+  {"Build secondary5.a"
+   "" ""
+   {secondary5.c} {} "secondary5.a"}
+  {"Build library6a.a"
+   "" ""
+   {library6a.c} {} "library6a.a"}
+  {"Build library6b.a"
+   "" ""
+   {library6b.c} {} "library6b.a"}
+  {"Build library6c.a"
+   "" ""
+   {library6c.c} {} "library6c.a"}
+  {"Build secondary6.a"
+   "" ""
+   {secondary6.c} {} "secondary6.a"}
+  {"Build library7a.a"
+   "" ""
+   {library7a.c} {} "library7a.a"}
+  {"Build library7b.a"
+   "" ""
+   {library7b.c} {} "library7b.a"}
+  {"Build library7c.a"
+   "" ""
+   {library7c.c} {} "library7c.a"}
+  {"Build secondary7.a"
+   "" ""
+   {secondary7.c} {} "secondary7.a"}
 }
 
 run_cc_link_tests $build_tests
@@ -110,6 +143,21 @@ set run_tests {
     {"Run secondary-main with library2.so secondary.o"
      "tmpdir/library2.so tmpdir/secondary.o tmpdir/libfoo.so" ""
      {secondary-main.c} "secondary10" "library4.out"}
+    {"Run secondary5 with library5a.a library5b.a"
+     "tmpdir/secondary5.o tmpdir/library5a.a tmpdir/library5b.a" ""
+     {dummy.c} "secondary5a" "secondary5.out"}
+    {"Run secondary5 with -( library5a.a library5b.a -)"
+     "tmpdir/secondary5.o -\\( tmpdir/library5a.a tmpdir/library5b.a -\\)" ""
+     {dummy.c} "secondary5b" "secondary5.out"}
+    {"Run secondary5 with -( library5a.a library5b.a -) -( library5a.a library5b.a -)"
+     "tmpdir/secondary5.o -\\( tmpdir/library5a.a tmpdir/library5b.a -\\) -\\( tmpdir/library5a.a tmpdir/library5b.a -\\)" ""
+     {dummy.c} "secondary5c" "secondary5.out"}
+    {"Run secondary6 with -( library6a.a library6b.a library6c.a -)"
+     "tmpdir/secondary6.o -\\( tmpdir/library6a.a tmpdir/library6b.a tmpdir/library6c.a -\\)" ""
+     {dummy.c} "secondary6" "secondary6.out"}
+    {"Run secondary7 with -( library7a.a library7b.a library7c.a -)"
+     "tmpdir/secondary7.o -\\( tmpdir/library7a.a tmpdir/library7b.a tmpdir/library7c.a -\\)" ""
+     {dummy.c} "secondary7" "secondary7.out"}
 }
 
 run_ld_link_exec_tests [] $run_tests

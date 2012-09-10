@@ -2962,31 +2962,41 @@ _bfd_elf_tls_setup (bfd *obfd, struct bfd_link_info *info)
   return tls;
 }
 
-/* Return TRUE iff this is a non-common, definition of a non-function symbol.  */
+/* Return TRUE iff this is a non-common, definition of a
+   non-function symbol, unless IGNORE_SECONDARY is TRUE.  */
+
 static bfd_boolean
-is_global_data_symbol_definition (bfd *abfd ATTRIBUTE_UNUSED,
-				  Elf_Internal_Sym *sym)
+is_global_symbol_definition (bfd *abfd, Elf_Internal_Sym *sym,
+			     bfd_boolean ignore_secondary)
 {
-  const struct elf_backend_data *bed;
+  /* Ignore secondary symbols.  */
+  if (ignore_secondary && ELF_ST_BIND (sym->st_info) == STB_SECONDARY)
+    return FALSE;
 
   /* Local symbols do not count, but target specific ones might.  */
   if (ELF_ST_BIND (sym->st_info) != STB_GLOBAL
       && ELF_ST_BIND (sym->st_info) < STB_LOOS)
     return FALSE;
 
-  bed = get_elf_backend_data (abfd);
-  /* Function symbols do not count.  */
-  if (bed->is_function_type (ELF_ST_TYPE (sym->st_info)))
-    return FALSE;
-
   /* If the section is undefined, then so is the symbol.  */
   if (sym->st_shndx == SHN_UNDEF)
     return FALSE;
 
-  /* If the symbol is defined in the common section, then
-     it is a common definition and so does not count.  */
-  if (bed->common_definition (sym))
-    return FALSE;
+  /* If secondary symbols are ignored, count function and common
+     symbols as global definition.  */
+  if (!ignore_secondary)
+    {
+      const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+
+      /* Function symbols do not count.  */
+      if (bed->is_function_type (ELF_ST_TYPE (sym->st_info)))
+	return FALSE;
+
+      /* If the symbol is defined in the common section, then
+	 it is a common definition and so does not count.  */
+      if (bed->common_definition (sym))
+	return FALSE;
+    }
 
   /* If the symbol is in a target specific section then we
      must rely upon the backend to tell us what it is.  */
@@ -3005,9 +3015,12 @@ is_global_data_symbol_definition (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Search the symbol table of the archive element of the archive ABFD
    whose archive map contains a mention of SYMDEF, and determine if
-   the symbol is defined in this element.  */
+   the symbol is defined in this element.  Igore seconday defintion,
+   it IGNORE_SECONDARY is TRUE.  */
+
 static bfd_boolean
-elf_link_is_defined_archive_symbol (bfd * abfd, carsym * symdef)
+elf_link_is_defined_archive_symbol (bfd * abfd, carsym * symdef,
+				    bfd_boolean ignore_secondary)
 {
   Elf_Internal_Shdr * hdr;
   bfd_size_type symcount;
@@ -3075,7 +3088,8 @@ elf_link_is_defined_archive_symbol (bfd * abfd, carsym * symdef)
 
       if (strcmp (name, symdef->name) == 0)
 	{
-	  result = is_global_data_symbol_definition (abfd, isym);
+	  result = is_global_symbol_definition (abfd, isym,
+						ignore_secondary);
 	  break;
 	}
     }
@@ -5179,7 +5193,8 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
 		 map alone.  Instead we must read in the element's symbol
 		 table and check that to see what kind of symbol definition
 		 this is.  */
-	      if (! elf_link_is_defined_archive_symbol (abfd, symdef))
+	      if (! elf_link_is_defined_archive_symbol (abfd, symdef,
+							FALSE))
 		continue;
 	    }
 	  /* Keep searching if a definition is secondary.  */
@@ -5189,6 +5204,14 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
 	      if (h->root.type != bfd_link_hash_undefweak)
 		defined[i] = TRUE;
 	      continue;
+	    }
+	  else if (h->root.secondary
+		   && h->root.type == bfd_link_hash_defweak)
+	    {
+	      /* Ignore another secondary definition.  */
+	      if (! elf_link_is_defined_archive_symbol (abfd, symdef,
+							TRUE))
+		continue;
 	    }
 
 	  /* We need to include this archive member.  */
