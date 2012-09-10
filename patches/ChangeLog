@@ -1,3 +1,42 @@
+2012-09-08  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-secondary-1.patch: Replace "-z secondary" with
+	"-z nosecondary".
+
+2012-09-06  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-secondary-1.patch: If secondary symbols are ignored,
+	count function and common symbols as global definition.
+
+2012-09-06  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-secondary-1.patch: Ignore another secondary
+	definition.
+
+2012-09-05  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-secondary-1.patch: Don't set symbol weak on secondary
+	symbol.
+
+2012-09-04  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr14493-1.patch: Removed.
+	* README: Likewise.
+
+2012-08-31  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr14493-1.patch: New.
+	* README: Apply it.
+
+2012-08-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-lto-mixed-18.patch: Rename
+	gld${EMULATION_NAME}_finish to aarch64_finish.
+
+2012-08-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-error-15.patch: Updated.
+
 2012-07-13  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-lto-mixed-18.patch: Relace trace_file_tries with

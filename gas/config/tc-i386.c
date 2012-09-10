@@ -144,7 +144,7 @@ static void set_16bit_gcc_code_flag (int);
 static void set_intel_syntax (int);
 static void set_intel_mnemonic (int);
 static void set_allow_index_reg (int);
-static void set_sse_check (int);
+static void set_check (int);
 static void set_cpu_arch (int);
 #ifdef TE_PE
 static void pe_directive_secrel (int);
@@ -221,6 +221,7 @@ enum i386_error
     unsupported_syntax,
     unsupported,
     invalid_vsib_address,
+    invalid_vector_register_set,
     unsupported_vector_index_register
   };
 
@@ -449,13 +450,13 @@ static int allow_naked_reg = 0;
 /* 1 if pseudo index register, eiz/riz, is allowed .  */
 static int allow_index_reg = 0;
 
-static enum
+static enum check_kind
   {
-    sse_check_none = 0,
-    sse_check_warning,
-    sse_check_error
+    check_none = 0,
+    check_warning,
+    check_error
   }
-sse_check;
+sse_check, operand_check = check_warning;
 
 /* Register prefix used for error message.  */
 static const char *register_prefix = "%";
@@ -663,6 +664,10 @@ static const arch_entry cpu_arch[] =
     CPU_BDVER1_FLAGS, 0, 0 },
   { STRING_COMMA_LEN ("bdver2"), PROCESSOR_BD,
     CPU_BDVER2_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN ("btver1"), PROCESSOR_BT,
+    CPU_BTVER1_FLAGS, 0, 0 },
+  { STRING_COMMA_LEN ("btver2"), PROCESSOR_BT,
+    CPU_BTVER2_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".8087"), PROCESSOR_UNKNOWN,
     CPU_8087_FLAGS, 0, 0 },
   { STRING_COMMA_LEN (".287"), PROCESSOR_UNKNOWN,
@@ -847,7 +852,8 @@ const pseudo_typeS md_pseudo_table[] =
   {"att_mnemonic", set_intel_mnemonic, 0},
   {"allow_index_reg", set_allow_index_reg, 1},
   {"disallow_index_reg", set_allow_index_reg, 0},
-  {"sse_check", set_sse_check, 0},
+  {"sse_check", set_check, 0},
+  {"operand_check", set_check, 1},
 #if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
   {"largecomm", handle_large_common, 0},
 #else
@@ -1058,7 +1064,7 @@ i386_align_code (fragS *fragP, int count)
      PROCESSOR_CORE, PROCESSOR_CORE2, PROCESSOR_COREI7, and
      PROCESSOR_GENERIC64, alt_long_patt will be used.
      3. For PROCESSOR_ATHLON, PROCESSOR_K6, PROCESSOR_K8 and
-     PROCESSOR_AMDFAM10, and PROCESSOR_BD, alt_short_patt
+     PROCESSOR_AMDFAM10, PROCESSOR_BD and PROCESSOR_BT, alt_short_patt
      will be used.
 
      When -mtune= isn't used, alt_long_patt will be used if
@@ -1113,6 +1119,7 @@ i386_align_code (fragS *fragP, int count)
 	    case PROCESSOR_K8:
 	    case PROCESSOR_AMDFAM10:
 	    case PROCESSOR_BD:
+	    case PROCESSOR_BT:
 	      patt = alt_short_patt;
 	      break;
 	    case PROCESSOR_I386:
@@ -1142,6 +1149,7 @@ i386_align_code (fragS *fragP, int count)
 	    case PROCESSOR_K8:
 	    case PROCESSOR_AMDFAM10:
 	    case PROCESSOR_BD:
+	    case PROCESSOR_BT:
 	    case PROCESSOR_GENERIC32:
 	      /* We use cpu_arch_isa_flags to check if we CAN optimize
 		 with nops.  */
@@ -1758,6 +1766,17 @@ operand_type_register_match (i386_operand_type m0,
 }
 
 static INLINE unsigned int
+register_number (const reg_entry *r)
+{
+  unsigned int nr = r->reg_num;
+
+  if (r->reg_flags & RegRex)
+    nr += 8;
+
+  return nr;
+}
+
+static INLINE unsigned int
 mode_from_disp_size (i386_operand_type t)
 {
   if (t.bitfield.disp8)
@@ -2100,8 +2119,22 @@ set_allow_index_reg (int flag)
 }
 
 static void
-set_sse_check (int dummy ATTRIBUTE_UNUSED)
+set_check (int what)
 {
+  enum check_kind *kind;
+  const char *str;
+
+  if (what)
+    {
+      kind = &operand_check;
+      str = "operand";
+    }
+  else
+    {
+      kind = &sse_check;
+      str = "sse";
+    }
+
   SKIP_WHITESPACE ();
 
   if (!is_end_of_line[(unsigned char) *input_line_pointer])
@@ -2110,17 +2143,17 @@ set_sse_check (int dummy ATTRIBUTE_UNUSED)
       int e = get_symbol_end ();
 
       if (strcmp (string, "none") == 0)
-	sse_check = sse_check_none;
+	*kind = check_none;
       else if (strcmp (string, "warning") == 0)
-	sse_check = sse_check_warning;
+	*kind = check_warning;
       else if (strcmp (string, "error") == 0)
-	sse_check = sse_check_error;
+	*kind = check_error;
       else
-	as_bad (_("bad argument to sse_check directive."));
+	as_bad (_("bad argument to %s_check directive."), str);
       *input_line_pointer = e;
     }
   else
-    as_bad (_("missing argument for sse_check directive"));
+    as_bad (_("missing argument for %s_check directive"), str);
 
   demand_empty_rest_of_line ();
 }
@@ -2830,12 +2863,7 @@ build_vex_prefix (const insn_template *t)
 
   /* Check register specifier.  */
   if (i.vex.register_specifier)
-    {
-      register_specifier = i.vex.register_specifier->reg_num;
-      if ((i.vex.register_specifier->reg_flags & RegRex))
-	register_specifier += 8;
-      register_specifier = ~register_specifier & 0xf;
-    }
+    register_specifier = ~register_number (i.vex.register_specifier) & 0xf;
   else
     register_specifier = 0xf;
 
@@ -2974,16 +3002,17 @@ process_immext (void)
 {
   expressionS *exp;
 
-  if (i.tm.cpu_flags.bitfield.cpusse3 && i.operands > 0)
+  if ((i.tm.cpu_flags.bitfield.cpusse3 || i.tm.cpu_flags.bitfield.cpusvme)
+      && i.operands > 0)
     {
-      /* SSE3 Instructions have the fixed operands with an opcode
-	 suffix which is coded in the same place as an 8-bit immediate
-	 field would be.  Here we check those operands and remove them
-	 afterwards.  */
+      /* MONITOR/MWAIT as well as SVME instructions have fixed operands
+	 with an opcode suffix which is coded in the same place as an
+	 8-bit immediate field would be.
+	 Here we check those operands and remove them afterwards.  */
       unsigned int x;
 
       for (x = 0; x < i.operands; x++)
-	if (i.op[x].regs->reg_num != x)
+	if (register_number (i.op[x].regs) != x)
 	  as_bad (_("can't use register '%s%s' as operand %d in '%s'."),
 		  register_prefix, i.op[x].regs->reg_name, x + 1,
 		  i.tm.name);
@@ -3129,7 +3158,7 @@ md_assemble (char *line)
   if (!(t = match_template ()))
     return;
 
-  if (sse_check != sse_check_none
+  if (sse_check != check_none
       && !i.tm.opcode_modifier.noavx
       && (i.tm.cpu_flags.bitfield.cpusse
 	  || i.tm.cpu_flags.bitfield.cpusse2
@@ -3138,7 +3167,7 @@ md_assemble (char *line)
 	  || i.tm.cpu_flags.bitfield.cpusse4_1
 	  || i.tm.cpu_flags.bitfield.cpusse4_2))
     {
-      (sse_check == sse_check_warning
+      (sse_check == check_warning
        ? as_warn
        : as_bad) (_("SSE instruction `%s' is used"), i.tm.name);
     }
@@ -3958,18 +3987,38 @@ check_VecOperands (const insn_template *t)
       return 1;
     }
 
-  /* For VSIB byte, we need a vector register for index and no PC
-     relative addressing is allowed.  */
-  if (t->opcode_modifier.vecsib
-      && (!i.index_reg
+  /* For VSIB byte, we need a vector register for index, and all vector
+     registers must be distinct.  */
+  if (t->opcode_modifier.vecsib)
+    {
+      if (!i.index_reg
 	  || !((t->opcode_modifier.vecsib == VecSIB128
 		&& i.index_reg->reg_type.bitfield.regxmm)
 	       || (t->opcode_modifier.vecsib == VecSIB256
-		   && i.index_reg->reg_type.bitfield.regymm))
-	  || (i.base_reg && i.base_reg->reg_num == RegRip)))
-    {
-      i.error = invalid_vsib_address;
-      return 1;
+		   && i.index_reg->reg_type.bitfield.regymm)))
+      {
+	i.error = invalid_vsib_address;
+	return 1;
+      }
+
+      gas_assert (i.reg_operands == 2);
+      gas_assert (i.types[0].bitfield.regxmm
+		  || i.types[0].bitfield.regymm);
+      gas_assert (i.types[2].bitfield.regxmm
+		  || i.types[2].bitfield.regymm);
+
+      if (operand_check == check_none)
+	return 0;
+      if (register_number (i.op[0].regs) != register_number (i.index_reg)
+	  && register_number (i.op[2].regs) != register_number (i.index_reg)
+	  && register_number (i.op[0].regs) != register_number (i.op[2].regs))
+	return 0;
+      if (operand_check == check_error)
+	{
+	  i.error = invalid_vector_register_set;
+	  return 1;
+	}
+      as_warn (_("mask, index, and destination registers should be distinct"));
     }
 
   return 0;
@@ -4364,6 +4413,9 @@ check_reverse:
 	  return NULL;
 	case invalid_vsib_address:
 	  err_msg = _("invalid VSIB address");
+	  break;
+	case invalid_vector_register_set:
+	  err_msg = _("mask, index, and destination registers must be distinct");
 	  break;
 	case unsupported_vector_index_register:
 	  err_msg = _("unsupported vector index register");
@@ -5071,7 +5123,7 @@ process_operands (void)
 	{
 	  /* The first operand is implicit and must be xmm0.  */
 	  gas_assert (operand_type_equal (&i.types[0], &regxmm));
-	  if (i.op[0].regs->reg_num != 0)
+	  if (register_number (i.op[0].regs) != 0)
 	    return bad_implicit_operand (1);
 
 	  if (i.tm.opcode_modifier.vexsources == VEX3SOURCES)
@@ -5145,7 +5197,7 @@ duplicate:
       gas_assert (i.reg_operands
 		  && (operand_type_equal (&i.types[0], &regxmm)
 		      || operand_type_equal (&i.types[0], &regymm)));
-      if (i.op[0].regs->reg_num != 0)
+      if (register_number (i.op[0].regs) != 0)
 	return bad_implicit_operand (i.types[0].bitfield.regxmm);
 
       for (j = 1; j < i.operands; j++)
@@ -5348,10 +5400,7 @@ build_modrm_byte (void)
                       || operand_type_equal (&i.tm.operand_types[reg_slot],
                                              &regymm));
           exp->X_op = O_constant;
-          exp->X_add_number
-              = ((i.op[reg_slot].regs->reg_num
-                  + ((i.op[reg_slot].regs->reg_flags & RegRex) ? 8 : 0))
-		 << 4);
+          exp->X_add_number = register_number (i.op[reg_slot].regs) << 4;
         }
       else
         {
@@ -5395,9 +5444,7 @@ build_modrm_byte (void)
 		      || operand_type_equal (&i.tm.operand_types[reg_slot],
 					     &regymm));
           i.op[imm_slot].imms->X_add_number
-              |= ((i.op[reg_slot].regs->reg_num
-                   + ((i.op[reg_slot].regs->reg_flags & RegRex) ? 8 : 0))
-		  << 4);
+              |= register_number (i.op[reg_slot].regs) << 4;
         }
 
       gas_assert (operand_type_equal (&i.tm.operand_types[nds], &regxmm)
@@ -5729,18 +5776,14 @@ build_modrm_byte (void)
 	      i.sib.base = i.base_reg->reg_num;
 	      /* x86-64 ignores REX prefix bit here to avoid decoder
 		 complications.  */
-	      if ((i.base_reg->reg_num & 7) == EBP_REG_NUM)
-		{
+	      if (!(i.base_reg->reg_flags & RegRex)
+		  && (i.base_reg->reg_num == EBP_REG_NUM
+		   || i.base_reg->reg_num == ESP_REG_NUM))
 		  default_seg = &ss;
-		  if (i.disp_operands == 0)
-		    {
-		      fake_zero_displacement = 1;
-		      i.types[op].bitfield.disp8 = 1;
-		    }
-		}
-	      else if (i.base_reg->reg_num == ESP_REG_NUM)
+	      if (i.base_reg->reg_num == 5 && i.disp_operands == 0)
 		{
-		  default_seg = &ss;
+		  fake_zero_displacement = 1;
+		  i.types[op].bitfield.disp8 = 1;
 		}
 	      i.sib.scale = i.log2_scale_factor;
 	      if (i.index_reg == 0)
@@ -6788,6 +6831,109 @@ lex_got (enum bfd_reloc_code_real *rel,
 }
 #endif
 
+#ifdef TE_PE
+#ifdef lex_got
+#undef lex_got
+#endif
+/* Parse operands of the form
+   <symbol>@SECREL32+<nnn>
+
+   If we find one, set up the correct relocation in RELOC and copy the
+   input string, minus the `@SECREL32' into a malloc'd buffer for
+   parsing by the calling routine.  Return this buffer, and if ADJUST
+   is non-null set it to the length of the string we removed from the
+   input line.  Otherwise return NULL.  
+   
+   This function is copied from the ELF version above adjusted for PE targets.  */
+
+static char *
+lex_got (enum bfd_reloc_code_real *rel ATTRIBUTE_UNUSED,
+	 int *adjust ATTRIBUTE_UNUSED,
+	 i386_operand_type *types ATTRIBUTE_UNUSED)
+{
+  static const struct
+  {
+    const char *str;
+    int len;
+    const enum bfd_reloc_code_real rel[2];
+    const i386_operand_type types64;
+  }
+  gotrel[] =
+  {
+    { STRING_COMMA_LEN ("SECREL32"),    { BFD_RELOC_32_SECREL,
+					  BFD_RELOC_32_SECREL },
+      OPERAND_TYPE_IMM32_32S_64_DISP32_64 },
+  };
+
+  char *cp;
+  unsigned j;
+
+  for (cp = input_line_pointer; *cp != '@'; cp++)
+    if (is_end_of_line[(unsigned char) *cp] || *cp == ',')
+      return NULL;
+
+  for (j = 0; j < ARRAY_SIZE (gotrel); j++)
+    {
+      int len = gotrel[j].len;
+
+      if (strncasecmp (cp + 1, gotrel[j].str, len) == 0)
+	{
+	  if (gotrel[j].rel[object_64bit] != 0)
+	    {
+	      int first, second;
+	      char *tmpbuf, *past_reloc;
+
+	      *rel = gotrel[j].rel[object_64bit];
+	      if (adjust)
+		*adjust = len;
+
+	      if (types)
+		{
+		  if (flag_code != CODE_64BIT)
+		    {
+		      types->bitfield.imm32 = 1;
+		      types->bitfield.disp32 = 1;
+		    }
+		  else
+		    *types = gotrel[j].types64;
+		}
+
+	      /* The length of the first part of our input line.  */
+	      first = cp - input_line_pointer;
+
+	      /* The second part goes from after the reloc token until
+		 (and including) an end_of_line char or comma.  */
+	      past_reloc = cp + 1 + len;
+	      cp = past_reloc;
+	      while (!is_end_of_line[(unsigned char) *cp] && *cp != ',')
+		++cp;
+	      second = cp + 1 - past_reloc;
+
+	      /* Allocate and copy string.  The trailing NUL shouldn't
+		 be necessary, but be safe.  */
+	      tmpbuf = (char *) xmalloc (first + second + 2);
+	      memcpy (tmpbuf, input_line_pointer, first);
+	      if (second != 0 && *past_reloc != ' ')
+		/* Replace the relocation token with ' ', so that
+		   errors like foo@SECLREL321 will be detected.  */
+		tmpbuf[first++] = ' ';
+	      memcpy (tmpbuf + first, past_reloc, second);
+	      tmpbuf[first + second] = '\0';
+	      return tmpbuf;
+	    }
+
+	  as_bad (_("@%s reloc is not supported with %d-bit output format"),
+		  gotrel[j].str, 1 << (5 + object_64bit));
+	  return NULL;
+	}
+    }
+
+  /* Might be a symbol version string.  Don't as_bad here.  */
+  return NULL;
+}
+
+#endif /* TE_PE */
+
 void
 x86_cons (expressionS *exp, int size)
 {
@@ -7310,7 +7456,7 @@ i386_index_check (const char *operand_string)
 		   ? i.base_reg->reg_type.bitfield.reg32
 		   : i.base_reg->reg_type.bitfield.reg16))
 	ok = 0;
-      else if (i.base_reg->reg_num != expected)
+      else if (register_number (i.base_reg) != expected)
 	ok = -1;
 
       if (ok < 0)
@@ -7325,7 +7471,7 @@ i386_index_check (const char *operand_string)
 		 : (flag_code == CODE_16BIT) ^ !i.prefix[ADDR_PREFIX]
 		   ? i386_regtab[j].reg_type.bitfield.reg32
 		   : i386_regtab[j].reg_type.bitfield.reg16)
-		&& i386_regtab[j].reg_num == expected)
+		&& register_number(i386_regtab + j) == expected)
 	      break;
 	  gas_assert (j < i386_regtab_size);
 	  as_warn (_("`%s' is not valid here (expected `%c%s%s%c')"),
@@ -7642,6 +7788,9 @@ i386_att_operand (char *operand_string)
 		    }
 		  else if (*base_string == REGISTER_PREFIX)
 		    {
+		      end_op = strchr (base_string, ',');
+		      if (end_op)
+			*end_op = '\0';
 		      as_bad (_("bad register name `%s'"), base_string);
 		      return 0;
 		    }
@@ -7683,6 +7832,9 @@ i386_att_operand (char *operand_string)
 	    }
 	  else if (*base_string == REGISTER_PREFIX)
 	    {
+	      end_op = strchr (base_string, ',');
+	      if (end_op)
+		*end_op = '\0';
 	      as_bad (_("bad register name `%s'"), base_string);
 	      return 0;
 	    }
@@ -8397,8 +8549,9 @@ const char *md_shortopts = "qn";
 #define OPTION_MOLD_GCC (OPTION_MD_BASE + 9)
 #define OPTION_MSSE2AVX (OPTION_MD_BASE + 10)
 #define OPTION_MSSE_CHECK (OPTION_MD_BASE + 11)
-#define OPTION_MAVXSCALAR (OPTION_MD_BASE + 12)
-#define OPTION_X32 (OPTION_MD_BASE + 13)
+#define OPTION_MOPERAND_CHECK (OPTION_MD_BASE + 12)
+#define OPTION_MAVXSCALAR (OPTION_MD_BASE + 13)
+#define OPTION_X32 (OPTION_MD_BASE + 14)
 
 struct option md_longopts[] =
 {
@@ -8420,6 +8573,7 @@ struct option md_longopts[] =
   {"mold-gcc", no_argument, NULL, OPTION_MOLD_GCC},
   {"msse2avx", no_argument, NULL, OPTION_MSSE2AVX},
   {"msse-check", required_argument, NULL, OPTION_MSSE_CHECK},
+  {"moperand-check", required_argument, NULL, OPTION_MOPERAND_CHECK},
   {"mavxscalar", required_argument, NULL, OPTION_MAVXSCALAR},
   {NULL, no_argument, NULL, 0}
 };
@@ -8649,13 +8803,24 @@ md_parse_option (int c, char *arg)
 
     case OPTION_MSSE_CHECK:
       if (strcasecmp (arg, "error") == 0)
-	sse_check = sse_check_error;
+	sse_check = check_error;
       else if (strcasecmp (arg, "warning") == 0)
-	sse_check = sse_check_warning;
+	sse_check = check_warning;
       else if (strcasecmp (arg, "none") == 0)
-	sse_check = sse_check_none;
+	sse_check = check_none;
       else
 	as_fatal (_("invalid -msse-check= option: `%s'"), arg);
+      break;
+
+    case OPTION_MOPERAND_CHECK:
+      if (strcasecmp (arg, "error") == 0)
+	operand_check = check_error;
+      else if (strcasecmp (arg, "warning") == 0)
+	operand_check = check_warning;
+      else if (strcasecmp (arg, "none") == 0)
+	operand_check = check_none;
+      else
+	as_fatal (_("invalid -moperand-check= option: `%s'"), arg);
       break;
 
     case OPTION_MAVXSCALAR:
@@ -8795,6 +8960,9 @@ md_show_usage (FILE *stream)
   fprintf (stream, _("\
   -msse-check=[none|error|warning]\n\
                           check SSE instructions\n"));
+  fprintf (stream, _("\
+  -moperand-check=[none|error|warning]\n\
+                          check operand combinations for validity\n"));
   fprintf (stream, _("\
   -mavxscalar=[128|256]   encode scalar AVX instructions with specific vector\n\
                            length\n"));

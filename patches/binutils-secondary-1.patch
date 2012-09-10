@@ -1,5 +1,31 @@
 bfd/
 
+2012-09-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elflink.c (is_global_data_symbol_definition): Renamed to ...
+	(is_global_symbol_definition): This.  If secondary symbols are
+	ignored, count function and common symbols as global definition.
+	(elf_link_is_defined_archive_symbol): Updated.
+
+2012-09-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elflink.c (is_global_data_symbol_definition): Add an argument
+	to ignore secondary symbols.
+	(elf_link_is_defined_archive_symbol): Likewise and pass it to
+	is_global_data_symbol_definition.
+	(elf_link_add_archive_symbols): Ignore another secondary
+	definition.
+
+2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elflink.c (elf_link_output_extsym): Generate STB_SECONDARY
+	symbols if needed.
+
+2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf.c (swap_out_syms): Output undefined secondary symbols
+	as weak.
+
 2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* elflink.c (_bfd_elf_merge_symbol): Allow overriding secondary
@@ -8,8 +34,8 @@ bfd/
 	symbols.  Allow overriding secondary symbols.
 	(elf_link_add_archive_symbols): Keep searching if a definition
 	is secondary. 
-	(elf_link_output_extsym): Generate STB_SECONDARY symbols if
-	needed.  Treat undefined secondary symbols as weak symbols.
+	(elf_link_output_extsym): Treat secondary symbols as weak
+	symbols.
 	* linker.c (_bfd_generic_link_add_one_symbol): Treat secondary
 	symbol as weak symbol.  Mark secondary symbol.
 
@@ -41,6 +67,16 @@ binutils/
 
 gas/
 
+2012-09-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/obj-elf.c (obj_elf_weak): Don't set symbol weak on
+	secondary symbol.
+
+2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/obj-elf.c (elf_frob_symbol): Handle secondary symbol
+	for .symver.  Also remove the unused secondary symbol.
+
 2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* symbols.c (S_IS_SECONDARY): New.
@@ -56,14 +92,13 @@ gas/
 
 	* config/obj-elf.c (obj_elf_secondary): New.
 	(elf_pseudo_table): Add "secondary".
-	(elf_frob_symbol): Handle secondary symbol for .symver.  Remove
-	the unused secondary symbol.  Check secondary symbols.
+	(elf_frob_symbol): Also check secondary symbols.
 
 	* doc/as.texinfo: Document .secondary directive.
 
 gas/testsuite/
 
-2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+2012-09-05  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* gas/elf/common3.d: New file.
 	* gas/elf/common3.l: Likewise.
@@ -71,10 +106,13 @@ gas/testsuite/
 	* gas/elf/common4.d: Likewise.
 	* gas/elf/common4.l: Likewise.
 	* gas/elf/common4.s: Likewise.
-	* gas/elf/secondary.e: Likewise.
-	* gas/elf/secondary.s: Likewise.
+	* gas/elf/secondary1.e: Likewise.
+	* gas/elf/secondary1.s: Likewise.
+	* gas/elf/secondary2.e: Likewise.
+	* gas/elf/secondary2.s: Likewise.
 
-	* gas/elf/elf.exp: Run common3, common4 and secondary.
+	* gas/elf/elf.exp: Run common3, common4, secondary1 and
+	secondary2.
 
 	* gas/elf/type.s: Add .secondary tests.
 	* gas/elf/type.e: Updated.
@@ -83,8 +121,11 @@ include/
 
 2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
 
+	* bfdlink.h (bfd_link_info): Add emit_secondary.
+
+2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
 	* bfdlink.h (bfd_link_hash_entry): Add secondary.
-	(bfd_link_info): Add emit_secondary.
 
 include/elf/
 
@@ -93,6 +134,17 @@ include/elf/
 	* common.h (STB_SECONDARY): New.
 
 ld/
+
+2012-09-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld.texinfo: Change "-z secondary" to "-z nosecondary".
+
+	* ldmain.c (main): Initialize link_info.emit_secondary to TRUE.
+
+	* emultempl/elf32.em (gld${EMULATION_NAME}_handle_option): Set
+	to link_info.emit_secondary to FALSE for "-z nosecondary".
+	(gld${EMULATION_NAME}_list_options): Replace "-z secondary" with
+	"-z nosecondary".
 
 2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -104,7 +156,12 @@ ld/
 
 ld/testsuite/
 
-2012-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+2012-09-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/secondary.exp: Update -Wl,-z,secondary with
+	-Wl,-z,nosecondary.
+
+2012-09-06  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ld-elf/library1.c: New file.
 	* ld-elf/library1.out: Likewise.
@@ -112,6 +169,14 @@ ld/testsuite/
 	* ld-elf/library2.out: Likewise.
 	* ld-elf/library3.out: Likewise.
 	* ld-elf/library4.out: Likewise.
+	* ld-elf/library5a.c: Likewise.
+	* ld-elf/library5b.c: Likewise.
+	* ld-elf/library6a.c: Likewise.
+	* ld-elf/library6b.c: Likewise.
+	* ld-elf/library6c.c: Likewise.
+	* ld-elf/library7a.c: Likewise.
+	* ld-elf/library7b.c: Likewise.
+	* ld-elf/library7c.c: Likewise.
 	* ld-elf/secondary-foo.c: Likewise.
 	* ld-elf/secondary-main.c: Likewise.
 	* ld-elf/secondary.c: Likewise.
@@ -125,12 +190,18 @@ ld/testsuite/
 	* ld-elf/secondary3b.s: Likewise.
 	* ld-elf/secondary4.rd: Likewise.
 	* ld-elf/secondary4.s: Likewise.
+	* ld-elf/secondary5.c: Likewise.
+	* ld-elf/secondary5.out: Likewise.
+	* ld-elf/secondary6.c: Likewise.
+	* ld-elf/secondary6.out: Likewise.
+	* ld-elf/secondary7.c: Likewise.
+	* ld-elf/secondary7.out: Likewise.
 
 diff --git a/bfd/archive.c b/bfd/archive.c
-index 0620452..f7f4134 100644
+index 8e8fd2d..de294a7 100644
 --- a/bfd/archive.c
 +++ b/bfd/archive.c
-@@ -2316,6 +2316,7 @@ _bfd_compute_and_write_armap (bfd *arch, unsigned int elength)
+@@ -2335,6 +2335,7 @@ _bfd_compute_and_write_armap (bfd *arch, unsigned int elength)
  
  		  if (((flags & (BSF_GLOBAL
  				 | BSF_WEAK
@@ -139,10 +210,10 @@ index 0620452..f7f4134 100644
  				 | BSF_GNU_UNIQUE)) != 0
  		       || bfd_is_com_section (sec))
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index 11f3e49..aef27f4 100644
+index bc5ed0c..63b55a9 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
-@@ -5371,6 +5371,10 @@ typedef struct bfd_symbol
+@@ -5630,6 +5630,10 @@ typedef struct bfd_symbol
       with this name and type in use.  BSF_OBJECT must also be set.  */
  #define BSF_GNU_UNIQUE         (1 << 23)
  
@@ -154,10 +225,10 @@ index 11f3e49..aef27f4 100644
  
    /* A pointer to the section to which this symbol is
 diff --git a/bfd/elf.c b/bfd/elf.c
-index 588e73f..a930bf8 100644
+index b4043b1..15e2dd4 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
-@@ -3251,7 +3251,10 @@ sym_is_global (bfd *abfd, asymbol *sym)
+@@ -3258,7 +3258,10 @@ sym_is_global (bfd *abfd, asymbol *sym)
    if (bed->elf_backend_sym_is_global)
      return (*bed->elf_backend_sym_is_global) (abfd, sym);
  
@@ -169,7 +240,7 @@ index 588e73f..a930bf8 100644
  	  || bfd_is_und_section (bfd_get_section (sym))
  	  || bfd_is_com_section (bfd_get_section (sym)));
  }
-@@ -6835,8 +6838,9 @@ Unable to find equivalent output section for symbol '%s' from section '%s'"),
+@@ -6850,8 +6853,9 @@ Unable to find equivalent output section for symbol '%s' from section '%s'"),
  #endif
  	    sym.st_info = ELF_ST_INFO (STB_GLOBAL, type);
  	}
@@ -180,7 +251,7 @@ index 588e73f..a930bf8 100644
  				    ? STB_WEAK
  				    : STB_GLOBAL),
  				   type);
-@@ -6850,6 +6854,8 @@ Unable to find equivalent output section for symbol '%s' from section '%s'"),
+@@ -6865,6 +6869,8 @@ Unable to find equivalent output section for symbol '%s' from section '%s'"),
  	    bind = STB_LOCAL;
  	  else if (flags & BSF_GNU_UNIQUE)
  	    bind = STB_GNU_UNIQUE;
@@ -206,7 +277,7 @@ index 61e8b45..ab4ffdc 100644
  	    || bfd_is_com_section (bfd_get_section (sym)));
  }
 diff --git a/bfd/elf64-ia64-vms.c b/bfd/elf64-ia64-vms.c
-index ef78374..f37903e 100644
+index 85a6192..5abfcfc 100644
 --- a/bfd/elf64-ia64-vms.c
 +++ b/bfd/elf64-ia64-vms.c
 @@ -4921,6 +4921,10 @@ error_free_dyn:
@@ -221,10 +292,10 @@ index ef78374..f37903e 100644
  	  flags = BSF_GNU_UNIQUE;
  	  break;
 diff --git a/bfd/elfcode.h b/bfd/elfcode.h
-index cc55c86..dd3896d 100644
+index 30bda73..05b1351 100644
 --- a/bfd/elfcode.h
 +++ b/bfd/elfcode.h
-@@ -1292,6 +1292,9 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bfd_boolean dynamic)
+@@ -1293,6 +1293,9 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bfd_boolean dynamic)
  	    case STB_WEAK:
  	      sym->symbol.flags |= BSF_WEAK;
  	      break;
@@ -235,10 +306,10 @@ index cc55c86..dd3896d 100644
  	      sym->symbol.flags |= BSF_GNU_UNIQUE;
  	      break;
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 7679b9a..dcee0cb 100644
+index 9446e7d..01519d5 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
-@@ -897,7 +897,7 @@ elf_merge_st_other (bfd *abfd, struct elf_link_hash_entry *h,
+@@ -900,7 +900,7 @@ elf_merge_st_other (bfd *abfd, struct elf_link_hash_entry *h,
  
  static void
  _bfd_elf_mark_dynamic_def_weak (struct elf_link_hash_entry *h,
@@ -247,7 +318,7 @@ index 7679b9a..dcee0cb 100644
  {
    if (!h->dynamic_def)
      {
-@@ -910,10 +910,10 @@ _bfd_elf_mark_dynamic_def_weak (struct elf_link_hash_entry *h,
+@@ -913,10 +913,10 @@ _bfd_elf_mark_dynamic_def_weak (struct elf_link_hash_entry *h,
  	     if it is weak. Otherwise, we clear it.  */
  	  if (!h->ref_dynamic)
  	    {
@@ -260,7 +331,7 @@ index 7679b9a..dcee0cb 100644
  	    h->dynamic_weak = 0;
  	}
      }
-@@ -952,7 +952,7 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -955,7 +955,7 @@ _bfd_elf_merge_symbol (bfd *abfd,
    int bind;
    bfd *oldbfd;
    bfd_boolean newdyn, olddyn, olddef, newdef, newdyncommon, olddyncommon;
@@ -269,7 +340,7 @@ index 7679b9a..dcee0cb 100644
    const struct elf_backend_data *bed;
  
    *skip = FALSE;
-@@ -1036,8 +1036,13 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -1039,8 +1039,13 @@ _bfd_elf_merge_symbol (bfd *abfd,
        break;
      }
  
@@ -284,7 +355,7 @@ index 7679b9a..dcee0cb 100644
    oldweak = (h->root.type == bfd_link_hash_defweak
  	     || h->root.type == bfd_link_hash_undefweak);
  
-@@ -1166,9 +1171,9 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -1169,9 +1174,9 @@ _bfd_elf_merge_symbol (bfd *abfd,
       visibility will make it unavailable to dynamic objects.  */
    if (newdyn)
      {
@@ -296,7 +367,7 @@ index 7679b9a..dcee0cb 100644
      }
  
    /* If the old symbol has non-default visibility, we ignore the new
-@@ -1403,10 +1408,14 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -1408,10 +1413,14 @@ _bfd_elf_merge_symbol (bfd *abfd,
       represent variables; this can cause confusion in principle, but
       any such confusion would seem to indicate an erroneous program or
       shared library.  We also permit a common symbol in a regular
@@ -312,7 +383,7 @@ index 7679b9a..dcee0cb 100644
        && (olddef
  	  || (h->root.type == bfd_link_hash_common
  	      && (newweak || newfunc))))
-@@ -1445,8 +1454,9 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -1450,8 +1459,9 @@ _bfd_elf_merge_symbol (bfd *abfd,
        *size_change_ok = TRUE;
      }
  
@@ -324,7 +395,7 @@ index 7679b9a..dcee0cb 100644
      {
        /* Don't skip new non-IR weak syms.  */
        if (!(oldbfd != NULL
-@@ -1474,18 +1484,20 @@ _bfd_elf_merge_symbol (bfd *abfd,
+@@ -1479,18 +1489,20 @@ _bfd_elf_merge_symbol (bfd *abfd,
       always take precedence over symbols from dynamic objects, even if
       they are defined after the dynamic object in the link.
  
@@ -349,7 +420,87 @@ index 7679b9a..dcee0cb 100644
      {
        /* Change the hash table entry to undefined, and let
  	 _bfd_generic_link_add_one_symbol do the right thing with the
-@@ -3867,6 +3879,7 @@ error_free_dyn:
+@@ -2917,31 +2929,41 @@ _bfd_elf_tls_setup (bfd *obfd, struct bfd_link_info *info)
+   return tls;
+ }
+ 
+-/* Return TRUE iff this is a non-common, definition of a non-function symbol.  */
++/* Return TRUE iff this is a non-common, definition of a
++   non-function symbol, unless IGNORE_SECONDARY is TRUE.  */
++
+ static bfd_boolean
+-is_global_data_symbol_definition (bfd *abfd ATTRIBUTE_UNUSED,
+-				  Elf_Internal_Sym *sym)
++is_global_symbol_definition (bfd *abfd, Elf_Internal_Sym *sym,
++			     bfd_boolean ignore_secondary)
+ {
+-  const struct elf_backend_data *bed;
++  /* Ignore secondary symbols.  */
++  if (ignore_secondary && ELF_ST_BIND (sym->st_info) == STB_SECONDARY)
++    return FALSE;
+ 
+   /* Local symbols do not count, but target specific ones might.  */
+   if (ELF_ST_BIND (sym->st_info) != STB_GLOBAL
+       && ELF_ST_BIND (sym->st_info) < STB_LOOS)
+     return FALSE;
+ 
+-  bed = get_elf_backend_data (abfd);
+-  /* Function symbols do not count.  */
+-  if (bed->is_function_type (ELF_ST_TYPE (sym->st_info)))
+-    return FALSE;
+-
+   /* If the section is undefined, then so is the symbol.  */
+   if (sym->st_shndx == SHN_UNDEF)
+     return FALSE;
+ 
+-  /* If the symbol is defined in the common section, then
+-     it is a common definition and so does not count.  */
+-  if (bed->common_definition (sym))
+-    return FALSE;
++  /* If secondary symbols are ignored, count function and common
++     symbols as global definition.  */
++  if (!ignore_secondary)
++    {
++      const struct elf_backend_data *bed = get_elf_backend_data (abfd);
++
++      /* Function symbols do not count.  */
++      if (bed->is_function_type (ELF_ST_TYPE (sym->st_info)))
++	return FALSE;
++
++      /* If the symbol is defined in the common section, then
++	 it is a common definition and so does not count.  */
++      if (bed->common_definition (sym))
++	return FALSE;
++    }
+ 
+   /* If the symbol is in a target specific section then we
+      must rely upon the backend to tell us what it is.  */
+@@ -2960,9 +2982,12 @@ is_global_data_symbol_definition (bfd *abfd ATTRIBUTE_UNUSED,
+ 
+ /* Search the symbol table of the archive element of the archive ABFD
+    whose archive map contains a mention of SYMDEF, and determine if
+-   the symbol is defined in this element.  */
++   the symbol is defined in this element.  Igore seconday defintion,
++   it IGNORE_SECONDARY is TRUE.  */
++
+ static bfd_boolean
+-elf_link_is_defined_archive_symbol (bfd * abfd, carsym * symdef)
++elf_link_is_defined_archive_symbol (bfd * abfd, carsym * symdef,
++				    bfd_boolean ignore_secondary)
+ {
+   Elf_Internal_Shdr * hdr;
+   bfd_size_type symcount;
+@@ -3030,7 +3055,8 @@ elf_link_is_defined_archive_symbol (bfd * abfd, carsym * symdef)
+ 
+       if (strcmp (name, symdef->name) == 0)
+ 	{
+-	  result = is_global_data_symbol_definition (abfd, isym);
++	  result = is_global_symbol_definition (abfd, isym,
++						ignore_secondary);
+ 	  break;
+ 	}
+     }
+@@ -3873,6 +3899,7 @@ error_free_dyn:
        unsigned int old_alignment;
        bfd *old_bfd;
        bfd * undef_bfd = NULL;
@@ -357,7 +508,7 @@ index 7679b9a..dcee0cb 100644
  
        override = FALSE;
  
-@@ -3895,6 +3908,10 @@ error_free_dyn:
+@@ -3901,6 +3928,10 @@ error_free_dyn:
  	  flags = BSF_WEAK;
  	  break;
  
@@ -368,7 +519,7 @@ index 7679b9a..dcee0cb 100644
  	case STB_GNU_UNIQUE:
  	  flags = BSF_GNU_UNIQUE;
  	  break;
-@@ -4182,7 +4199,12 @@ error_free_dyn:
+@@ -4188,7 +4219,12 @@ error_free_dyn:
  	      && vernum > 1
  	      && definition)
  	    h->verinfo.verdef = &elf_tdata (abfd)->verdef[vernum - 1];
@@ -381,7 +532,7 @@ index 7679b9a..dcee0cb 100644
  
        if (! (_bfd_generic_link_add_one_symbol
  	     (info, abfd, name, flags, sec, value, NULL, FALSE, bed->collect,
-@@ -4369,10 +4391,14 @@ error_free_dyn:
+@@ -4375,10 +4411,14 @@ error_free_dyn:
  	      if (! definition)
  		{
  		  h->ref_regular = 1;
@@ -398,7 +549,7 @@ index 7679b9a..dcee0cb 100644
  		{
  		  h->def_regular = 1;
  		  if (h->def_dynamic)
-@@ -4403,6 +4429,13 @@ error_free_dyn:
+@@ -4409,6 +4449,13 @@ error_free_dyn:
  		  h->dynamic_def = 1;
  		  hi->def_dynamic = 1;
  		  hi->dynamic_def = 1;
@@ -412,8 +563,13 @@ index 7679b9a..dcee0cb 100644
  		}
  
  	      /* If the indirect symbol has been forced local, don't
-@@ -5100,7 +5133,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
- 	      if (! elf_link_is_defined_archive_symbol (abfd, symdef))
+@@ -5113,15 +5160,26 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
+ 		 map alone.  Instead we must read in the element's symbol
+ 		 table and check that to see what kind of symbol definition
+ 		 this is.  */
+-	      if (! elf_link_is_defined_archive_symbol (abfd, symdef))
++	      if (! elf_link_is_defined_archive_symbol (abfd, symdef,
++							FALSE))
  		continue;
  	    }
 -	  else if (h->root.type != bfd_link_hash_undefined)
@@ -423,7 +579,20 @@ index 7679b9a..dcee0cb 100644
  	    {
  	      if (h->root.type != bfd_link_hash_undefweak)
  		defined[i] = TRUE;
-@@ -8787,7 +8822,21 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+ 	      continue;
+ 	    }
++	  else if (h->root.secondary
++		   && h->root.type == bfd_link_hash_defweak)
++	    {
++	      /* Ignore another secondary definition.  */
++	      if (! elf_link_is_defined_archive_symbol (abfd, symdef,
++							TRUE))
++		continue;
++	    }
+ 
+ 	  /* We need to include this archive member.  */
+ 	  element = _bfd_get_elt_at_filepos (abfd, symdef->file_offset);
+@@ -8803,7 +8861,21 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
      sym.st_info = ELF_ST_INFO (STB_GNU_UNIQUE, h->type);
    else if (h->root.type == bfd_link_hash_undefweak
  	   || h->root.type == bfd_link_hash_defweak)
@@ -446,7 +615,7 @@ index 7679b9a..dcee0cb 100644
    else
      sym.st_info = ELF_ST_INFO (STB_GLOBAL, h->type);
    sym.st_target_internal = h->target_internal;
-@@ -8918,7 +8967,8 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+@@ -8934,7 +9006,8 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
    if (sym.st_shndx == SHN_UNDEF
        && h->ref_regular
        && (ELF_ST_BIND (sym.st_info) == STB_GLOBAL
@@ -456,7 +625,7 @@ index 7679b9a..dcee0cb 100644
      {
        int bindtype;
        unsigned int type = ELF_ST_TYPE (sym.st_info);
-@@ -8944,10 +8994,12 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
+@@ -8960,10 +9033,12 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
      sym.st_size = 0;
  
    /* If a non-weak symbol with non-default visibility is not defined
@@ -471,7 +640,7 @@ index 7679b9a..dcee0cb 100644
        && !h->def_regular)
      {
 diff --git a/bfd/elfn32-mips.c b/bfd/elfn32-mips.c
-index 6728371..91870c5 100644
+index 81d4cf1..fb44ef7 100644
 --- a/bfd/elfn32-mips.c
 +++ b/bfd/elfn32-mips.c
 @@ -3153,7 +3153,10 @@ mips_elf_sym_is_global (bfd *abfd ATTRIBUTE_UNUSED, asymbol *sym)
@@ -615,10 +784,10 @@ index ad38e27..31e1508 100644
  		|| bfd_is_und_section (sym->section)
  		|| bfd_is_com_section (sym->section));
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index b1bacfd..9329344 100644
+index 2fbf2ae..b3b8b2f 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
-@@ -8702,6 +8702,7 @@ get_symbol_binding (unsigned int binding)
+@@ -8742,6 +8742,7 @@ get_symbol_binding (unsigned int binding)
      case STB_LOCAL:	return "LOCAL";
      case STB_GLOBAL:	return "GLOBAL";
      case STB_WEAK:	return "WEAK";
@@ -627,7 +796,7 @@ index b1bacfd..9329344 100644
        if (binding >= STB_LOPROC && binding <= STB_HIPROC)
  	snprintf (buff, sizeof (buff), _("<processor specific>: %d"),
 diff --git a/gas/config/obj-elf.c b/gas/config/obj-elf.c
-index d7c7665..fc702cb 100644
+index d7c7665..c615b36 100644
 --- a/gas/config/obj-elf.c
 +++ b/gas/config/obj-elf.c
 @@ -66,6 +66,7 @@ static void obj_elf_line (int);
@@ -676,7 +845,17 @@ index d7c7665..fc702cb 100644
  obj_elf_weak (int ignore ATTRIBUTE_UNUSED)
  {
    int c;
-@@ -1988,18 +2013,24 @@ elf_frob_symbol (symbolS *symp, int *puntp)
+@@ -446,7 +471,8 @@ obj_elf_weak (int ignore ATTRIBUTE_UNUSED)
+     {
+       symbolP = get_sym_from_input_line_and_check ();
+       c = *input_line_pointer;
+-      S_SET_WEAK (symbolP);
++      if (!S_IS_SECONDARY (symbolP))
++	S_SET_WEAK (symbolP);
+       if (c == ',')
+ 	{
+ 	  input_line_pointer++;
+@@ -1988,18 +2014,24 @@ elf_frob_symbol (symbolS *symp, int *puntp)
  	      if (S_IS_WEAK (symp))
  		S_SET_WEAK (symp2);
  
@@ -704,7 +883,7 @@ index d7c7665..fc702cb 100644
      }
  
  #ifdef TC_MIPS
-@@ -2214,7 +2245,7 @@ elf_frob_file_before_adjust (void)
+@@ -2214,7 +2246,7 @@ elf_frob_file_before_adjust (void)
  	    /* If there was .weak foo, but foo was neither defined nor
  	       used anywhere, remove it.  */
  
@@ -714,10 +893,10 @@ index d7c7665..fc702cb 100644
  		     && symbol_used_in_reloc_p (symp) == 0)
  	      symbol_remove (symp, &symbol_rootP, &symbol_lastP);
 diff --git a/gas/doc/as.texinfo b/gas/doc/as.texinfo
-index 5b5d268..d587857 100644
+index 3daec6d..faa2ccc 100644
 --- a/gas/doc/as.texinfo
 +++ b/gas/doc/as.texinfo
-@@ -4071,6 +4071,7 @@ Some machine configurations provide additional directives.
+@@ -4095,6 +4095,7 @@ Some machine configurations provide additional directives.
  * Print::			@code{.print @var{string}}
  @ifset ELF
  * Protected::                   @code{.protected @var{names}}
@@ -725,7 +904,7 @@ index 5b5d268..d587857 100644
  @end ifset
  
  * Psize::                       @code{.psize @var{lines}, @var{columns}}
-@@ -5753,6 +5754,14 @@ their binding: local, global or weak).  The directive sets the visibility to
+@@ -5777,6 +5778,14 @@ their binding: local, global or weak).  The directive sets the visibility to
  components that defines them must be resolved to the definition in that
  component, even if a definition in another component would normally preempt
  this.
@@ -906,32 +1085,82 @@ index 0000000..37bd0ce
 +	.comm foobar,30
 +	.secondary foobar
 diff --git a/gas/testsuite/gas/elf/elf.exp b/gas/testsuite/gas/elf/elf.exp
-index 7897788..c63cf97 100644
+index 7897788..04a1e10 100644
 --- a/gas/testsuite/gas/elf/elf.exp
 +++ b/gas/testsuite/gas/elf/elf.exp
-@@ -188,6 +188,10 @@ if { [is_elf_format] } then {
+@@ -188,6 +188,11 @@ if { [is_elf_format] } then {
      
      run_dump_test "common1"
      run_dump_test "common2"
 +    run_dump_test "common3"
 +    run_dump_test "common4"
 +
-+    run_elf_list_test "secondary" "" "" "-s" "| grep \"secondary_\""
++    run_elf_list_test "secondary1" "" "" "-s" "| grep \"secondary_\""
++    run_elf_list_test "secondary2" "" "" "-s" "| grep \"secondary_\""
  
  load_lib gas-dg.exp
  dg-init
-diff --git a/gas/testsuite/gas/elf/secondary.e b/gas/testsuite/gas/elf/secondary.e
+diff --git a/gas/testsuite/gas/elf/secondary1.e b/gas/testsuite/gas/elf/secondary1.e
+new file mode 100644
+index 0000000..da00dfb
+--- /dev/null
++++ b/gas/testsuite/gas/elf/secondary1.e
+@@ -0,0 +1,4 @@
++ +.: 0+0 +1 +FUNC +SECOND +DEFAULT +. secondary_function1
++ +.: 0+1 +1 +FUNC +SECOND +DEFAULT +. secondary_function2
++ +.: 0+0 +1 +OBJECT +SECOND +DEFAULT +. secondary_object1
++ +.: 0+1 +1 +OBJECT +SECOND +DEFAULT +. secondary_object2
+diff --git a/gas/testsuite/gas/elf/secondary1.s b/gas/testsuite/gas/elf/secondary1.s
+new file mode 100644
+index 0000000..6a3032d
+--- /dev/null
++++ b/gas/testsuite/gas/elf/secondary1.s
+@@ -0,0 +1,33 @@
++	.text
++
++        .size   secondary_function1,1
++	.secondary secondary_function1
++	.weak	secondary_function1
++        .type   secondary_function1,%function
++secondary_function1:
++	.byte	0x0
++        .size   secondary_function1,1
++	
++        .size   secondary_function2,1
++	.weak	secondary_function2
++	.secondary secondary_function2
++        .type   secondary_function2,%function
++secondary_function2:
++	.byte	0x0
++        .size   secondary_function2,1
++	
++
++        .data
++        .type   secondary_object1,%object
++	.weak	secondary_object1
++	.secondary secondary_object1
++secondary_object1:
++	.byte	0x0
++        .size   secondary_object1,1
++
++        .type   secondary_object2,%object
++	.weak	secondary_object2
++	.secondary secondary_object2
++secondary_object2:
++	.byte	0x0
++        .size   secondary_object2,1
+diff --git a/gas/testsuite/gas/elf/secondary2.e b/gas/testsuite/gas/elf/secondary2.e
 new file mode 100644
 index 0000000..0470eb8
 --- /dev/null
-+++ b/gas/testsuite/gas/elf/secondary.e
++++ b/gas/testsuite/gas/elf/secondary2.e
 @@ -0,0 +1 @@
 + +.: 0+ +0 +[A-Z]+ +WEAK +DEFAULT +UND secondary_function
-diff --git a/gas/testsuite/gas/elf/secondary.s b/gas/testsuite/gas/elf/secondary.s
+diff --git a/gas/testsuite/gas/elf/secondary2.s b/gas/testsuite/gas/elf/secondary2.s
 new file mode 100644
 index 0000000..234330a
 --- /dev/null
-+++ b/gas/testsuite/gas/elf/secondary.s
++++ b/gas/testsuite/gas/elf/secondary2.s
 @@ -0,0 +1,5 @@
 +	.text
 +	.secondary secondary_function
@@ -1006,7 +1235,7 @@ index d900b47..2a116c9 100644
       cause map file generation to use an O(N^2) algorithm and disable
       caching ELF symbol buffer.  */
 diff --git a/include/elf/common.h b/include/elf/common.h
-index 58e489a..2a4452b 100644
+index 1c681d5..fef60c0 100644
 --- a/include/elf/common.h
 +++ b/include/elf/common.h
 @@ -649,6 +649,7 @@
@@ -1018,15 +1247,15 @@ index 58e489a..2a4452b 100644
  #define STB_GNU_UNIQUE	10		/* Symbol is unique in namespace */
  #define STB_HIOS	12		/* OS-specific semantics */
 diff --git a/ld/emultempl/elf32.em b/ld/emultempl/elf32.em
-index 2b7a352..18f0010 100644
+index de51050..17e284c 100644
 --- a/ld/emultempl/elf32.em
 +++ b/ld/emultempl/elf32.em
 @@ -2334,6 +2334,8 @@ fragment <<EOF
  	link_info.error_textrel = FALSE;
        else if (strcmp (optarg, "textoff") == 0)
  	link_info.error_textrel = FALSE;
-+      else if (strcmp (optarg, "secondary") == 0)
-+	link_info.emit_secondary = TRUE;
++      else if (strcmp (optarg, "nosecondary") == 0)
++	link_info.emit_secondary = FALSE;
  EOF
  fi
  
@@ -1035,27 +1264,37 @@ index 2b7a352..18f0010 100644
    fprintf (file, _("\
    -z relro                    Create RELRO program header\n"));
 +  fprintf (file, _("\
-+  -z secondary                Emit secondary symbols\n"));
++  -z nosecondary              Convert secondary symbols to weak symbols\n"));
  EOF
  fi
  
 diff --git a/ld/ld.texinfo b/ld/ld.texinfo
-index 732fed6..1b70140 100644
+index dd3149c..6d0495a 100644
 --- a/ld/ld.texinfo
 +++ b/ld/ld.texinfo
-@@ -1087,6 +1087,12 @@ Marks the object may contain $ORIGIN.
+@@ -1087,6 +1087,10 @@ Marks the object may contain $ORIGIN.
  @item relro
  Create an ELF @code{PT_GNU_RELRO} segment header in the object.
  
-+@item secondary
-+By default, the linker converts secondary symbols to weak symbols.  This
-+option disables secondary symbol conversion and emits secondary symbols
-+when generating a shared library.  The resulting shared library requires
-+secondary symbol support in the dynamic linker.
++@item nosecondary
++Convert secondary symbols to weak symbols when generating a shared
++library.
 +
  @item max-page-size=@var{value}
  Set the emulation maximum page size to @var{value}.
  
+diff --git a/ld/ldmain.c b/ld/ldmain.c
+index 15f8ebf..5720480 100644
+--- a/ld/ldmain.c
++++ b/ld/ldmain.c
+@@ -278,6 +278,7 @@ main (int argc, char **argv)
+   link_info.combreloc = TRUE;
+   link_info.strip_discarded = TRUE;
+   link_info.emit_hash = TRUE;
++  link_info.emit_secondary = TRUE;
+   link_info.callbacks = &link_callbacks;
+   link_info.input_bfds_tail = &link_info.input_bfds;
+   /* SVR4 linkers seem to set DT_INIT and DT_FINI based on magic _init
 diff --git a/ld/testsuite/ld-elf/library1.c b/ld/testsuite/ld-elf/library1.c
 new file mode 100644
 index 0000000..28e255d
@@ -1119,6 +1358,111 @@ index 0000000..1ff1840
 +++ b/ld/testsuite/ld-elf/library4.out
 @@ -0,0 +1 @@
 +weak library bar (SHARED)
+diff --git a/ld/testsuite/ld-elf/library5a.c b/ld/testsuite/ld-elf/library5a.c
+new file mode 100644
+index 0000000..7e44bb4
+--- /dev/null
++++ b/ld/testsuite/ld-elf/library5a.c
+@@ -0,0 +1,16 @@
++#include <stdio.h>
++
++asm (".secondary bar");
++asm (".weak bar");
++
++void
++bar (void)
++{
++  printf ("secondary bar\n");
++}
++
++void
++xxx (void)
++{
++  printf ("xxx\n");
++}
+diff --git a/ld/testsuite/ld-elf/library5b.c b/ld/testsuite/ld-elf/library5b.c
+new file mode 100644
+index 0000000..f44d97c
+--- /dev/null
++++ b/ld/testsuite/ld-elf/library5b.c
+@@ -0,0 +1,10 @@
++#include <stdio.h>
++
++extern void bar (void);
++
++void
++foo (void)
++{
++  printf ("foo\n");
++  bar ();
++}
+diff --git a/ld/testsuite/ld-elf/library6a.c b/ld/testsuite/ld-elf/library6a.c
+new file mode 100644
+index 0000000..7de81b3
+--- /dev/null
++++ b/ld/testsuite/ld-elf/library6a.c
+@@ -0,0 +1,4 @@
++void
++bar (void)
++{
++}
+diff --git a/ld/testsuite/ld-elf/library6b.c b/ld/testsuite/ld-elf/library6b.c
+new file mode 100644
+index 0000000..528fd89
+--- /dev/null
++++ b/ld/testsuite/ld-elf/library6b.c
+@@ -0,0 +1,7 @@
++extern void bar (void);
++
++void
++xxx (void)
++{
++  bar ();
++}
+diff --git a/ld/testsuite/ld-elf/library6c.c b/ld/testsuite/ld-elf/library6c.c
+new file mode 100644
+index 0000000..60f4b92
+--- /dev/null
++++ b/ld/testsuite/ld-elf/library6c.c
+@@ -0,0 +1,9 @@
++extern void abort (void);
++
++asm (".secondary bar");
++
++void
++bar (void)
++{
++  abort ();
++}
+diff --git a/ld/testsuite/ld-elf/library7a.c b/ld/testsuite/ld-elf/library7a.c
+new file mode 100644
+index 0000000..10cd8bf
+--- /dev/null
++++ b/ld/testsuite/ld-elf/library7a.c
+@@ -0,0 +1 @@
++int bar;
+diff --git a/ld/testsuite/ld-elf/library7b.c b/ld/testsuite/ld-elf/library7b.c
+new file mode 100644
+index 0000000..5f67848
+--- /dev/null
++++ b/ld/testsuite/ld-elf/library7b.c
+@@ -0,0 +1,7 @@
++extern int bar;
++
++int
++xxx (void)
++{
++  return bar;
++}
+diff --git a/ld/testsuite/ld-elf/library7c.c b/ld/testsuite/ld-elf/library7c.c
+new file mode 100644
+index 0000000..aa57fde
+--- /dev/null
++++ b/ld/testsuite/ld-elf/library7c.c
+@@ -0,0 +1,3 @@
++asm (".secondary bar");
++
++int bar = 3;
 diff --git a/ld/testsuite/ld-elf/secondary-foo.c b/ld/testsuite/ld-elf/secondary-foo.c
 new file mode 100644
 index 0000000..8b23ec8
@@ -1163,10 +1507,10 @@ index 0000000..6d64ed7
 +}
 diff --git a/ld/testsuite/ld-elf/secondary.exp b/ld/testsuite/ld-elf/secondary.exp
 new file mode 100644
-index 0000000..b381e88
+index 0000000..106c13a
 --- /dev/null
 +++ b/ld/testsuite/ld-elf/secondary.exp
-@@ -0,0 +1,115 @@
+@@ -0,0 +1,163 @@
 +# Expect script for ELF secondary symbol tests.
 +#   Copyright 2012
 +#   Free Software Foundation, Inc.
@@ -1212,16 +1556,16 @@ index 0000000..b381e88
 +   "-r -nostdlib" ""
 +   {secondary.c} {{readelf {-s} secondary.rd}} "secondary1.o"}
 +  {"Build secondary1.so"
-+   "-shared" "-fPIC"
++   "-Wl,-z,nosecondary -shared" "-fPIC"
 +   {secondary.c} {{readelf {--dyn-syms} secondary1.rd}} "secondary1.so"}
 +  {"Build secondary2.so"
-+   "-Wl,-z,secondary -shared" "-fPIC"
++   "-shared" "-fPIC"
 +   {secondary.c} {{readelf {--dyn-syms} secondary2.rd}} "secondary2.so"}
 +  {"Build libfoo.so"
 +   "-shared" "-fPIC"
 +   {secondary-foo.c} {} "libfoo.so"}
 +  {"Build secondary-main with secondary.o"
-+   "-Wl,-z,secondary tmpdir/secondary.o tmpdir/libfoo.so" ""
++   "tmpdir/secondary.o tmpdir/libfoo.so" ""
 +   {secondary-main.c} {{readelf {--dyn-syms} secondary1.rd}} "secondary"}
 +  {"Build library1.so"
 +   "-shared" "-fPIC -DSHARED"
@@ -1244,6 +1588,39 @@ index 0000000..b381e88
 +  {"Build secondary4.so"
 +   "-nostdlib -shared tmpdir/secondary3a.o" ""
 +   {secondary4.s} {{readelf {--dyn-syms} secondary4.rd}} "secondary4.so"}
++  {"Build library5a.a"
++   "" ""
++   {library5a.c} {} "library5a.a"}
++  {"Build library5b.a"
++   "" ""
++   {library5b.c} {} "library5b.a"}
++  {"Build secondary5.a"
++   "" ""
++   {secondary5.c} {} "secondary5.a"}
++  {"Build library6a.a"
++   "" ""
++   {library6a.c} {} "library6a.a"}
++  {"Build library6b.a"
++   "" ""
++   {library6b.c} {} "library6b.a"}
++  {"Build library6c.a"
++   "" ""
++   {library6c.c} {} "library6c.a"}
++  {"Build secondary6.a"
++   "" ""
++   {secondary6.c} {} "secondary6.a"}
++  {"Build library7a.a"
++   "" ""
++   {library7a.c} {} "library7a.a"}
++  {"Build library7b.a"
++   "" ""
++   {library7b.c} {} "library7b.a"}
++  {"Build library7c.a"
++   "" ""
++   {library7c.c} {} "library7c.a"}
++  {"Build secondary7.a"
++   "" ""
++   {secondary7.c} {} "secondary7.a"}
 +}
 +
 +run_cc_link_tests $build_tests
@@ -1279,6 +1656,21 @@ index 0000000..b381e88
 +    {"Run secondary-main with library2.so secondary.o"
 +     "tmpdir/library2.so tmpdir/secondary.o tmpdir/libfoo.so" ""
 +     {secondary-main.c} "secondary10" "library4.out"}
++    {"Run secondary5 with library5a.a library5b.a"
++     "tmpdir/secondary5.o tmpdir/library5a.a tmpdir/library5b.a" ""
++     {dummy.c} "secondary5a" "secondary5.out"}
++    {"Run secondary5 with -( library5a.a library5b.a -)"
++     "tmpdir/secondary5.o -\\( tmpdir/library5a.a tmpdir/library5b.a -\\)" ""
++     {dummy.c} "secondary5b" "secondary5.out"}
++    {"Run secondary5 with -( library5a.a library5b.a -) -( library5a.a library5b.a -)"
++     "tmpdir/secondary5.o -\\( tmpdir/library5a.a tmpdir/library5b.a -\\) -\\( tmpdir/library5a.a tmpdir/library5b.a -\\)" ""
++     {dummy.c} "secondary5c" "secondary5.out"}
++    {"Run secondary6 with -( library6a.a library6b.a library6c.a -)"
++     "tmpdir/secondary6.o -\\( tmpdir/library6a.a tmpdir/library6b.a tmpdir/library6c.a -\\)" ""
++     {dummy.c} "secondary6" "secondary6.out"}
++    {"Run secondary7 with -( library7a.a library7b.a library7c.a -)"
++     "tmpdir/secondary7.o -\\( tmpdir/library7a.a tmpdir/library7b.a tmpdir/library7c.a -\\)" ""
++     {dummy.c} "secondary7" "secondary7.out"}
 +}
 +
 +run_ld_link_exec_tests [] $run_tests
@@ -1395,3 +1787,78 @@ index 0000000..a2acf21
 +	.byte 0
 +	.data
 +	.dc.a foo
+diff --git a/ld/testsuite/ld-elf/secondary5.c b/ld/testsuite/ld-elf/secondary5.c
+new file mode 100644
+index 0000000..a2b2f20
+--- /dev/null
++++ b/ld/testsuite/ld-elf/secondary5.c
+@@ -0,0 +1,10 @@
++extern void foo (void);
++extern void xxx (void);
++
++int
++main (void)
++{
++  foo ();
++  xxx ();
++  return 0;
++}
+diff --git a/ld/testsuite/ld-elf/secondary5.out b/ld/testsuite/ld-elf/secondary5.out
+new file mode 100644
+index 0000000..730c35d
+--- /dev/null
++++ b/ld/testsuite/ld-elf/secondary5.out
+@@ -0,0 +1,3 @@
++foo
++secondary bar
++xxx
+diff --git a/ld/testsuite/ld-elf/secondary6.c b/ld/testsuite/ld-elf/secondary6.c
+new file mode 100644
+index 0000000..2a7e17b
+--- /dev/null
++++ b/ld/testsuite/ld-elf/secondary6.c
+@@ -0,0 +1,11 @@
++#include <stdio.h>
++
++extern void xxx (void);
++
++int
++main (void)
++{
++  xxx ();
++  printf ("OK\n");
++  return 0;
++}
+diff --git a/ld/testsuite/ld-elf/secondary6.out b/ld/testsuite/ld-elf/secondary6.out
+new file mode 100644
+index 0000000..d86bac9
+--- /dev/null
++++ b/ld/testsuite/ld-elf/secondary6.out
+@@ -0,0 +1 @@
++OK
+diff --git a/ld/testsuite/ld-elf/secondary7.c b/ld/testsuite/ld-elf/secondary7.c
+new file mode 100644
+index 0000000..9a67352
+--- /dev/null
++++ b/ld/testsuite/ld-elf/secondary7.c
+@@ -0,0 +1,13 @@
++#include <stdio.h>
++
++extern void abort (void);
++extern int xxx (void);
++
++int
++main (void)
++{
++  if (xxx () != 0)
++    abort ();
++  printf ("OK\n");
++  return 0;
++}
+diff --git a/ld/testsuite/ld-elf/secondary7.out b/ld/testsuite/ld-elf/secondary7.out
+new file mode 100644
+index 0000000..d86bac9
+--- /dev/null
++++ b/ld/testsuite/ld-elf/secondary7.out
+@@ -0,0 +1 @@
++OK

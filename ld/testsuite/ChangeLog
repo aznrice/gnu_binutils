@@ -1,3 +1,362 @@
+2012-08-31  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-i386/i386.exp: Run mov1a, mov1b.
+	* ld-x86-64/x86-64.exp: Run mov1a, mov1b, mov1c, mov1d.
+
+	* ld-i386/mov1.s: New file.
+	* ld-i386/mov1a.d: Likewise.
+	* ld-i386/mov1b.d: Likewise.
+	* ld-x86-64/mov1.s: Likewise.
+	* ld-x86-64/mov1a.d: Likewise.
+	* ld-x86-64/mov1b.d: Likewise.
+	* ld-x86-64/mov1c.d: Likewise.
+	* ld-x86-64/mov1d.d: Likewise.
+
+2012-08-31  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-i386/i386.exp: Run lea1d, lea1f, lea1f.
+	* ld-x86-64/x86-64.exp: Run lea1g, lea1h, lea1i, lea1j, lea1k,
+	lea1l.
+
+	* ld-ifunc/ifunc-13-i386.d: Remove R_386_RELATIVE entry.
+
+	* ld-i386/lea1d.d: New file.
+	* ld-i386/lea1e.d: Likewise.
+	* ld-i386/lea1f.d: Likewise.
+	* ld-x86-64/lea1g.d: Likewise.
+	* ld-x86-64/lea1h.d: Likewise.
+	* ld-x86-64/lea1i.d: Likewise.
+	* ld-x86-64/lea1j.d: Likewise.
+	* ld-x86-64/lea1k.d: Likewise.
+	* ld-x86-64/lea1l.d: Likewise.
+
+2012-08-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-i386/i386.exp: Run lea1a, lea1b, lea1c.
+	* ld-x86-64/x86-64.exp: Run lea1a, lea1b, lea1c, lea1d, lea1e,
+	lea1f.
+
+	* ld-i386/lea1.s: New file.
+	* ld-i386/lea1a.d: Likewise.
+	* ld-i386/lea1b.d: Likewise.
+	* ld-i386/lea1c.d: Likewise.
+	* ld-x86-64/lea1.s: Likewise.
+	* ld-x86-64/lea1a.d: Likewise.
+	* ld-x86-64/lea1b.d: Likewise.
+	* ld-x86-64/lea1c.d: Likewise.
+	* ld-x86-64/lea1d.d: Likewise.
+	* ld-x86-64/lea1e.d: Likewise.
+	* ld-x86-64/lea1f.d: Likewise.
+
+2012-08-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14525
+	* ld-elf/elf.exp: Run pr14525.
+
+	* ld-elf/pr14525.c: New.
+	* ld-elf/pr14525.out: Likewise.
+
+2012-08-28  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* ld-elf/export-class.sd: New test.
+	* ld-elf/export-class.vd: New test.
+	* ld-elf/export-class-def.s: New test source.
+	* ld-elf/export-class-dep.s: New test source.
+	* ld-elf/export-class-lib.s: New test source.
+	* ld-elf/export-class-ref.s: New test source.
+	* ld-elf/export-class-lib.ver: New test version script.
+	* ld-elf/export-class.exp: New test script.
+	* ld-arm/arm-export-class.rd: New test.
+	* ld-arm/arm-export-class.xd: New test.
+	* ld-arm/export-class.exp: New test script.
+	* ld-i386/i386-export-class.rd: New test.
+	* ld-i386/i386-export-class.xd: New test.
+	* ld-i386/export-class.exp: New test script.
+	* ld-mips-elf/mips-32-export-class.rd: New test.
+	* ld-mips-elf/mips-32-export-class.xd: New test.
+	* ld-mips-elf/mips-64-export-class.rd: New test.
+	* ld-mips-elf/mips-64-export-class.xd: New test.
+	* ld-mips-elf/export-class.exp: New test script.
+	* ld-powerpc/powerpc-32-export-class.rd: New test.
+	* ld-powerpc/powerpc-32-export-class.xd: New test.
+	* ld-powerpc/powerpc-64-export-class.rd: New test.
+	* ld-powerpc/powerpc-64-export-class.xd: New test.
+	* ld-powerpc/export-class.exp: New test script.
+	* ld-x86-64/x86-64-64-export-class.rd: New test.
+	* ld-x86-64/x86-64-x32-export-class.rd: New test.
+	* ld-x86-64/export-class.exp: New test script.
+
+2012-08-24  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/exclude3a.d: Remove target and use failif.
+
+	* ld-elf/exclude3b.d: Change target to *-*-linux* *-*-gnu* and
+	use failif
+
+	* ld-elf/exclude3d.d: Removed.
+
+2012-08-24  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/elf.exp: Add Solaris/x86-64 support to eh[1-4] test.
+
+2012-08-24  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* ld-arm/arm-elf.exp: Add new testcases.
+	* ld-arm/attr-merge-vfp-3.d: Update for change in expected
+	output.
+	* ld-arm/attr-merge-vfp-3r.d: Likewise.
+	* ld-arm/attr-merge-vfp-4.d: Likewise.
+	* ld-arm/attr-merge-vfp-4r.d: Likewise.
+	* ld-arm/attr-merge-vfp-5.d: Likewise.
+	* ld-arm/attr-merge-vfp-5r.d: Likewise.
+	* ld-arm/attr-merge-vfp-7.d: New testcase.
+	* ld-arm/attr-merge-vfp-7r.d: Likewise.
+	* ld-arm/attr-merge-vfp-armv8-hard.s: Likewise.
+	* ld-arm/attr-merge-vfp-armv8.s: Likewise.
+
+2012-08-14  Nick Clifton  <nickc@redhat.com>
+
+	PR ld/14265
+	* ld-gc/gc.exp: Add a new test.
+	* ld-gc/pr14265.c: Source file for the new test.
+	* ld-gc/pr14265.t: Linker script for the new test.
+	* ld-gc/pr14265.d: Expected symbol dump.
+
+2012-08-13  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* ld-mips-elf/export-class-call16-o32.dd: New test.
+	* ld-mips-elf/export-class-call16-o32-irix.dd: New test.
+	* ld-mips-elf/export-class-call16-o32.gd: New test.
+	* ld-mips-elf/export-class-call16-n32.dd: New test.
+	* ld-mips-elf/export-class-call16-n32.gd: New test.
+	* ld-mips-elf/export-class-call16-n64.dd: New test.
+	* ld-mips-elf/export-class-call16-n64.gd: New test.
+	* ld-mips-elf/export-class-call16-def.s: New test source.
+	* ld-mips-elf/export-class-call16-o32.s: New test source.
+	* ld-mips-elf/export-class-call16-n32.s: New test source.
+	* ld-mips-elf/export-class-call16-n64.s: New test source.
+	* ld-mips-elf/export-class-call16.ld: New test linker script.
+	* ld-mips-elf/mips-elf.exp: Run the new tests.
+
+2012-08-13  Ian Bolton  <ian.bolton@arm.com>
+	    Laurent Desnogues  <laurent.desnogues@arm.com>
+	    Jim MacArthur  <jim.macarthur@arm.com>
+	    Marcus Shawcroft  <marcus.shawcroft@arm.com>
+	    Nigel Stephens  <nigel.stephens@arm.com>
+	    Ramana Radhakrishnan  <ramana.radhakrishnan@arm.com>
+	    Richard Earnshaw  <rearnsha@arm.com>
+	    Sofiane Naci  <sofiane.naci@arm.com>
+	    Tejas Belagod  <tejas.belagod@arm.com>
+	    Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* ld-aarch64/aarch64-elf.exp: New file.
+	* ld-aarch64/aarch64.ld: New file.
+	* ld-aarch64/eh-frame-bar.s: New file.
+	* ld-aarch64/eh-frame-foo.s: New file.
+	* ld-aarch64/eh-frame.d: New file.
+	* ld-aarch64/emit-relocs-257-be.d: New file.
+	* ld-aarch64/emit-relocs-257.d: New file.
+	* ld-aarch64/emit-relocs-257.s: New file.
+	* ld-aarch64/emit-relocs-260-be.d: New file.
+	* ld-aarch64/emit-relocs-260.d: New file.
+	* ld-aarch64/emit-relocs-260.s: New file.
+	* ld-aarch64/emit-relocs-262.d: New file.
+	* ld-aarch64/emit-relocs-262.s: New file.
+	* ld-aarch64/emit-relocs-263.d: New file.
+	* ld-aarch64/emit-relocs-263.s: New file.
+	* ld-aarch64/emit-relocs-264.d: New file.
+	* ld-aarch64/emit-relocs-264.s: New file.
+	* ld-aarch64/emit-relocs-265.d: New file.
+	* ld-aarch64/emit-relocs-265.s: New file.
+	* ld-aarch64/emit-relocs-266.d: New file.
+	* ld-aarch64/emit-relocs-266.s: New file.
+	* ld-aarch64/emit-relocs-267.d: New file.
+	* ld-aarch64/emit-relocs-267.s: New file.
+	* ld-aarch64/emit-relocs-268.d: New file.
+	* ld-aarch64/emit-relocs-268.s: New file.
+	* ld-aarch64/emit-relocs-269.d: New file.
+	* ld-aarch64/emit-relocs-269.s: New file.
+	* ld-aarch64/emit-relocs-270-bad.d: New file.
+	* ld-aarch64/emit-relocs-270.d: New file.
+	* ld-aarch64/emit-relocs-270.s: New file.
+	* ld-aarch64/emit-relocs-271.d: New file.
+	* ld-aarch64/emit-relocs-271.s: New file.
+	* ld-aarch64/emit-relocs-272.d: New file.
+	* ld-aarch64/emit-relocs-272.s: New file.
+	* ld-aarch64/emit-relocs-273.d: New file.
+	* ld-aarch64/emit-relocs-273.s: New file.
+	* ld-aarch64/emit-relocs-274.d: New file.
+	* ld-aarch64/emit-relocs-274.s: New file.
+	* ld-aarch64/emit-relocs-275.d: New file.
+	* ld-aarch64/emit-relocs-275.s: New file.
+	* ld-aarch64/emit-relocs-276.d: New file.
+	* ld-aarch64/emit-relocs-276.s: New file.
+	* ld-aarch64/emit-relocs-277.d: New file.
+	* ld-aarch64/emit-relocs-277.s: New file.
+	* ld-aarch64/emit-relocs-278.d: New file.
+	* ld-aarch64/emit-relocs-278.s: New file.
+	* ld-aarch64/emit-relocs-279-bad.d: New file.
+	* ld-aarch64/emit-relocs-279.d: New file.
+	* ld-aarch64/emit-relocs-279.s: New file.
+	* ld-aarch64/emit-relocs-280.d: New file.
+	* ld-aarch64/emit-relocs-280.s: New file.
+	* ld-aarch64/emit-relocs-282.d: New file.
+	* ld-aarch64/emit-relocs-282.s: New file.
+	* ld-aarch64/emit-relocs-283.d: New file.
+	* ld-aarch64/emit-relocs-283.s: New file.
+	* ld-aarch64/emit-relocs-284.d: New file.
+	* ld-aarch64/emit-relocs-284.s: New file.
+	* ld-aarch64/emit-relocs-285.d: New file.
+	* ld-aarch64/emit-relocs-285.s: New file.
+	* ld-aarch64/emit-relocs-286-bad.d: New file.
+	* ld-aarch64/emit-relocs-286.d: New file.
+	* ld-aarch64/emit-relocs-286.s: New file.
+	* ld-aarch64/emit-relocs-287.d: New file.
+	* ld-aarch64/emit-relocs-287.s: New file.
+	* ld-aarch64/emit-relocs-299.d: New file.
+	* ld-aarch64/emit-relocs-299.s: New file.
+	* ld-aarch64/emit-relocs-311.d: New file.
+	* ld-aarch64/emit-relocs-311.s: New file.
+	* ld-aarch64/emit-relocs-312.d: New file.
+	* ld-aarch64/emit-relocs-312.s: New file.
+	* ld-aarch64/emit-relocs1.s: New file.
+	* ld-aarch64/farcall-b-none-function.d: New file.
+	* ld-aarch64/farcall-b-none-function.s: New file.
+	* ld-aarch64/farcall-b.d: New file.
+	* ld-aarch64/farcall-b.s: New file.
+	* ld-aarch64/farcall-back.d: New file.
+	* ld-aarch64/farcall-back.s: New file.
+	* ld-aarch64/farcall-bl-none-function.d: New file.
+	* ld-aarch64/farcall-bl-none-function.s: New file.
+	* ld-aarch64/farcall-bl.d: New file.
+	* ld-aarch64/farcall-bl.s: New file.
+	* ld-aarch64/farcall-section.d: New file.
+	* ld-aarch64/farcall-section.s: New file.
+	* ld-aarch64/limit-b.d: New file.
+	* ld-aarch64/limit-b.s: New file.
+	* ld-aarch64/limit-bl.d: New file.
+	* ld-aarch64/limit-bl.s: New file.
+	* ld-aarch64/relocs.ld: New file.
+	* ld-aarch64/tls-desc-ie.d: New file.
+	* ld-aarch64/tls-desc-ie.s: New file.
+	* ld-aarch64/tls-relax-all.d: New file.
+	* ld-aarch64/tls-relax-all.s: New file.
+	* ld-aarch64/tls-relax-gd-ie.d: New file.
+	* ld-aarch64/tls-relax-gd-ie.s: New file.
+	* ld-aarch64/tls-relax-gd-le.d: New file.
+	* ld-aarch64/tls-relax-gd-le.s: New file.
+	* ld-aarch64/tls-relax-gdesc-ie-2.d: New file.
+	* ld-aarch64/tls-relax-gdesc-ie-2.s: New file.
+	* ld-aarch64/tls-relax-gdesc-ie.d: New file.
+	* ld-aarch64/tls-relax-gdesc-ie.s: New file.
+	* ld-aarch64/tls-relax-gdesc-le-2.d: New file.
+	* ld-aarch64/tls-relax-gdesc-le-2.s: New file.
+	* ld-aarch64/tls-relax-gdesc-le.d: New file.
+	* ld-aarch64/tls-relax-gdesc-le.s: New file.
+	* ld-aarch64/tls-relax-ie-le-2.d: New file.
+	* ld-aarch64/tls-relax-ie-le-2.s: New file.
+	* ld-aarch64/tls-relax-ie-le-3.d: New file.
+	* ld-aarch64/tls-relax-ie-le-3.s: New file.
+	* ld-aarch64/tls-relax-ie-le.d: New file.
+	* ld-aarch64/tls-relax-ie-le.s: New file.
+	* ld-aarch64/weak-undefined.d: New file.
+	* ld-aarch64/weak-undefined.s: New file.
+	* ld-elf/binutils.exp (binutils_test): Add optional parameter
+	'test_name'; change to construct 'test_name' from the 'prog_name'
+	and 'ld_options' only when "$test_name" == "".
+	* ld-elf/group8a.d (#notarget): Add AArch64.
+	* ld-elf/group8b.d (#notarget): Add AArch64.
+	* ld-elf/group9a.d (#notarget): Add AArch64.
+	* ld-elf/group9b.d (#notarget): Add AArch64.
+	* ld-elf/pr12851.d (#notarget): Add AArch64.
+	* ld-elf/pr12975.d (#notarget): Add AArch64.
+	* ld-elf/pr13177.d (#notarget): Add AArch64.
+	* ld-elf/pr13195.d (#notarget): Add AArch64.
+	* ld-elfvers/vers.exp: Add AArch64.
+	* ld-shared/shared.exp: Add AArch64.
+	* ld-srec/srec.exp: Add AArch64.
+	* lib/ld-lib.exp: Add AArch64.
+
+2012-08-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* ld-mips-elf/dyn-sec64.ld: Use HIDDEN to define _gp.
+	* ld-mips-elf/eh-frame5.ld: Likewise.
+	* ld-mips-elf/got-dump-1.ld: Likewise.
+	* ld-mips-elf/got-dump-2.ld: Likewise.
+	* ld-mips-elf/got-page-1.ld: Likewise.
+	* ld-mips-elf/mips-dyn.ld: Likewise.
+	* ld-mips-elf/mips-lib.ld: Likewise.
+	* ld-mips-elf/mips16-pic-1.ld: Likewise.
+	* ld-mips-elf/no-shared-1.ld: Likewise.
+	* ld-mips-elf/pic-and-nonpic-1.ld: Likewise.
+	* ld-mips-elf/pic-and-nonpic-3a.ld: Likewise.
+	* ld-mips-elf/pic-and-nonpic-3b.ld: Likewise.
+	* ld-mips-elf/pic-and-nonpic-4b.ld: Likewise.
+	* ld-mips-elf/pic-and-nonpic-5b.ld: Likewise.
+	* ld-mips-elf/pic-and-nonpic-6.ld: Likewise.
+	* ld-mips-elf/reloc-2.ld: Likewise.
+	* ld-mips-elf/reloc-estimate-1.ld: Likewise.
+	* ld-mips-elf/stub-dynsym-1.ld: Likewise.
+	* ld-mips-elf/tls-hidden3.ld: Likewise.
+	* ld-mips-elf/mips16-pic-2.ad: Update accordingly.
+	* ld-mips-elf/pic-and-nonpic-3b.ad: Likewise.
+	* ld-mips-elf/pic-and-nonpic-4b.ad: Likewise.
+	* ld-mips-elf/pic-and-nonpic-5b.ad: Likewise.
+	* ld-mips-elf/pic-and-nonpic-6-n32.ad: Likewise.
+	* ld-mips-elf/pic-and-nonpic-6-n64.ad: Likewise.
+	* ld-mips-elf/pic-and-nonpic-6-o32.ad: Likewise.
+	* ld-mips-elf/eh-frame5.d: Likewise.
+	* ld-mips-elf/tlsdyn-o32-1.d: Likewise.
+	* ld-mips-elf/tlsdyn-o32-2.d: Likewise.
+	* ld-mips-elf/tlsdyn-o32-3.d: Likewise.
+	* ld-mips-elf/tlsdyn-o32.d: Likewise.
+	* ld-mips-elf/pic-and-nonpic-3a.dd: Likewise.
+	* ld-mips-elf/pic-and-nonpic-3b.dd: Likewise.
+	* ld-mips-elf/pic-and-nonpic-6-n32.dd: Likewise.
+	* ld-mips-elf/pic-and-nonpic-6-n64.dd: Likewise.
+	* ld-mips-elf/pic-and-nonpic-6-o32.dd: Likewise.
+	* ld-mips-elf/tls-multi-got-1.got: Likewise.
+	* ld-mips-elf/tlsdyn-o32-1.got: Likewise.
+	* ld-mips-elf/tlsdyn-o32-2.got: Likewise.
+	* ld-mips-elf/tlsdyn-o32-3.got: Likewise.
+	* ld-mips-elf/tlsdyn-o32.got: Likewise.
+	* ld-mips-elf/tlslib-o32-ver.got: Likewise.
+	* ld-mips-elf/tlslib-o32.got: Likewise.
+	* ld-mips-elf/mips16-pic-2.nd: Likewise.
+	* ld-mips-elf/pic-and-nonpic-1.nd: Likewise.
+	* ld-mips-elf/pic-and-nonpic-3b.nd: Likewise.
+	* ld-mips-elf/pic-and-nonpic-4b.nd: Likewise.
+	* ld-mips-elf/pic-and-nonpic-5b.nd: Likewise.
+	* ld-mips-elf/pic-and-nonpic-6-n32.nd: Likewise.
+	* ld-mips-elf/pic-and-nonpic-6-n64.nd: Likewise.
+	* ld-mips-elf/pic-and-nonpic-6-o32.nd: Likewise.
+	* ld-mips-elf/tls-multi-got-1.r: Likewise.
+	* ld-mips-elf/pic-and-nonpic-3b.rd: Likewise.
+	* ld-mips-elf/pic-and-nonpic-4b.rd: Likewise.
+	* ld-mips-elf/mips-elf.exp: Likewise.
+
+2012-08-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* ld-mips-elf/gp-hidden.rd: New test.
+	* ld-mips-elf/gp-hidden.sd: New test.
+	* ld-mips-elf/gp-hidden-lib.rd: New test.
+	* ld-mips-elf/gp-hidden-ver.rd: New test.
+	* ld-mips-elf/gp-hidden-64.rd: New test.
+	* ld-mips-elf/gp-hidden-lib-64.rd: New test.
+	* ld-mips-elf/gp-hidden-ver-64.rd: New test.
+	* ld-mips-elf/gp-hidden.s: New test source.
+	* ld-mips-elf/gp-hidden-lib.s: New test source.
+	* ld-mips-elf/gp-hidden-ver.s: New test source.
+	* ld-mips-elf/gp-hidden-ver.ver: New test version script.
+	* ld-mips-elf/mips-elf.exp: Run the new tests.
+
+2012-08-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* ld-mips-elf/rel32-o32.d: Adjust section VMAs after the removal
+	of _gp from the global scope.
+	* ld-mips-elf/rel32-n32.d: Likewise.
+	* ld-mips-elf/rel64.d: Likewise.
+
 2012-08-06  Maciej W. Rozycki  <macro@codesourcery.com>
 
 	* ld-mips-elf/mips-elf.exp: Set has_newabi for all Linux targets.

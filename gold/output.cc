@@ -811,9 +811,10 @@ Output_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>::Output_reloc(
     Output_section* os,
     unsigned int type,
     Output_data* od,
-    Address address)
+    Address address,
+    bool is_relative)
   : address_(address), local_sym_index_(SECTION_CODE), type_(type),
-    is_relative_(false), is_symbolless_(false),
+    is_relative_(is_relative), is_symbolless_(is_relative),
     is_section_symbol_(true), use_plt_offset_(false), shndx_(INVALID_CODE)
 {
   // this->type_ is a bitfield; make sure TYPE fits.
@@ -832,9 +833,10 @@ Output_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>::Output_reloc(
     unsigned int type,
     Sized_relobj<size, big_endian>* relobj,
     unsigned int shndx,
-    Address address)
+    Address address,
+    bool is_relative)
   : address_(address), local_sym_index_(SECTION_CODE), type_(type),
-    is_relative_(false), is_symbolless_(false),
+    is_relative_(is_relative), is_symbolless_(is_relative),
     is_section_symbol_(true), use_plt_offset_(false), shndx_(shndx)
 {
   gold_assert(shndx != INVALID_CODE);
@@ -1134,8 +1136,12 @@ Output_reloc<elfcpp::SHT_REL, dynamic, size, big_endian>::symbol_value(
       else
 	return sym->value() + addend;
     }
-  gold_assert(this->local_sym_index_ != SECTION_CODE
-	      && this->local_sym_index_ != TARGET_CODE
+  if (this->local_sym_index_ == SECTION_CODE)
+    {
+      gold_assert(!this->use_plt_offset_);
+      return this->u1_.os->address() + addend;
+    }
+  gold_assert(this->local_sym_index_ != TARGET_CODE
               && this->local_sym_index_ != INVALID_CODE
 	      && this->local_sym_index_ != 0
               && !this->is_section_symbol_);
@@ -1701,6 +1707,18 @@ Output_data_got<size, big_endian>::add_got_entry_pair(Got_entry got_entry_1,
     }
 }
 
+// Replace GOT entry I with a new value.
+
+template<int size, bool big_endian>
+void
+Output_data_got<size, big_endian>::replace_got_entry(
+    unsigned int i,
+    Got_entry got_entry)
+{
+  gold_assert(i < this->entries_.size());
+  this->entries_[i] = got_entry;
+}
+
 // Output_data_dynamic::Dynamic_entry methods.
 
 // Write out the entry.
@@ -2245,7 +2263,10 @@ Output_section::Output_section(const char* name, elfcpp::Elf_Word type,
     always_keeps_input_sections_(false),
     has_fixed_layout_(false),
     is_patch_space_allowed_(false),
+    is_unique_segment_(false),
     tls_offset_(0),
+    extra_segment_flags_(0),
+    segment_alignment_(0),
     checkpoint_(NULL),
     lookup_maps_(new Output_section_lookup_maps),
     free_list_(),
@@ -3979,7 +4000,8 @@ Output_segment::Output_segment(elfcpp::Elf_Word type, elfcpp::Elf_Word flags)
     flags_(flags),
     is_max_align_known_(false),
     are_addresses_set_(false),
-    is_large_data_segment_(false)
+    is_large_data_segment_(false),
+    is_unique_segment_(false)
 {
   // The ELF ABI specifies that a PT_TLS segment always has PF_R as
   // the flags.
@@ -4591,10 +4613,10 @@ Output_segment::set_tls_offsets()
     (*p)->set_tls_offset(this->vaddr_);
 }
 
-// Return the load address of the first section.
+// Return the first section.
 
-uint64_t
-Output_segment::first_section_load_address() const
+Output_section*
+Output_segment::first_section() const
 {
   for (int i = 0; i < static_cast<int>(ORDER_MAX); ++i)
     {
@@ -4604,9 +4626,7 @@ Output_segment::first_section_load_address() const
 	   ++p)
 	{
 	  if ((*p)->is_section())
-	    return ((*p)->has_load_address()
-		    ? (*p)->load_address()
-		    : (*p)->address());
+	    return (*p)->output_section();
 	}
     }
   gold_unreachable();

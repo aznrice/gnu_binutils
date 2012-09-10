@@ -164,6 +164,16 @@ gc_orphan_section_test:gc_orphan_section_test.o gcctestdir/ld
 gc_orphan_section_test.stdout: gc_orphan_section_test
 	$(TEST_NM) gc_orphan_section_test > gc_orphan_section_test.stdout
 
+check_SCRIPTS += pr14265.sh
+check_DATA += pr14265.stdout
+MOSTLYCLEANFILES += pr14265
+pr14265.o: pr14265.c
+	$(COMPILE) -O0 -c -o $@ $<
+pr14265: pr14265.o 
+	$(LINK) -Bgcctestdir/ -Wl,--gc-sections -T $(srcdir)/pr14265.t -o $@ $<
+pr14265.stdout: pr14265
+	$(TEST_NM) --format=bsd --numeric-sort $< > $@
+
 check_SCRIPTS += icf_test.sh
 check_DATA += icf_test.stdout
 MOSTLYCLEANFILES += icf_test
@@ -218,7 +228,7 @@ final_layout_sequence.txt:
 final_layout: final_layout.o final_layout_sequence.txt gcctestdir/ld
 	$(CXXLINK) -Bgcctestdir/ -Wl,--section-ordering-file,final_layout_sequence.txt final_layout.o
 final_layout.stdout: final_layout
-	$(TEST_NM) -n final_layout > final_layout.stdout
+	$(TEST_NM) -n --synthetic final_layout > final_layout.stdout
 
 check_PROGRAMS += icf_virtual_function_folding_test
 MOSTLYCLEANFILES += icf_virtual_function_folding_test
@@ -1519,13 +1529,15 @@ unused.c:
 	@cp /dev/null $@
 
 check_SCRIPTS += plugin_final_layout.sh
-check_DATA += plugin_final_layout.stdout
+check_DATA += plugin_final_layout.stdout plugin_final_layout_readelf.stdout
 plugin_final_layout.o: plugin_final_layout.cc
 	$(CXXCOMPILE) -O0 -c -ffunction-sections  -fdata-sections -g -o $@ $<
 plugin_final_layout: plugin_final_layout.o plugin_section_order.so gcctestdir/ld
 	$(CXXLINK) -Bgcctestdir/ -Wl,--plugin,"./plugin_section_order.so" plugin_final_layout.o
 plugin_final_layout.stdout: plugin_final_layout
-	$(TEST_NM) -n plugin_final_layout > plugin_final_layout.stdout
+	$(TEST_NM) -n --synthetic plugin_final_layout > plugin_final_layout.stdout
+plugin_final_layout_readelf.stdout: plugin_final_layout
+	$(TEST_READELF) -Wl plugin_final_layout > plugin_final_layout_readelf.stdout
 
 plugin_section_order.so: plugin_section_order.o
 	$(LINK) -Bgcctestdir/ -shared plugin_section_order.o
@@ -1963,7 +1975,7 @@ MOSTLYCLEANFILES += memory_test.stdout memory_test memory_test.o
 memory_test.o: memory_test.s
 	$(COMPILE) -o $@ -c $<
 memory_test: memory_test.o gcctestdir/ld $(srcdir)/memory_test.t
-	$(LINK) -Bgcctestdir/ -nostartfiles -nostdlib -T $(srcdir)/memory_test.t -o $@ memory_test.o
+	$(LINK) -Bgcctestdir/ -nostartfiles -nostdlib -z max-page-size=0x1000 -z common-page-size=0x1000 -T $(srcdir)/memory_test.t -o $@ memory_test.o
 memory_test.stdout: memory_test
 	$(TEST_READELF) -lWS  $< > $@
 

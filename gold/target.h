@@ -412,6 +412,15 @@ class Target
   define_standard_symbols(Symbol_table* symtab, Layout* layout)
   { this->do_define_standard_symbols(symtab, layout); }
 
+  // Return the output section name to use given an input section
+  // name, or NULL if no target specific name mapping is required.
+  // Set *PLEN to the length of the name if returning non-NULL.
+  const char*
+  output_section_name(const Relobj* relobj,
+		      const char* name,
+		      size_t* plen) const
+  { return this->do_output_section_name(relobj, name, plen); }
+
  protected:
   // This struct holds the constant information for a child class.  We
   // use a struct to avoid the overhead of virtual function calls for
@@ -655,6 +664,11 @@ class Target
   do_define_standard_symbols(Symbol_table*, Layout*)
   { }
 
+  // This may be overridden by the child class.
+  virtual const char*
+  do_output_section_name(const Relobj*, const char*, size_t*) const
+  { return NULL; }
+
  private:
   // The implementations of the four do_make_elf_object virtual functions are
   // almost identical except for their sizes and endianness.  We use a template.
@@ -787,23 +801,22 @@ class Sized_target : public Target
 			  const unsigned char* plocal_symbols,
 			  Relocatable_relocs*) = 0;
 
-  // Relocate a section during a relocatable link.  The parameters are
-  // like relocate_section, with additional parameters for the view of
-  // the output reloc section.
+  // Emit relocations for a section during a relocatable link, and for
+  // --emit-relocs.  The parameters are like relocate_section, with
+  // additional parameters for the view of the output reloc section.
   virtual void
-  relocate_for_relocatable(const Relocate_info<size, big_endian>*,
-			   unsigned int sh_type,
-			   const unsigned char* prelocs,
-			   size_t reloc_count,
-			   Output_section* output_section,
-			   off_t offset_in_output_section,
-			   const Relocatable_relocs*,
-			   unsigned char* view,
-			   typename elfcpp::Elf_types<size>::Elf_Addr
-			     view_address,
-			   section_size_type view_size,
-			   unsigned char* reloc_view,
-			   section_size_type reloc_view_size) = 0;
+  relocate_relocs(const Relocate_info<size, big_endian>*,
+		  unsigned int sh_type,
+		  const unsigned char* prelocs,
+		  size_t reloc_count,
+		  Output_section* output_section,
+		  off_t offset_in_output_section,
+		  const Relocatable_relocs*,
+		  unsigned char* view,
+		  typename elfcpp::Elf_types<size>::Elf_Addr view_address,
+		  section_size_type view_size,
+		  unsigned char* reloc_view,
+		  section_size_type reloc_view_size) = 0;
 
   // Perform target-specific processing in a relocatable link.  This is
   // only used if we use the relocation strategy RELOC_SPECIAL.

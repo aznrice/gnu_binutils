@@ -349,7 +349,7 @@ class Object
       this->input_file_->file().remove_object();
   }
 
-  // Return the name of the object as we would report it to the tuser.
+  // Return the name of the object as we would report it to the user.
   const std::string&
   name() const
   { return this->name_; }
@@ -2116,6 +2116,15 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
   Address
   map_to_kept_section(unsigned int shndx, bool* found) const;
 
+  // Find the section header with the given NAME.  If HDR is non-NULL
+  // then it is a section header returned from a previous call to this
+  // function and the next section header with the same name will be
+  // returned.
+  const unsigned char*
+  find_shdr(const unsigned char* pshdrs, const char* name,
+	    const char* names, section_size_type names_size,
+	    const unsigned char* hdr) const;
+
   // Compute final local symbol value.  R_SYM is the local symbol index.
   // LV_IN points to a local symbol value containing the input value.
   // LV_OUT points to a local symbol value storing the final output value,
@@ -2347,6 +2356,11 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
 
   typedef std::vector<View_size> Views;
 
+  // Stash away info for a number of special sections.
+  // Return true if any of the sections found require local symbols to be read.
+  virtual bool
+  do_find_special_sections(Read_symbols_data* sd);
+
   // This may be overriden by a child class.
   virtual void
   do_relocate_sections(const Symbol_table* symtab, const Layout* layout,
@@ -2484,27 +2498,6 @@ class Sized_relobj_file : public Sized_relobj<size, big_endian>
 			   const unsigned char* plocal_syms,
 			   const Read_relocs_data::Relocs_list::iterator&,
 			   Relocatable_relocs*);
-
-  // Emit the relocs for --emit-relocs.
-  void
-  emit_relocs(const Relocate_info<size, big_endian>*, unsigned int,
-	      unsigned int sh_type, const unsigned char* prelocs,
-	      size_t reloc_count, Output_section*, Address output_offset,
-	      unsigned char* view, Address address,
-	      section_size_type view_size,
-	      unsigned char* reloc_view, section_size_type reloc_view_size);
-
-  // Emit the relocs for --emit-relocs, templatized on the type of the
-  // relocation section.
-  template<int sh_type>
-  void
-  emit_relocs_reltype(const Relocate_info<size, big_endian>*, unsigned int,
-		      const unsigned char* prelocs, size_t reloc_count,
-		      Output_section*, Address output_offset,
-		      unsigned char* view, Address address,
-		      section_size_type view_size,
-		      unsigned char* reloc_view,
-		      section_size_type reloc_view_size);
 
   // Scan the input relocations for --incremental.
   void

@@ -1,3 +1,89 @@
+2012-08-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14525
+	* scripttempl/elf.sc: Also provide __executable_start for PIE.
+
+2012-08-17  Kai Tietz  <ktietz@redhat.com>
+
+	PR ld/14326
+	* scripttempl/pe.sc: Add _etext symbol.
+
+2012-08-14  Nick Clifton  <nickc@redhat.com>
+
+	* configure.in (ALL_LINGUGAS): Add uk.
+	* configure: Regenerate.
+	* po/uk.po: New Ukranian translation.
+
+2012-08-13  Ian Bolton  <ian.bolton@arm.com>
+	    Laurent Desnogues  <laurent.desnogues@arm.com>
+	    Jim MacArthur  <jim.macarthur@arm.com>
+	    Marcus Shawcroft  <marcus.shawcroft@arm.com>
+	    Nigel Stephens  <nigel.stephens@arm.com>
+	    Ramana Radhakrishnan  <ramana.radhakrishnan@arm.com>
+	    Richard Earnshaw  <rearnsha@arm.com>
+	    Sofiane Naci  <sofiane.naci@arm.com>
+	    Tejas Belagod  <tejas.belagod@arm.com>
+	    Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* Makefile.am: Add AArch64.
+	* Makefile.in: Regenerate.
+	* configure.tgt: Add AArch64.
+	* emulparams/aarch64elf.sh: New file.
+	* emulparams/aarch64elfb.sh: New file.
+	* emulparams/aarch64linux.sh: New file.
+	* emulparams/aarch64linuxb.sh: New file.
+	* emultempl/aarch64elf.em: New file.
+	* NEWS: Mention the new feature.
+
+2012-08-09  Nick Clifton  <nickc@redhat.com>
+
+	* po/vi.po: Updated Vietnamese translation.
+
+2012-08-07  Daniel Green  <venix1@gmail.com>
+
+	* scripttempl/pe.sc (R_TLS): Add .tls$AAA and .tls$ZZZ.
+	* scripttempl/pep.sc (R_TLS): Add .tls$AAA and .tls$ZZZ.
+
+2012-08-07  Nick Clifton  <nickc@redhat.com>
+
+	* po/ja.po: Updated Japanese translation.
+
+2012-08-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* emulparams/elf32bmip.sh: Make _gp hidden.
+	* emulparams/elf32bmipn32-defs.sh: Likewise.
+	* emulparams/elf32mipswindiss.sh: Likewise.
+	* scripttempl/mips.sc: Likewise.
+
+2012-08-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* ldexp.h (etree_union): Add defsym member to the assign member
+	structure.
+	(exp_assign): Add hidden argument to prototype.
+	* ldexp.c (exp_fold_tree_1): Use the defsym member to handle
+	--defsym symbols.
+	(exp_assop): Add defsym argument, initialize the defsym member
+	of the assign structure.
+	(exp_assign): Handle hidden symbols.
+	(exp_defsym): Update to use the defsym argument to exp_assop.
+	(exp_provide): Update to handle the defsym argument to exp_assop.
+	* ldlex.l (HIDDEN): New token.
+	* ldgram.y (HIDDEN): Likewise.
+	(assignment, section): Update calls to exp_assign.
+	* ldctor.c (ldctor_build_sets): Likewise.
+	* mri.c (mri_format): Likewise.
+	* ldlang.c (lang_insert_orphan, lang_leave_overlay): Likewise.
+	(open_input_bfds): Remove --defsym symbols special case.
+	* emultempl/beos.em (gld_${EMULATION_NAME}_set_symbols): Update
+	call to exp_assign.
+	* emultempl/pe.em (gld_${EMULATION_NAME}_set_symbols): Likewise.
+	* emultempl/pep.em (gld_${EMULATION_NAME}_set_symbols): Likewise.
+	* emultempl/spuelf.em (spu_place_special_section): Likewise.
+	* emultempl/xtensaelf.em (ld_xtensa_insert_page_offsets):
+	Likewise.
+	* ld.texinfo (Assigning Values to Symbols): Add HIDDEN.
+	(HIDDEN): New subsection.
+
 2012-07-31  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/14156
@@ -5,7 +91,7 @@
 
 	* scripttempl/elf.sc: Add SORT_NONE to .init and .fini sections.
 	* scripttempl/elf32msp430.sc: Likewise.
-	* scripttempl/elf32msp430_3.sc: Likewise. 
+	* scripttempl/elf32msp430_3.sc: Likewise.
 	* scripttempl/elfd10v.sc: Likewise.
 	* scripttempl/elfd30v.sc: Likewise.
 	* scripttempl/elfxtensa.sc: Likewise.

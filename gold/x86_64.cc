@@ -469,9 +469,9 @@ class Target_x86_64 : public Sized_target<size, false>
 			  const unsigned char* plocal_symbols,
 			  Relocatable_relocs*);
 
-  // Relocate a section during a relocatable link.
+  // Emit relocations for a section.
   void
-  relocate_for_relocatable(
+  relocate_relocs(
       const Relocate_info<size, false>*,
       unsigned int sh_type,
       const unsigned char* prelocs,
@@ -3006,7 +3006,7 @@ Target_x86_64<size>::Scan::global(Symbol_table* symtab,
 	  case elfcpp::R_X86_64_TPOFF32:     // Local-exec
 	    layout->set_has_static_tls();
 	    if (parameters->options().shared())
-	      unsupported_reloc_local(object, r_type);
+	      unsupported_reloc_global(object, r_type, gsym);
 	    break;
 
 	  default:
@@ -4208,7 +4208,7 @@ Target_x86_64<size>::scan_relocatable_relocs(
 
 template<int size>
 void
-Target_x86_64<size>::relocate_for_relocatable(
+Target_x86_64<size>::relocate_relocs(
     const Relocate_info<size, false>* relinfo,
     unsigned int sh_type,
     const unsigned char* prelocs,
@@ -4224,7 +4224,7 @@ Target_x86_64<size>::relocate_for_relocatable(
 {
   gold_assert(sh_type == elfcpp::SHT_RELA);
 
-  gold::relocate_for_relocatable<size, false, elfcpp::SHT_RELA>(
+  gold::relocate_relocs<size, false, elfcpp::SHT_RELA>(
     relinfo,
     prelocs,
     reloc_count,
