@@ -1,5 +1,5 @@
-This is the beta release of binutils 2.23.51.0.1 for Linux, which is
-based on binutils 2012 0806 in CVS on sourceware.org plus various
+This is the beta release of binutils 2.23.51.0.2 for Linux, which is
+based on binutils 2012 0908 in CVS on sourceware.org plus various
 changes. It is purely for Linux.
 
 All relevant patches in patches have been applied to the source tree.
@@ -115,12 +115,45 @@ endif
 
 to arch/ia64/Makefile in your kernel source tree.
 
-Please report any bugs related to binutils 2.23.51.0.1 to
+Please report any bugs related to binutils 2.23.51.0.2 to
 hjl.tools@gmail.com
 
 and
 
 http://www.sourceware.org/bugzilla/
+
+Changes from binutils 2.23.51.0.1:
+
+1. Update from binutils 2012 0908.
+2. Fix STB_SECONDARY support:
+   a. Generate STB_SECONDARY symbols in DSO by default.
+   b. Properly handle STB_SECONDAY symbols when linking with archive.
+   c. Don't allow .weak directive to override .secondary directive.
+3. Optimize i386/x86-64 linker to convert GOT load (MOV) to LEA.
+4. Clarify x86 assembler error messages.  PR 14457.
+5. Improve NOP/prefetch support in x86 disassembler.
+6. Improve Intel syntax support in x86 assembler.
+7. Add -march={btver1, btver2} options to x86 assembler.
+8. Fix binutils build with --enable-shared.  PR 4970.
+9. Also provide __executable_start for PIE.  PR 14525.
+10. Use xmalloc to allocate memory for argument list file.  PR 14526.
+11. Add Intel Itanium Series 9500 support to assembler/diassembler.
+12. Ignore section symbols without a BFD section when outputing symbols
+and check bad section index.  PR 14493.
+13. Improve archive reader.  PR 14475.
+14. Support DW_OP_GNU_const_index reader.
+15. Improve handling of imput files with empty ELF group sections.
+PR 14444.
+16. Fix IFUNC support in s390 linker.
+17. Improve gold.
+18. Add aarch64 support.
+19. Improve arm support.
+20. Improve mips support.
+21. Improve mmix support.
+22. Improve moxie support.
+23. Improve ppc support.
+24. Improve s390 support.
+25. Improve tile support.
 
 Changes from binutils 2.22.52.0.4:
 
@@ -564,13 +597,13 @@ already been defined.  PR 12001.
 
 The file list:
 
-1. binutils-2.23.51.0.1.tar.bz2.  Source code.
+1. binutils-2.23.51.0.2.tar.bz2.  Source code.
 
 The primary sites for the beta Linux binutils are:
 
 1. http://www.kernel.org/pub/linux/devel/binutils/
 
-It is also available on linux/release/2.23.51.0.1 branch at
+It is also available on linux/release/2.23.51.0.2 branch at
 
 http://git.kernel.org/?p=linux/kernel/git/hjl/binutils.git;a=summary
 
@@ -579,4 +612,4 @@ Thanks.
 
 H.J. Lu
 hjl.tools@gmail.com
-08/07/2012
+09/10/2012
