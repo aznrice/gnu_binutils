@@ -1,3 +1,27 @@
+2012-09-12  Chris Schlumberger-Socha  <chris.schlumberger-socha@arm.com>
+
+	* config/tc-aarch64.c
+	(reloc_table): Add reloc to table entry.
+	(parse_address_main): Add support for #:<reloc_op>:<symbol>.
+	(parse_operands): Check for unused reloc.
+	(md_apply_fix): New case for reloc.
+	(aarch64_force_relocation): Likewise.
+
+2012-09-11  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR gas/13503
+	* config/tc-avr.h (TC_VALIDATE_FIX): Skip: BFD_RELOC_AVR_8_LO,
+	BFD_RELOC_AVR_8_HI, BFD_RELOC_AVR_8_HLO.
+
+2012-09-11  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am (bootstrap): Add $EXEEXT to dependency.
+	* Makefile.in: Regenerate.
+
+2012-09-10  Matthias Klose  <doko@ubuntu.com>
+
+	* config.in: Disable sanity check for kfreebsd.
+
 2012-09-10  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* configure: Regenerated.
