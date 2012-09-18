@@ -313,15 +313,15 @@ index 61e8b45..ab4ffdc 100644
  	    || bfd_is_com_section (bfd_get_section (sym)));
  }
 diff --git a/bfd/elf32-sh-symbian.c b/bfd/elf32-sh-symbian.c
-index 0882d52..d213291 100644
+index 1f03dbc..d601836 100644
 --- a/bfd/elf32-sh-symbian.c
 +++ b/bfd/elf32-sh-symbian.c
 @@ -497,7 +497,7 @@ sh_symbian_relocate_section (bfd *                  output_bfd,
  	      if (! _bfd_elf_merge_symbol (input_bfd, info,
  					   ptr->new_name, & new_sym,
  					   & psec, & new_value, NULL,
--					   & new_hash, & skip,
-+					   FALSE, & new_hash, & skip,
+-					   NULL, & new_hash, & skip,
++					   NULL, FALSE, & new_hash, & skip,
  					   & override, & type_change_ok,
  					   & size_change_ok))
  		{
