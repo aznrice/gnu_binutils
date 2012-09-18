@@ -1,5 +1,5 @@
-This is the beta release of binutils 2.23.51.0.2 for Linux, which is
-based on binutils 2012 0908 in CVS on sourceware.org plus various
+This is the beta release of binutils 2.23.51.0.3 for Linux, which is
+based on binutils 2012 0918 in CVS on sourceware.org plus various
 changes. It is purely for Linux.
 
 All relevant patches in patches have been applied to the source tree.
@@ -115,12 +115,25 @@ endif
 
 to arch/ia64/Makefile in your kernel source tree.
 
-Please report any bugs related to binutils 2.23.51.0.2 to
+Please report any bugs related to binutils 2.23.51.0.3 to
 hjl.tools@gmail.com
 
 and
 
 http://www.sourceware.org/bugzilla/
+
+Changes from binutils 2.23.51.0.2:
+
+1. Update from binutils 2012 0918.
+2. Properly handle versioned STB_SECONDARY symbols. 
+3. Fix wrong symbol type with common symbol and weak function.  PR 14591.
+4. Ignore discarded sections when converting mov to lea.
+5. Improve gold.
+6. Improve avr support.
+7. Improve aarch64 support.
+8. Improve moxie support.
+9. Improve ppc support.
+10. Improve tile support.
 
 Changes from binutils 2.23.51.0.1:
 
@@ -597,13 +610,13 @@ already been defined.  PR 12001.
 
 The file list:
 
-1. binutils-2.23.51.0.2.tar.bz2.  Source code.
+1. binutils-2.23.51.0.3.tar.bz2.  Source code.
 
 The primary sites for the beta Linux binutils are:
 
 1. http://www.kernel.org/pub/linux/devel/binutils/
 
-It is also available on linux/release/2.23.51.0.2 branch at
+It is also available on linux/release/2.23.51.0.3 branch at
 
 http://git.kernel.org/?p=linux/kernel/git/hjl/binutils.git;a=summary
 
@@ -612,4 +625,4 @@ Thanks.
 
 H.J. Lu
 hjl.tools@gmail.com
-09/10/2012
+09/18/2012
