@@ -1,3 +1,36 @@
+2012-09-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/shared.exp (build_cxx_tests): Move out the commented out
+	test.
+
+	* lib/ld-lib.exp (run_ld_link_exec_tests): Assemble all sources
+	files in each test.
+
+2012-09-12  Chris Schlumberger-Socha  <chris.schlumberger-socha@arm.com>
+
+	* ld-aarch64/aarch64-elf.exp: New reloc tests.
+	* ld-aarch64/emit-relocs-309-low-bad.d: New file. Expected asm for test
+	failure (lower bound overflow).
+	* ld-aarch64/emit-relocs-309-low.d: New file. Expected asm for test
+	success (lower bound).
+	* ld-aarch64/emit-relocs-309-up-bad.d: New file. Expected asm for test
+	failure (upper bound overflow).
+	* ld-aarch64/emit-relocs-309-up.d: New file. Expected asm for test
+	success (upper bound).
+	* ld-aarch64/emit-relocs-309.s: New file. Asm for new reloc tests.
+
+2012-09-09  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* ld-mmix/sec-1.d, ld-mmix/sec-3.d: Force end-of-section symbols
+	to be emitted and checked.
+	* ld-mmix/data-1.s, ld-mmix/orph-.d, ld-mmix/orph-awp.d,
+	ld-mmix/orph-d-a.d, ld-mmix/orph-d-awn.d, ld-mmix/orph-d-awp.d,
+	ld-mmix/orph-d-awpe.d, ld-mmix/orph-d.d, ld-mmix/orph-dc-ap.d,
+	ld-mmix/orph-dc-awp.d, ld-mmix/orph-dc.d, ld-mmix/tm-ae.s,
+	ld-mmix/tm-ape.s, ld-mmix/tm-awne.s, ld-mmix/tm-awpe.s,
+	ld-mmix/tm-d-ap.s, ld-mmix/tm-d-awp.s, ld-mmix/tm-d.s,
+	ld-mmix/tm-e.s, ld-mmix/tm-orph1.s: New test files.
+
 2012-08-31  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ld-i386/i386.exp: Run mov1a, mov1b.

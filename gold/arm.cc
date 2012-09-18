@@ -2551,7 +2551,8 @@ class Target_arm : public Sized_target<32, big_endian>
 	  unsigned int data_shndx,
 	  Output_section* output_section,
 	  const elfcpp::Rel<32, big_endian>& reloc, unsigned int r_type,
-	  const elfcpp::Sym<32, big_endian>& lsym);
+	  const elfcpp::Sym<32, big_endian>& lsym,
+	  bool is_discarded);
 
     inline void
     global(Symbol_table* symtab, Layout* layout, Target_arm* target,
@@ -7857,8 +7858,12 @@ Target_arm<big_endian>::Scan::local(Symbol_table* symtab,
 				    Output_section* output_section,
 				    const elfcpp::Rel<32, big_endian>& reloc,
 				    unsigned int r_type,
-				    const elfcpp::Sym<32, big_endian>& lsym)
+				    const elfcpp::Sym<32, big_endian>& lsym,
+				    bool is_discarded)
 {
+  if (is_discarded)
+    return;
+
   r_type = get_real_reloc_type(r_type);
   switch (r_type)
     {
@@ -8068,7 +8073,7 @@ Target_arm<big_endian>::Scan::local(Symbol_table* symtab,
 		  got->add_local_pair_with_rel(object, r_sym, shndx,
 					       GOT_TYPE_TLS_PAIR,
 					       target->rel_dyn_section(layout),
-					       elfcpp::R_ARM_TLS_DTPMOD32, 0);
+					       elfcpp::R_ARM_TLS_DTPMOD32);
 		else
 		  got->add_tls_gd32_with_static_reloc(GOT_TYPE_TLS_PAIR,
 						      object, r_sym);

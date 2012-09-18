@@ -538,7 +538,8 @@ class Target_i386 : public Sized_target<32, false>
 	  unsigned int data_shndx,
 	  Output_section* output_section,
 	  const elfcpp::Rel<32, false>& reloc, unsigned int r_type,
-	  const elfcpp::Sym<32, false>& lsym);
+	  const elfcpp::Sym<32, false>& lsym,
+	  bool is_discarded);
 
     inline void
     global(Symbol_table* symtab, Layout* layout, Target_i386* target,
@@ -1702,15 +1703,19 @@ Target_i386::Scan::reloc_needs_plt_for_ifunc(
 
 inline void
 Target_i386::Scan::local(Symbol_table* symtab,
-				Layout* layout,
-				Target_i386* target,
-				Sized_relobj_file<32, false>* object,
-				unsigned int data_shndx,
-				Output_section* output_section,
-				const elfcpp::Rel<32, false>& reloc,
-				unsigned int r_type,
-				const elfcpp::Sym<32, false>& lsym)
+			 Layout* layout,
+			 Target_i386* target,
+			 Sized_relobj_file<32, false>* object,
+			 unsigned int data_shndx,
+			 Output_section* output_section,
+			 const elfcpp::Rel<32, false>& reloc,
+			 unsigned int r_type,
+			 const elfcpp::Sym<32, false>& lsym,
+			 bool is_discarded)
 {
+  if (is_discarded)
+    return;
+
   // A local STT_GNU_IFUNC symbol may require a PLT entry.
   if (lsym.get_st_type() == elfcpp::STT_GNU_IFUNC
       && this->reloc_needs_plt_for_ifunc(object, r_type))
@@ -1874,7 +1879,7 @@ Target_i386::Scan::local(Symbol_table* symtab,
 		  got->add_local_pair_with_rel(object, r_sym, shndx,
 					       GOT_TYPE_TLS_PAIR,
 					       target->rel_dyn_section(layout),
-					       elfcpp::R_386_TLS_DTPMOD32, 0);
+					       elfcpp::R_386_TLS_DTPMOD32);
 	      }
 	    else if (optimized_type != tls::TLSOPT_TO_LE)
 	      unsupported_reloc_local(object, r_type);

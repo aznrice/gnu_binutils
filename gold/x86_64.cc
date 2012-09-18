@@ -676,7 +676,8 @@ class Target_x86_64 : public Sized_target<size, false>
 	  unsigned int data_shndx,
 	  Output_section* output_section,
 	  const elfcpp::Rela<size, false>& reloc, unsigned int r_type,
-	  const elfcpp::Sym<size, false>& lsym);
+	  const elfcpp::Sym<size, false>& lsym,
+	  bool is_discarded);
 
     inline void
     global(Symbol_table* symtab, Layout* layout, Target_x86_64* target,
@@ -2270,8 +2271,12 @@ Target_x86_64<size>::Scan::local(Symbol_table* symtab,
 				 Output_section* output_section,
 				 const elfcpp::Rela<size, false>& reloc,
 				 unsigned int r_type,
-				 const elfcpp::Sym<size, false>& lsym)
+				 const elfcpp::Sym<size, false>& lsym,
+				 bool is_discarded)
 {
+  if (is_discarded)
+    return;
+
   // A local STT_GNU_IFUNC symbol may require a PLT entry.
   bool is_ifunc = lsym.get_st_type() == elfcpp::STT_GNU_IFUNC;
   if (is_ifunc && this->reloc_needs_plt_for_ifunc(object, r_type))
@@ -2477,7 +2482,7 @@ Target_x86_64<size>::Scan::local(Symbol_table* symtab,
 					       shndx,
 					       GOT_TYPE_TLS_PAIR,
 					       target->rela_dyn_section(layout),
-					       elfcpp::R_X86_64_DTPMOD64, 0);
+					       elfcpp::R_X86_64_DTPMOD64);
 	      }
 	    else if (optimized_type != tls::TLSOPT_TO_LE)
 	      unsupported_reloc_local(object, r_type);

@@ -1,7 +1,54 @@
+2012-09-17  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* config/tc-aarch64.c (aarch64_archs): Rename 'armv8' to 'armv8-a'.
+
+2012-09-14  David Edelsohn  <dje.gcc@gmail.com>
+
+	* configure: Regenerate.
+
+2012-09-13  Anthony Green  <green@moxielogic.com>
+
+	* config/tc-moxie.h (DEFAULT_TARGET_FORMAT): Define.
+	(TARGET_FORMAT): Don't hard-code endian-ness.
+	* config/tc-moxie.c (target_big_endian, moxie_target_format):
+	Define.
+	(md_assemble): Handle bi-endian encodings.
+	(md_shortopts, md_parse_option, md_show_usage, md_apply_fix)
+	(md_number_to_chars, md_chars_to_number): Update for bi-endian
+	support.
+
+2012-09-12  Chris Schlumberger-Socha  <chris.schlumberger-socha@arm.com>
+
+	* config/tc-aarch64.c
+	(reloc_table): Add reloc to table entry.
+	(parse_address_main): Add support for #:<reloc_op>:<symbol>.
+	(parse_operands): Check for unused reloc.
+	(md_apply_fix): New case for reloc.
+	(aarch64_force_relocation): Likewise.
+
+2012-09-11  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR gas/13503
+	* config/tc-avr.h (TC_VALIDATE_FIX): Skip: BFD_RELOC_AVR_8_LO,
+	BFD_RELOC_AVR_8_HI, BFD_RELOC_AVR_8_HLO.
+
+2012-09-11  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am (bootstrap): Add $EXEEXT to dependency.
+	* Makefile.in: Regenerate.
+
+2012-09-10  Matthias Klose  <doko@ubuntu.com>
+
+	* config.in: Disable sanity check for kfreebsd.
+
+2012-09-10  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure: Regenerated.
+
 2012-09-07  Anthony Green  <green@moxielogic.com>
 
 	* config/tc-moxie.c (md_pcrel_from): Branches are now relative
-          to the address following the branch instruction.
+	to the address following the branch instruction.
 
 2012-09-06  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 
