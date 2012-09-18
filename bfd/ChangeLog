@@ -1,3 +1,27 @@
+2012-09-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-i386.c (elf_i386_convert_mov_to_lea): Ignore discarded
+	section.
+	* elf64-x86-64.c (elf_x86_64_convert_mov_to_lea): Likewise.
+
+2012-09-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-i386.c (elf_i386_finish_dynamic_symbol): Replace return
+	FALSE with abort.
+	* elf64-x86-64.c (elf_x86_64_finish_dynamic_symbol): Likewise.
+
+2012-09-17  Walter Lee  <walt@tilera.com>
+
+	* elf32-tilepro.c (tilepro_elf_relocate_section): Remove unused
+	got_base variable.
+	* elfxx-tilegx.c (tilegx_elf_relocate_section): Ditto.
+
+2012-09-17  Walter Lee  <walt@tilera.com>
+
+	* elf32-tilepro.c (tilepro_elf_relocate_section): Fix computation
+	of got relocations for when .got.plt section is merged with .got.
+	* elfxx-tilegx.c (tilegx_elf_relocate_section): Ditto.
+
 2012-09-14  David Edelsohn  <dje.gcc@gmail.com>
 
 	* configure: Regenerate.
