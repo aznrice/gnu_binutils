@@ -108,6 +108,19 @@ set build_tests {
   {"Build secondary7.a"
    "" ""
    {secondary7.c} {} "secondary7.a"}
+  {"Build library8a.so"
+   "-shared -Wl,--version-script=library8.map" "-fPIC"
+   {library8a.c} {{readelf {-s} library8a.rd}} "library8a.so"}
+  {"Build library8b.so"
+   "-shared -Wl,--version-script=library8.map" "-fPIC"
+   {library8b.c} {{readelf {-s} library8b.rd}} "library8b.so"}
+  {"Build library8c.a"
+   "" "-fPIC"
+   {library8c.c} {} "library8c.a"}
+  {"Build library8c.so"
+   "-shared -Wl,--version-script=library8.map tmpdir/library8c.o tmpdir/library8a.so tmpdir/library8b.so"
+   "-fPIC"
+   {dummy.c} {{readelf {-s} library8c.rd}} "library8c.so"}
 }
 
 run_cc_link_tests $build_tests

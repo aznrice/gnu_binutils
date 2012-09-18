@@ -953,7 +953,8 @@ _bfd_elf_mark_dynamic_def_weak (struct elf_link_hash_entry *h,
    SIZE_CHANGE_OK if it is OK for the size to change.  By OK to
    change, we mean that we shouldn't warn if the type or size does
    change.  We set POLD_ALIGNMENT if an old common symbol in a dynamic
-   object is overridden by a regular object.  */
+   object is overridden by a regular object.  If OLDSECONARY is TRUE,
+   the old definion is a secondary symbol.  */
 
 bfd_boolean
 _bfd_elf_merge_symbol (bfd *abfd,
@@ -962,7 +963,9 @@ _bfd_elf_merge_symbol (bfd *abfd,
 		       Elf_Internal_Sym *sym,
 		       asection **psec,
 		       bfd_vma *pvalue,
+		       bfd_boolean *pold_weak,
 		       unsigned int *pold_alignment,
+		       bfd_boolean oldsecondary,
 		       struct elf_link_hash_entry **sym_hash,
 		       bfd_boolean *skip,
 		       bfd_boolean *override,
@@ -976,7 +979,7 @@ _bfd_elf_merge_symbol (bfd *abfd,
   int bind;
   bfd *oldbfd;
   bfd_boolean newdyn, olddyn, olddef, newdef, newdyncommon, olddyncommon;
-  bfd_boolean newweak, oldweak, newfunc, oldfunc, weakbind, oldsecondary;
+  bfd_boolean newweak, oldweak, newfunc, oldfunc, weakbind;
   const struct elf_backend_data *bed;
 
   *skip = FALSE;
@@ -1060,15 +1063,20 @@ _bfd_elf_merge_symbol (bfd *abfd,
       break;
     }
 
-  oldsecondary = h->root.secondary != 0;
+  /* Set OLDSECONADRY if it isn't TRUE.  */
+  if (!oldsecondary)
+    oldsecondary = h->root.secondary != 0;
 
   /* Treat secondary symbols as weak symbols.  */
   weakbind = bind == STB_WEAK || bind == STB_SECONDARY;
 
   /* Differentiate strong and weak symbols.  */
   newweak = weakbind;
-  oldweak = (h->root.type == bfd_link_hash_defweak
+  oldweak = (oldsecondary
+	     || h->root.type == bfd_link_hash_defweak
 	     || h->root.type == bfd_link_hash_undefweak);
+  if (pold_weak)
+    *pold_weak = oldweak;
 
   /* In cases involving weak versioned symbols, we may wind up trying
      to merge a symbol with itself.  Catch that here, to avoid the
@@ -1316,7 +1324,7 @@ _bfd_elf_merge_symbol (bfd *abfd,
 
   if (newdef && !newdyn && olddyn)
     newweak = FALSE;
-  if (olddef && newdyn)
+  if (olddef && newdyn && !oldsecondary)
     oldweak = FALSE;
 
   /* Allow changes between different types of function symbol.  */
@@ -1626,8 +1634,8 @@ _bfd_elf_merge_symbol (bfd *abfd,
 
 /* This function is called to create an indirect symbol from the
    default for the symbol with the default version if needed. The
-   symbol is described by H, NAME, SYM, PSEC, VALUE, and OVERRIDE.  We
-   set DYNSYM if the new indirect symbol is dynamic.  */
+   symbol is described by H, NAME, SYM, PSEC, VALUE, OVERRIDE and
+   OLDSECONDARY.  We set DYNSYM if the new indirect symbol is dynamic.  */
 
 static bfd_boolean
 _bfd_elf_add_default_symbol (bfd *abfd,
@@ -1637,6 +1645,7 @@ _bfd_elf_add_default_symbol (bfd *abfd,
 			     Elf_Internal_Sym *sym,
 			     asection **psec,
 			     bfd_vma *value,
+			     bfd_boolean oldsecondary,
 			     bfd_boolean *dynsym,
 			     bfd_boolean override)
 {
@@ -1698,8 +1707,8 @@ _bfd_elf_add_default_symbol (bfd *abfd,
   size_change_ok = FALSE;
   sec = *psec;
   if (!_bfd_elf_merge_symbol (abfd, info, shortname, sym, &sec, value,
-			      NULL, &hi, &skip, &override,
-			      &type_change_ok, &size_change_ok))
+			      NULL, NULL, oldsecondary, &hi, &skip,
+			      &override, &type_change_ok, &size_change_ok))
     return FALSE;
 
   if (skip)
@@ -1807,8 +1816,8 @@ nondefault:
   size_change_ok = FALSE;
   sec = *psec;
   if (!_bfd_elf_merge_symbol (abfd, info, shortname, sym, &sec, value,
-			      NULL, &hi, &skip, &override,
-			      &type_change_ok, &size_change_ok))
+			      NULL, NULL, oldsecondary, &hi, &skip,
+			      &override, &type_change_ok, &size_change_ok))
     return FALSE;
 
   if (skip)
@@ -3927,12 +3936,14 @@ error_free_dyn:
       bfd_boolean size_change_ok;
       bfd_boolean type_change_ok;
       bfd_boolean new_weakdef;
+      bfd_boolean new_weak;
+      bfd_boolean old_weak;
       bfd_boolean override;
       bfd_boolean common;
       unsigned int old_alignment;
       bfd *old_bfd;
       bfd * undef_bfd = NULL;
-      unsigned int secondary;
+      bfd_boolean oldsecondary;
 
       override = FALSE;
 
@@ -4064,6 +4075,7 @@ error_free_dyn:
 
       size_change_ok = FALSE;
       type_change_ok = bed->type_change_ok;
+      old_weak = FALSE;
       old_alignment = 0;
       old_bfd = NULL;
       new_sec = sec;
@@ -4209,8 +4221,8 @@ error_free_dyn:
 	    }
 
 	  if (!_bfd_elf_merge_symbol (abfd, info, name, isym, &sec,
-				      &value, &old_alignment,
-				      sym_hash, &skip, &override,
+				      &value, &old_weak, &old_alignment,
+				      FALSE, sym_hash, &skip, &override,
 				      &type_change_ok, &size_change_ok))
 	    goto error_free_vers;
 
@@ -4254,10 +4266,10 @@ error_free_dyn:
 	    h->verinfo.verdef = &elf_tdata (abfd)->verdef[vernum - 1];
 
 	  /* Remember if the old definition is secondary.  */
-	  secondary = h->root.secondary;
+	  oldsecondary = h->root.secondary != 0;
 	}
       else
-	secondary = 0;
+	oldsecondary = FALSE;
 
       if (! (_bfd_generic_link_add_one_symbol
 	     (info, abfd, name, flags, sec, value, NULL, FALSE, bed->collect,
@@ -4276,10 +4288,11 @@ error_free_dyn:
       if (is_elf_hash_table (htab))
 	h->unique_global = (flags & BSF_GNU_UNIQUE) != 0;
 
+      new_weak = (flags & BSF_WEAK) != 0;
       new_weakdef = FALSE;
       if (dynamic
 	  && definition
-	  && (flags & BSF_WEAK) != 0
+	  && new_weak
 	  && !bed->is_function_type (ELF_ST_TYPE (isym->st_info))
 	  && is_elf_hash_table (htab)
 	  && h->u.weakdef == NULL)
@@ -4408,7 +4421,9 @@ error_free_dyn:
 	    h->size = h->root.u.c.size;
 
 	  if (ELF_ST_TYPE (isym->st_info) != STT_NOTYPE
-	      && (definition || h->type == STT_NOTYPE))
+	      && ((definition && !new_weak)
+		  || (old_weak && h->root.type == bfd_link_hash_common)
+		  || h->type == STT_NOTYPE))
 	    {
 	      unsigned int type = ELF_ST_TYPE (isym->st_info);
 
@@ -4482,9 +4497,9 @@ error_free_dyn:
 		  h->dynamic_def = 1;
 		  hi->def_dynamic = 1;
 		  hi->dynamic_def = 1;
-		  /* Dynamic definition overrides regular secondary
+		  /* Dynamic definition overrides regular old secondary
 		     definition.  */
-		  if (secondary)
+		  if (oldsecondary)
 		    {
 		      h->def_regular = 0;
 		      hi->def_regular = 0;
@@ -4517,8 +4532,8 @@ error_free_dyn:
 	     the default name.  */
 	  if (definition || h->root.type == bfd_link_hash_common)
 	    if (!_bfd_elf_add_default_symbol (abfd, info, h, name, isym,
-					      &sec, &value, &dynsym,
-					      override))
+					      &sec, &value, oldsecondary,
+					      &dynsym, override))
 	      goto error_free_vers;
 
 	  if (definition && !dynamic)
