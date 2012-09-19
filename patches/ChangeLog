@@ -1,3 +1,8 @@
+2012-09-19  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr14591-1.patch: Removed.
+	* README: Likewise.
+
 2012-09-18  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-pr14591-1.patch: Fix elf32-sh-symbian.c compilation.
