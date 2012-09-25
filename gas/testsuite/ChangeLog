@@ -1,3 +1,52 @@
+2012-09-25  Saravanan Ekanathan <saravanan.ekanathan@amd.com>
+
+	* gas/i386/arch-10-bdver1.d: New file to test bdver1 core.
+	* gas/i386/x86-64-arch-2-bdver1.d: Likewise.
+	* gas/i386/i386.exp: Run bdver1 testcases.
+	* gas/i386/arch-10-bdver2.d: Updated -march flags.
+	* gas/i386/arch-10-btver1.d: Likewise.
+	* gas/i386/arch-10-btver2.d: Likewise.
+	* gas/i386/x86-64-arch-2-bdver2.d: Likewise.
+	* gas/i386/x86-64-arch-2-btver1.d: Likewise.
+	* gas/i386/x86-64-arch-2-btver2.d: Likewise.
+
+2012-09-23  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* gas/mips/hilo-diff-eb.d: New test.
+	* gas/mips/hilo-diff-eb-n32.d: New test.
+	* gas/mips/hilo-diff-eb-n64.d: New test.
+	* gas/mips/hilo-diff-el.d: New test.
+	* gas/mips/hilo-diff-el-n32.d: New test.
+	* gas/mips/hilo-diff-el-n64.d: New test.
+	* gas/mips/mips16@hilo-diff-eb.d: New test.
+	* gas/mips/mips16@hilo-diff-eb-n32.d: New test.
+	* gas/mips/mips16@hilo-diff-eb-n64.d: New test.
+	* gas/mips/mips16@hilo-diff-el.d: New test.
+	* gas/mips/mips16@hilo-diff-el-n32.d: New test.
+	* gas/mips/mips16@hilo-diff-el-n64.d: New test.
+	* gas/mips/micromips@hilo-diff-eb.d: New test.
+	* gas/mips/micromips@hilo-diff-eb-n32.d: New test.
+	* gas/mips/micromips@hilo-diff-eb-n64.d: New test.
+	* gas/mips/micromips@hilo-diff-el.d: New test.
+	* gas/mips/micromips@hilo-diff-el-n32.d: New test.
+	* gas/mips/micromips@hilo-diff-el-n64.d: New test.
+	* gas/mips/hilo-diff.s: New test source.
+	* gas/mips/mips.exp: Run the new tests.
+
+2012-09-23  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* gas/mips/elf-rel22.s, gas/mips/elf-rel22.d: Add more tests.
+	* gas/mips/elf-rel29.s, gas/mips/elf-rel29.d,
+	gas/mips/micromips@elf-rel29.d, gas/mips/elf-rel30.s,
+	gas/mips/elf-rel30.l: New tests.
+	* gas/mips/mips.exp: Run them.
+
+2012-09-23  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* gas/mips/dot-1.s, gas/mips/dot-1.d, gas/mips/micromips@dot-1.d,
+	gas/mips/mips16@dot-1.d: New test.
+	* gas/mips/mips.exp: Run it.
+
 2012-09-20  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* gas/i386/i386.exp: Run x86-64-arch-2-1 and x86-64-arch-2-2.
