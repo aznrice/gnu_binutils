@@ -1,3 +1,42 @@
+2012-10-13  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	* config/tc-hppa.c (pa_ip): Limit unit conditions for uxor to those
+	not involving a carry.
+
+2012-10-12  Peter Bergner  <bergner@vnet.ibm.com>
+
+	* doc/as.texinfo (-mpwr4, -mpwr7): Fix option name typos.
+
+2012-10-11  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* config/tc-arm.c: Change condition code insertion for
+	lds[hb] instructions from after the 2nd character to after the 3rd.
+	(tCM): Remove macro.
+	(TxCM): Likewise.
+	(TxCM_): Likewise.
+	(TCM): Likewise.
+
+2012-10-09  Nagajyothi Eggone  <nagajyothi.eggone@amd.com>
+
+	* config/tc-i386.c (cpu_arch): Add CPU_BDVER3_FLAGS.
+	* doc/c-i386.texi: Add -march=bdver3 option.
+
+2012-10-04  Nick Clifton  <nickc@redhat.com>
+
+	* config/tc-v850.c (v850_insert_operand): Use a static buffer for
+	the error message.
+
+2012-10-04  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* config/tc-s390.c (s390_parse_cpu): Add new option zEC12.
+	* doc/as.texinfo: Document new option zEC12.
+	* doc/c-s390.texi: Likewise.
+
+2012-10-03  DJ Delorie  <dj@redhat.com>
+
+	* config/tc-rl78.c: Change line_separator to '@' so that '|' can
+	be used in expressions.
+
 2012-10-01  Alan Modra  <amodra@gmail.com>
 
 	* write.c (chain_frchains_together_1): Reorder assertion to avoid

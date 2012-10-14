@@ -1,3 +1,67 @@
+2012-10-13  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	* gas/hppa/basic/unit.s: Remove uxor instructions with unit condition
+	involving a carry.
+	* gas/hppa/basic/unit2.s: Likewise.
+	* gas/hppa/basic/basic.exp: Adjusted expected.
+
+2012-10-11  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* gas/arm/armv8-a+fp.d: Use preferred form of vrint instruction
+	variants for disassembly.
+	* gas/arm/armv8-a+fp.s: Likewise.
+	* gas/arm/armv8-a+simd.d: Likewise.
+	* gas/arm/armv8-a+simd.s: Likewise.
+
+2012-10-11  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* gas/arm/ldgesb-bad.d: New file.
+	* gas/arm/ldgesb-bad.l: Likewise.
+	* gas/arm/ldgesb-bad.s: Likewise.
+	* gas/arm/ldgesh-bad.d: Likewise.
+	* gas/arm/ldgesh-bad.l: Likewise.
+	* gas/arm/ldgesh-bad.s: Likewise.
+	* gas/arm/ldsgeb.d: Likewise.
+	* gas/arm/ldsgeb.s: Likewise.
+	* gas/arm/ldsgeb.l: Likewise.
+	* gas/arm/ldsgeh.d: Likewise.
+	* gas/arm/ldsgeh.s: Likewise.
+	* gas/arm/ldsgeh.l: Likewise.
+
+2012-10-09  Nagajyothi Eggone  <nagajyothi.eggone@amd.com>
+
+	* gas/i386/i386.exp: Run bdver3 test cases.
+	* gas/i386/nops-1-bdver3.d: New.
+	* gas/i386/arch-10-bdver3.d: New.
+	* gas/i386/x86-64-nops-1-bdver3.d: New.
+	* gas/i386/x86-64-arch-2-bdver3.d: New.
+
+2012-10-05  Peter Bergner  <bergner@vnet.ibm.com>
+
+	* gas/ppc/power7.d: Add tests for mfppr, mfppr32, mtppr and mtppr32.
+	* gas/ppc/power7.s: Likewise.
+	* gas/ppc/altivec.d: Add tests for all legacy Altivec instructions.
+	* gas/ppc/altivec.s: Likewise.
+	* gas/ppc/altivec2.d: New test file.
+	* gas/ppc/altivec2.s: Likewise.
+	* gas/ppc/ppc.exp: Run it.
+
+2012-10-04  Nick Clifton  <nickc@redhat.com>
+
+	* gas/v850/v850e1.d: Fix expected disassembly of clr1, not1, set1
+	and tst1 insns.
+
+2012-10-04  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* gas/s390/zarch-zEC12.d: Fix branch preload instructions.
+	* gas/s390/zarch-zEC12.s: Likewise.
+
+2012-10-04  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* gas/s390/s390.exp: Run zEC12 tests.
+	* gas/s390/zarch-zEC12.d: New file.
+	* gas/s390/zarch-zEC12.s: New file.
+
 2012-09-25  Saravanan Ekanathan <saravanan.ekanathan@amd.com>
 
 	* gas/i386/arch-10-bdver1.d: New file to test bdver1 core.
