@@ -1,3 +1,11 @@
+2012-10-18  Kai Tietz  <ktietz@redhat.com>
+
+	* objdump.c (dump_bfd): Call dump headers after
+	call of slurp_symtab.
+
+	* objcopy.c (is_strip_section_1): Don't strip
+	.reloc section by default.
+
 2012-10-11  Doug Evans  <dje@google.com>
 
 	* dwarf.c (display_gdb_index): Include static/global information
