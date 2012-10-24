@@ -1,3 +1,67 @@
+2012-10-23  Cary Coutant  <ccoutant@google.com>
+
+	* testsuite/Makefile.am (TEST_OBJCOPY): New macro.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/dwp_test.h: New source file.
+	* testsuite/dwp_test_1.cc: New source file.
+	* testsuite/dwp_test_1.s: New source file.
+	* testsuite/dwp_test_1.sh: New source file.
+	* testsuite/dwp_test_1b.cc: New source file.
+	* testsuite/dwp_test_1b.s: New source file.
+	* testsuite/dwp_test_2.cc: New source file.
+	* testsuite/dwp_test_2.s: New source file.
+	* testsuite/dwp_test_2.sh: New source file.
+	* testsuite/dwp_test_main.cc: New source file.
+	* testsuite/dwp_test_main.s: New source file.
+
+2012-10-23  Cary Coutant  <ccoutant@google.com>
+
+	* dwp.h: New header file.
+	* dwp.cc: New source file.
+	* gold.h: Move shared declarations to system.h.
+	* system.h: New header file.
+	* Makefile.am: Add dwp.
+	* Makefile.in: Regenerate.
+
+2012-10-23  Cary Coutant  <ccoutant@google.com>
+
+	* dwarf_reader.cc (Dwarf_ranges_table::read_range_list): Call
+	Dwarf_info_reader::read_from_pointer.
+	(Dwarf_pubnames_table::read_header): Likewise.
+	(Dwarf_pubnames_table::next_name): Likewise.
+	(Dwarf_die::read_attributes): Likewise.
+	(Dwarf_die::skip_attributes): Likewise.
+	(Dwarf_info_reader::read_from_pointer): New function template.
+	* dwarf_reader.h (Dwarf_ranges_table): Add dwinfo_.
+	(Dwarf_pubnames_table): Likewise.
+	(Dwarf_info_reader::read_from_pointer): New function template.
+	* gdb-index.cc (Gdb_index_info_reader): Adjust call to
+	Dwarf_pubnames_table ctor.
+
+2012-10-23  Cary Coutant  <ccoutant@google.com>
+
+	* dwarf_reader.cc (Dwarf_info_reader::do_parse): Use stored
+	abbrev_shndx.
+	* dwarf_reader.h (Dwarf_info_reader::Dwarf_info_reader): Initialize
+	abbrev_shndx_.
+	(Dwarf_info_reader::set_abbrev_shndx): New method.
+	(Dwarf_info_reader::abbrev_shndx_): New data member.
+
+2012-10-23  Cary Coutant  <ccoutant@google.com>
+
+	* dwarf_reader.cc (make_elf_reloc_mapper): Check size and endianness
+	from object, not parameters.
+	(Dwarf_info_reader::parse): Likewise.
+	* object.h (Relobj::elfsize, Relobj::is_big_endian): New methods.
+	(Relobj::do_elfsize, Relobj::do_is_big_endian): New methods.
+	(Sized_relobj::do_elfsize, Sized_relobj::do_is_big_endian): New
+	methods.
+
+2012-10-23  Cary Coutant  <ccoutant@google.com>
+
+	* fileread.cc (Input_file::Input_file): New constructor.
+	* fileread.h (class Input_file): Add new constructor.
+
 2012-10-18  Alan Modra  <amodra@gmail.com>
 
 	PR gold/14727
