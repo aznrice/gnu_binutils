@@ -159,7 +159,7 @@ class Dwo_file
   // Remap a single string offsets from an offset in the input string table
   // to an offset in the output string table.
   unsigned int
-  remap_str_offset(unsigned int val);
+  remap_str_offset(section_offset_type val);
 
   // Add a set of .debug_info and related sections to OUTPUT_FILE.
   void
@@ -1321,7 +1321,7 @@ Dwo_file::sized_remap_str_offsets(const unsigned char* contents,
 }
 
 unsigned int
-Dwo_file::remap_str_offset(unsigned int val)
+Dwo_file::remap_str_offset(section_offset_type val)
 {
   Str_offset_map_entry entry;
   entry.first = val;
@@ -1458,7 +1458,9 @@ Dwp_output_file::record_target_info(const char*, int machine,
   // Write zeroes for the ELF header initially.  We'll write
   // the actual header during finalize().
   static const char buf[elfcpp::Elf_sizes<64>::ehdr_size] = { 0 };
-  ::fwrite(buf, 1, this->next_file_offset_, this->fd_);
+  if (::fwrite(buf, 1, this->next_file_offset_, this->fd_)
+      < (size_t) this->next_file_offset_)
+    gold_fatal(_("%s: %s"), this->name_, strerror(errno));
 }
 
 // Add a string to the debug strings section.
