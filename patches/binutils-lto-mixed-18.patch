@@ -1,5 +1,12 @@
 bfd/
 
+2012-10-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14747
+	* elflink.c (_bfd_elf_fix_symbol_flags): Never mark
+	_GLOBAL_OFFSET_TABLE_, _PROCEDURE_LINKAGE_TABLE_ nor _DYNAMIC
+	undefined.
+
 2012-06-28  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/14272
@@ -237,6 +244,11 @@ ld/
 	* scripttempl/pep.sc: Likewise.
 
 ld/testsuite/
+
+2012-10-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-plugin/lto.exp (lto_run_tests): Move tmpdir/lto-15a.o
+	after tmpdir/liblto-15.a.
 
 2012-10-25  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -630,16 +642,28 @@ index cab1cc7..8ead51c 100644
    { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
    { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index f22e023..481c98f 100644
+index f22e023..7c9bc86 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
-@@ -2477,6 +2477,18 @@ _bfd_elf_fix_symbol_flags (struct elf_link_hash_entry *h,
+@@ -2435,6 +2435,7 @@ _bfd_elf_fix_symbol_flags (struct elf_link_hash_entry *h,
+ 			   struct elf_info_failed *eif)
+ {
+   const struct elf_backend_data *bed;
++  struct elf_link_hash_table *htab = elf_hash_table (eif->info);
+ 
+   /* If this symbol was mentioned in a non-ELF file, try to set
+      DEF_REGULAR and REF_REGULAR correctly.  This is the only way to
+@@ -2477,6 +2478,22 @@ _bfd_elf_fix_symbol_flags (struct elf_link_hash_entry *h,
      }
    else
      {
 +      /* If a plugin symbol is referenced from a non-IR file, mark
-+	 the symbol as undefined.  */         
-+      if (h->root.non_ir_ref
++	 the symbol as undefined, except for _GLOBAL_OFFSET_TABLE_,
++	 _PROCEDURE_LINKAGE_TABLE_ and _DYNAMIC.  */         
++      if (h != htab->hgot
++	  && h != htab->hplt
++	  && h != htab->hdynamic
++	  && h->root.non_ir_ref
 +	  && (h->root.type == bfd_link_hash_defined
 +	      || h->root.type == bfd_link_hash_defweak)
 +	  && h->root.u.def.section->owner != NULL
@@ -652,7 +676,16 @@ index f22e023..481c98f 100644
        /* Unfortunately, NON_ELF is only correct if the symbol
  	 was first seen in a non-ELF file.  Fortunately, if the symbol
  	 was first seen in an ELF file, we're probably OK unless the
-@@ -5145,6 +5157,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
+@@ -2495,7 +2512,7 @@ _bfd_elf_fix_symbol_flags (struct elf_link_hash_entry *h,
+     }
+ 
+   /* Backend specific symbol fixup.  */
+-  bed = get_elf_backend_data (elf_hash_table (eif->info)->dynobj);
++  bed = get_elf_backend_data (htab->dynobj);
+   if (bed->elf_backend_fixup_symbol
+       && !(*bed->elf_backend_fixup_symbol) (eif->info, h))
+     return FALSE;
+@@ -5145,6 +5162,9 @@ elf_link_add_archive_symbols (bfd *abfd, struct bfd_link_info *info)
  	     something wrong with the archive.  */
  	  if (element->archive_pass != 0)
  	    {
@@ -3772,7 +3805,7 @@ index 0000000..4b5bcf8
 +#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..24bc967
+index 0000000..dbbd503
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
 @@ -0,0 +1,360 @@
@@ -4042,7 +4075,7 @@ index 0000000..24bc967
 +   "-O2 -flto -fuse-linker-plugin tmpdir/lto-14a.o -Wl,--whole-archive tmpdir/liblto-14.a -Wl,--no-whole-archive tmpdir/lto-14b.o" ""
 +   {dummy.c} "lto-14.exe" "lto-14.out" "" "c"}
 +  {"LTO 15"
-+   "-O2 -flto -fuse-linker-plugin -Wl,--start-group tmpdir/lto-15a.o tmpdir/liblto-15.a -Wl,--end-group" ""
++   "-O2 -flto -fuse-linker-plugin -Wl,--start-group tmpdir/liblto-15.a tmpdir/lto-15a.o -Wl,--end-group" ""
 +   {dummy.c} "lto-15.exe" "lto-15.out" "" "c"}
 +  {"PR ld/12942 (1)"
 +   "-O2 -flto -fuse-linker-plugin tmpdir/pr12942a.o tmpdir/pr12942b.o" ""
