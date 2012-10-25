@@ -1,3 +1,8 @@
+2012-10-25  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-lto-mixed-18.patch: Fix LTO tests with -Wall and
+	-Wp,-D_FORTIFY_SOURCE.
+
 2012-09-19  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-pr14591-1.patch: Removed.
