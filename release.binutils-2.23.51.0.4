@@ -1,5 +1,5 @@
-This is the beta release of binutils 2.23.51.0.3 for Linux, which is
-based on binutils 2012 0918 in CVS on sourceware.org plus various
+This is the beta release of binutils 2.23.51.0.4 for Linux, which is
+based on binutils 2012 1026 in CVS on sourceware.org plus various
 changes. It is purely for Linux.
 
 All relevant patches in patches have been applied to the source tree.
@@ -115,12 +115,36 @@ endif
 
 to arch/ia64/Makefile in your kernel source tree.
 
-Please report any bugs related to binutils 2.23.51.0.3 to
+Please report any bugs related to binutils 2.23.51.0.4 to
 hjl.tools@gmail.com
 
 and
 
 http://www.sourceware.org/bugzilla/
+
+Changes from binutils 2.23.51.0.3:
+
+1. Update from binutils 2012 1026.
+2. Fix an LTO linker bug.  PR 14747.
+3. Add cx16 arch feature to x86 assembler.
+4. Add -march=bdver3 option to x86 assembler.
+5. Properly handle ignored REX prefix with fwait in x86 disassembler.
+6. Fix x32 register names in objdump DWARF output.
+7. Add NT_SIGINFO/NT_FILE support to readelf.
+8. Add linker --ignore-unresolved-symbol option from NetBSD.
+9. Treat .gdb_index section as debug section.  PR 14662.
+10. Add --debug-dump=addr, --debug_dump=cu_index options to readelf and
+objdump.
+11. Add dwp, DWARF packaging utility.
+12. Add compressed debug section support to Windows.  PR 14067. 
+13. Improve gold.
+14. Improve aarch64 support.
+15. Improve arm support.
+16. Improve hppa support.
+17. Improve mips support.
+18. Improve s390 support.
+19. Improve tile support.
+20. Improve v850 support.
 
 Changes from binutils 2.23.51.0.2:
 
@@ -610,13 +634,13 @@ already been defined.  PR 12001.
 
 The file list:
 
-1. binutils-2.23.51.0.3.tar.bz2.  Source code.
+1. binutils-2.23.51.0.4.tar.bz2.  Source code.
 
 The primary sites for the beta Linux binutils are:
 
 1. http://www.kernel.org/pub/linux/devel/binutils/
 
-It is also available on linux/release/2.23.51.0.3 branch at
+It is also available on linux/release/2.23.51.0.4 branch at
 
 http://git.kernel.org/?p=linux/kernel/git/hjl/binutils.git;a=summary
 
@@ -625,4 +649,4 @@ Thanks.
 
 H.J. Lu
 hjl.tools@gmail.com
-09/18/2012
+10/26/2012
