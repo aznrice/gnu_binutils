@@ -25,6 +25,20 @@ if { ![check_plugin_api_available]
     return
 }
 
+global CFLAGS
+global CXXFLAGS
+set saved_CFLAGS "$CFLAGS"
+set saved_CXXFLAGS "$CXXFLAGS"
+regsub -all "\\-Wp,-D_FORTIFY_SOURCE=\[0-9\]+" $CFLAGS "" CFLAGS
+regsub -all "\\-Wp,-D_FORTIFY_SOURCE=\[0-9\]+" $CXXFLAGS "" CXXFLAGS
+
+proc restore_notify { } {
+  global saved_CFLAGS
+  global saved_CXXFLAGS
+  set CFLAGS "$saved_CFLAGS"
+  set CXXFLAGS "$saved_CXXFLAGS"
+}
+
 # Simple LTO tests and generate input files for complex LTO tests.
 set lto_link_tests {
   {"LTO 1"
@@ -250,7 +264,7 @@ set lto_run_tests {
    "-O2 -flto -fuse-linker-plugin tmpdir/lto-14a.o -Wl,--whole-archive tmpdir/liblto-14.a -Wl,--no-whole-archive tmpdir/lto-14b.o" ""
    {dummy.c} "lto-14.exe" "lto-14.out" "" "c"}
   {"LTO 15"
-   "-O2 -flto -fuse-linker-plugin -Wl,--start-group tmpdir/lto-15a.o tmpdir/liblto-15.a -Wl,--end-group" ""
+   "-O2 -flto -fuse-linker-plugin -Wl,--start-group tmpdir/liblto-15.a tmpdir/lto-15a.o -Wl,--end-group" ""
    {dummy.c} "lto-15.exe" "lto-15.out" "" "c"}
   {"PR ld/12942 (1)"
    "-O2 -flto -fuse-linker-plugin tmpdir/pr12942a.o tmpdir/pr12942b.o" ""
@@ -290,6 +304,7 @@ remote_file host delete "tmpdir/liblto-4.a"
 set catch_output [run_host_cmd "$ar" "rc tmpdir/liblto-4.a tmpdir/lto-4a.o tmpdir/lto-4b.o tmpdir/lto-4c.o"]
 if {![string match "" $catch_output]} {
     unresolved $testname
+    restore_notify
     return
 }
 
@@ -298,6 +313,7 @@ remote_file host delete "tmpdir/liblto-11.a"
 set catch_output [run_host_cmd "$ar" "rc tmpdir/liblto-11.a tmpdir/lto-11a.o tmpdir/lto-11b.o tmpdir/lto-11c.o"]
 if {![string match "" $catch_output]} {
     unresolved $testname
+    restore_notify
     return
 }
 
@@ -340,3 +356,5 @@ run_ld_link_exec_tests [] $lto_run_tests
 if { [is_elf_format] } {
     run_ld_link_exec_tests [] $lto_run_elf_tests
 }
+
+restore_notify

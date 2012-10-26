@@ -1,3 +1,84 @@
+2012-10-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elfvsb/main.c (main_visibility_checkcom): Remove address
+	check for visibility_def if HIDDEN_UNDEF_TEST is defined.
+	(main_visibility_checkweak): Remove address check for
+	visibility_func if HIDDEN_UNDEF_TEST is defined.
+
+2012-10-25  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* ld-scripts/empty-aligned.d: Revert last change.  Allow more
+	than one header, just not two PT_LOAD.
+	* ld-elf/stack.s: Use .long 0 rather than nops.
+
+2012-10-23  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* ld-elf/binutils.exp: Add -z stack-size=0.
+	* ld-elf/elf.exp: Add stack-exec and stack-size tests.
+	* ld-elf/orphan-region.d: Add stack-size option. Remove xfail.
+	* ld-elf/stack-exec.rd: New.
+	* ld-elf/stack-size.rd: New.
+	* ld-elf/stack.s: New.
+	* ld-scripts/empty-aligned.d: Add stack-size option.
+	* ld-sh/fdpic-stack-set.d: New.
+	* ld-tic6x/shlib-1.rd: Remove __stacksize symbol.
+	* ld-tic6x/shlib-1b.rd: Likewise.
+	* ld-tic6x/shlib-1r.rd: Likewise.
+	* ld-tic6x/shlib-1rb.rd: Likewise.
+	* ld-tic6x/shlib-app-1.rd: Likewise.
+	* ld-tic6x/shlib-app-1b.rd: Likewise.
+	* ld-tic6x/shlib-app-1r.rd: Likewise.
+	* ld-tic6x/shlib-app-1rb.rd: Likewise.
+	* ld-tic6x/shlib-noindex.rd: Likewise.
+	* ld-tic6x/static-app-1.rd: Likewise.
+	* ld-tic6x/static-app-1b.rd: Likewise.
+	* ld-tic6x/static-app-1r.rd: Likewise.
+	* ld-tic6x/static-app-1rb.rd: Likewise.
+
+2012-10-16  Sofiane Naci  <sofiane.naci@arm.com>
+
+	* ld-aarch64/tlsle-symbol-offset.s: New file.
+	* ld-aarch64/tlsle-symbol-offset.d: New file.
+	* ld-aarch64/aarch64-elf.exp: Add tlsle-symbol-offset test.
+
+2012-10-08  Joe Seymour  <jseymour@codesourcery.com>
+
+	* ld-scripts/sane1.d: Sort output from nm. Allow for other symbols in
+	output.
+
+2012-09-19  Chris Schlumberger-Socha  <chris.schlumberger-socha@arm.com>
+
+	* ld-aarch64/emit-relocs-309-low.d: Replace symbol with regexp.
+	* ld-aarch64/emit-relocs-309-up.d: Likewise.
+
+2012-09-19  Andrew Burgess  <aburgess@broadcom.com>
+
+	* ld-scripts/assign-loc.d: New file.  Test for assigning absolute
+	symbol to location counter.
+	* ld-scripts/assign-loc.t: New file.  Linker script for above test.
+	* ld-scripts/expr.exp: Add new assignment test.
+
+2012-09-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14591
+	* ld-elf/comm-data.exp (run_ld_link_tests): Add comm-data3a and
+	comm-data3b tests.
+
+	* ld-ifunc/ifunc.exp (run_ld_link_exec_tests): New.
+
+	* ld-elf/comm-data3.sd: New file.
+	* ld-elf/comm-data3a.s: Likewise.
+	* ld-elf/comm-data3b.s: Likewise.
+	* ld-ifunc/ifunc-17a-i386.d: Likewise.
+	* ld-ifunc/ifunc-17a-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-17a.s: Likewise.
+	* ld-ifunc/ifunc-17b-i386.d: Likewise.
+	* ld-ifunc/ifunc-17b-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-17b.s: Likewise.
+	* ld-ifunc/ifunc-common-1.out: Likewise.
+	* ld-ifunc/ifunc-common-1a.c: Likewise.
+	* ld-ifunc/ifunc-common-1b.c: Likewise.
+
 2012-09-17  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ld-elf/shared.exp (build_cxx_tests): Move out the commented out

@@ -2194,7 +2194,7 @@ Output_data_plt_tilegx<size, big_endian>::address_for_global(
   if (gsym->type() == elfcpp::STT_GNU_IFUNC
       && gsym->can_use_relative_reloc(false))
     offset = (this->count_ + 1) * this->get_plt_entry_size();
-  return this->address() + offset;
+  return this->address() + offset + gsym->plt_offset();
 }
 
 // Return the PLT address to use for a local symbol.  These are always
@@ -2202,10 +2202,13 @@ Output_data_plt_tilegx<size, big_endian>::address_for_global(
 
 template<int size, bool big_endian>
 uint64_t
-Output_data_plt_tilegx<size, big_endian>::address_for_local(const Relobj*,
-                                                            unsigned int)
+Output_data_plt_tilegx<size, big_endian>::address_for_local(
+    const Relobj* object,
+    unsigned int r_sym)
 {
-  return this->address() + (this->count_ + 1) * this->get_plt_entry_size();
+  return (this->address()
+	  + (this->count_ + 1) * this->get_plt_entry_size()
+	  + object->local_plt_offset(r_sym));
 }
 
 // Set the final size.
@@ -4256,6 +4259,13 @@ Target_tilegx<size, big_endian>::do_finalize_sections(
     {
       uint64_t data_size = this->got_->current_data_size();
       symtab->get_sized_symbol<size>(sym)->set_symsize(data_size);
+
+      // If the .got section is more than 0x8000 bytes, we add
+      // 0x8000 to the value of _GLOBAL_OFFSET_TABLE_, so that 16
+      // bit relocations have a greater chance of working.
+      if (data_size >= 0x8000)
+        symtab->get_sized_symbol<size>(sym)->set_value(
+          symtab->get_sized_symbol<size>(sym)->value() + 0x8000);
     }
 
   if (parameters->doing_static_link()
@@ -4327,8 +4337,7 @@ Target_tilegx<size, big_endian>::Relocate::relocate(
   if (gsym != NULL
       && gsym->use_plt_offset(Scan::get_reference_flags(r_type)))
     {
-      symval.set_output_value(target->plt_address_for_global(gsym)
-                              + gsym->plt_offset());
+      symval.set_output_value(target->plt_address_for_global(gsym));
       psymval = &symval;
     }
   else if (gsym == NULL && psymval->is_ifunc_symbol())
@@ -4336,8 +4345,7 @@ Target_tilegx<size, big_endian>::Relocate::relocate(
       unsigned int r_sym = elfcpp::elf_r_sym<size>(rela.get_r_info());
       if (object->local_has_plt_offset(r_sym))
         {
-          symval.set_output_value(target->plt_address_for_local(object, r_sym)
-                                  + object->local_plt_offset(r_sym));
+          symval.set_output_value(target->plt_address_for_local(object, r_sym));
           psymval = &symval;
         }
     }
@@ -4347,7 +4355,10 @@ Target_tilegx<size, big_endian>::Relocate::relocate(
   // Get the GOT offset if needed.
   // For tilegx, the GOT pointer points to the start of the GOT section.
   bool have_got_offset = false;
-  unsigned int got_offset = 0;
+  int got_offset = 0;
+  int got_base = target->got_ != NULL
+                 ? target->got_->current_data_size() >= 0x8000 ? 0x8000 : 0
+                 : 0;
   unsigned int got_type = GOT_TYPE_STANDARD;
   bool always_apply_relocation = false;
   switch (r_type)
@@ -4361,13 +4372,14 @@ Target_tilegx<size, big_endian>::Relocate::relocate(
       if (gsym != NULL)
         {
           gold_assert(gsym->has_got_offset(got_type));
-          got_offset = gsym->got_offset(got_type);
+          got_offset = gsym->got_offset(got_type) - got_base;
         }
       else
         {
           unsigned int r_sym = elfcpp::elf_r_sym<size>(rela.get_r_info());
           gold_assert(object->local_has_got_offset(r_sym, got_type));
-          got_offset = object->local_got_offset(r_sym, got_type);
+          got_offset =
+            object->local_got_offset(r_sym, got_type) - got_base;
         }
       have_got_offset = true;
       break;
@@ -4546,8 +4558,7 @@ Target_tilegx<size, big_endian>::Relocate::relocate(
                 if (opt_t == tls::TLSOPT_NONE) {
                   Symbol *tls_sym = relinfo->symtab->lookup("__tls_get_addr");
                   symval.set_output_value(
-                    target->plt_address_for_global(tls_sym)
-                     + tls_sym->plt_offset());
+                    target->plt_address_for_global(tls_sym));
                   psymval = &symval;
                   TilegxReloc::imm_x_pcrel_general(view, object, psymval,
                                                    addend, address, r_howto);
@@ -4590,12 +4601,13 @@ Target_tilegx<size, big_endian>::Relocate::relocate(
               if (have_got_offset) {
                 if (gsym != NULL) {
                   gold_assert(gsym->has_got_offset(got_type));
-                  got_offset = gsym->got_offset(got_type);
+                  got_offset = gsym->got_offset(got_type) - got_base;
                 } else {
                   unsigned int r_sym
                      = elfcpp::elf_r_sym<size>(rela.get_r_info());
                   gold_assert(object->local_has_got_offset(r_sym, got_type));
-                  got_offset = object->local_got_offset(r_sym, got_type);
+                  got_offset =
+                    object->local_got_offset(r_sym, got_type) - got_base;
                 }
               }
 
@@ -4721,8 +4733,8 @@ Target_tilegx<size, big_endian>::relocate_section(
 
   gold_assert(sh_type == elfcpp::SHT_RELA);
 
-  gold::relocate_section<size, big_endian, Tilegx,
-                         elfcpp::SHT_RELA, Tilegx_relocate>(
+  gold::relocate_section<size, big_endian, Tilegx, elfcpp::SHT_RELA,
+			 Tilegx_relocate, gold::Default_comdat_behavior>(
     relinfo,
     this,
     prelocs,
@@ -4858,7 +4870,7 @@ uint64_t
 Target_tilegx<size, big_endian>::do_dynsym_value(const Symbol* gsym) const
 {
   gold_assert(gsym->is_from_dynobj() && gsym->has_plt_offset());
-  return this->plt_address_for_global(gsym) + gsym->plt_offset();
+  return this->plt_address_for_global(gsym);
 }
 
 // Return the value to use for the base of a DW_EH_PE_datarel offset

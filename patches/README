@@ -20,7 +20,6 @@ patches="
 	binutils-error-15.patch
 	binutils-lto-mixed-18.patch
 	binutils-pr12639-2.patch
-	binutils-pr14591-1.patch
 	binutils-secondary-1.patch
 "
 

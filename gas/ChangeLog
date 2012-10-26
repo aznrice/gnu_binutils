@@ -1,3 +1,161 @@
+2012-10-22  Simon Baldwin  <simonb@google.com>
+
+	* as.c (dump_statistics): Compute data size as the delta between
+	current sbrk(0) and start_sbrk.
+	* (main): Set start_sbrk to sbrk(0) on entry.
+
+2012-10-18  Kai Tietz  <ktietz@redhat.com>
+
+	* config/obj-coff.c: Add include of struc-symbol.h header.
+	(coff_frob_symbol): Check that function-aux entries are generated for
+	defined symbols only.
+
+	* doc/as.texinfo: Add missing documentation about section flag
+	exclude.
+
+2012-10-14  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	* config/tc-hppa.c (pa_get_number): New.
+	(pa_get_absolute_expression): Simplify.
+	(pa_ip): Use pa_get_number instead of pa_get_absolute_expression
+	to get SOP, SFU and COPR identifiers.
+
+	* config/tc-hppa.c (pa_ip): Reject double floating point stores and
+	loads that reference the right half of a floating point register.
+
+2012-10-13  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	* config/tc-hppa.c (pa_ip): Limit unit conditions for uxor to those
+	not involving a carry.
+
+2012-10-12  Peter Bergner  <bergner@vnet.ibm.com>
+
+	* doc/as.texinfo (-mpwr4, -mpwr7): Fix option name typos.
+
+2012-10-11  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* config/tc-arm.c: Change condition code insertion for
+	lds[hb] instructions from after the 2nd character to after the 3rd.
+	(tCM): Remove macro.
+	(TxCM): Likewise.
+	(TxCM_): Likewise.
+	(TCM): Likewise.
+
+2012-10-09  Nagajyothi Eggone  <nagajyothi.eggone@amd.com>
+
+	* config/tc-i386.c (cpu_arch): Add CPU_BDVER3_FLAGS.
+	* doc/c-i386.texi: Add -march=bdver3 option.
+
+2012-10-04  Nick Clifton  <nickc@redhat.com>
+
+	* config/tc-v850.c (v850_insert_operand): Use a static buffer for
+	the error message.
+
+2012-10-04  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* config/tc-s390.c (s390_parse_cpu): Add new option zEC12.
+	* doc/as.texinfo: Document new option zEC12.
+	* doc/c-s390.texi: Likewise.
+
+2012-10-03  DJ Delorie  <dj@redhat.com>
+
+	* config/tc-rl78.c: Change line_separator to '@' so that '|' can
+	be used in expressions.
+
+2012-10-01  Alan Modra  <amodra@gmail.com>
+
+	* write.c (chain_frchains_together_1): Reorder assertion to avoid
+	uninit warning.
+
+2012-09-23  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.h (TC_FORCE_RELOCATION): Remove comment.
+	* config/tc-mips.c (calculate_reloc): New function.
+	(append_insn): Use it.  Do not resolve compound relocations here.
+	(mips16_macro_build, mips16_ip): Use calculate_reloc.
+	(mips16_immed_extend): New function, split out from...
+	(mips16_immed): ...here.
+	(mips_frob_file): Handle null symbols.
+	(mips_force_relocation): Remove NEWABI handling.
+	(read_reloc_insn, write_reloc_insn): New functions.
+	(md_apply_fix): Report TLS relocations against constants.
+	Use read_reloc_insn, calculate_reloc and write_reloc_insn.
+	Report relocations against constants that can't be resolved
+	at assembly time.
+
+2012-09-23  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (append_insn) <BFD_RELOC_MIPS_JMP>: Don't
+	mark as incomplete for constant expressions.
+	<BFD_RELOC_MIPS16_JMP>: Likewise.
+
+2012-09-23  Richard Sandiford  <rdsandiford@googlemail.com>
+	    Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.h (mips_record_label): Delete.
+	(mips_add_dot_label): Declare.
+	(tc_new_dot_label): Use it.
+	* config/tc-mips.c (mips_assembling_insn): New variable.
+	(md_assemble): Call mips_mark_labels.  Set mips_assembling_insn
+	while the main part of the function is executing.
+	(mips_compressed_mark_label): New function, split out from...
+	(mips_compressed_mark_labels): ...here.
+	(append_insn): Don't call mips_mark_labels here.
+	(mips_record_label): Make local.
+	(mips_add_dot_label): New function.
+
+2012-09-23  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (SEXT_16BIT): New macro.
+	(mips16_immed): Take the reloc type as a parameter.  Do not impose
+	a signed vs. unsigned distinction on the value when a relocation
+	operator was used.
+	(mips16_macro_build, mips16_ip, md_convert_frag): Pass the reloc
+	type to mips16_immed.
+	(macro): Use SEXT_16BIT.
+
+2012-09-23  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (read_insn, write_insn, read_compressed_insn):
+	New functions.
+	(install_insn, md_apply_fix, md_convert_frag, mips_handle_align):
+	Use them, and write_compressed_insn.
+
+2012-09-23  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/tc-mips.c (mips_cl_insn): Remove use_extend and extend.
+	(MIPS16_EXTEND): New macro.
+	(mips16_opcode_length): New function.
+	(insn_length): Use it.
+	(create_insn): Update after mips_cl_insn change.
+	(write_compressed_insn): New function.
+	(install_insn): Use it.
+	(append_insn): Use insn_length to check for unextended MIPS16
+	instructions.
+	(mips16_macro_build): Update call to mips16_immed.
+	(mips16_ip): Likewise.  Use MIPS16_EXTEND to force an extended
+	instruction.
+	(mips16_immed): Remove use_extend and extend; install EXTEND
+	opcodes in the upper 16 bits of *INSN instead.  Keep the
+	instruction extended if it already is.  Replace warn, small
+	and ext with a forced_insn_length-like parameter.
+	(md_convert_frag): Update call mips16_immed.
+	Use write_compressed_insn.
+
+2012-09-20  Michael Zolotukhin  <michael.v.zolotukhin@intel.com>
+
+	* config/tc-i386.c (cpu_arch): Add .cx16.
+	* doc/c-i386.texi: Document .cx16.
+
+2012-09-19  Steve Ellcey  <sellcey@mips.com>
+
+	* configure.tgt: Add mips*-mti-elf* target.
+
+2012-09-18  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* config/tc-arm.c: Changed ldra and strl-form mnemonics
+	to lda and stl-form for armv8.
+
 2012-09-17  Yufeng Zhang  <yufeng.zhang@arm.com>
 
 	* config/tc-aarch64.c (aarch64_archs): Rename 'armv8' to 'armv8-a'.
