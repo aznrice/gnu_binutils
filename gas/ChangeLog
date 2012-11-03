@@ -1,3 +1,25 @@
+2012-11-01  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (is_delay_slot_valid): Simplify expression.
+
+2012-11-01  Chao-ying Fu  <fu@mips.com>
+
+	* config/tc-mips.c (append_insn): Set fx_no_overflow for 16-bit
+	microMIPS branch relocations.
+
+2012-11-01  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (is_delay_slot_valid): Don't accept macros
+	in 16-bit delay slots.
+	(macro_build_jalr): Emit 32-bit JALR if placed in a 32-bit delay
+	slot.
+	(macro) <M_JAL_2>: Likewise
+
+2012-10-31  David Holsgrove  <david.holsgrove@xilinx.com>
+
+	* config/tc-microblaze.c: Check for weak symbols before
+	emitting relocation.
+
 2012-10-29  Alan Modra  <amodra@gmail.com>
 
 	* sb.c (sb_check): Use __builtin_clzll when size_t is not the
