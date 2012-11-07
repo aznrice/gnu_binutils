@@ -1,3 +1,62 @@
+2012-11-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* section.c (bfd_get_section_contents): Replace memcpy
+	with memmove.
+
+2012-11-07  Hans-Peter Nilsson  <hp@axis.com>
+
+	PR binutils/14481
+	* aout-target.h (MY_close_and_cleanup): Make local function
+	instead of alias of MY_bfd_free_cached_info.  Also call
+	_bfd_generic_close_and_cleanup.
+
+2012-11-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/14813
+	* bfdio.c (bfd_iovec): Change return type of bclose to
+	bfd_boolean.
+	(memory_bclose): Change return type to bfd_boolean.
+	* cache.c (cache_bclose): Likewise.
+	* opncls.c (opncls_bclose): Likewise.  Return TRUE on success.
+	* vms-lib.c (vms_lib_bclose): Likewise.  Return TRUE.
+	* libbfd.h: Regenerated.
+
+2012-11-06  Tristan Gingold  <gingold@adacore.com>
+
+	* coff-x86_64.c (_bfd_generic_find_nearest_line_discriminator):
+	Define as coff_find_nearest_line_discriminator.
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	PR binutils/14567
+	* opncls.c (opncls_iovec): Forward declare.
+	(_bfd_new_bfd_contained_in): If using opncls_iovec, copy iostream
+	to new bfd.
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	* mach-o.c (bfd_mach_o_close_and_cleanup): Don't call
+	_bfd_generic_close_and_cleanup for mach_o_fat archives.
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	* coff-tic4x.c (tic4x_coff0_vec, tic4x_coff0_beh_vec,
+	tic4x_coff1_vec, tic4x_coff1_beh_vec, tic4x_coff2_vec,
+	tic4x_coff2_beh_vec): Allow SEC_CODE and SEC_READONLY in
+	section flags.
+	* coff-ppc.c (TARGET_LITTLE_SYM): Likewise.
+	(TARGET_BIG_SYM): Likewise.
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (struct ppc_link_hash_table): Add dot_toc_dot.
+	(ppc64_elf_size_stubs): Lookup ".TOC.".
+	(ppc64_elf_relocate_section): Resolve special symbol ".TOC.".
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (maybe_strip_output): Heed SEC_KEEP.
+
 2012-11-05  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
 
 	PR target/14788
@@ -1447,7 +1506,7 @@
 	PR target/13503
 	* reloc.c: Rename BFD_RELOC_AVR_8_HHI to BFD_RELOC_AVR_8_HLO.
 	* bfd-in2.h: Regenerate.
-	* libbfd.h: Regenrate.
+	* libbfd.h: Regenerate.
 	* elf32-avr.c (elf_avr_howto_table): Rename R_AVR_8_HHI8 to
 	R_AVR_8_HLO8.
 	(avr_reloc_map): Likewise.
@@ -1585,7 +1644,7 @@
 	* reloc.c: Add new ENUM for BFD_RELOC_AVR_8_LO,
 	BFD_RELOC_AVR_8_HI, BFD_RELOC_AVR_8_HHI.
 	* bfd-in2.h: Regenerate.
-	* libbfd.h: Regenrate.
+	* libbfd.h: Regenerate.
 	* elf32-avr.c (elf_avr_howto_table): Add entries for
 	R_AVR_8_LO8, R_AVR_8_HI8, R_AVR_8_HHI8.
 	(avr_reloc_map): Add RELOC mappings for R_AVR_8_LO8, R_AVR_8_HI8,

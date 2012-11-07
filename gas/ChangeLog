@@ -1,3 +1,37 @@
+2012-11-07  David Holsgrove  <david.holsgrove@xilinx.com>
+
+	* config/tc-microblaze.c: Remove special register condition check
+	for INST_TYPE_RFSL related instructions.
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-xgate.c: Make some functions static.  Formatting
+	style and whitespace fixes.  Wrap overly long lines.  Format
+	help message.
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-tic4x.c: Remove alignment TODO comments.
+	(tic4x_do_align): Enable subseg_text_p test.
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-ppc.c (ppc_elf_adjust_symtab): New function, split out..
+	(ppc_frob_file_before_adjust): ..from here.
+	(md_apply_fix): Set BSF_KEEP on .TOC. if not @tocbase.
+	* config/tc-ppc.h (ppc_elf_adjust_symtab): Declare.
+	(tc_adjust_symtab): Define.
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-ppc.c (md_apply_fix): Fix xcoff build breakage from
+	last patch.
+
+2012-11-05  Sean Keys  <skeys@ipdatasys.com>
+
+	* config/tc-xgate.c: Remove bogus use of <fx_pcrel_adjust>.
+	* config/tc-m68hc11.c: Likewise.
+
 2012-11-05  Alan Modra  <amodra@gmail.com>
 
 	* configure.in: Apply 2012-09-10 change to config.in here.
