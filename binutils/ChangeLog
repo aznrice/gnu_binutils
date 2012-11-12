@@ -1,3 +1,74 @@
+2012-11-09  Nick Clifton  <nickc@redhat.com>
+
+	* readelf.c (get_machine_flags): Add support for E_FLAG_RX_ABI.
+	(guess_is_rela): Add EM_V800.
+	(dump_relocations): Likewise.
+	(get_machine_name): Update EM_V800.
+	(get_machine_flags): Add support for RH850 ABI flags.
+	(is_32bit_abs_reloc): Add support for RH850 ABI reloc.
+
+2012-11-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* coffgrok.c (coff_grok): Remove trailing redundant `;'.
+	* resrc.c (open_input_stream): Likewise.
+
+2012-11-08  Alan Modra  <amodra@gmail.com>
+
+	* po/POTFILES.in: Regenerate.
+
+2012-11-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* objcopy.c (copy_section): Don't read beyond section end.
+
+2012-11-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/14567
+	* Makefile.am (BFDTEST2_PROG): New.
+	(bfdtest2_DEPENDENCIES): Likewise.
+	(TEST_PROGS): Add $(BFDTEST2_PROG).
+	* Makefile.in: Regenerated.
+	* bfdtest2.c: New file.
+
+2012-11-05  Stephane Carrez  <Stephane.Carrez@gmail.com>
+
+	* MAINTAINERS: Update my email address.
+
+2012-11-05  Alan Modra  <amodra@gmail.com>
+
+	* configure.in: Apply 2012-09-10 change to config.in here.  Add
+	__CONFIG_H__ check.
+	* config.in: Regenerate.
+
+2012-11-01  Tom Tromey  <tromey@redhat.com>
+
+	* readelf.c (get_note_type): Handle NT_386_TLS, NT_386_IOPERM.
+
+2012-10-30  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/14779
+	* configure.in: Add checks for wchar.h and mbstate_t.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+	* readelf.c: Conditionally include wchar.h.
+	(print_symbol): Conditionally use mbstate_t.
+
+2012-10-30  	Steve McIntyre  <steve.mcintyre@linaro.org>
+
+	* readelf.c (decode_ARM_machine_flags): Recognise and display the
+	new ARM hard-float/soft-float ABI flags for EABI_VER5. Split out
+	the code for EABI_VER4 and EABI_VER5 to allow this.
+
+2012-10-29  Alan Modra  <amodra@gmail.com>
+
+	* dlltool.c (INIT_SEC_DATA): Move.
+	(secdata <DLLTOOL_PPC>): Use here too.
+
+2012-10-26  Nick Clifton  <nickc@redhat.com>
+
+	* po/hr.po: New Croation translation.
+	* configure.in (ALL_LINGUAS): Add hr.
+	* configure: Regenerate.
+
 2012-10-23  Cary Coutant  <ccoutant@google.com>
 
 	* dwarf.c (do_debug_addr, do_debug_cu_index): New global flags.

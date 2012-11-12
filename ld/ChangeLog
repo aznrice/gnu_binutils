@@ -1,3 +1,51 @@
+2012-11-09  Nick Clifton  <nickc@redhat.com>
+
+	* emultempl/rxelf.em (no_flag_mismatch_warnings): Initialise to
+	true.
+	(PARSE_AND_LIST_LONGOPTS): Add flag-mismatch-warnings.
+	(PARSE_AND_LIST_ARG_CASES): Add support for
+	--flag-mismatch-warnings.
+
+	* Makefile.am: (ALL_EMULATION_SOURCES): Add ev850_rh850.c.
+	* Makefile.in: Regenerate.
+	* configure.tgt (v850*-*-*): Make v850_rh850 the default
+	emulation. Add vanilla v850 as an extra emulation.
+	* emulparams/v850_rh850.sh: New file.
+	* scripttempl/v850_rh850.sc: New file.
+
+2012-11-09  Edgar E. Iglesias <edgar.iglesias@gmail.com>
+
+	* Makefile.am: Add eelf32microblazeel.c and eelf32mbel_linux.c.
+	* Makefile.in: Regenerated.
+	* configure.tgt: Add microblazeel and set endian per target.
+	* emulparams/elf32mb_linux.sh: Add OUTPUT_FORMAT.
+	* emulparams/elf32microblaze.sh: Likewise.
+	* emulparams/elf32mbel_linux.sh: New file.
+	* emulparams/elf32microblazeel.sh: Likewise.
+
+2012-11-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* testplug.c (record_add_file): Remove trailing redundant `;'.
+
+2012-11-05  Alan Modra  <amodra@gmail.com>
+
+	* configure.in: Apply 2012-09-10 change to config.in here.
+
+2012-11-01  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* emultempl/elf32.em: Print stacksize help.
+
+2012-11-01  Alan Modra  <amodra@gmail.com>
+
+	* ldlang.c (insert_pad): Correct output section size calculation.
+	(lang_size_sections_1): Likewise for lang_data_statement and
+	lang_reloc_statement.
+
+2012-10-29  Alan Modra  <amodra@gmail.com>
+
+	* configure.tgt (powerpcle-pe,winnt,cygwin): Add deffilep.o
+	and pe-dll.o.
+
 2012-10-24  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ld.h (command_line): Remove

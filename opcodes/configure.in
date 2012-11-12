@@ -51,7 +51,7 @@ AC_CONFIG_HEADERS(config.h:config.in)
 AH_VERBATIM([00_CONFIG_H_CHECK],
 [/* Check that config.h is #included before system headers
    (this works only for glibc, but that should be enough).  */
-#if defined(__GLIBC__) && !defined(__CONFIG_H__)
+#if defined(__GLIBC__) && !defined(__FreeBSD_kernel__) && !defined(__CONFIG_H__)
 #  error config.h must be #included before system headers
 #endif
 #define __CONFIG_H__ 1])
@@ -318,6 +318,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_v850_arch)		ta="$ta v850-opc.lo v850-dis.lo" ;;
 	bfd_v850e_arch)		ta="$ta v850-opc.lo v850-dis.lo" ;;
 	bfd_v850ea_arch)	ta="$ta v850-opc.lo v850-dis.lo" ;;
+	bfd_v850_rh850_arch)	ta="$ta v850-opc.lo v850-dis.lo" ;;
 	bfd_vax_arch)		ta="$ta vax-dis.lo" ;;
 	bfd_w65_arch)		ta="$ta w65-dis.lo" ;;
 	bfd_we32k_arch)		;;

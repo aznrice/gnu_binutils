@@ -48,7 +48,9 @@
 #ifdef HAVE_ZLIB_H
 #include <zlib.h>
 #endif
+#ifdef HAVE_WCHAR_H
 #include <wchar.h>
+#endif
 
 #if __GNUC__ >= 2
 /* Define BFD64 here, even if our default architecture is 32 bit ELF
@@ -386,7 +388,7 @@ print_vma (bfd_vma vma, print_mode mode)
 }
 
 /* Display a symbol on stdout.  Handles the display of control characters and
-   multibye characters.
+   multibye characters (assuming the host environment supports them).
 
    Display at most abs(WIDTH) characters, truncating as necessary, unless do_wide is true.
 
@@ -400,7 +402,9 @@ print_symbol (int width, const char *symbol)
 {
   bfd_boolean extra_padding = FALSE;
   int num_printed = 0;
+#ifdef HAVE_MBSTATE_T
   mbstate_t state;
+#endif
   int width_remaining;
 
   if (width < 0)
@@ -417,13 +421,14 @@ print_symbol (int width, const char *symbol)
   else
     width_remaining = width;
 
+#ifdef HAVE_MBSTATE_T
   /* Initialise the multibyte conversion state.  */
   memset (& state, 0, sizeof (state));
+#endif
 
   while (width_remaining)
     {
       size_t  n;
-      wchar_t w;
       const char c = *symbol++;
 
       if (c == 0)
@@ -449,15 +454,22 @@ print_symbol (int width, const char *symbol)
 	}
       else
 	{
+#ifdef HAVE_MBSTATE_T
+	  wchar_t w;
+#endif
 	  /* Let printf do the hard work of displaying multibyte characters.  */
 	  printf ("%.1s", symbol - 1);
 	  width_remaining --;
 	  num_printed ++;
 
+#ifdef HAVE_MBSTATE_T
 	  /* Try to find out how many bytes made up the character that was
 	     just printed.  Advance the symbol pointer past the bytes that
 	     were displayed.  */
 	  n = mbrtowc (& w, symbol - 1, MB_CUR_MAX, & state);
+#else
+	  n = 1;
+#endif
 	  if (n != (size_t) -1 && n != (size_t) -2 && n > 0)
 	    symbol += (n - 1);
 	}
@@ -622,6 +634,7 @@ guess_is_rela (unsigned int e_machine)
     case EM_TI_C6000:
     case EM_TILEGX:
     case EM_TILEPRO:
+    case EM_V800:
     case EM_V850:
     case EM_CYGNUS_V850:
     case EM_VAX:
@@ -1046,6 +1059,9 @@ dump_relocations (FILE * file,
 	  rtype = elf_spu_reloc_type (type);
 	  break;
 
+	case EM_V800:
+	  rtype = v800_reloc_type (type);
+	  break;
 	case EM_V850:
 	case EM_CYGNUS_V850:
 	  rtype = v850_reloc_type (type);
@@ -1875,7 +1891,6 @@ get_machine_name (unsigned e_machine)
     case EM_960:		return "Intel 90860";
     case EM_PPC:		return "PowerPC";
     case EM_PPC64:		return "PowerPC64";
-    case EM_V800:		return "NEC V800";
     case EM_FR20:		return "Fujitsu FR20";
     case EM_RH32:		return "TRW RH32";
     case EM_MCORE:		return "MCORE";
@@ -1900,6 +1915,7 @@ get_machine_name (unsigned e_machine)
     case EM_CYGNUS_M32R:
     case EM_M32R:		return "Renesas M32R (formerly Mitsubishi M32r)";
     case EM_CYGNUS_V850:
+    case EM_V800:		return "Renesas V850 (using RH850 ABI)";
     case EM_V850:		return "Renesas V850";
     case EM_CYGNUS_MN10300:
     case EM_MN10300:		return "mn10300";
@@ -2124,11 +2140,6 @@ decode_ARM_machine_flags (unsigned e_flags, char buf[])
 
     case EF_ARM_EABI_VER4:
       strcat (buf, ", Version4 EABI");
-      goto eabi;
-
-    case EF_ARM_EABI_VER5:
-      strcat (buf, ", Version5 EABI");
-    eabi:
       while (e_flags)
 	{
 	  unsigned flag;
@@ -2145,6 +2156,42 @@ decode_ARM_machine_flags (unsigned e_flags, char buf[])
 
 	    case EF_ARM_LE8:
 	      strcat (buf, ", LE8");
+	      break;
+
+	    default:
+	      unknown = 1;
+	      break;
+	    }
+      break;
+	}
+      break;
+
+    case EF_ARM_EABI_VER5:
+      strcat (buf, ", Version5 EABI");
+      while (e_flags)
+	{
+	  unsigned flag;
+
+	  /* Process flags one bit at a time.  */
+	  flag = e_flags & - e_flags;
+	  e_flags &= ~ flag;
+
+	  switch (flag)
+	    {
+	    case EF_ARM_BE8:
+	      strcat (buf, ", BE8");
+	      break;
+
+	    case EF_ARM_LE8:
+	      strcat (buf, ", LE8");
+	      break;
+
+	    case EF_ARM_ABI_FLOAT_SOFT: /* Conflicts with EF_ARM_SOFT_FLOAT.  */
+	      strcat (buf, ", soft-float ABI");
+	      break;
+
+	    case EF_ARM_ABI_FLOAT_HARD: /* Conflicts with EF_ARM_VFP_FLOAT.  */
+	      strcat (buf, ", hard-float ABI");
 	      break;
 
 	    default:
@@ -2369,6 +2416,56 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 
 	  if (e_flags & EF_PPC_RELOCATABLE_LIB)
 	    strcat (buf, _(", relocatable-lib"));
+	  break;
+
+	case EM_V800:
+	  if ((e_flags & EF_RH850_ABI) == EF_RH850_ABI)
+	    strcat (buf, ", RH850 ABI");
+	    
+	  if (e_flags & EF_V800_850E3)
+	    strcat (buf, ", V3 architecture");
+
+	  if ((e_flags & (EF_RH850_FPU_DOUBLE | EF_RH850_FPU_SINGLE)) == 0)
+	    strcat (buf, ", FPU not used");
+
+	  if ((e_flags & (EF_RH850_REGMODE22 | EF_RH850_REGMODE32)) == 0)
+	    strcat (buf, ", regmode: COMMON");
+
+	  if ((e_flags & (EF_RH850_GP_FIX | EF_RH850_GP_NOFIX)) == 0)
+	    strcat (buf, ", r4 not used");
+
+	  if ((e_flags & (EF_RH850_EP_FIX | EF_RH850_EP_NOFIX)) == 0)
+	    strcat (buf, ", r30 not used");
+
+	  if ((e_flags & (EF_RH850_TP_FIX | EF_RH850_TP_NOFIX)) == 0)
+	    strcat (buf, ", r5 not used");
+
+	  if ((e_flags & (EF_RH850_REG2_RESERVE | EF_RH850_REG2_NORESERVE)) == 0)
+	    strcat (buf, ", r2 not used");
+
+	  for (e_flags &= 0xFFFF; e_flags; e_flags &= ~ (e_flags & - e_flags))
+	    {
+	      switch (e_flags & - e_flags)
+		{
+		case EF_RH850_FPU_DOUBLE: strcat (buf, ", double precision FPU"); break;
+		case EF_RH850_FPU_SINGLE: strcat (buf, ", single precision FPU"); break;
+		case EF_RH850_SIMD: strcat (buf, ", SIMD"); break;
+		case EF_RH850_CACHE: strcat (buf, ", CACHE"); break;
+		case EF_RH850_MMU: strcat (buf, ", MMU"); break;
+		case EF_RH850_REGMODE22: strcat (buf, ", regmode:22"); break;
+		case EF_RH850_REGMODE32: strcat (buf, ", regmode:23"); break;
+		case EF_RH850_DATA_ALIGN8: strcat (buf, ", 8-byte alignment"); break;
+		case EF_RH850_GP_FIX: strcat (buf, ", r4 fixed"); break;
+		case EF_RH850_GP_NOFIX: strcat (buf, ", r4 free"); break;
+		case EF_RH850_EP_FIX: strcat (buf, ", r30 fixed"); break;
+		case EF_RH850_EP_NOFIX: strcat (buf, ", r30 free"); break;
+		case EF_RH850_TP_FIX: strcat (buf, ", r5 fixed"); break;
+		case EF_RH850_TP_NOFIX: strcat (buf, ", r5 free"); break;
+		case EF_RH850_REG2_RESERVE: strcat (buf, ", r2 fixed"); break;
+		case EF_RH850_REG2_NORESERVE: strcat (buf, ", r2 free"); break;
+		default: break;
+		}
+	    }
 	  break;
 
 	case EM_V850:
@@ -2641,6 +2738,8 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	    strcat (buf, ", dsp");
 	  if (e_flags & E_FLAG_RX_PID)
 	    strcat (buf, ", pid");	  
+	  if (e_flags & E_FLAG_RX_ABI)
+	    strcat (buf, ", RX ABI");
 	  break;
 
 	case EM_S390:
@@ -9967,6 +10066,8 @@ is_32bit_abs_reloc (unsigned int reloc_type)
     case EM_CYGNUS_V850:
     case EM_V850:
       return reloc_type == 6; /* R_V850_ABS32.  */
+    case EM_V800:
+      return reloc_type == 0x33; /* R_V810_WORD.  */
     case EM_VAX:
       return reloc_type == 1; /* R_VAX_32.  */
     case EM_X86_64:
@@ -12635,6 +12736,10 @@ get_note_type (unsigned e_type)
 	return _("NT_PPC_VMX (ppc Altivec registers)");
       case NT_PPC_VSX:
 	return _("NT_PPC_VSX (ppc VSX registers)");
+      case NT_386_TLS:
+	return _("NT_386_TLS (x86 TLS information)");
+      case NT_386_IOPERM:
+	return _("NT_386_IOPERM (x86 I/O permissions)");
       case NT_X86_XSTATE:
 	return _("NT_X86_XSTATE (x86 XSAVE extended state)");
       case NT_S390_HIGH_GPRS:

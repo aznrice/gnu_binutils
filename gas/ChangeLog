@@ -1,3 +1,178 @@
+2012-11-09  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* read.h (s_vendor_attribute): Move to...
+	* config/obj-elf.h (obj_elf_vendor_attribute): ... here.
+	* read.c (potable): Remove "gnu_attribute".
+	(skip_whitespace, skip_past_char, skip_past_comma): Delete, move
+	to config/obj-elf.c.
+	(s_vendor_attribute): Delete, move to obj_elf_vendor_attribute
+	in config/obj-elf.c.
+	(s_gnu_attribute): Delete, move to obj_elf_gnu_attribute in
+	config/obj-elf.c.
+	* config/obj-elf.c (elf_pseudo_table): Add "gnu_attribute".
+	(skip_whitespace, skip_past_char, skip_past_comma): New, moved
+	from read.c.
+	(obj_elf_vendor_attribute): New, moved from s_vendor_attribute
+	in read.c.
+	(obj_elf_gnu_attribute): New, moved from s_gnu_attribute in
+	read.c.
+	* config/tc-arm.c (s_arm_eabi_attribute): Rename
+	s_vendor_attribute to obj_elf_vendor_attribute.
+	* config/tc-tic6x.c (s_tic6x_c6xabi_attribute): Likewise.
+
+2012-11-09  Nick Clifton  <nickc@redhat.com>
+
+	* config/obj-elf.c (obj_elf_change_section): Allow init array
+	sections to have the SHF_EXECINSTR attribute for the RX target.
+	* config/tc-rx.c (elf_flags): Initialise with E_FLAG_RX_ABI.
+	(enum options): Add OPTION_USES_GCC_ABI and OPTION_USES_RX_ABI.
+	(md_longopts): Add -mgcc-abi and -mrx-abi.
+	(md_parse_option): Add support for OPTION_USES_GCC_ABI and
+	OPTION_USES_RX_ABI.
+	* doc/as.texinfo (RX Options): Add mention of remaining RX
+	options.
+	* doc/c-rx.texi: Document -mgcc-abi and -mrx-abi.
+
+	* config/tc-v850.c (v850_target_arch): New.
+	(v850_target_format): New.
+	(set_machine): Use v850_target_arch.
+	(md_begin): Likewise.
+	(md_show_usage): Document new switches.
+	(md_parse_option): Add -mgcc-abi, -mrh850-abi, -m8byte-align and
+	-m4byte-align.
+	* config/tc-v850.c (TARGET_ARCH) Use v850_target_arch.
+	(TARGET_FORMAT): Use v850_target_format.
+	* doc/c-v850.texi: Document new options.
+
+2012-11-09  David Holsgrove  <david.holsgrove@xilinx.com>
+
+	* gas/microblaze/endian.exp: New file - endian testcase for microblaze / microblazeel.
+	* gas/microblaze/endian.s: Likewise.
+	* gas/microblaze/endian_be.d: Likewise.
+	* gas/microblaze/endian_le.d: Likewise.
+	* gas/microblaze/endian_le_elf.d: Likewise.
+	* gas/microblaze/reloc_sym.d: Update to accept targets other than elf32-microblaze.
+	* gas/microblaze/special_reg.d: Likewise.
+
+2012-11-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/atof-ieee.c (gen_to_words): Remove trailing redundant
+	`;'.
+	* config/atof-vax.c (flonum_gen2vax): Likewise.
+	* config/tc-d10v.c (write_2_short): Likewise.
+	* config/tc-i386-intel.c (i386_intel_simplify): Likewise.
+	* config/tc-s390.c (tc_s390_force_relocation): Likewise.
+	* config/tc-v850.c (md_parse_option): Likewise.
+	* config/tc-xtensa.c (find_address_of_next_align_frag): Likewise.
+	* dwarf2dbg.c (out_header): Likewise.
+	* symbols.c (dollar_label_name): Likewise.
+	(fb_label_name): Likewise.
+
+2012-11-08  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (mips_ip) <'u'>: Default to BFD_RELOC_LO16.
+
+2012-11-08  Alan Modra  <amodra@gmail.com>
+
+	* po/POTFILES.in: Regenerate.
+
+2012-11-07  James Murray <jsm@jsm-net.demon.co.uk>
+
+	* config/tc-m68hc11.c: Fix R_M68HC12_16B relocation for movb/w
+
+2012-11-07  David Holsgrove  <david.holsgrove@xilinx.com>
+
+	* config/tc-microblaze.c: Remove special register condition check
+	for INST_TYPE_RFSL related instructions.
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-xgate.c: Make some functions static.  Formatting
+	style and whitespace fixes.  Wrap overly long lines.  Format
+	help message.
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-tic4x.c: Remove alignment TODO comments.
+	(tic4x_do_align): Enable subseg_text_p test.
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-ppc.c (ppc_elf_adjust_symtab): New function, split out..
+	(ppc_frob_file_before_adjust): ..from here.
+	(md_apply_fix): Set BSF_KEEP on .TOC. if not @tocbase.
+	* config/tc-ppc.h (ppc_elf_adjust_symtab): Declare.
+	(tc_adjust_symtab): Define.
+
+2012-11-06  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-ppc.c (md_apply_fix): Fix xcoff build breakage from
+	last patch.
+
+2012-11-05  Sean Keys  <skeys@ipdatasys.com>
+
+	* config/tc-xgate.c: Remove bogus use of <fx_pcrel_adjust>.
+	* config/tc-m68hc11.c: Likewise.
+
+2012-11-05  Alan Modra  <amodra@gmail.com>
+
+	* configure.in: Apply 2012-09-10 change to config.in here.
+
+2012-11-05  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-ppc.c (md_chars_to_number): Delete.
+	(ppc_setup_opcodes): Assert num_powerpc_operands fit.
+	(ppc_is_toc_sym): Move earlier in file.
+	(md_assemble): Move code setting reloc from md_apply_fix.  Combine
+	non-ELF code setting fixup with ELF code.  Stash opindex in
+	fx_pcrel_adjust.  Adjust fixup offset for VLE.  Don't set
+	fx_no_overflow here.
+	(md_apply_fix): Rewrite to use ppc_insert_operand for all
+	resolved instruction fields.  Leave insn field zero when
+	emitting an ELF reloc in most cases.
+
+	* write.h (struct fix <fx_pcrel_adjust>): Make it a signed char.
+	* config/tc-m68k.c (tc_gen_reloc, md_pcrel_from): Remove explicit
+	sign extendion of fx_pxrel_adjust.
+
+2012-11-01  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (is_delay_slot_valid): Simplify expression.
+
+2012-11-01  Chao-ying Fu  <fu@mips.com>
+
+	* config/tc-mips.c (append_insn): Set fx_no_overflow for 16-bit
+	microMIPS branch relocations.
+
+2012-11-01  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* config/tc-mips.c (is_delay_slot_valid): Don't accept macros
+	in 16-bit delay slots.
+	(macro_build_jalr): Emit 32-bit JALR if placed in a 32-bit delay
+	slot.
+	(macro) <M_JAL_2>: Likewise
+
+2012-10-31  David Holsgrove  <david.holsgrove@xilinx.com>
+
+	* config/tc-microblaze.c: Check for weak symbols before
+	emitting relocation.
+
+2012-10-29  Alan Modra  <amodra@gmail.com>
+
+	* sb.c (sb_check): Use __builtin_clzll when size_t is not the
+	same size as long.
+
+2012-10-29  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-ppc.c (ppc_znop): Remove unused vars.
+
+2012-10-26  Alan Modra  <amodra@gmail.com>
+
+	PR target/14758
+	* config/tc-ppc.c (ppc_setup_opcodes): Fix comment.
+	(md_assemble): Translate to _DS relocs for ppc32 as well as ppc64.
+	(tc_gen_reloc): Handle _DS relocs in ppc32 mode.
+
 2012-10-22  Simon Baldwin  <simonb@google.com>
 
 	* as.c (dump_statistics): Compute data size as the delta between

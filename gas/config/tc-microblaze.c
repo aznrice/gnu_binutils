@@ -35,6 +35,9 @@
 #define streq(a,b) (strcmp (a, b) == 0)
 #endif
 
+#define OPTION_EB (OPTION_MD_BASE + 0)
+#define OPTION_EL (OPTION_MD_BASE + 1)
+
 void microblaze_generate_symbol (char *sym);
 static bfd_boolean check_spl_reg (unsigned *);
 
@@ -1198,9 +1201,6 @@ md_assemble (char * str)
           as_fatal (_("Error in statement syntax"));
           immed = 0;
         }
-      /* Check for spl registers.  */
-      if (check_spl_reg (&reg1))
-        as_fatal (_("Cannot use special register with this instruction"));
       inst |= (immed << IMM_LOW) & RFSL_MASK;
       output = frag_more (isize);
       break;
@@ -1710,6 +1710,8 @@ const char * md_shortopts = "";
 
 struct option md_longopts[] =
 {
+  {"EB", no_argument, NULL, OPTION_EB},
+  {"EL", no_argument, NULL, OPTION_EL},
   { NULL,          no_argument, NULL, 0}
 };
 
@@ -2065,7 +2067,8 @@ md_estimate_size_before_relax (fragS * fragP,
           as_bad (_("Absolute PC-relative value in relaxation code.  Assembler error....."));
           abort ();
         }
-      else if ((S_GET_SEGMENT (fragP->fr_symbol) == segment_type))
+      else if (S_GET_SEGMENT (fragP->fr_symbol) == segment_type &&
+               !S_IS_WEAK (fragP->fr_symbol))
         {
           fragP->fr_subtype = DEFINED_PC_OFFSET;
           /* Don't know now whether we need an imm instruction.  */
@@ -2306,6 +2309,12 @@ md_parse_option (int c, char * arg ATTRIBUTE_UNUSED)
 {
   switch (c)
     {
+    case OPTION_EB:
+      target_big_endian = 1;
+      break;
+    case OPTION_EL:
+      target_big_endian = 0;
+      break;
     default:
       return 0;
     }

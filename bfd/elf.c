@@ -7472,7 +7472,7 @@ error_return_verdef:
       Elf_Internal_Verdef *iverdef;
       Elf_Internal_Verdaux *iverdaux;
 
-      iverdef = &elf_tdata (abfd)->verdef[freeidx - 1];;
+      iverdef = &elf_tdata (abfd)->verdef[freeidx - 1];
 
       iverdef->vd_version = VER_DEF_CURRENT;
       iverdef->vd_flags = 0;
@@ -8714,6 +8714,10 @@ elfcore_grok_note (bfd *abfd, Elf_Internal_Note *note)
 
 	return TRUE;
       }
+
+    case NT_SIGINFO:
+      return elfcore_make_note_pseudosection (abfd, ".note.linuxcore.siginfo",
+					      note);
     }
 }
 

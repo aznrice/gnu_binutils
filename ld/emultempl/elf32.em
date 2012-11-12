@@ -2508,6 +2508,8 @@ fragment <<EOF
   fprintf (file, _("\
   -z relro                    Create RELRO program header\n"));
   fprintf (file, _("\
+  -z stacksize=SIZE           Set size of stack segment\n"));
+  fprintf (file, _("\
   -z nosecondary              Convert secondary symbols to weak symbols\n"));
 EOF
 fi
