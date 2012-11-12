@@ -1,5 +1,5 @@
-This is the beta release of binutils 2.23.51.0.4 for Linux, which is
-based on binutils 2012 1026 in CVS on sourceware.org plus various
+This is the beta release of binutils 2.23.51.0.5 for Linux, which is
+based on binutils 2012 1110 in CVS on sourceware.org plus various
 changes. It is purely for Linux.
 
 All relevant patches in patches have been applied to the source tree.
@@ -115,12 +115,31 @@ endif
 
 to arch/ia64/Makefile in your kernel source tree.
 
-Please report any bugs related to binutils 2.23.51.0.4 to
+Please report any bugs related to binutils 2.23.51.0.5 to
 hjl.tools@gmail.com
 
 and
 
 http://www.sourceware.org/bugzilla/
+
+Changes from binutils 2.23.51.0.4:
+
+1. Update from binutils 2012 1110.
+2. Support new Linux NOTE sections.
+3. Add -z stacksize=SIZE option to ld to set size of stack segment.
+4. Fix a BFD IOVEC close bug.  PR 14813.
+5. Fix a BFD IOVEC on archive bug.  PR 14567.
+6. Fix archive support for non-ELF targets.  PR 14481.
+7. Improve gold.
+8. Improve COFF support.
+9. Improve arm support.
+10. Improve microblaze support.
+11. Improve mips support.
+12. Improve ppc support.
+13. Improve rx support.
+14. Improve s390 support.
+15. Improve v850 support.
+16. Improve xgate support.
 
 Changes from binutils 2.23.51.0.3:
 
@@ -634,13 +653,13 @@ already been defined.  PR 12001.
 
 The file list:
 
-1. binutils-2.23.51.0.4.tar.bz2.  Source code.
+1. binutils-2.23.51.0.5.tar.bz2.  Source code.
 
 The primary sites for the beta Linux binutils are:
 
 1. http://www.kernel.org/pub/linux/devel/binutils/
 
-It is also available on linux/release/2.23.51.0.4 branch at
+It is also available on linux/release/2.23.51.0.5 branch at
 
 http://git.kernel.org/?p=linux/kernel/git/hjl/binutils.git;a=summary
 
@@ -649,4 +668,4 @@ Thanks.
 
 H.J. Lu
 hjl.tools@gmail.com
-10/26/2012
+11/12/2012
