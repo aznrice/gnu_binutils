@@ -25,18 +25,19 @@
 
 enum microblaze_instr
 {
-  add, rsub, addc, rsubc, addk, rsubk, addkc, rsubkc, cmp, cmpu,
+  add, rsub, addc, rsubc, addk, rsubk, addkc, rsubkc, clz, cmp, cmpu,
   addi, rsubi, addic, rsubic, addik, rsubik, addikc, rsubikc, mul, 
   mulh, mulhu, mulhsu,
   idiv, idivu, bsll, bsra, bsrl, get, put, nget, nput, cget, cput,
   ncget, ncput, muli, bslli, bsrai, bsrli, mului, or, and, xor,
   andn, pcmpbf, pcmpbc, pcmpeq, pcmpne, sra, src, srl, sext8, sext16, 
-  wic, wdc, wdcclear, wdcflush, mts, mfs, br, brd,
+  wic, wdc, wdcclear, wdcflush, mts, mfs, mbar, br, brd,
   brld, bra, brad, brald, microblaze_brk, beq, beqd, bne, bned, blt,
   bltd, ble, bled, bgt, bgtd, bge, bged, ori, andi, xori, andni,
   imm, rtsd, rtid, rtbd, rted, bri, brid, brlid, brai, braid, bralid,
   brki, beqi, beqid, bnei, bneid, blti, bltid, blei, bleid, bgti,
-  bgtid, bgei, bgeid, lbu, lhu, lw, lwx, sb, sh, sw, swx, lbui, lhui, lwi,
+  bgtid, bgei, bgeid, lbu, lbur, lhu, lhur, lw, lwr, lwx, sb, sbr, sh, 
+  shr, sw, swr, swx, lbui, lhui, lwi,
   sbi, shi, swi, msrset, msrclr, tuqula, fadd, frsub, fmul, fdiv, 
   fcmp_lt, fcmp_eq, fcmp_le, fcmp_gt, fcmp_ne, fcmp_ge, fcmp_un, flt, 
   fint, fsqrt, 
@@ -121,6 +122,7 @@ enum microblaze_instr_type
 #define RA_LOW  16 /* Low bit for RA.  */
 #define RB_LOW  11 /* Low bit for RB.  */
 #define IMM_LOW  0 /* Low bit for immediate.  */
+#define IMM_MBAR 21 /* low bit for mbar instruction.  */
 
 #define RD_MASK 0x03E00000
 #define RA_MASK 0x001F0000
@@ -129,6 +131,9 @@ enum microblaze_instr_type
 
 /* Imm mask for barrel shifts.  */
 #define IMM5_MASK 0x0000001F
+
+/* Imm mask for mbar.  */
+#define IMM5_MBAR_MASK 0x03E00000
 
 /* FSL imm mask for get, put instructions.  */
 #define  RFSL_MASK 0x000000F
