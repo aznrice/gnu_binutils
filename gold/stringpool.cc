@@ -76,7 +76,7 @@ Stringpool_template<Stringpool_char>::reserve(unsigned int n)
   // rehash() implementation is broken in gcc 4.0.3's stl
   //this->string_set_.rehash(this->string_set_.size() + n);
   //return;
-#elif defined(HAVE_EXT_HASH_MAP)
+#elif defined(HAVE_EXT_HASH_MAP) || defined(ANDROID)
   this->string_set_.resize(this->string_set_.size() + n);
   return;
 #endif
@@ -499,7 +499,7 @@ template<typename Stringpool_char>
 void
 Stringpool_template<Stringpool_char>::print_stats(const char* name) const
 {
-#if defined(HAVE_TR1_UNORDERED_MAP) || defined(HAVE_EXT_HASH_MAP)
+#if defined(HAVE_TR1_UNORDERED_MAP) || defined(HAVE_EXT_HASH_MAP) || defined(ANDROID)
   fprintf(stderr, _("%s: %s entries: %zu; buckets: %zu\n"),
 	  program_name, name, this->string_set_.size(),
 	  this->string_set_.bucket_count());

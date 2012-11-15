@@ -471,7 +471,11 @@ AC_SUBST(GOLD_LDADD)
 
 dnl Force support for large files by default.  This may need to be
 dnl host dependent.  If build == host, we can check getconf LFS_CFLAGS.
-LFS_CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+# On Android, _FILE_OFFSET_BITS=64 causes unresolved
+# references to 64-bit variants of _M_seek in stlport
+if ! echo $host |grep -q android; then
+	LFS_CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+fi
 AC_SUBST(LFS_CFLAGS)
 
 AC_CHECK_HEADERS(sys/mman.h)

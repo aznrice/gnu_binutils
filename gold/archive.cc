@@ -584,7 +584,7 @@ Archive::get_file_and_offset(off_t off, Input_file** input_file, off_t* memoff,
       const char* arch_path = this->filename().c_str();
       const char* basename = lbasename(arch_path);
       if (basename > arch_path)
-        member_name->replace(0, 0,
+        member_name->replace((std::string::size_type)0, 0,
                              this->filename().substr(0, basename - arch_path));
     }
 

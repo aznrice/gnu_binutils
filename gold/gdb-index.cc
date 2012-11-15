@@ -29,6 +29,8 @@
 #include "output.h"
 #include "demangle.h"
 
+#include <ctype.h> // for tolower
+
 namespace gold
 {
 
