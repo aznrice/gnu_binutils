@@ -131,10 +131,10 @@ ld/
 	* scripttempl/elf.sc: Support sharable sections.
 
 diff --git a/bfd/elf-bfd.h b/bfd/elf-bfd.h
-index aa78ecd..8a4d3a9 100644
+index b8d82b1..7de224e 100644
 --- a/bfd/elf-bfd.h
 +++ b/bfd/elf-bfd.h
-@@ -2141,6 +2141,28 @@ extern bfd_boolean bfd_elf_link_add_symbols
+@@ -2139,6 +2139,28 @@ extern bfd_boolean bfd_elf_link_add_symbols
    (bfd *, struct bfd_link_info *);
  extern bfd_boolean _bfd_elf_add_dynamic_entry
    (struct bfd_link_info *, bfd_vma, bfd_vma);
@@ -164,7 +164,7 @@ index aa78ecd..8a4d3a9 100644
  extern bfd_boolean bfd_elf_link_record_dynamic_symbol
    (struct bfd_link_info *, struct elf_link_hash_entry *);
 diff --git a/bfd/elf.c b/bfd/elf.c
-index b8bb6d3..db90308 100644
+index a936636..4f1f713 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2093,6 +2093,8 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -670,7 +670,7 @@ index d58384f..82b6d96 100644
  
  static int
 diff --git a/bfd/elflink.c b/bfd/elflink.c
-index 2fcbac3..7ebc744 100644
+index f22e023..d86ddac 100644
 --- a/bfd/elflink.c
 +++ b/bfd/elflink.c
 @@ -386,6 +386,27 @@ _bfd_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
@@ -701,7 +701,7 @@ index 2fcbac3..7ebc744 100644
  	}
      }
  
-@@ -13084,3 +13105,219 @@ elf_append_rel (bfd *abfd, asection *s, Elf_Internal_Rela *rel)
+@@ -13079,3 +13100,219 @@ elf_append_rel (bfd *abfd, asection *s, Elf_Internal_Rela *rel)
    BFD_ASSERT (loc + bed->s->sizeof_rel <= s->contents + s->size);
    bed->s->swap_reloca_out (abfd, rel, loc);
  }
@@ -1155,18 +1155,18 @@ index f1b60cb..f41afab 100644
  if [ "x${host}" = "x${target}" ]; then
    case " $EMULATION_LIBPATH " in
 diff --git a/ld/emultempl/elf32.em b/ld/emultempl/elf32.em
-index 9e263a9..b1fed31 100644
+index 6c84b82..63df0ac 100644
 --- a/ld/emultempl/elf32.em
 +++ b/ld/emultempl/elf32.em
-@@ -104,6 +104,7 @@ gld${EMULATION_NAME}_before_parse (void)
-   ldfile_set_output_arch ("${OUTPUT_ARCH}", bfd_arch_`echo ${ARCH} | sed -e 's/:.*//'`);
+@@ -105,6 +105,7 @@ gld${EMULATION_NAME}_before_parse (void)
    input_flags.dynamic = ${DYNAMIC_LINK-TRUE};
    config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo TRUE ; else echo FALSE ; fi`;
+   config.separate_code = `if test "x${SEPARATE_CODE}" = xyes ; then echo TRUE ; else echo FALSE ; fi`;
 +  link_info.sharable_sections = `if test "$SHARABLE_SECTIONS" = "yes" ; then echo TRUE ; else echo FALSE ; fi`;
  }
  
  EOF
-@@ -1814,6 +1815,12 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1815,6 +1816,12 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
    int iself = s->owner->xvec->flavour == bfd_target_elf_flavour;
    unsigned int sh_type = iself ? elf_section_type (s) : SHT_NULL;
  
