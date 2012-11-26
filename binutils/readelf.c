@@ -2585,12 +2585,6 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	    case E_MIPS_ARCH_64R2: strcat (buf, ", mips64r2"); break;
 	    default: strcat (buf, _(", unknown ISA")); break;
 	    }
-
-	  if (e_flags & EF_SH_PIC)
-	    strcat (buf, ", pic");
-
-	  if (e_flags & EF_SH_FDPIC)
-	    strcat (buf, ", fdpic");
 	  break;
 
 	case EM_SH:
@@ -2620,6 +2614,11 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	    default: strcat (buf, _(", unknown ISA")); break;
 	    }
 
+	  if (e_flags & EF_SH_PIC)
+	    strcat (buf, ", pic");
+
+	  if (e_flags & EF_SH_FDPIC)
+	    strcat (buf, ", fdpic");
 	  break;
 
 	case EM_SPARCV9:
@@ -8115,10 +8114,70 @@ process_dynamic_section (FILE * file)
 		      printf (" NODUMP");
 		      val ^= DF_1_NODUMP;
 		    }
-		  if (val & DF_1_CONLFAT)
+		  if (val & DF_1_CONFALT)
 		    {
-		      printf (" CONLFAT");
-		      val ^= DF_1_CONLFAT;
+		      printf (" CONFALT");
+		      val ^= DF_1_CONFALT;
+		    }
+		  if (val & DF_1_ENDFILTEE)
+		    {
+		      printf (" ENDFILTEE");
+		      val ^= DF_1_ENDFILTEE;
+		    }
+		  if (val & DF_1_DISPRELDNE)
+		    {
+		      printf (" DISPRELDNE");
+		      val ^= DF_1_DISPRELDNE;
+		    }
+		  if (val & DF_1_DISPRELPND)
+		    {
+		      printf (" DISPRELPND");
+		      val ^= DF_1_DISPRELPND;
+		    }
+		  if (val & DF_1_NODIRECT)
+		    {
+		      printf (" NODIRECT");
+		      val ^= DF_1_NODIRECT;
+		    }
+		  if (val & DF_1_IGNMULDEF)
+		    {
+		      printf (" IGNMULDEF");
+		      val ^= DF_1_IGNMULDEF;
+		    }
+		  if (val & DF_1_NOKSYMS)
+		    {
+		      printf (" NOKSYMS");
+		      val ^= DF_1_NOKSYMS;
+		    }
+		  if (val & DF_1_NOHDR)
+		    {
+		      printf (" NOHDR");
+		      val ^= DF_1_NOHDR;
+		    }
+		  if (val & DF_1_EDITED)
+		    {
+		      printf (" EDITED");
+		      val ^= DF_1_EDITED;
+		    }
+		  if (val & DF_1_NORELOC)
+		    {
+		      printf (" NORELOC");
+		      val ^= DF_1_NORELOC;
+		    }
+		  if (val & DF_1_SYMINTPOSE)
+		    {
+		      printf (" SYMINTPOSE");
+		      val ^= DF_1_SYMINTPOSE;
+		    }
+		  if (val & DF_1_GLOBAUDIT)
+		    {
+		      printf (" GLOBAUDIT");
+		      val ^= DF_1_GLOBAUDIT;
+		    }
+		  if (val & DF_1_SINGLETON)
+		    {
+		      printf (" SINGLETON");
+		      val ^= DF_1_SINGLETON;
 		    }
 		  if (val != 0)
 		    printf (" %lx", val);

@@ -1,3 +1,19 @@
+2012-11-23  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-lto-error-1.patch: New.  Improve plugin error
+	handling.
+	* README: Apply it.  Improve ChangeLog.patches.
+	* binutils-lto-mixed-18.patch: Updated for plugin error handling
+	improvement.
+
+2012-11-22  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-shr-100.patch: Updated.
+
+2012-11-19  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-shr-100.patch: Updated.
+
 2012-11-03  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-secondary-1.patch: Updated.

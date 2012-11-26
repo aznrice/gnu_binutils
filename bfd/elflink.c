@@ -4475,8 +4475,6 @@ error_free_dyn:
 		    {
 		      h->def_dynamic = 0;
 		      h->ref_dynamic = 1;
-		      /* PR 12549: Note if the dynamic reference is weak.  */
-		      h->ref_dynamic_nonweak = (bind != STB_WEAK);
 		    }
 		}
 
@@ -4494,9 +4492,6 @@ error_free_dyn:
 		{
 		  h->ref_dynamic = 1;
 		  hi->ref_dynamic = 1;
-		  /* PR 12549: Note if the dynamic reference is weak.  */
-		  hi->ref_dynamic_nonweak =
-		    h->ref_dynamic_nonweak = (bind != STB_WEAK);
 		}
 	      else
 		{
@@ -4591,8 +4586,8 @@ error_free_dyn:
 	  if (!add_needed
 	      && definition
 	      && ((dynsym
-		   && h->ref_regular_nonweak)
-		  || (h->ref_dynamic_nonweak
+		   && h->ref_regular)
+		  || (h->ref_dynamic
 		      && (elf_dyn_lib_class (abfd) & DYN_AS_NEEDED) != 0
 		      && !on_needed_list (elf_dt_name (abfd), htab->needed))))
 	    {

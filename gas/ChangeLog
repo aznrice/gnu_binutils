@@ -1,3 +1,43 @@
+2012-11-23  Alan Modra  <amodra@gmail.com>
+
+	* config/tc-ppc.c (sticky): New var.
+	(md_parse_option, ppc_machine): Update ppc_parse_cpu calls.
+
+2012-11-21  Edgar E. Iglesias <edgar.iglesias@gmail.com>
+
+	* config/tc-microblaze.c (parse_reg): Parse REG_SLR, REG_SHR
+
+2012-11-20  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/14859
+	* gas/i386/x86-64-opcode.s: Add jecxz.
+	* gas/i386/x86-64-opcode.d: Updated.
+
+2012-11-20  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* config/tc-aarch64.c (first_error_fmt): Add ATTRIBUTE_UNUSED to the
+	local variable "ret".
+
+2012-11-20  Roland McGrath  <mcgrathr@google.com>
+
+	* config/tc-arm.c (arm_symbol_chars): New variable.
+	* config/tc-arm.h (tc_symbol_chars): New macro, defined to that.
+
+2012-11-20  David S. Miller  <davem@davemloft.net>
+
+	* config/tc-sparc.c (md_parse_option): Only certain arch
+	specifications should override the object to be 32-bit
+	or 64-bit.
+
+2012-11-14  David Holsgrove  <david.holsgrove@xilinx.com>
+
+	* config/tc-microblaze.c (md_assemble): Add support for INST_TYPE_IMM5
+
+2012-11-14  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* config/tc-ppc.c (md_apply_fix): Leave field zero when emitting
+	an ELF reloc on data as well.
+
 2012-11-09  Maciej W. Rozycki  <macro@codesourcery.com>
 
 	* read.h (s_vendor_attribute): Move to...
@@ -46,13 +86,12 @@
 
 2012-11-09  David Holsgrove  <david.holsgrove@xilinx.com>
 
-	* gas/microblaze/endian.exp: New file - endian testcase for microblaze / microblazeel.
-	* gas/microblaze/endian.s: Likewise.
-	* gas/microblaze/endian_be.d: Likewise.
-	* gas/microblaze/endian_le.d: Likewise.
-	* gas/microblaze/endian_le_elf.d: Likewise.
-	* gas/microblaze/reloc_sym.d: Update to accept targets other than elf32-microblaze.
-	* gas/microblaze/special_reg.d: Likewise.
+	* tc-microblaze.c (md_longopts): Define OPTION_EB and
+	OPTION_EL for target.
+	(md_parse_option): Likewise.
+	* tc-microblaze.h: Set elf32-microblazeel if not
+	target_big_endian for TARGET_FORMAT.
+	* configure.tgt: Add microblazeel and set endian per target.
 
 2012-11-09  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -619,7 +658,7 @@
 	CPU_BTVER2_FLAGS.
 	(i386_align_code): Add case for PROCESSOR_BT.
 
-	* config/tc-i386.h (enum processor_type): Add PROCESSOR_BT.       
+	* config/tc-i386.h (enum processor_type): Add PROCESSOR_BT.
 
 	* doc/c-i386.texi: Add -march={btver1, btver2} options.
 

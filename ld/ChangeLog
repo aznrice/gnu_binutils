@@ -1,3 +1,31 @@
+2012-11-21  Roland McGrath  <mcgrathr@google.com>
+
+	* ld.h (ld_config_type): New flag member separate_code.
+	* emultempl/elf32.em
+	(gld${EMULATION_NAME}_before_parse): Set it based on $SEPARATE_CODE.
+	* ldlang.c (ldlang_override_segment_assignment): If it's set, then
+	always return TRUE when SEC_CODE differs between the sections.
+
+2012-11-20  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld.texinfo: Document "-z global".
+
+	* emultempl/elf32.em (gld${EMULATION_NAME}_handle_option): Support
+	"-z global".
+	(gld${EMULATION_NAME}_list_options): Likewise.
+
+2012-11-15  Maxim Kuvyrkov  <maxim@codesourcery.com>
+
+	Port lib32 arrangement from Debian.
+	* emulparams/elf_i386.sh: Include lib32 directories in library search
+	path.
+
+2012-11-15  Simon Baldwin  <simonb@google.com>
+
+	* ldmain.c (main): Add start_sbrk set to sbrk(0) on entry.
+	On exit, compute data size as the delta between current
+	sbrk(0) and start_sbrk.
+
 2012-11-09  Nick Clifton  <nickc@redhat.com>
 
 	* emultempl/rxelf.em (no_flag_mismatch_warnings): Initialise to

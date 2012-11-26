@@ -105,6 +105,7 @@ gld${EMULATION_NAME}_before_parse (void)
   ldfile_set_output_arch ("${OUTPUT_ARCH}", bfd_arch_`echo ${ARCH} | sed -e 's/:.*//'`);
   input_flags.dynamic = ${DYNAMIC_LINK-TRUE};
   config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo TRUE ; else echo FALSE ; fi`;
+  config.separate_code = `if test "x${SEPARATE_CODE}" = xyes ; then echo TRUE ; else echo FALSE ; fi`;
   link_info.sharable_sections = `if test "$SHARABLE_SECTIONS" = "yes" ; then echo TRUE ; else echo FALSE ; fi`;
 }
 
@@ -142,7 +143,7 @@ gld${EMULATION_NAME}_load_symbols (lang_input_statement_type *entry)
     return FALSE;
 
   bfd_elf_set_dyn_lib_class (entry->the_bfd,
-                             (enum dynamic_lib_link_class) link_class);
+			     (enum dynamic_lib_link_class) link_class);
 
   /* Continue on with normal load_symbols processing.  */
   return FALSE;
@@ -1106,7 +1107,7 @@ gld${EMULATION_NAME}_after_open (void)
 		{
 		  struct elf_obj_tdata *t = elf_tdata (link_info.output_bfd);
 		  struct build_id_info *b =
-                      (struct build_id_info *) xmalloc (sizeof *b);
+		      (struct build_id_info *) xmalloc (sizeof *b);
 
 		  b->style = link_info.emit_note_gnu_build_id;
 		  b->sec = s;
@@ -1441,7 +1442,7 @@ if test x"$LDEMUL_BEFORE_ALLOCATION" != xgld"$EMULATION_NAME"_before_allocation;
 fragment <<EOF
 
 /* used by before_allocation and handle_option. */
-static void 
+static void
 gld${EMULATION_NAME}_append_to_separated_string (char **to, char *op_arg)
 {
   if (*to == NULL)
@@ -1509,7 +1510,7 @@ gld${EMULATION_NAME}_before_allocation (void)
       {
 	const char *audit_libs = elf_dt_audit (abfd);
 
-	/* If the input bfd contains an audit entry, we need to add it as 
+	/* If the input bfd contains an audit entry, we need to add it as
 	   a dep audit entry.  */
 	if (audit_libs && *audit_libs != '\0')
 	  {
@@ -2242,7 +2243,7 @@ EOF
 if test x"$GENERATE_SHLIB_SCRIPT" = xyes; then
 fragment <<EOF
     case OPTION_AUDIT:
-  	gld${EMULATION_NAME}_append_to_separated_string (&audit, optarg); 
+	gld${EMULATION_NAME}_append_to_separated_string (&audit, optarg);
 	break;
 
     case 'P':
@@ -2338,6 +2339,8 @@ fragment <<EOF
 EOF
 if test x"$GENERATE_SHLIB_SCRIPT" = xyes; then
 fragment <<EOF
+      else if (strcmp (optarg, "global") == 0)
+	link_info.flags_1 |= (bfd_vma) DF_1_GLOBAL;
       else if (strcmp (optarg, "initfirst") == 0)
 	link_info.flags_1 |= (bfd_vma) DF_1_INITFIRST;
       else if (strcmp (optarg, "interpose") == 0)
@@ -2431,7 +2434,7 @@ if test x"$GENERATE_SHLIB_SCRIPT" = xyes; then
 fragment <<EOF
   fprintf (file, _("\
   -P AUDITLIB, --depaudit=AUDITLIB\n" "\
-                              Specify a library to use for auditing dependencies\n"));
+			      Specify a library to use for auditing dependencies\n"));
   fprintf (file, _("\
   --disable-new-dtags         Disable new dynamic tags\n"));
   fprintf (file, _("\
@@ -2458,6 +2461,9 @@ EOF
 
 if test x"$GENERATE_SHLIB_SCRIPT" = xyes; then
 fragment <<EOF
+  fprintf (file, _("\
+  -z global                   Make symbols in DSO available for subsequently\n\
+			       loaded objects\n"));
   fprintf (file, _("\
   -z initfirst                Mark DSO to be initialized first at runtime\n"));
   fprintf (file, _("\
@@ -2504,7 +2510,7 @@ fragment <<EOF
   -z now                      Mark object non-lazy runtime binding\n"));
   fprintf (file, _("\
   -z origin                   Mark object requiring immediate \$ORIGIN\n\
-                                processing at runtime\n"));
+				processing at runtime\n"));
   fprintf (file, _("\
   -z relro                    Create RELRO program header\n"));
   fprintf (file, _("\

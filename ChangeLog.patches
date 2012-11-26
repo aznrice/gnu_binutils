@@ -130,8 +130,6 @@ ld/
 	* ldmain.c (main): Initialize link_info.sharable_sections.
 	* scripttempl/elf.sc: Support sharable sections.
 
-diff --git a/bfd/elf-bfd.h b/bfd/elf-bfd.h
-index 889ce12..fdcfa92 100644
 bfd/
 
 2012-08-14  H.J. Lu  <hongjiu.lu@intel.com>
@@ -240,8 +238,32 @@ ld/testsuite/
 	* ld-ia64/error3.d: Likewise.
 	* ld-ia64/error4.d: Likewise.
 
-diff --git a/bfd/elf-bfd.h b/bfd/elf-bfd.h
-index 6a44912..1f3574f 100644
+ld/
+
+2012-11-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ldmain.c (main): Don't check plugin_load_plugins return.
+
+	* lexsup.c (parse_args): Don't check plugin_opt_plugin return.
+
+	* plugin.c (dl_error): New.
+	(plugin_opt_plugin): Change return type to void.  Stop on
+	dlopen error and report error with dl_error ().
+	(plugin_load_plugins): Change return type to void.  Stop on
+	dlsym error and report error with dl_error ().  Don't use
+	set_plugin_error.
+	(plugin_call_cleanup): Issue an error for each plugin.
+
+	* plugin.h (plugin_opt_plugin): Change return type to void.
+	(plugin_load_plugins): Likewise.
+
+ld/testsuite/
+
+2012-11-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-plugin/plugin-2.d: Update expected error message.
+	* ld-plugin/plugin-4.d: Likewise.
+
 bfd/
 
 2012-10-25  H.J. Lu  <hongjiu.lu@intel.com>
@@ -735,8 +757,6 @@ ld/testsuite/
 
 	* lib/ld-lib.exp (check_lto_available): New.
 
-diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index e94e3c8..5fe2a86 100644
 bfd/
 
 2011-04-06  H.J. Lu  <hongjiu.lu@intel.com>
@@ -751,8 +771,6 @@ binutils/
 	PR binutils/12639
 	* readelf.c (process_symbol_table): Detect corrupted symtab.
 
-diff --git a/bfd/elfcode.h b/bfd/elfcode.h
-index 28b6b90..c56b4f1 100644
 bfd/
 
 2012-09-11  H.J. Lu  <hongjiu.lu@intel.com>
@@ -975,5 +993,3 @@ ld/testsuite/
 	* ld-elf/library8c.c: Likewise.
 	* ld-elf/library8c.rd: Likewise.
 
-diff --git a/bfd/archive.c b/bfd/archive.c
-index 8e8fd2d..de294a7 100644

@@ -223,6 +223,7 @@ unsigned long nop_limit = 4;
 /* The type of processor we are assembling for.  This is one or more
    of the PPC_OPCODE flags defined in opcode/ppc.h.  */
 ppc_cpu_t ppc_cpu = 0;
+ppc_cpu_t sticky = 0;
 
 /* Flags set on encountering toc relocs.  */
 enum {
@@ -1160,7 +1161,7 @@ md_parse_option (int c, char *arg)
       break;
 
     case 'm':
-      new_cpu = ppc_parse_cpu (ppc_cpu, arg);
+      new_cpu = ppc_parse_cpu (ppc_cpu, &sticky, arg);
       if (new_cpu != 0)
 	{
 	  ppc_cpu = new_cpu;
@@ -4863,7 +4864,7 @@ ppc_machine (int ignore ATTRIBUTE_UNUSED)
 	  else
 	    ppc_cpu = cpu_history[--curr_hist];
 	}
-      else if ((new_cpu = ppc_parse_cpu (ppc_cpu, cpu_string)) != 0)
+      else if ((new_cpu = ppc_parse_cpu (ppc_cpu, &sticky, cpu_string)) != 0)
 	ppc_cpu = new_cpu;
       else
 	as_bad (_("invalid machine `%s'"), cpu_string);
@@ -6620,6 +6621,9 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     }
   else
     {
+      int size = 0;
+      offsetT fieldval = value;
+
       /* Handle relocs in data.  */
       switch (fixP->fx_r_type)
 	{
@@ -6635,8 +6639,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 
 	case BFD_RELOC_32_PCREL:
 	case BFD_RELOC_RVA:
-	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
-			      value, 4);
+	  size = 4;
 	  break;
 
 	case BFD_RELOC_64:
@@ -6646,8 +6649,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	  /* fall through */
 
 	case BFD_RELOC_64_PCREL:
-	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
-			      value, 8);
+	  size = 8;
 	  break;
 
 	case BFD_RELOC_16:
@@ -6656,8 +6658,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	  /* fall through */
 
 	case BFD_RELOC_16_PCREL:
-	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
-			      value, 2);
+	  size = 2;
 	  break;
 
 	case BFD_RELOC_8:
@@ -6690,8 +6691,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	      fixP->fx_done = 1;
 	    }
 	  else
-	    md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
-				value, 1);
+	    size = 1;
 	  break;
 
 	case BFD_RELOC_VTABLE_INHERIT:
@@ -6711,52 +6711,51 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	  if (fixP->fx_pcrel)
 	    fixP->fx_r_type = BFD_RELOC_LO16_PCREL;
 	case BFD_RELOC_LO16_PCREL:
-	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
-			      value, 2);
+	  size = 2;
 	  break;
 
 	case BFD_RELOC_HI16:
 	  if (fixP->fx_pcrel)
 	    fixP->fx_r_type = BFD_RELOC_HI16_PCREL;
 	case BFD_RELOC_HI16_PCREL:
-	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
-			      PPC_HI (value), 2);
+	  size = 2;
+	  fieldval = PPC_HI (value);
 	  break;
 
 	case BFD_RELOC_HI16_S:
 	  if (fixP->fx_pcrel)
 	    fixP->fx_r_type = BFD_RELOC_HI16_S_PCREL;
 	case BFD_RELOC_HI16_S_PCREL:
-	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
-			      PPC_HA (value), 2);
+	  size = 2;
+	  fieldval = PPC_HA (value);
 	  break;
 
 	case BFD_RELOC_PPC64_HIGHER:
 	  if (fixP->fx_pcrel)
 	    goto bad_pcrel;
-	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
-			      PPC_HIGHER (value), 2);
+	  size = 2;
+	  fieldval = PPC_HIGHER (value);
 	  break;
 
 	case BFD_RELOC_PPC64_HIGHER_S:
 	  if (fixP->fx_pcrel)
 	    goto bad_pcrel;
-	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
-			      PPC_HIGHERA (value), 2);
+	  size = 2;
+	  fieldval = PPC_HIGHERA (value);
 	  break;
 
 	case BFD_RELOC_PPC64_HIGHEST:
 	  if (fixP->fx_pcrel)
 	    goto bad_pcrel;
-	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
-			      PPC_HIGHEST (value), 2);
+	  size = 2;
+	  fieldval = PPC_HIGHEST (value);
 	  break;
 
 	case BFD_RELOC_PPC64_HIGHEST_S:
 	  if (fixP->fx_pcrel)
 	    goto bad_pcrel;
-	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
-			      PPC_HIGHESTA (value), 2);
+	  size = 2;
+	  fieldval = PPC_HIGHESTA (value);
 	  break;
 
 	case BFD_RELOC_PPC_DTPMOD:
@@ -6856,6 +6855,10 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	  fflush (stderr);
 	  abort ();
 	}
+
+      if (size && APPLY_RELOC)
+	md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
+			    fieldval, size);
     }
 
 #ifdef OBJ_ELF

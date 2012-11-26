@@ -492,7 +492,7 @@ ld/testsuite/
 	* lib/ld-lib.exp (check_lto_available): New.
 
 diff --git a/bfd/bfd-in2.h b/bfd/bfd-in2.h
-index e94e3c8..5fe2a86 100644
+index bba8757..808ca57 100644
 --- a/bfd/bfd-in2.h
 +++ b/bfd/bfd-in2.h
 @@ -1057,6 +1057,9 @@ struct bfd_section *bfd_create_gnu_debuglink_section
@@ -515,7 +515,7 @@ index e94e3c8..5fe2a86 100644
  /* Pointer to the common section.  */
  #define bfd_com_section_ptr (&std_section[0])
  /* Pointer to the undefined section.  */
-@@ -5709,6 +5715,14 @@ enum bfd_direction
+@@ -5710,6 +5716,14 @@ enum bfd_direction
      both_direction = 3
    };
  
@@ -530,7 +530,7 @@ index e94e3c8..5fe2a86 100644
  struct bfd
  {
    /* A unique identifier of the BFD  */
-@@ -5856,6 +5870,9 @@ struct bfd
+@@ -5857,6 +5871,9 @@ struct bfd
    /* The last section on the section list.  */
    struct bfd_section *section_last;
  
@@ -540,7 +540,7 @@ index e94e3c8..5fe2a86 100644
    /* The number of sections.  */
    unsigned int section_count;
  
-@@ -5974,6 +5991,9 @@ struct bfd
+@@ -5975,6 +5992,9 @@ struct bfd
    /* Set if only required symbols should be added in the link hash table for
       this object.  Used by VMS linkers.  */
    unsigned int selective_search : 1;
@@ -550,7 +550,7 @@ index e94e3c8..5fe2a86 100644
  };
  
  typedef enum bfd_error
-@@ -6195,6 +6215,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
+@@ -6196,6 +6216,8 @@ void bfd_emul_set_commonpagesize (const char *, bfd_vma);
  
  char *bfd_demangle (bfd *, const char *, int);
  
@@ -636,7 +636,7 @@ index eed1896..1a6624a 100644
 +  return NULL;
 +}
 diff --git a/bfd/elf.c b/bfd/elf.c
-index cab1cc7..8ead51c 100644
+index a936636..45c7de0 100644
 --- a/bfd/elf.c
 +++ b/bfd/elf.c
 @@ -2087,6 +2087,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
@@ -743,10 +743,10 @@ index 66b9051..181ac05 100644
      }
  
 diff --git a/bfd/opncls.c b/bfd/opncls.c
-index fdccba3..05272d8 100644
+index 7bd2fdc..5f74878 100644
 --- a/bfd/opncls.c
 +++ b/bfd/opncls.c
-@@ -1536,3 +1536,69 @@ bfd_fill_in_gnu_debuglink_section (bfd *abfd,
+@@ -1540,3 +1540,69 @@ bfd_fill_in_gnu_debuglink_section (bfd *abfd,
  
    return TRUE;
  }
@@ -817,7 +817,7 @@ index fdccba3..05272d8 100644
 +  return name;
 +}
 diff --git a/bfd/plugin.c b/bfd/plugin.c
-index 8d2c4b2..1e6d82b 100644
+index 1319203..a591573 100644
 --- a/bfd/plugin.c
 +++ b/bfd/plugin.c
 @@ -130,6 +130,139 @@ register_claim_file (ld_plugin_claim_file_handler handler)
@@ -1049,7 +1049,7 @@ index 3091f97..2db087f 100644
  plugin_data_struct;
  
 diff --git a/bfd/section.c b/bfd/section.c
-index ab5635b..ad8f27e 100644
+index 6fd7d8e..5d7ee61 100644
 --- a/bfd/section.c
 +++ b/bfd/section.c
 @@ -552,6 +552,9 @@ CODE_FRAGMENT
@@ -1063,7 +1063,7 @@ index ab5635b..ad8f27e 100644
  .#define bfd_com_section_ptr (&std_section[0])
  .{* Pointer to the undefined section.  *}
 diff --git a/binutils/objcopy.c b/binutils/objcopy.c
-index f44ebcd..ca2a4e3 100644
+index 4860864..2519fd9 100644
 --- a/binutils/objcopy.c
 +++ b/binutils/objcopy.c
 @@ -918,30 +918,6 @@ is_specified_symbol (const char *name, htab_t htab)
@@ -1116,10 +1116,10 @@ index f44ebcd..ca2a4e3 100644
        if (gsym != NULL)
  	{
 diff --git a/binutils/readelf.c b/binutils/readelf.c
-index b4f9f4e..33da2a6 100644
+index 7877539..2ff48ed 100644
 --- a/binutils/readelf.c
 +++ b/binutils/readelf.c
-@@ -3107,6 +3107,7 @@ get_section_type_name (unsigned int sh_type)
+@@ -3205,6 +3205,7 @@ get_section_type_name (unsigned int sh_type)
      case 0x7ffffffd:		return "AUXILIARY";
      case 0x7fffffff:		return "FILTER";
      case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
@@ -1165,7 +1165,7 @@ index bf44dee..25ba942 100644
    unsigned int allow_undefined_version: 1;
  
 diff --git a/include/elf/common.h b/include/elf/common.h
-index be228cd..7c4edb1 100644
+index 4399d02..df7c8a6 100644
 --- a/include/elf/common.h
 +++ b/include/elf/common.h
 @@ -472,6 +472,7 @@
@@ -1246,7 +1246,7 @@ index 3b881dd..a37a35d 100644
 -LDEMUL_FINISH=gld${EMULATION_NAME}_finish
 +LDEMUL_FINISH=arm_finish
 diff --git a/ld/emultempl/elf32.em b/ld/emultempl/elf32.em
-index f6d4c44..0914d82 100644
+index 6c84b82..a045d66 100644
 --- a/ld/emultempl/elf32.em
 +++ b/ld/emultempl/elf32.em
 @@ -68,6 +68,7 @@ static void gld${EMULATION_NAME}_before_allocation (void);
@@ -1257,7 +1257,7 @@ index f6d4c44..0914d82 100644
  EOF
  
  if [ "x${USE_LIBPATH}" = xyes ] ; then
-@@ -1759,6 +1760,8 @@ output_rel_find (asection *sec, int isdyn)
+@@ -1760,6 +1761,8 @@ output_rel_find (asection *sec, int isdyn)
    return last;
  }
  
@@ -1266,7 +1266,7 @@ index f6d4c44..0914d82 100644
  /* Place an orphan section.  We use this to put random SHF_ALLOC
     sections in the right segment.  */
  
-@@ -1767,7 +1770,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1768,7 +1771,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
  				   const char *secname,
  				   int constraint)
  {
@@ -1275,7 +1275,7 @@ index f6d4c44..0914d82 100644
      {
        { ".text",
  	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE,
-@@ -1794,6 +1797,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1795,6 +1798,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
  	SEC_HAS_CONTENTS,
  	0, 0, 0, 0 },
      };
@@ -1283,7 +1283,7 @@ index f6d4c44..0914d82 100644
    enum orphan_save_index
      {
        orphan_text = 0,
-@@ -1805,7 +1809,6 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1806,7 +1810,6 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
        orphan_sdata,
        orphan_nonalloc
      };
@@ -1291,7 +1291,7 @@ index f6d4c44..0914d82 100644
    struct orphan_save *place;
    lang_output_section_statement_type *after;
    lang_output_section_statement_type *os;
-@@ -1882,15 +1885,22 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1883,15 +1886,22 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
  
    if (!orphan_init_done)
      {
@@ -1315,7 +1315,7 @@ index f6d4c44..0914d82 100644
        orphan_init_done = 1;
      }
  
-@@ -1960,6 +1970,27 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
+@@ -1961,6 +1971,27 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
  EOF
  fi
  
@@ -1343,7 +1343,7 @@ index f6d4c44..0914d82 100644
  if test x"$LDEMUL_AFTER_ALLOCATION" != xgld"$EMULATION_NAME"_after_allocation; then
  fragment <<EOF
  
-@@ -2503,7 +2534,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
+@@ -2511,7 +2542,7 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
    ${LDEMUL_GET_SCRIPT-gld${EMULATION_NAME}_get_script},
    "${EMULATION_NAME}",
    "${OUTPUT_FORMAT}",
@@ -1426,7 +1426,7 @@ index e9091e9..2362f11 100644
    /* It opened OK, the format checked out, and the plugins have had
       their chance to claim it, so this is success.  */
 diff --git a/ld/ldlang.c b/ld/ldlang.c
-index 0c97898..101e713 100644
+index 750711c..49df481 100644
 --- a/ld/ldlang.c
 +++ b/ld/ldlang.c
 @@ -38,6 +38,7 @@
@@ -1517,7 +1517,7 @@ index 0c97898..101e713 100644
  	      subsbfd = member;
  	      if (!(*link_info.callbacks
  		    ->add_archive_element) (&link_info, member,
-@@ -6691,7 +6712,38 @@ lang_process (void)
+@@ -6701,7 +6722,38 @@ lang_process (void)
  	  open_input_bfds (statement_list.head, OPEN_BFD_RESCAN);
  	}
      }
@@ -1556,7 +1556,7 @@ index 0c97898..101e713 100644
  
    link_info.gc_sym_list = &entry_symbol;
    if (entry_symbol.name == NULL)
-@@ -8091,3 +8143,961 @@ lang_ld_feature (char *str)
+@@ -8101,3 +8153,961 @@ lang_ld_feature (char *str)
        p = q;
      }
  }
@@ -2590,10 +2590,10 @@ index 441f673..70ddc57 100644
    OPTION_DEFAULT_SCRIPT,
    OPTION_PRINT_OUTPUT_FORMAT,
 diff --git a/ld/ldmain.c b/ld/ldmain.c
-index 3ba19b9..da7c18d 100644
+index c23c554..0bc8059 100644
 --- a/ld/ldmain.c
 +++ b/ld/ldmain.c
-@@ -219,6 +219,9 @@ main (int argc, char **argv)
+@@ -222,6 +222,9 @@ main (int argc, char **argv)
  
    xatexit (ld_cleanup);
  
@@ -2603,7 +2603,7 @@ index 3ba19b9..da7c18d 100644
    /* Set up the sysroot directory.  */
    ld_sysroot = get_sysroot (argc, argv);
    if (*ld_sysroot)
-@@ -295,7 +298,7 @@ main (int argc, char **argv)
+@@ -298,7 +301,7 @@ main (int argc, char **argv)
    default_target = ldemul_choose_target (argc, argv);
    config.maxpagesize = bfd_emul_get_maxpagesize (default_target);
    config.commonpagesize = bfd_emul_get_commonpagesize (default_target);
@@ -2612,7 +2612,7 @@ index 3ba19b9..da7c18d 100644
    ldemul_before_parse ();
    lang_has_input_file = FALSE;
    parse_args (argc, argv);
-@@ -311,34 +314,7 @@ main (int argc, char **argv)
+@@ -313,34 +316,7 @@ main (int argc, char **argv)
  
    ldemul_set_symbols ();
  
@@ -2648,7 +2648,7 @@ index 3ba19b9..da7c18d 100644
  
    if (verbose)
      {
-@@ -445,6 +421,8 @@ main (int argc, char **argv)
+@@ -447,6 +423,8 @@ main (int argc, char **argv)
        if (! bfd_close (link_info.output_bfd))
  	einfo (_("%F%B: final close failed: %E\n"), link_info.output_bfd);
  
@@ -2657,7 +2657,7 @@ index 3ba19b9..da7c18d 100644
        /* If the --force-exe-suffix is enabled, and we're making an
  	 executable file and it doesn't end in .exe, copy it to one
  	 which does.  */
-@@ -491,6 +469,9 @@ main (int argc, char **argv)
+@@ -493,6 +471,9 @@ main (int argc, char **argv)
  	}
      }
  
@@ -2667,7 +2667,7 @@ index 3ba19b9..da7c18d 100644
    END_PROGRESS (program_name);
  
    if (config.stats)
-@@ -797,7 +778,9 @@ add_archive_element (struct bfd_link_info *info,
+@@ -799,7 +780,9 @@ add_archive_element (struct bfd_link_info *info,
  	    }
  	}
      }
@@ -2677,7 +2677,7 @@ index 3ba19b9..da7c18d 100644
  
    ldlang_add_file (input);
  
-@@ -1170,7 +1153,7 @@ warning_callback (struct bfd_link_info *info ATTRIBUTE_UNUSED,
+@@ -1172,7 +1155,7 @@ warning_callback (struct bfd_link_info *info ATTRIBUTE_UNUSED,
      einfo ("%P: %s%s\n", _("warning: "), warning);
    else if (symbol == NULL)
      einfo ("%B: %s%s\n", abfd, _("warning: "), warning);
@@ -2686,7 +2686,7 @@ index 3ba19b9..da7c18d 100644
      {
        struct warning_callback_info cinfo;
  
-@@ -1466,3 +1449,38 @@ notice (struct bfd_link_info *info,
+@@ -1468,3 +1451,38 @@ notice (struct bfd_link_info *info,
  
    return TRUE;
  }
@@ -2737,7 +2737,7 @@ index 69928f8..66aa628 100644
 +
  #endif
 diff --git a/ld/lexsup.c b/ld/lexsup.c
-index c6baebe..b2c831f 100644
+index be8a897..63a23ee 100644
 --- a/ld/lexsup.c
 +++ b/ld/lexsup.c
 @@ -168,6 +168,9 @@ static const struct ld_option ld_options[] =
@@ -2750,7 +2750,7 @@ index c6baebe..b2c831f 100644
    { {"flto", optional_argument, NULL, OPTION_IGNORE},
      '\0', NULL, N_("Ignored for GCC LTO option compatibility"),
      ONE_DASH },
-@@ -962,6 +965,9 @@ parse_args (unsigned argc, char **argv)
+@@ -960,6 +963,9 @@ parse_args (unsigned argc, char **argv)
  	  if (plugin_opt_plugin_arg (optarg))
  	    einfo(_("%P%F: bad -plugin-opt option\n"));
  	  break;
@@ -2761,7 +2761,7 @@ index c6baebe..b2c831f 100644
  	case 'q':
  	  link_info.emitrelocations = TRUE;
 diff --git a/ld/plugin.c b/ld/plugin.c
-index 8902ef4..c700863 100644
+index a11ccde..8c910fa 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -39,6 +39,9 @@
@@ -2774,7 +2774,7 @@ index 8902ef4..c700863 100644
  /* The suffix to append to the name of the real (claimed) object file
     when generating a dummy BFD to hold the IR symbols sent from the
     plugin.  For cosmetic use only; appears in maps, crefs etc.  */
-@@ -210,6 +213,17 @@ plugin_opt_plugin_arg (const char *arg)
+@@ -223,6 +226,17 @@ plugin_opt_plugin_arg (const char *arg)
    if (!last_plugin)
      return set_plugin_error (_("<no plugin>"));
  
@@ -2792,7 +2792,7 @@ index 8902ef4..c700863 100644
    newarg = xmalloc (sizeof *newarg);
    newarg->arg = arg;
    newarg->next = NULL;
-@@ -870,6 +884,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
+@@ -883,6 +897,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
    close (file->fd);
    if (claimed)
      {
@@ -2802,7 +2802,7 @@ index 8902ef4..c700863 100644
        /* Discard the real file's BFD and substitute the dummy one.  */
  
        /* BFD archive handling caches elements so we can't call
-@@ -923,13 +940,16 @@ plugin_call_cleanup (void)
+@@ -936,14 +953,17 @@ plugin_call_cleanup (void)
      {
        if (curplug->cleanup_handler && !curplug->cleanup_done)
  	{
@@ -2812,7 +2812,8 @@ index 8902ef4..c700863 100644
 -	  rv = (*curplug->cleanup_handler) ();
 -	  called_plugin = NULL;
 -	  if (rv != LDPS_OK)
--	    set_plugin_error (curplug->name);
+-	    info_msg (_("%P: %s: error in plugin cleanup: %d (ignored)\n"),
+-		      curplug->name, rv);
 +	  if (!plugin_save_temps)
 +	    {
 +	      enum ld_plugin_status rv;
@@ -2821,13 +2822,14 @@ index 8902ef4..c700863 100644
 +	      rv = (*curplug->cleanup_handler) ();
 +	      called_plugin = NULL;
 +	      if (rv != LDPS_OK)
-+		set_plugin_error (curplug->name);
++		info_msg (_("%P: %s: error in plugin cleanup: %d (ignored)\n"),
++			  curplug->name, rv);
 +	    }
  	  dlclose (curplug->dlhandle);
  	}
        curplug = curplug->next;
 diff --git a/ld/plugin.h b/ld/plugin.h
-index dc32295..e3e6ee3 100644
+index a227575..d41aa53 100644
 --- a/ld/plugin.h
 +++ b/ld/plugin.h
 @@ -24,6 +24,9 @@
