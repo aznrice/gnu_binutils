@@ -1,5 +1,5 @@
-This is the beta release of binutils 2.23.51.0.5 for Linux, which is
-based on binutils 2012 1110 in CVS on sourceware.org plus various
+This is the beta release of binutils 2.23.51.0.6 for Linux, which is
+based on binutils 2012 1123 in CVS on sourceware.org plus various
 changes. It is purely for Linux.
 
 All relevant patches in patches have been applied to the source tree.
@@ -115,12 +115,32 @@ endif
 
 to arch/ia64/Makefile in your kernel source tree.
 
-Please report any bugs related to binutils 2.23.51.0.5 to
+Please report any bugs related to binutils 2.23.51.0.6 to
 hjl.tools@gmail.com
 
 and
 
 http://www.sourceware.org/bugzilla/
+
+Changes from binutils 2.23.51.0.5:
+
+1. Update from binutils 2012 1123.
+2. Fix 64-bit jecxz encoding regression in x86 assembler.  PR 14859.
+3. Revert an accidental linker change.  PR 14862.
+4. Fix x32 TLS LD to LE optimization in gold.  PR 14858.
+5. Add "-z global" option to set DF_1_GLOBAL to ld.
+6. Improve ld plugin error handling.
+7. Port ld lib32 arrangement from Debian.
+8. Properly set the output maxpagesize when rewriting program header.
+PR 14493.
+9. Add additional DF_1_XXX support to readelf.
+10. Improve nacl support with separate code segments.
+11. Improve macos support.
+12. Improve arm support.
+13. Improve microblaze support.
+14. Improve mips support.
+15. Improve ppc support.
+16. Improve sparc support.
 
 Changes from binutils 2.23.51.0.4:
 
@@ -653,13 +673,13 @@ already been defined.  PR 12001.
 
 The file list:
 
-1. binutils-2.23.51.0.5.tar.bz2.  Source code.
+1. binutils-2.23.51.0.6.tar.bz2.  Source code.
 
 The primary sites for the beta Linux binutils are:
 
 1. http://www.kernel.org/pub/linux/devel/binutils/
 
-It is also available on linux/release/2.23.51.0.5 branch at
+It is also available on linux/release/2.23.51.0.6 branch at
 
 http://git.kernel.org/?p=linux/kernel/git/hjl/binutils.git;a=summary
 
@@ -668,4 +688,4 @@ Thanks.
 
 H.J. Lu
 hjl.tools@gmail.com
-11/12/2012
+11/26/2012
