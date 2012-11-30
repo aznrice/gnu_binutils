@@ -1,0 +1,61 @@
+2012-11-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/14899
+	* Makefile.def (dependencies): Make all-ld and all-gold depend
+	on all-gas.
+	* Makefile.in: Regenerated.
+
+diff --git a/Makefile.def b/Makefile.def
+index 1ea63ac..f2013d1 100644
+--- a/Makefile.def
++++ b/Makefile.def
+@@ -405,6 +405,7 @@ dependencies = { module=all-ld; on=all-opcodes; };
+ dependencies = { module=all-ld; on=all-build-bison; };
+ dependencies = { module=all-ld; on=all-build-flex; };
+ dependencies = { module=all-ld; on=all-intl; };
++dependencies = { module=all-ld; on=all-gas; };
+ dependencies = { module=install-ld; on=install-gold; };
+ dependencies = { module=install-strip-ld; on=install-strip-gold; };
+ dependencies = { module=configure-gold; on=configure-intl; };
+@@ -412,6 +413,7 @@ dependencies = { module=all-gold; on=all-libiberty; };
+ dependencies = { module=all-gold; on=all-intl; };
+ dependencies = { module=all-gold; on=all-bfd; };
+ dependencies = { module=all-gold; on=all-build-bison; };
++dependencies = { module=all-gold; on=all-gas; };
+ dependencies = { module=check-gold; on=all-binutils; };
+ dependencies = { module=check-gold; on=all-gas; };
+ 
+diff --git a/Makefile.in b/Makefile.in
+index 636b2ba..37d7d29 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -45491,6 +45491,14 @@ all-stage3-ld: maybe-all-stage3-intl
+ all-stage4-ld: maybe-all-stage4-intl
+ all-stageprofile-ld: maybe-all-stageprofile-intl
+ all-stagefeedback-ld: maybe-all-stagefeedback-intl
++all-ld: maybe-all-gas
++
++all-stage1-ld: maybe-all-stage1-gas
++all-stage2-ld: maybe-all-stage2-gas
++all-stage3-ld: maybe-all-stage3-gas
++all-stage4-ld: maybe-all-stage4-gas
++all-stageprofile-ld: maybe-all-stageprofile-gas
++all-stagefeedback-ld: maybe-all-stagefeedback-gas
+ install-ld: maybe-install-gold
+ install-strip-ld: maybe-install-strip-gold
+ configure-gold: maybe-configure-intl
+@@ -45533,6 +45541,14 @@ all-stage3-gold: maybe-all-build-bison
+ all-stage4-gold: maybe-all-build-bison
+ all-stageprofile-gold: maybe-all-build-bison
+ all-stagefeedback-gold: maybe-all-build-bison
++all-gold: maybe-all-gas
++
++all-stage1-gold: maybe-all-stage1-gas
++all-stage2-gold: maybe-all-stage2-gas
++all-stage3-gold: maybe-all-stage3-gas
++all-stage4-gold: maybe-all-stage4-gas
++all-stageprofile-gold: maybe-all-stageprofile-gas
++all-stagefeedback-gold: maybe-all-stagefeedback-gas
+ check-gold: maybe-all-binutils
+ 
+ check-stage1-gold: maybe-all-stage1-binutils

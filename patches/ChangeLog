@@ -1,5 +1,10 @@
 2012-11-30  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-pr14899-1.patch: New.  Build ld and gold after gas.
+	* README: Apply it.
+
+2012-11-30  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-pr14897-1.patch: New.  Install gold as default linker
 	only for --disable-ld or --enable-gold=default.
 	* README: Apply it.
