@@ -1,0 +1,71 @@
+2012-11-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gold/14897
+	* configure.ac (install_as_default): Set to yes only for
+	--disable-ld or --enable-gold=default.
+	* configure: Regenerated.
+
+diff --git a/gold/configure b/gold/configure
+index 4f74ae3..16737ae 100755
+--- a/gold/configure
++++ b/gold/configure
+@@ -3272,18 +3272,22 @@ default_ld=
+ # Check whether --enable-ld was given.
+ if test "${enable_ld+set}" = set; then :
+   enableval=$enable_ld; case "${enableval}" in
+-  default)
+-    default_ld=ld.bfd
+-    ;;
+-esac
++ no)
++   default_ld=ld.gold
++   ;;
++ esac
+ fi
+ 
+ 
+ # Check whether --enable-gold was given.
+ if test "${enable_gold+set}" = set; then :
+   enableval=$enable_gold; case "${enableval}" in
+- yes|default)
+-   if test x${default_ld} = x; then
++ default)
++   install_as_default=yes
++   installed_linker=ld.gold
++   ;;
++ yes)
++   if test x${default_ld} != x; then
+      install_as_default=yes
+    fi
+    installed_linker=ld.gold
+diff --git a/gold/configure.ac b/gold/configure.ac
+index f8297f2..cbb2326 100644
+--- a/gold/configure.ac
++++ b/gold/configure.ac
+@@ -55,16 +55,20 @@ default_ld=
+ AC_ARG_ENABLE(ld,
+ [[  --enable-ld[=ARG]     build ld [ARG={default,yes,no}]]],
+ [case "${enableval}" in
+-  default)
+-    default_ld=ld.bfd
+-    ;;
+-esac])
++ no)
++   default_ld=ld.gold
++   ;;
++ esac])
+ 
+ AC_ARG_ENABLE(gold,
+ [[  --enable-gold[=ARG]     build gold [ARG={default,yes,no}]]],
+ [case "${enableval}" in
+- yes|default)
+-   if test x${default_ld} = x; then
++ default)
++   install_as_default=yes
++   installed_linker=ld.gold
++   ;;
++ yes)
++   if test x${default_ld} != x; then
+      install_as_default=yes
+    fi
+    installed_linker=ld.gold
