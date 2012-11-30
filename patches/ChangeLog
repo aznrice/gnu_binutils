@@ -1,3 +1,9 @@
+2012-11-30  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-use-ld-1.patch: New.  Add fuse-ld= for GCC linker
+	option compatibility
+	* README: Apply it.
+
 2012-11-23  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-lto-error-1.patch: New.  Improve plugin error
