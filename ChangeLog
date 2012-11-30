@@ -1,3 +1,15 @@
+2012-11-30  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
+
+	* configure.ac: Merge from GCC.
+	* Makefile.tpl: Dito.
+	* Makefile.in: Dito.
+	* configure: Dito.
+
+2012-11-28  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
+
+	* configure.ac (noconfigdirs): Merge from GCC.
+	* configure: Regenerate.
+
 2012-11-19  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
 
 	* config.sub (arm): Merge from upstream: Handle armv[6-8] targets.

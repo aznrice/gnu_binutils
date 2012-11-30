@@ -1,3 +1,18 @@
+2012-11-30  Oleg Raikhman  <oleg@adapteva.com>
+	    Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	* epiphany-desc.c, epiphany-desc.h, epiphany-opc.c: Regenerate.
+
+2012-11-29  Roland McGrath  <mcgrathr@google.com>
+
+	* s390-mkopc.c (file_header): Add const.
+
+2012-11-29  David Holsgrove  <david.holsgrove@xilinx.com>
+
+	* microblaze-opc.h: Rename INST_TYPE_RD_R1_SPECIAL to
+	INST_TYPE_R1_R2_SPECIAL
+	* microblaze-dis.c (print_insn_microblaze): Same.
+
 2012-11-23  Alan Modra  <amodra@gmail.com>
 
 	* ppc-dis.c (ppc_parse_cpu): Add "sticky" param.  Track bits
@@ -45,7 +60,7 @@
 
 2012-11-14  Edgar E. Iglesias <edgar.iglesias@gmail.com>
 
-	* microblaze-opc.h: Increase MAX_OPCODES (op_code_struct):  add lbur, 
+	* microblaze-opc.h: Increase MAX_OPCODES (op_code_struct):  add lbur,
 	lhur, lwr, sbr, shr, swr
 	* microblaze-opcm.h (microblaze_instr): add lbur, lhur, lwr, sbr, shr,
 	swr

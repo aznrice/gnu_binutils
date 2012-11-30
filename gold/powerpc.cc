@@ -711,20 +711,20 @@ class Target_powerpc : public Sized_target<size, big_endian>
 
   // Create the PLT section.
   void
-  make_plt_section(Layout*);
+  make_plt_section(Symbol_table*, Layout*);
 
   void
-  make_iplt_section(Layout*);
+  make_iplt_section(Symbol_table*, Layout*);
 
   // Create a PLT entry for a global symbol.
   void
-  make_plt_entry(Layout*, Symbol*,
+  make_plt_entry(Symbol_table*, Layout*, Symbol*,
 		 const elfcpp::Rela<size, big_endian>&,
 		 const Sized_relobj_file<size, big_endian>* object);
 
   // Create a PLT entry for a local IFUNC symbol.
   void
-  make_local_ifunc_plt_entry(Layout*,
+  make_local_ifunc_plt_entry(Symbol_table*, Layout*,
 			     const elfcpp::Rela<size, big_endian>&,
 			     Sized_relobj_file<size, big_endian>*);
 
@@ -1391,8 +1391,8 @@ Powerpc_relobj<size, big_endian>::do_scan_relocs(Symbol_table* symtab,
 {
   if (size == 32)
     {
-      // Define a weak hidden _GLOBAL_OFFSET_TABLE_ to ensure it isn't
-      // seen as undefined when scanning relocs (and thus requires
+      // Define _GLOBAL_OFFSET_TABLE_ to ensure it isn't seen as
+      // undefined when scanning relocs (and thus requires
       // non-relative dynamic relocs).  The proper value will be
       // updated later.
       Symbol *gotsym = symtab->lookup("_GLOBAL_OFFSET_TABLE_", NULL);
@@ -1407,7 +1407,7 @@ Powerpc_relobj<size, big_endian>::do_scan_relocs(Symbol_table* symtab,
 					Symbol_table::PREDEFINED,
 					got, 0, 0,
 					elfcpp::STT_OBJECT,
-					elfcpp::STB_WEAK,
+					elfcpp::STB_LOCAL,
 					elfcpp::STV_HIDDEN, 0,
 					false, false);
 	}
@@ -1574,13 +1574,20 @@ private:
 	Output_data_got<size, big_endian>::add_constant(0);
 
 	// Define _GLOBAL_OFFSET_TABLE_ at the header
-	this->symtab_->define_in_output_data("_GLOBAL_OFFSET_TABLE_", NULL,
-					     Symbol_table::PREDEFINED,
-					     this, this->g_o_t(), 0,
-					     elfcpp::STT_OBJECT,
-					     elfcpp::STB_LOCAL,
-					     elfcpp::STV_HIDDEN,
-					     0, false, false);
+	Symbol *gotsym = this->symtab_->lookup("_GLOBAL_OFFSET_TABLE_", NULL);
+	if (gotsym != NULL)
+	  {
+	    Sized_symbol<size>* sym = static_cast<Sized_symbol<size>*>(gotsym);
+	    sym->set_value(this->g_o_t());
+	  }
+	else
+	  this->symtab_->define_in_output_data("_GLOBAL_OFFSET_TABLE_", NULL,
+					       Symbol_table::PREDEFINED,
+					       this, this->g_o_t(), 0,
+					       elfcpp::STT_OBJECT,
+					       elfcpp::STB_LOCAL,
+					       elfcpp::STV_HIDDEN, 0,
+					       false, false);
       }
     else
       Output_data_got<size, big_endian>::add_constant(0);
@@ -1878,10 +1885,14 @@ Output_data_plt_powerpc<size, big_endian>::do_write(Output_file* of)
 
 template<int size, bool big_endian>
 void
-Target_powerpc<size, big_endian>::make_plt_section(Layout* layout)
+Target_powerpc<size, big_endian>::make_plt_section(Symbol_table* symtab,
+						   Layout* layout)
 {
   if (this->plt_ == NULL)
     {
+      if (this->got_ == NULL)
+	this->got_section(symtab, layout);
+
       if (this->glink_ == NULL)
 	make_glink_section(layout);
 
@@ -1915,11 +1926,12 @@ Target_powerpc<size, big_endian>::make_plt_section(Layout* layout)
 
 template<int size, bool big_endian>
 void
-Target_powerpc<size, big_endian>::make_iplt_section(Layout* layout)
+Target_powerpc<size, big_endian>::make_iplt_section(Symbol_table* symtab,
+						    Layout* layout)
 {
   if (this->iplt_ == NULL)
     {
-      this->make_plt_section(layout);
+      this->make_plt_section(symtab, layout);
 
       Reloc_section* iplt_rel = new Reloc_section(false);
       this->rela_dyn_->output_section()->add_output_section_data(iplt_rel);
@@ -2865,6 +2877,7 @@ Target_powerpc<size, big_endian>::make_glink_section(Layout* layout)
 template<int size, bool big_endian>
 void
 Target_powerpc<size, big_endian>::make_plt_entry(
+    Symbol_table* symtab,
     Layout* layout,
     Symbol* gsym,
     const elfcpp::Rela<size, big_endian>& reloc,
@@ -2874,13 +2887,13 @@ Target_powerpc<size, big_endian>::make_plt_entry(
       && gsym->can_use_relative_reloc(false))
     {
       if (this->iplt_ == NULL)
-	this->make_iplt_section(layout);
+	this->make_iplt_section(symtab, layout);
       this->iplt_->add_ifunc_entry(gsym);
     }
   else
     {
       if (this->plt_ == NULL)
-	this->make_plt_section(layout);
+	this->make_plt_section(symtab, layout);
       this->plt_->add_entry(gsym);
     }
   this->glink_->add_entry(object, gsym, reloc);
@@ -2891,12 +2904,13 @@ Target_powerpc<size, big_endian>::make_plt_entry(
 template<int size, bool big_endian>
 void
 Target_powerpc<size, big_endian>::make_local_ifunc_plt_entry(
+    Symbol_table* symtab,
     Layout* layout,
     const elfcpp::Rela<size, big_endian>& reloc,
     Sized_relobj_file<size, big_endian>* relobj)
 {
   if (this->iplt_ == NULL)
-    this->make_iplt_section(layout);
+    this->make_iplt_section(symtab, layout);
   unsigned int r_sym = elfcpp::elf_r_sym<size>(reloc.get_r_info());
   this->iplt_->add_local_ifunc_entry(relobj, r_sym);
   this->glink_->add_entry(relobj, r_sym, reloc);
@@ -3249,7 +3263,9 @@ Target_powerpc<size, big_endian>::Scan::local(
   // A local STT_GNU_IFUNC symbol may require a PLT entry.
   bool is_ifunc = lsym.get_st_type() == elfcpp::STT_GNU_IFUNC;
   if (is_ifunc && this->reloc_needs_plt_for_ifunc(object, r_type))
-    target->make_local_ifunc_plt_entry(layout, reloc, object);
+    {
+      target->make_local_ifunc_plt_entry(symtab, layout, reloc, object);
+    }
 
   switch (r_type)
     {
@@ -3559,7 +3575,7 @@ Target_powerpc<size, big_endian>::Scan::global(
   // A STT_GNU_IFUNC symbol may require a PLT entry.
   if (gsym->type() == elfcpp::STT_GNU_IFUNC
       && this->reloc_needs_plt_for_ifunc(object, r_type))
-    target->make_plt_entry(layout, gsym, reloc, object);
+    target->make_plt_entry(symtab, layout, gsym, reloc, object);
 
   switch (r_type)
     {
@@ -3629,7 +3645,7 @@ Target_powerpc<size, big_endian>::Scan::global(
 	// Make a PLT entry if necessary.
 	if (gsym->needs_plt_entry())
 	  {
-	    target->make_plt_entry(layout, gsym, reloc, 0);
+	    target->make_plt_entry(symtab, layout, gsym, reloc, 0);
 	    // Since this is not a PC-relative relocation, we may be
 	    // taking the address of a function. In that case we need to
 	    // set the entry in the dynamic symbol table to the address of
@@ -3648,11 +3664,15 @@ Target_powerpc<size, big_endian>::Scan::global(
 		target->copy_reloc(symtab, layout, object,
 				   data_shndx, output_section, gsym, reloc);
 	      }
-	    else if (((size == 32 && r_type == elfcpp::R_POWERPC_ADDR32)
-		      || (size == 64 && r_type == elfcpp::R_PPC64_ADDR64))
-		     && (gsym->can_use_relative_reloc(false)
-			 || (size == 64
-			     && data_shndx == ppc_object->opd_shndx())))
+	    else if ((size == 32
+		      && r_type == elfcpp::R_POWERPC_ADDR32
+		      && gsym->can_use_relative_reloc(false)
+		      && !(gsym->visibility() == elfcpp::STV_PROTECTED
+			   && parameters->options().shared()))
+		     || (size == 64
+			 && r_type == elfcpp::R_PPC64_ADDR64
+			 && (gsym->can_use_relative_reloc(false)
+			     || data_shndx == ppc_object->opd_shndx())))
 	      {
 		Reloc_section* rela_dyn = target->rela_dyn_section(layout);
 		unsigned int dynrel = elfcpp::R_POWERPC_RELATIVE;
@@ -3685,7 +3705,7 @@ Target_powerpc<size, big_endian>::Scan::global(
 	      && (gsym->is_undefined()
 		  || gsym->is_from_dynobj()
 		  || gsym->is_preemptible())))
-	target->make_plt_entry(layout, gsym, reloc, object);
+	target->make_plt_entry(symtab, layout, gsym, reloc, object);
       // Fall thru
 
     case elfcpp::R_PPC64_REL64:

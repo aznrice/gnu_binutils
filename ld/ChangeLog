@@ -1,3 +1,20 @@
+2012-11-30  Joern Rennecke <joern.rennecke@embecosm.com>
+
+	* scripttempl/epiphany_4x4.sc, emulparams/elf32epiphany_4x4.sh: Add.
+	* emultempl/epiphanyelf_4x4.em: Likewise.
+	* configure.tgt: Add elf32epiphany_4x4 support.
+	* Makefile.am: Likewise.
+	* Makefile.in: Regenerate.
+
+2012-11-29  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* Makefile.in: Regenerate.
+
+2012-11-27  Nick Clifton  <nickc@redhat.com>
+
+	PR ld/14776
+	* ld.texinfo: Fix spelling mistakes.
+
 2012-11-26  Roland McGrath  <mcgrathr@google.com>
 
 	* emultempl/aarch64elf.em (gld${EMULATION_NAME}_before_parse):
