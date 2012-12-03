@@ -18,7 +18,6 @@ clean=$1
 patches="
 	binutils-shr-100.patch
 	binutils-error-15.patch
-	binutils-lto-error-1.patch
 	binutils-lto-mixed-18.patch
 	binutils-pr12639-2.patch
 	binutils-secondary-1.patch
