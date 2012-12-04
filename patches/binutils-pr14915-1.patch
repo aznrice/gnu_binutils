@@ -1,0 +1,96 @@
+ld/
+
+2012-12-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14915
+	* emultempl/elf32.em (gld${EMULATION_NAME}_after_open): Also
+	check DT_NEEDED entries when creating shared object with
+	--copy-dt-needed-entries.
+
+ld/testsuite/
+
+2012-12-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14915
+	* ld-elf/shared.exp (build_tests): Test --add-needed,
+	--copy-dt-needed-entries, --no-add-needed and
+	--no-copy-dt-needed-entries with -shared.
+	Add tests for --no-add-needed and --no-copy-dt-needed-entries
+	with -shared.
+
+diff --git a/ld/emultempl/elf32.em b/ld/emultempl/elf32.em
+index 6c84b82..d30a0ad 100644
+--- a/ld/emultempl/elf32.em
++++ b/ld/emultempl/elf32.em
+@@ -1181,8 +1181,6 @@ gld${EMULATION_NAME}_after_open (void)
+      special action by the person doing the link.  Note that the
+      needed list can actually grow while we are stepping through this
+      loop.  */
+-  if (!link_info.executable)
+-    return;
+   needed = bfd_elf_get_needed_list (link_info.output_bfd, &link_info);
+   for (l = needed; l != NULL; l = l->next)
+     {
+@@ -1191,9 +1189,13 @@ gld${EMULATION_NAME}_after_open (void)
+       int force;
+ 
+       /* If the lib that needs this one was --as-needed and wasn't
+-	 found to be needed, then this lib isn't needed either.  */
++	 found to be needed, then this lib isn't needed either.  Skip
++	 the lib when creating a shared object unless we are copying
++	 DT_NEEDED entres.  */
+       if (l->by != NULL
+-	  && (bfd_elf_get_dyn_lib_class (l->by) & DYN_AS_NEEDED) != 0)
++	  && ((bfd_elf_get_dyn_lib_class (l->by) & DYN_AS_NEEDED) != 0
++	      || (!link_info.executable
++		  && bfd_elf_get_dyn_lib_class (l->by) & DYN_NO_ADD_NEEDED) != 0))
+ 	continue;
+ 
+       /* If we've already seen this file, skip it.  */
+diff --git a/ld/testsuite/ld-elf/shared.exp b/ld/testsuite/ld-elf/shared.exp
+index 2e679d9..eef264e 100644
+--- a/ld/testsuite/ld-elf/shared.exp
++++ b/ld/testsuite/ld-elf/shared.exp
+@@ -188,6 +188,21 @@ set build_tests {
+   {"Build libneeded1c.o"
+    "-r -nostdlib" ""
+    {needed1c.c} {} "libneeded1c.o"}
++  {"Build libneeded1pic.o"
++   "-r -nostdlib" "-fPIC"
++   {needed1c.c} {} "libneeded1pic.o"}
++  {"Build needed1a.so with --add-needed"
++   "-shared tmpdir/libneeded1pic.o -Wl,--add-needed,-rpath=tmpdir,-z,defs -Ltmpdir -lneeded1a" ""
++   {dummy.c} {} "needed1a.so"}
++  {"Build needed1b.so with --copy-dt-needed-entries"
++   "-shared tmpdir/libneeded1pic.o -Wl,--copy-dt-needed-entries,-rpath=tmpdir,-z,defs -Ltmpdir -lneeded1a" ""
++   {dummy.c} {} "needed1b.so"}
++  {"Build needed1a.so with --no-add-needed"
++   "-shared tmpdir/libneeded1pic.o -Wl,--no-add-needed -Ltmpdir -lneeded1a" ""
++   {dummy.c} {} "needed1c.so"}
++  {"Build needed1b.so with --no-copy-dt-needed-entries"
++   "-shared tmpdir/libneeded1pic.o -Wl,--no-copy-dt-needed-entries -Ltmpdir -lneeded1a" ""
++   {dummy.c} {} "needed1d.so"}
+ }
+ 
+ run_cc_link_tests $build_tests
+@@ -352,6 +367,20 @@ if { [ regexp "'bar' is defined in DSO tmpdir/libneeded1b.so" $exec_output ] } {
+ } {
+     fail $testname
+ }
++set testname "--no-add-needed -shared"
++set exec_output [run_host_cmd "$CC" "$gcc_gas_flag $gcc_ld_flag -shared tmpdir/libneeded1pic.o -Wl,--no-add-needed,-z,defs -Ltmpdir -lneeded1a"]
++if { [ regexp "undefined reference to `bar'" $exec_output ] } {
++    pass $testname
++} {
++    fail $testname
++}
++set testname "--no-copy-dt-needed-entries -shared"
++set exec_output [run_host_cmd "$CC" "$gcc_gas_flag $gcc_ld_flag -shared tmpdir/libneeded1pic.o -Wl,--no-copy-dt-needed-entries,-z,defs -Ltmpdir -lneeded1a"]
++if { [ regexp "undefined reference to `bar'" $exec_output ] } {
++    pass $testname
++} {
++    fail $testname
++}
+ 
+ # Check to see if the C++ compiler works
+ if { [which $CXX] == 0 } {
