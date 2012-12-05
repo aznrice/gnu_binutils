@@ -251,6 +251,14 @@ ld/
 
 ld/testsuite/
 
+2012-12-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14918
+	* ld-plugin/lto.exp (lto_link_elf_tests): Add PR ld/14918 test.
+
+	* ld-plugin/pr14918.c: New file.
+	* ld-plugin/pr14918.d: Likewise.
+
 2012-10-25  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ld-plugin/lto.exp (lto_run_tests): Move tmpdir/lto-15a.o
@@ -1177,10 +1185,10 @@ index 4399d02..df7c8a6 100644
  /* The next three section types are defined by Solaris, and are named
     SHT_SUNW*.  We use them in GNU code, so we also define SHT_GNU*
 diff --git a/ld/emultempl/aarch64elf.em b/ld/emultempl/aarch64elf.em
-index 4c03ffd..a9adb16 100644
+index 25935d0..ae29c15 100644
 --- a/ld/emultempl/aarch64elf.em
 +++ b/ld/emultempl/aarch64elf.em
-@@ -263,7 +263,7 @@ gld${EMULATION_NAME}_after_allocation (void)
+@@ -264,7 +264,7 @@ gld${EMULATION_NAME}_after_allocation (void)
  }
  
  static void
@@ -1189,7 +1197,7 @@ index 4c03ffd..a9adb16 100644
  {
    if (! link_info.relocatable)
      {
-@@ -275,7 +275,7 @@ gld${EMULATION_NAME}_finish (void)
+@@ -276,7 +276,7 @@ gld${EMULATION_NAME}_finish (void)
  	}
      }
  
@@ -1198,7 +1206,7 @@ index 4c03ffd..a9adb16 100644
  }
  
  /* This is a convenient point to tell BFD about target specific flags.
-@@ -412,4 +412,4 @@ LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=aarch64_elf_create_output_section_statem
+@@ -413,4 +413,4 @@ LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=aarch64_elf_create_output_section_statem
  LDEMUL_BEFORE_PARSE=gld"${EMULATION_NAME}"_before_parse
  
  # Call the extra arm-elf function
@@ -1218,10 +1226,10 @@ index 21064ad..ec0965a 100644
  EOF
  
 diff --git a/ld/emultempl/armelf.em b/ld/emultempl/armelf.em
-index 3b881dd..a37a35d 100644
+index 7f7d2cc..d1cdb9c 100644
 --- a/ld/emultempl/armelf.em
 +++ b/ld/emultempl/armelf.em
-@@ -365,7 +365,7 @@ gld${EMULATION_NAME}_after_allocation (void)
+@@ -366,7 +366,7 @@ gld${EMULATION_NAME}_after_allocation (void)
  }
  
  static void
@@ -1230,7 +1238,7 @@ index 3b881dd..a37a35d 100644
  {
    struct bfd_link_hash_entry * h;
  
-@@ -388,7 +388,7 @@ gld${EMULATION_NAME}_finish (void)
+@@ -389,7 +389,7 @@ gld${EMULATION_NAME}_finish (void)
  	}
      }
  
@@ -1239,7 +1247,7 @@ index 3b881dd..a37a35d 100644
  
    if (thumb_entry_symbol)
      {
-@@ -689,4 +689,4 @@ LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=arm_elf_create_output_section_statements
+@@ -690,4 +690,4 @@ LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=arm_elf_create_output_section_statements
  LDEMUL_BEFORE_PARSE=gld"${EMULATION_NAME}"_before_parse
  
  # Call the extra arm-elf function
@@ -2761,7 +2769,7 @@ index be8a897..63a23ee 100644
  	case 'q':
  	  link_info.emitrelocations = TRUE;
 diff --git a/ld/plugin.c b/ld/plugin.c
-index a11ccde..8c910fa 100644
+index da99e77..2966f0f 100644
 --- a/ld/plugin.c
 +++ b/ld/plugin.c
 @@ -39,6 +39,9 @@
@@ -2774,7 +2782,7 @@ index a11ccde..8c910fa 100644
  /* The suffix to append to the name of the real (claimed) object file
     when generating a dummy BFD to hold the IR symbols sent from the
     plugin.  For cosmetic use only; appears in maps, crefs etc.  */
-@@ -223,6 +226,17 @@ plugin_opt_plugin_arg (const char *arg)
+@@ -217,6 +220,17 @@ plugin_opt_plugin_arg (const char *arg)
    if (!last_plugin)
      return set_plugin_error (_("<no plugin>"));
  
@@ -2792,7 +2800,7 @@ index a11ccde..8c910fa 100644
    newarg = xmalloc (sizeof *newarg);
    newarg->arg = arg;
    newarg->next = NULL;
-@@ -883,6 +897,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
+@@ -876,6 +890,9 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
    close (file->fd);
    if (claimed)
      {
@@ -2802,7 +2810,7 @@ index a11ccde..8c910fa 100644
        /* Discard the real file's BFD and substitute the dummy one.  */
  
        /* BFD archive handling caches elements so we can't call
-@@ -936,14 +953,17 @@ plugin_call_cleanup (void)
+@@ -929,14 +946,17 @@ plugin_call_cleanup (void)
      {
        if (curplug->cleanup_handler && !curplug->cleanup_done)
  	{
@@ -3794,10 +3802,10 @@ index 0000000..4b5bcf8
 +#...
 diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
 new file mode 100644
-index 0000000..dbbd503
+index 0000000..281ecb1
 --- /dev/null
 +++ b/ld/testsuite/ld-plugin/lto.exp
-@@ -0,0 +1,360 @@
+@@ -0,0 +1,363 @@
 +# Expect script for ld-plugin LTO tests
 +#   Copyright 2011
 +#   Free Software Foundation, Inc.
@@ -3998,6 +4006,9 @@ index 0000000..dbbd503
 +  {"PR ld/13244"
 +   "-shared -O2 -fPIC -flto -fuse-linker-plugin -nostdlib" "-O2 -fno-early-inlining -flto"
 +   {pr13244.c} {{"readelf" {-s --wide} "pr13244.d"}} "pr13244.so" "c"}
++  {"PR ld/14918"
++   "-flto" "-flto"
++   {pr14918.c} {{"readelf" {-d --wide} "pr14918.d"}} "pr14918.exe" "c"}
 +}
 +
 +# Check final symbols in executables.
@@ -4773,6 +4784,27 @@ index 0000000..67e8506
 +++ b/ld/testsuite/ld-plugin/pr13287.cc
 @@ -0,0 +1 @@
 +int main() {return 0; }
+diff --git a/ld/testsuite/ld-plugin/pr14918.c b/ld/testsuite/ld-plugin/pr14918.c
+new file mode 100644
+index 0000000..a9bce4a
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr14918.c
+@@ -0,0 +1,5 @@
++int
++main ()
++{
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/pr14918.d b/ld/testsuite/ld-plugin/pr14918.d
+new file mode 100644
+index 0000000..0b14948
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr14918.d
+@@ -0,0 +1,4 @@
++#failif
++#...
++ 0x0+1 \(NEEDED\) +Shared library: \[libgcc_s.so.[0-9]+\]
++#...
 diff --git a/ld/testsuite/ld-plugin/run-ie.c b/ld/testsuite/ld-plugin/run-ie.c
 new file mode 100644
 index 0000000..32afa0a
@@ -4819,10 +4851,10 @@ index 0000000..7edca6d
 @@ -0,0 +1 @@
 +IE: 4
 diff --git a/ld/testsuite/lib/ld-lib.exp b/ld/testsuite/lib/ld-lib.exp
-index 49837dd..cf81652 100644
+index 3cb8ee1..0393e6a 100644
 --- a/ld/testsuite/lib/ld-lib.exp
 +++ b/ld/testsuite/lib/ld-lib.exp
-@@ -975,7 +975,7 @@ proc set_file_contents { filename contents } {
+@@ -981,7 +981,7 @@ proc set_file_contents { filename contents } {
  proc ar_simple_create { ar aropts target objects } {
      remote_file host delete $target
  
@@ -4831,7 +4863,7 @@ index 49837dd..cf81652 100644
      set exec_output [prune_warnings $exec_output]
  
      if [string match "" $exec_output] then {
-@@ -1603,6 +1603,34 @@ proc check_plugin_api_available { } {
+@@ -1609,6 +1609,34 @@ proc check_plugin_api_available { } {
      return $plugin_api_available_saved
  }
  
