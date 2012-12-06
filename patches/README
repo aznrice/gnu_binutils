@@ -24,7 +24,6 @@ patches="
 	binutils-use-ld-1.patch
 	binutils-pr14897-1.patch
 	binutils-pr14899-1.patch
-	binutils-pr14915-1.patch
 "
 
 if [ -n "$clean" ]
