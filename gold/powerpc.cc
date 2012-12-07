@@ -3239,9 +3239,6 @@ Stub_table<size, big_endian>::do_write(Output_file* of)
   unsigned char* const oview = of->get_output_view(off, oview_size);
   unsigned char* p;
 
-  typedef typename elfcpp::Elf_types<size>::Elf_Addr Address;
-  static const Address invalid_address = static_cast<Address>(0) - 1;
-
   if (size == 64)
     {
       const Output_data_got_powerpc<size, big_endian>* got
@@ -5441,6 +5438,33 @@ Target_powerpc<size, big_endian>::do_finalize_sections(
     this->copy_relocs_.emit(this->rela_dyn_section(layout));
 }
 
+// Return TRUE iff INSN is one we expect on a _LO variety toc/got
+// reloc.
+
+static bool
+ok_lo_toc_insn(uint32_t insn)
+{
+  return ((insn & (0x3f << 26)) == 14u << 26 /* addi */
+	  || (insn & (0x3f << 26)) == 32u << 26 /* lwz */
+	  || (insn & (0x3f << 26)) == 34u << 26 /* lbz */
+	  || (insn & (0x3f << 26)) == 36u << 26 /* stw */
+	  || (insn & (0x3f << 26)) == 38u << 26 /* stb */
+	  || (insn & (0x3f << 26)) == 40u << 26 /* lhz */
+	  || (insn & (0x3f << 26)) == 42u << 26 /* lha */
+	  || (insn & (0x3f << 26)) == 44u << 26 /* sth */
+	  || (insn & (0x3f << 26)) == 46u << 26 /* lmw */
+	  || (insn & (0x3f << 26)) == 47u << 26 /* stmw */
+	  || (insn & (0x3f << 26)) == 48u << 26 /* lfs */
+	  || (insn & (0x3f << 26)) == 50u << 26 /* lfd */
+	  || (insn & (0x3f << 26)) == 52u << 26 /* stfs */
+	  || (insn & (0x3f << 26)) == 54u << 26 /* stfd */
+	  || ((insn & (0x3f << 26)) == 58u << 26 /* lwa,ld,lmd */
+	      && (insn & 3) != 1)
+	  || ((insn & (0x3f << 26)) == 62u << 26 /* std, stmd */
+	      && ((insn & 3) == 0 || (insn & 3) == 3))
+	  || (insn & (0x3f << 26)) == 12u << 26 /* addic */);
+}
+
 // Return the value to use for a branch relocation.
 
 template<int size, bool big_endian>
@@ -6019,6 +6043,75 @@ Target_powerpc<size, big_endian>::Relocate::relocate(
 
     default:
       break;
+    }
+
+  if (size == 64)
+    {
+      // Multi-instruction sequences that access the TOC can be
+      // optimized, eg. addis ra,r2,0; addi rb,ra,x;
+      // to             nop;           addi rb,r2,x;
+      switch (r_type)
+	{
+	default:
+	  break;
+
+	case elfcpp::R_POWERPC_GOT_TLSLD16_HA:
+	case elfcpp::R_POWERPC_GOT_TLSGD16_HA:
+	case elfcpp::R_POWERPC_GOT_TPREL16_HA:
+	case elfcpp::R_POWERPC_GOT_DTPREL16_HA:
+	case elfcpp::R_POWERPC_GOT16_HA:
+	case elfcpp::R_PPC64_TOC16_HA:
+	  if (!parameters->options().no_toc_optimize())
+	    {
+	      Insn* iview = reinterpret_cast<Insn*>(view - 2 * big_endian);
+	      Insn insn = elfcpp::Swap<32, big_endian>::readval(iview);
+	      if ((insn & ((0x3f << 26) | 0x1f << 16))
+		  != ((15u << 26) | (2 << 16)) /* addis rt,2,imm */)
+		gold_error_at_location(relinfo, relnum, rela.get_r_offset(),
+				       _("toc optimization is not supported "
+					 "for %#08x instruction"), insn);
+	      else if (value + 0x8000 < 0x10000)
+		{
+		  elfcpp::Swap<32, big_endian>::writeval(iview, nop);
+		  return true;
+		}
+	    }
+	  break;
+
+	case elfcpp::R_POWERPC_GOT_TLSLD16_LO:
+	case elfcpp::R_POWERPC_GOT_TLSGD16_LO:
+	case elfcpp::R_POWERPC_GOT_TPREL16_LO:
+	case elfcpp::R_POWERPC_GOT_DTPREL16_LO:
+	case elfcpp::R_POWERPC_GOT16_LO:
+	case elfcpp::R_PPC64_GOT16_LO_DS:
+	case elfcpp::R_PPC64_TOC16_LO:
+	case elfcpp::R_PPC64_TOC16_LO_DS:
+	  if (!parameters->options().no_toc_optimize())
+	    {
+	      Insn* iview = reinterpret_cast<Insn*>(view - 2 * big_endian);
+	      Insn insn = elfcpp::Swap<32, big_endian>::readval(iview);
+	      if (!ok_lo_toc_insn(insn))
+		gold_error_at_location(relinfo, relnum, rela.get_r_offset(),
+				       _("toc optimization is not supported "
+					 "for %#08x instruction"), insn);
+	      else if (value + 0x8000 < 0x10000)
+		{
+		  if ((insn & (0x3f << 26)) == 12u << 26 /* addic */)
+		    {
+		      // Transform addic to addi when we change reg.
+		      insn &= ~((0x3f << 26) | (0x1f << 16));
+		      insn |= (14u << 26) | (2 << 16);
+		    }
+		  else
+		    {
+		      insn &= ~(0x1f << 16);
+		      insn |= 2 << 16;
+		    }
+		  elfcpp::Swap<32, big_endian>::writeval(iview, insn);
+		}
+	    }
+	  break;
+	}
     }
 
   typename Reloc::Overflow_check overflow = Reloc::CHECK_NONE;
@@ -6887,5 +6980,15 @@ Target_selector_powerpc<32, true> target_selector_ppc32;
 Target_selector_powerpc<32, false> target_selector_ppc32le;
 Target_selector_powerpc<64, true> target_selector_ppc64;
 Target_selector_powerpc<64, false> target_selector_ppc64le;
+
+// Instantiate these constants for -O0
+template<int size, bool big_endian>
+const int Output_data_glink<size, big_endian>::pltresolve_size;
+template<int size, bool big_endian>
+const typename Stub_table<size, big_endian>::Address
+  Stub_table<size, big_endian>::invalid_address;
+template<int size, bool big_endian>
+const typename Target_powerpc<size, big_endian>::Address
+  Target_powerpc<size, big_endian>::invalid_address;
 
 } // End anonymous namespace.
