@@ -71,7 +71,8 @@ public:
   Powerpc_relobj(const std::string& name, Input_file* input_file, off_t offset,
 		 const typename elfcpp::Ehdr<size, big_endian>& ehdr)
     : Sized_relobj_file<size, big_endian>(name, input_file, offset, ehdr),
-      special_(0), opd_valid_(false), opd_ent_(), access_from_map_()
+      special_(0), opd_valid_(false),
+      opd_ent_(), access_from_map_(), has14_(), stub_table_()
   { }
 
   ~Powerpc_relobj()
@@ -2067,6 +2068,7 @@ Target_powerpc<size, big_endian>::Branch_info::make_stub(
 	    return;
 	  to = symval.value(this->object_, 0);
 	}
+      to += this->addend_;
       if (stub_table == NULL)
 	stub_table = this->object_->stub_table(this->shndx_);
       gold_assert(stub_table != NULL);
@@ -6940,7 +6942,8 @@ class Target_selector_powerpc : public Target_selector
 {
 public:
   Target_selector_powerpc()
-    : Target_selector(elfcpp::EM_NONE, size, big_endian,
+    : Target_selector(size == 64 ? elfcpp::EM_PPC64 : elfcpp::EM_PPC,
+		      size, big_endian,
 		      (size == 64
 		       ? (big_endian ? "elf64-powerpc" : "elf64-powerpcle")
 		       : (big_endian ? "elf32-powerpc" : "elf32-powerpcle")),
@@ -6948,28 +6951,6 @@ public:
 		       ? (big_endian ? "elf64ppc" : "elf64lppc")
 		       : (big_endian ? "elf32ppc" : "elf32lppc")))
   { }
-
-  virtual Target*
-  do_recognize(Input_file*, off_t, int machine, int, int)
-  {
-    switch (size)
-      {
-      case 64:
-	if (machine != elfcpp::EM_PPC64)
-	  return NULL;
-	break;
-
-      case 32:
-	if (machine != elfcpp::EM_PPC)
-	  return NULL;
-	break;
-
-      default:
-	return NULL;
-      }
-
-    return this->instantiate_target();
-  }
 
   virtual Target*
   do_instantiate_target()
