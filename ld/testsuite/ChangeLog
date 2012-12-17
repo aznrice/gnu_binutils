@@ -1,3 +1,27 @@
+2012-12-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14968
+	* ld-ifunc/ifunc-18a-i386.d: New file.
+	* ld-ifunc/ifunc-18a-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-18a.s: Likewise.
+	* ld-ifunc/ifunc-18b-i386.d: Likewise.
+	* ld-ifunc/ifunc-18b-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-18b.s: Likewise.
+	* ld-ifunc/ifunc-19a-i386.d: Likewise.
+	* ld-ifunc/ifunc-19a-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-19a.s: Likewise.
+	* ld-ifunc/ifunc-19b-i386.d: Likewise.
+	* ld-ifunc/ifunc-19b-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-19b.s: Likewise.
+
+2012-12-15  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* ld-elf/elf.exp (stack exec, stack size): Run for any GNU target.
+	* ld-elf/maxpage3c.d: Run for any x86 GNU target.
+	* ld-elf/maxpage4.d: Likewise.
+	* ld-elf/maxpage5.d: Likewise.
+	* ld-i386/export-class.exp: Likewise.
+
 2012-12-14  Yufeng Zhang  <yufeng.zhang@arm.com>
 
 	* ld-elf/indirect.exp: Disable if -shared is not supported.
