@@ -1,5 +1,5 @@
-This is the beta release of binutils 2.23.51.0.6 for Linux, which is
-based on binutils 2012 1123 in CVS on sourceware.org plus various
+This is the beta release of binutils 2.23.51.0.7 for Linux, which is
+based on binutils 2012 1218 in CVS on sourceware.org plus various
 changes. It is purely for Linux.
 
 All relevant patches in patches have been applied to the source tree.
@@ -115,12 +115,37 @@ endif
 
 to arch/ia64/Makefile in your kernel source tree.
 
-Please report any bugs related to binutils 2.23.51.0.6 to
+Please report any bugs related to binutils 2.23.51.0.7 to
 hjl.tools@gmail.com
 
 and
 
 http://www.sourceware.org/bugzilla/
+
+Changes from binutils 2.23.51.0.6:
+
+1. Update from binutils 2012 1218.
+2. Add missing R_*_IRELATIVE relocations.  PR 14968.
+3. Remove unnecessary R_*_NONE relocations.  PR 14956.
+4. Fix ar/ranlib on 32-bit filesystems.  PR 14933.
+5. Fix a "Not enough room for program headers" linker bug.  PR 14926.
+6. Support self-assignment in a linker script to convert symbols to
+absolute.  PR 14962.
+7. Support --copy-dt-needed-entries when creating DSO.  PR 14915.
+8. Improve linker plugin DSO error handling.  PR 14904.
+9. Issue warning for plugin dummy.  PR 12760.
+10. Add -fuse-ld=bfd|gold support to ld and gold.
+11. Fix gold configure.  PR 14897.
+12. Correct gas dependency.  PR 14899.
+13. Add rdos support.
+14. Improve gold.
+15. Improve nacl support.
+16. Improve aarch64 support.
+17. Improve arm support.
+18. Improve microblaze support.
+19. Improve mips support.
+20. Improve ppc support.
+21. Improve tile support.
 
 Changes from binutils 2.23.51.0.5:
 
@@ -673,13 +698,13 @@ already been defined.  PR 12001.
 
 The file list:
 
-1. binutils-2.23.51.0.6.tar.bz2.  Source code.
+1. binutils-2.23.51.0.7.tar.bz2.  Source code.
 
 The primary sites for the beta Linux binutils are:
 
 1. http://www.kernel.org/pub/linux/devel/binutils/
 
-It is also available on linux/release/2.23.51.0.6 branch at
+It is also available on linux/release/2.23.51.0.7 branch at
 
 http://git.kernel.org/?p=linux/kernel/git/hjl/binutils.git;a=summary
 
@@ -688,4 +713,4 @@ Thanks.
 
 H.J. Lu
 hjl.tools@gmail.com
-11/26/2012
+12/20/2012
