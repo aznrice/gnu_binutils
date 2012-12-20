@@ -1157,7 +1157,7 @@ warning_callback (struct bfd_link_info *info ATTRIBUTE_UNUSED,
     einfo ("%P: %s%s\n", _("warning: "), warning);
   else if (symbol == NULL)
     einfo ("%B: %s%s\n", abfd, _("warning: "), warning);
-  else if ((abfd->flags & BFD_PLUGIN) == 0)
+  else
     {
       struct warning_callback_info cinfo;
 

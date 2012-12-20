@@ -238,32 +238,6 @@ ld/testsuite/
 	* ld-ia64/error3.d: Likewise.
 	* ld-ia64/error4.d: Likewise.
 
-ld/
-
-2012-11-22  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* ldmain.c (main): Don't check plugin_load_plugins return.
-
-	* lexsup.c (parse_args): Don't check plugin_opt_plugin return.
-
-	* plugin.c (dl_error): New.
-	(plugin_opt_plugin): Change return type to void.  Stop on
-	dlopen error and report error with dl_error ().
-	(plugin_load_plugins): Change return type to void.  Stop on
-	dlsym error and report error with dl_error ().  Don't use
-	set_plugin_error.
-	(plugin_call_cleanup): Issue an error for each plugin.
-
-	* plugin.h (plugin_opt_plugin): Change return type to void.
-	(plugin_load_plugins): Likewise.
-
-ld/testsuite/
-
-2012-11-22  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* ld-plugin/plugin-2.d: Update expected error message.
-	* ld-plugin/plugin-4.d: Likewise.
-
 bfd/
 
 2012-10-25  H.J. Lu  <hongjiu.lu@intel.com>
@@ -517,211 +491,40 @@ ld/
 
 ld/testsuite/
 
-2012-10-25  H.J. Lu  <hongjiu.lu@intel.com>
+2012-12-05  H.J. Lu  <hongjiu.lu@intel.com>
 
-	* ld-plugin/lto.exp (lto_run_tests): Move tmpdir/lto-15a.o
-	after tmpdir/liblto-15.a.
+	PR ld/14918
+	* ld-plugin/lto.exp (lto_link_elf_tests): Add PR ld/14918 test.
 
-2012-10-25  H.J. Lu  <hongjiu.lu@intel.com>
+	* ld-plugin/pr14918.c: New file.
+	* ld-plugin/pr14918.d: Likewise.
 
-	* ld-plugin/lto-8a.c (foo): New prototype.
+2011-01-22  H.J. Lu  <hongjiu.lu@intel.com>
 
-	* ld-plugin/pr13201.c: Include <stdlib.h>.
+	PR ld/12365
+	* ld-plugin/pr12365a.c: New file.
+	* ld-plugin/pr12365b.c: Likewise.
+	* ld-plugin/pr12365c.c: Likewise.
 
-	* ld-plugin/pr13229.cc (call_something): Changed return type
-	to void.
-	(optimize_me_out): Likewise.
-	(optimize_me_out2): Likewise.
-	* ld-plugin/pr13244.c (do_nothing): Likewise.
-	(bar): Likewise.
+	* ld-plugin/lto.exp (lto_link_tests): Prepare for the PR ld/12365
+	test.
+	Run the PR ld/12365 test.
 
-2012-10-25  H.J. Lu  <hongjiu.lu@intel.com>
+2011-01-22  H.J. Lu  <hongjiu.lu@intel.com>
 
-	* ld-plugin/lto.exp: Filter-out -Wp,-D_FORTIFY_SOURCE= from
-	CFLAGS and CXXFLAGS.
-
-2012-10-20  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* ld-plugin/lto.exp: Update expected error message.
-
-2012-06-24  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* lib/ld-lib.exp (check_lto_available): Test the new linker to
-	build DSO.
-
-2011-10-21  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/13287
-	* ld-plugin/lto.exp (lto_link_tests): Add a test for PR ld/13287.
-
-	* ld-plugin/pr13287.cc: New.
-
-2011-10-07  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/13229
-	PR ld/13244
-	* ld-plugin/lto.exp (lto_link_elf_tests): Add tests for PRs
-	ld/13229 and ld/13244.
-
-	* ld-plugin/pr13229.cc: New.
-	* ld-plugin/pr13229.d: Likewise.
-	* ld-plugin/pr13244.c: Likewise.
-	* ld-plugin/pr13244.d: Likewise.
-
-2011-09-23  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/13201
-	* ld-plugin/lto.exp (lto_link_tests): Add a test for PR ld/13201.
-	(lto_run_tests): Likewise.
-
-	* ld-plugin/pr13201.c: New.
-	* ld-plugin/pr13201.out: Likewise.
-
-2011-09-16  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/12975
-	* ld-plugin/lto.exp (lto_link_elf_tests): Add a test for PR
-	ld/12975.
-
-	* ld-plugin/pr12975.c: New.
-	* ld-plugin/pr12975.d: Likewise.
-	* ld-plugin/pr12975.t: Likewise.
-
-2011-09-14  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/13183
-	* ld-plugin/lto.exp (lto_link_tests): Add tests for PR ld/13183.
-	(lto_link_symbol_tests): Likewise.
-
-	* ld-plugin/pr13183.d: New.
-	* ld-plugin/pr13183a.c: Likewise.
-	* ld-plugin/pr13183b.c: Likewise.
-
-	* lib/ld-lib.exp (ar_simple_create): Pass -rc to ar.
-
-2011-08-09  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/13066
-	* ld-plugin/lto.exp (lto_run_tests): Add a test for PR ld/13066.
-
-	* ld-plugin/pr13066.cc: New.
-	* ld-plugin/pr13066.out: Likewise.
-
-2011-07-11  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/12942
-	* ld-plugin/lto.exp (lto_link_elf_tests): Add a test for PR
-	ld/12982.
-
-	* ld-plugin/pr12982.c: New.
-	* ld-plugin/pr12982.d: Likewise.
-
-2011-07-09  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/12942
-	* ld-plugin/lto.exp (lto_link_tests): Add tests for PR ld/12942.
-	(lto_run_tests): Likewise.
-	Add "PR ld/12942 (3)" test.
-
-	* ld-plugin/pr12942.out: New.
-	* ld-plugin/pr12942a.cc: Likewise.
-	* ld-plugin/pr12942a.h: Likewise.
-	* ld-plugin/pr12942b.cc: Likewise.
-	* ld-plugin/pr12942c.cc: Likewise.
-
-2011-06-29  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* ld-plugin/lto.exp (lto_link_elf_tests): Add 2 LTO ELF DSO 
-	tests.
-
-	* ld-plugin/lto-17a.c: New.
-	* ld-plugin/lto-17a.d: Likewise.
-	* ld-plugin/lto-17b-1.d: Likewise.
-	* ld-plugin/lto-17b-2.d: Likewise.
-	* ld-plugin/lto-17b.c: Likewise.
-
-2011-06-29  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* ld-plugin/lto.exp (lto_link_elf_tests): Add 2 LTO ELF DSO 
-	tests.
-
-	* ld-plugin/lto-17a.c: New.
-	* ld-plugin/lto-17a.d: Likewise.
-	* ld-plugin/lto-17b-1.d: Likewise.
-	* ld-plugin/lto-17b-2.d: Likewise.
-	* ld-plugin/lto-17b.c: Likewise.
-
-2011-06-29  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* ld-plugin/lto.exp (lto_run_elf_tests): Add "LTO TLS IE".
-
-	* ld-plugin/run-ie.c: New.
-	* ld-plugin/run-ie.out: Likewise.
-
-2011-05-14  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/12760
-	* ld-plugin/lto.exp (lto_link_tests): Add tests for PR ld/12760.
-
-	* ld-plugin/pr12760a.s: New.
-	* ld-plugin/pr12760b.c: Likewise.
-
-2011-05-14  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/12758
-	* ld-plugin/lto.exp (lto_link_tests): Add tests for PR ld/12758.
-
-	* ld-plugin/pr12758a.s: New.
-	* ld-plugin/pr12758b.c: Likewise.
-
-2011-05-14  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* ld-plugin/lto.exp (lto_link_symbol_tests): Replace "-e foo"
-	with "-Wl,-e,foo".
-
-2011-04-19  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* ld-plugin/dummy.c: New.
-	* ld-plugin/dummy.s: Likewise.
-	* ld-plugin/func1p.c: Likewise.
-	* ld-plugin/func2i.c: Likewise.
-	* ld-plugin/func3h.c: Likewise.
-	* ld-plugin/lto-10.out: Likewise.
+	PR ld/12430
+	* ld-plugin/lto-10.out: New file.
 	* ld-plugin/lto-10a.c: Likewise.
 	* ld-plugin/lto-10b.c: Likewise.
 	* ld-plugin/lto-10r.d: Likewise.
-	* ld-plugin/lto-11.out: Likewise.
-	* ld-plugin/lto-11a.c: Likewise.
-	* ld-plugin/lto-11b.c: Likewise.
-	* ld-plugin/lto-11c.c: Likewise.
-	* ld-plugin/lto-12.out: Likewise.
-	* ld-plugin/lto-12a.c: Likewise.
-	* ld-plugin/lto-12b.c: Likewise.
-	* ld-plugin/lto-12c.c: Likewise.
-	* ld-plugin/lto-13.out: Likewise.
-	* ld-plugin/lto-13a.c: Likewise.
-	* ld-plugin/lto-13b.c: Likewise.
-	* ld-plugin/lto-13c.c: Likewise.
-	* ld-plugin/lto-14.out: Likewise.
-	* ld-plugin/lto-14a.c: Likewise.
-	* ld-plugin/lto-14b.c: Likewise.
-	* ld-plugin/lto-14c.c: Likewise.
-	* ld-plugin/lto-15.out: Likewise.
-	* ld-plugin/lto-15a.c: Likewise.
-	* ld-plugin/lto-15b.c: Likewise.
-	* ld-plugin/lto-16a.c: Likewise.
-	* ld-plugin/lto-16a.d: Likewise.
-	* ld-plugin/lto-16b.c: Likewise.
-	* ld-plugin/lto-16b.d: Likewise.
-	* ld-plugin/lto-1a.c: Likewise.
-	* ld-plugin/lto-1b.c: Likewise.
-	* ld-plugin/lto-2.c: Likewise.
-	* ld-plugin/lto-3.d: Likewise.
-	* ld-plugin/lto-3.out: Likewise.
-	* ld-plugin/lto-3a.c: Likewise.
-	* ld-plugin/lto-3b.c: Likewise.
-	* ld-plugin/lto-3c.c: Likewise.
-	* ld-plugin/lto-3r.d: Likewise.
+
+	* ld-plugin/lto.exp (lto_link_tests): Prepare for "LTO 10".
+	(lto_run_tests): Add "LTO 10".
+	Run lto-10r and create tmpdir/lto-10.o.
+
+2011-01-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12291
 	* ld-plugin/lto-4.out: Likewise.
 	* ld-plugin/lto-4a.c: Likewise.
 	* ld-plugin/lto-4b.c: Likewise.
@@ -730,32 +533,11 @@ ld/testsuite/
 	* ld-plugin/lto-4r-b.d: Likewise.
 	* ld-plugin/lto-4r-c.d: Likewise.
 	* ld-plugin/lto-4r-d.d: Likewise.
-	* ld-plugin/lto-5.d: Likewise.
-	* ld-plugin/lto-5.out: Likewise.
-	* ld-plugin/lto-5a.c: Likewise.
-	* ld-plugin/lto-5b.c: Likewise.
-	* ld-plugin/lto-5r.d: Likewise.
-	* ld-plugin/lto-6.c: Likewise.
-	* ld-plugin/lto-7.out: Likewise.
-	* ld-plugin/lto-7a.c: Likewise.
-	* ld-plugin/lto-7b.c: Likewise.
-	* ld-plugin/lto-7c.c: Likewise.
-	* ld-plugin/lto-7d.c: Likewise.
-	* ld-plugin/lto-8.out: Likewise.
-	* ld-plugin/lto-8a.c: Likewise.
-	* ld-plugin/lto-8b.c: Likewise.
-	* ld-plugin/lto-9.cc: Likewise.
-	* ld-plugin/lto-9.d: Likewise.
-	* ld-plugin/lto.exp: Likewise.
-	* ld-plugin/pr12365a.c: Likewise.
-	* ld-plugin/pr12365b.c: Likewise.
-	* ld-plugin/pr12365c.c: Likewise.
-	* ld-plugin/pr12696-1.cc: Likewise.
 
-	* ld-plugin/plugin.exp: Add object files for symbols claimed
-	or created by testplugin.
-
-	* lib/ld-lib.exp (check_lto_available): New.
+	* ld-plugin/lto.exp (lto_link_tests): Prepare for "LTO 4[acd]"
+	and "lto-4r-[abcd]" tests.
+	(lto_run_tests): Add "LTO 4[acd]" tests.
+	Build liblto-4.a.  Run "lto-4r-[abcd]" tests.
 
 bfd/
 
@@ -993,3 +775,30 @@ ld/testsuite/
 	* ld-elf/library8c.c: Likewise.
 	* ld-elf/library8c.rd: Likewise.
 
+gold/
+
+2012-11-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* options.h (General_options): Add -fuse-ld= for GCC linker
+	option compatibility.
+
+ld/
+
+2012-11-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* lexsup.c (ld_options): Add fuse-ld= for GCC linker option
+	compatibility.
+
+2012-11-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gold/14897
+	* configure.ac (install_as_default): Set to yes only for
+	--disable-ld or --enable-gold=default.
+	* configure: Regenerated.
+
+2012-11-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/14899
+	* Makefile.def (dependencies): Make all-binutils, all-gprof,
+	all-ld and all-gold depend on all-gas.
+	* Makefile.in: Regenerated.

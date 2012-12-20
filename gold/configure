@@ -3274,18 +3274,22 @@ default_ld=
 # Check whether --enable-ld was given.
 if test "${enable_ld+set}" = set; then :
   enableval=$enable_ld; case "${enableval}" in
-  default)
-    default_ld=ld.bfd
-    ;;
-esac
+ no)
+   default_ld=ld.gold
+   ;;
+ esac
 fi
 
 
 # Check whether --enable-gold was given.
 if test "${enable_gold+set}" = set; then :
   enableval=$enable_gold; case "${enableval}" in
- yes|default)
-   if test x${default_ld} = x; then
+ default)
+   install_as_default=yes
+   installed_linker=ld.gold
+   ;;
+ yes)
+   if test x${default_ld} != x; then
      install_as_default=yes
    fi
    installed_linker=ld.gold

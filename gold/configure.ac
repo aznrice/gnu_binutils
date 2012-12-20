@@ -72,16 +72,20 @@ default_ld=
 AC_ARG_ENABLE(ld,
 [[  --enable-ld[=ARG]     build ld [ARG={default,yes,no}]]],
 [case "${enableval}" in
-  default)
-    default_ld=ld.bfd
-    ;;
-esac])
+ no)
+   default_ld=ld.gold
+   ;;
+ esac])
 
 AC_ARG_ENABLE(gold,
 [[  --enable-gold[=ARG]     build gold [ARG={default,yes,no}]]],
 [case "${enableval}" in
- yes|default)
-   if test x${default_ld} = x; then
+ default)
+   install_as_default=yes
+   installed_linker=ld.gold
+   ;;
+ yes)
+   if test x${default_ld} != x; then
      install_as_default=yes
    fi
    installed_linker=ld.gold
