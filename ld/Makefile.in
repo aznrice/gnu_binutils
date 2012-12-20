@@ -15,6 +15,24 @@
 
 @SET_MAKE@
 
+#
+#   Copyright 2012 Free Software Foundation
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+#
+
 
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -521,6 +539,7 @@ ALL_EMULATION_SOURCES = \
 	eelf32elmip.c \
 	eelf32elmipvxworks.c \
 	eelf32epiphany.c \
+	eelf32epiphany_4x4.c \
 	eelf32fr30.c \
 	eelf32frv.c \
 	eelf32frvfd.c \
@@ -760,6 +779,7 @@ ALL_EMULATION_SOURCES = \
 	etic54xcoff.c \
 	etic80coff.c \
 	ev850.c \
+	ev850_rh850.c \
 	evanilla.c \
 	evax.c \
 	evaxnbsd.c \
@@ -1143,6 +1163,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32elmip.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32elmipvxworks.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32epiphany.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32epiphany_4x4.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32fr30.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32frv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32frvfd.Po@am__quote@
@@ -1419,6 +1440,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/etic54xcoff.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/etic80coff.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ev850.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ev850_rh850.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/evanilla.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/evax.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/evaxnbsd.Po@am__quote@
@@ -2194,6 +2216,7 @@ earmelf_linux_eabi.c: $(srcdir)/emulparams/armelf_linux_eabi.sh \
 earmelf_nacl.c: $(srcdir)/emulparams/armelf_nacl.sh \
   $(srcdir)/emulparams/armelf_linux_eabi.sh \
   $(srcdir)/emulparams/armelf_linux.sh \
+  $(srcdir)/emulparams/elf_nacl.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} armelf_nacl "$(tdir_armelf_nacl)"
@@ -2227,6 +2250,7 @@ earmelfb_nacl.c: $(srcdir)/emulparams/armelfb_nacl.sh \
   $(srcdir)/emulparams/armelf_nacl.sh \
   $(srcdir)/emulparams/armelf_linux_eabi.sh \
   $(srcdir)/emulparams/armelf_linux.sh \
+  $(srcdir)/emulparams/elf_nacl.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} armelfb_nacl "$(tdir_armelfb_nacl)"
@@ -2494,6 +2518,10 @@ eelf32elmipvxworks.c: $(srcdir)/emulparams/elf32elmipvxworks.sh \
 eelf32epiphany.c: $(srcdir)/emulparams/elf32epiphany.sh \
   $(ELF_DEPS) ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32epiphany "$(tdir_epiphany)"
+eelf32epiphany_4x4.c: $(srcdir)/emulparams/elf32epiphany_4x4.sh \
+  $(srcdir)/emultempl/elf32.em \
+  $(ELF_DEPS) $(srcdir)/scripttempl/epiphany_4x4.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32epiphany_4x4 "$(tdir_epiphany_4x4)"
 eelf32fr30.c: $(srcdir)/emulparams/elf32fr30.sh \
   $(ELF_GEN_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32fr30 "$(tdir_fr30)"

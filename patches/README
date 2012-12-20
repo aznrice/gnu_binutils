@@ -18,10 +18,12 @@ clean=$1
 patches="
 	binutils-shr-100.patch
 	binutils-error-15.patch
-	binutils-lto-error-1.patch
 	binutils-lto-mixed-18.patch
 	binutils-pr12639-2.patch
 	binutils-secondary-1.patch
+	binutils-use-ld-1.patch
+	binutils-pr14897-1.patch
+	binutils-pr14899-1.patch
 "
 
 if [ -n "$clean" ]

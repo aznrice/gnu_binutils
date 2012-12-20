@@ -158,17 +158,11 @@ dlclose (void *handle)
 
 #endif /* !defined (HAVE_DLFCN_H) && defined (HAVE_WINDOWS_H)  */
 
-#ifdef HAVE_DLFCN_H
+#ifndef HAVE_DLFCN_H
 static const char *
-dl_error (const char *plugin ATTRIBUTE_UNUSED)
+dlerror (void)
 {
-  return dlerror ();
-}
-#else
-static const char *
-dl_error (const * char plugin)
-{
-  return plugin;
+  return "";
 }
 #endif
 
@@ -205,7 +199,7 @@ plugin_opt_plugin (const char *plugin)
   newplug->name = plugin;
   newplug->dlhandle = dlopen (plugin, RTLD_NOW);
   if (!newplug->dlhandle)
-    einfo (_("%P%F: error loading plugin: %s\n"), dl_error (plugin));
+    einfo (_("%P%F: %s: error loading plugin: %s\n"), plugin, dlerror ());
 
   /* Chain on end, so when we run list it is in command-line order.  */
   *plugins_tail_chain_ptr = newplug;
@@ -833,15 +827,14 @@ plugin_load_plugins (void)
       if (!onloadfn)
 	onloadfn = (ld_plugin_onload) dlsym (curplug->dlhandle, "_onload");
       if (!onloadfn)
-	einfo (_("%P%F: error loading plugin: %s\n"),
-	       dl_error (curplug->name));
+        einfo (_("%P%F: %s: error loading plugin: %s\n"),
+	       curplug->name, dlerror ());
       set_tv_plugin_args (curplug, &my_tv[tv_header_size]);
       called_plugin = curplug;
       rv = (*onloadfn) (my_tv);
       called_plugin = NULL;
       if (rv != LDPS_OK)
-	einfo (_("%P%F: %s: error loading plugin: %d\n"),
-	       curplug->name, rv);
+	einfo (_("%P%F: %s: plugin error: %d\n"), curplug->name, rv);
       curplug = curplug->next;
     }
 

@@ -1,0 +1,109 @@
+2012-11-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/14899
+	* Makefile.def (dependencies): Make all-binutils, all-gprof,
+	all-ld and all-gold depend on all-gas.
+	* Makefile.in: Regenerated.
+diff --git a/Makefile.def b/Makefile.def
+index 1ea63ac..6724026 100644
+--- a/Makefile.def
++++ b/Makefile.def
+@@ -370,6 +370,9 @@ dependencies = { module=all-bfd; on=all-intl; };
+ dependencies = { module=configure-opcodes; on=configure-libiberty; hard=true; };
+ dependencies = { module=all-opcodes; on=all-libiberty; };
+ 
++// We must build gas before binutils, gprof, ld and gold to avoid race
++// condition in the prev-gcc/as script during bootstrap of combined tree
++// with GCC and binutils.  See PR gas/14899 for details.
+ dependencies = { module=configure-binutils; on=configure-intl; };
+ dependencies = { module=all-binutils; on=all-libiberty; };
+ dependencies = { module=all-binutils; on=all-opcodes; };
+@@ -377,6 +380,7 @@ dependencies = { module=all-binutils; on=all-bfd; };
+ dependencies = { module=all-binutils; on=all-build-flex; };
+ dependencies = { module=all-binutils; on=all-build-bison; };
+ dependencies = { module=all-binutils; on=all-intl; };
++dependencies = { module=all-binutils; on=all-gas; };
+ 
+ // We put install-opcodes before install-binutils because the installed
+ // binutils might be on PATH, and they might need the shared opcodes
+@@ -398,6 +402,7 @@ dependencies = { module=all-gprof; on=all-libiberty; };
+ dependencies = { module=all-gprof; on=all-bfd; };
+ dependencies = { module=all-gprof; on=all-opcodes; };
+ dependencies = { module=all-gprof; on=all-intl; };
++dependencies = { module=all-gprof; on=all-gas; };
+ dependencies = { module=configure-ld; on=configure-intl; };
+ dependencies = { module=all-ld; on=all-libiberty; };
+ dependencies = { module=all-ld; on=all-bfd; };
+@@ -405,6 +410,7 @@ dependencies = { module=all-ld; on=all-opcodes; };
+ dependencies = { module=all-ld; on=all-build-bison; };
+ dependencies = { module=all-ld; on=all-build-flex; };
+ dependencies = { module=all-ld; on=all-intl; };
++dependencies = { module=all-ld; on=all-gas; };
+ dependencies = { module=install-ld; on=install-gold; };
+ dependencies = { module=install-strip-ld; on=install-strip-gold; };
+ dependencies = { module=configure-gold; on=configure-intl; };
+@@ -412,6 +418,7 @@ dependencies = { module=all-gold; on=all-libiberty; };
+ dependencies = { module=all-gold; on=all-intl; };
+ dependencies = { module=all-gold; on=all-bfd; };
+ dependencies = { module=all-gold; on=all-build-bison; };
++dependencies = { module=all-gold; on=all-gas; };
+ dependencies = { module=check-gold; on=all-binutils; };
+ dependencies = { module=check-gold; on=all-gas; };
+ 
+diff --git a/Makefile.in b/Makefile.in
+index 4820253..e25691e 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -45386,6 +45386,14 @@ all-stage3-binutils: maybe-all-stage3-intl
+ all-stage4-binutils: maybe-all-stage4-intl
+ all-stageprofile-binutils: maybe-all-stageprofile-intl
+ all-stagefeedback-binutils: maybe-all-stagefeedback-intl
++all-binutils: maybe-all-gas
++
++all-stage1-binutils: maybe-all-stage1-gas
++all-stage2-binutils: maybe-all-stage2-gas
++all-stage3-binutils: maybe-all-stage3-gas
++all-stage4-binutils: maybe-all-stage4-gas
++all-stageprofile-binutils: maybe-all-stageprofile-gas
++all-stagefeedback-binutils: maybe-all-stagefeedback-gas
+ install-binutils: maybe-install-opcodes
+ install-strip-binutils: maybe-install-strip-opcodes
+ install-opcodes: maybe-install-bfd
+@@ -45435,6 +45443,7 @@ all-gprof: maybe-all-libiberty
+ all-gprof: maybe-all-bfd
+ all-gprof: maybe-all-opcodes
+ all-gprof: maybe-all-intl
++all-gprof: maybe-all-gas
+ configure-ld: maybe-configure-intl
+ 
+ configure-stage1-ld: maybe-configure-stage1-intl
+@@ -45491,6 +45500,14 @@ all-stage3-ld: maybe-all-stage3-intl
+ all-stage4-ld: maybe-all-stage4-intl
+ all-stageprofile-ld: maybe-all-stageprofile-intl
+ all-stagefeedback-ld: maybe-all-stagefeedback-intl
++all-ld: maybe-all-gas
++
++all-stage1-ld: maybe-all-stage1-gas
++all-stage2-ld: maybe-all-stage2-gas
++all-stage3-ld: maybe-all-stage3-gas
++all-stage4-ld: maybe-all-stage4-gas
++all-stageprofile-ld: maybe-all-stageprofile-gas
++all-stagefeedback-ld: maybe-all-stagefeedback-gas
+ install-ld: maybe-install-gold
+ install-strip-ld: maybe-install-strip-gold
+ configure-gold: maybe-configure-intl
+@@ -45533,6 +45550,14 @@ all-stage3-gold: maybe-all-build-bison
+ all-stage4-gold: maybe-all-build-bison
+ all-stageprofile-gold: maybe-all-build-bison
+ all-stagefeedback-gold: maybe-all-build-bison
++all-gold: maybe-all-gas
++
++all-stage1-gold: maybe-all-stage1-gas
++all-stage2-gold: maybe-all-stage2-gas
++all-stage3-gold: maybe-all-stage3-gas
++all-stage4-gold: maybe-all-stage4-gas
++all-stageprofile-gold: maybe-all-stageprofile-gas
++all-stagefeedback-gold: maybe-all-stagefeedback-gas
+ check-gold: maybe-all-binutils
+ 
+ check-stage1-gold: maybe-all-stage1-binutils

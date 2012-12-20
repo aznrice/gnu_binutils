@@ -1,3 +1,93 @@
+2012-12-17  Nick Clifton  <nickc@redhat.com>
+
+	* MAINTAINERS: Add copyright notice.
+	* Makefile.am: Likewise.
+	* NEWS: Likewise.
+	* README: Likewise.
+	* configure.host: Likewise.
+	* configure.in: Likewise.
+	* gen-doc.texi: Likewise.
+	* h8-doc.texi: Likewise.
+	* ldlex-wrapper.c: Likewise.
+	* emulparams/README: Likewise.
+	* emultempl/README: Likewise.
+	* scripttempl/README: Likewise.
+	* Makefile.in: Regenerate.
+
+2012-12-17  Alan Modra  <amodra@gmail.com>
+
+	PR ld/14962
+	* ldexp.h (struct ldexp_control): Add "assign_name".
+	* ldexp.c (fold_name <NAME>): Compare and clear assign_name on match.
+	(exp_fold_tree_1): Remove existing code testing for self assignment.
+	Instead set and test expld.assign_name.
+	* ldlang.c (scan_for_self_assignment): Delete.
+	(print_assignment): Instead set and test expld.assign_name.
+
+2012-12-11  Roland McGrath  <mcgrathr@google.com>
+
+	* emulparams/elf_nacl.sh (nacl_rodata_addr): New shell function.
+	(RODATA_ADDR, SHLIB_RODATA_ADDR): Use it to base the calculation
+	on SEGMENT_START("text-segment", ...) rather than ... alone.
+	* Makefile.am (earmelf_nacl.c, earmelfb_nacl.c): Add missing
+	dependency on $(srcdir)/emulparams/elf_nacl.sh.
+	* Makefile.in: Regenerate.
+
+2012-12-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14915
+	* emultempl/elf32.em (gld${EMULATION_NAME}_after_open): Also
+	check DT_NEEDED entries when creating shared object with
+	--copy-dt-needed-entries.
+
+2012-12-05  Leif Ekblad  <leif@rdos.net>
+
+	* configure.tgt: Add x86_64-*-rdos.
+
+2012-12-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14904
+	* ldmain.c (main): Don't check plugin_load_plugins return.
+
+	* lexsup.c (parse_args): Don't check plugin_opt_plugin return.
+
+	* plugin.c (dlerror): New.  Defined if HAVE_DLFCN_H isn't
+	defined.
+	(plugin_opt_plugin): Change return type to void.  Stop on
+	dlopen error and report error with dlerror ().
+	(plugin_load_plugins): Change return type to void.  Stop on
+	dlsym error and report error with dlerror ().  Don't use
+	set_plugin_error.
+	(plugin_call_cleanup): Issue an error for each plugin.
+
+	* plugin.h (plugin_opt_plugin): Change return type to void.
+	(plugin_load_plugins): Likewise.
+
+2012-11-30  Joern Rennecke <joern.rennecke@embecosm.com>
+
+	* scripttempl/epiphany_4x4.sc, emulparams/elf32epiphany_4x4.sh: Add.
+	* emultempl/epiphanyelf_4x4.em: Likewise.
+	* configure.tgt: Add elf32epiphany_4x4 support.
+	* Makefile.am: Likewise.
+	* Makefile.in: Regenerate.
+
+2012-11-29  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* Makefile.in: Regenerate.
+
+2012-11-27  Nick Clifton  <nickc@redhat.com>
+
+	PR ld/14776
+	* ld.texinfo: Fix spelling mistakes.
+
+2012-11-26  Roland McGrath  <mcgrathr@google.com>
+
+	* emultempl/aarch64elf.em (gld${EMULATION_NAME}_before_parse):
+	Copy last elf32.em here too.
+	* emultempl/armelf.em (gld${EMULATION_NAME}_before_parse): Likewise.
+	* emultempl/mmixelf.em (gld${EMULATION_NAME}_before_parse): Likewise.
+	* emultempl/scoreelf.em (gld${EMULATION_NAME}_before_parse): Likewise.
+
 2012-11-21  Roland McGrath  <mcgrathr@google.com>
 
 	* ld.h (ld_config_type): New flag member separate_code.
@@ -929,6 +1019,12 @@
 
 For older changes see ChangeLog-2011
 
+Copyright (C) 2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

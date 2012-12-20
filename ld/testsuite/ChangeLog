@@ -1,3 +1,314 @@
+2012-12-19  Alan Modra  <amodra@gmail.com>
+
+	PR ld/14962
+	* ld-scripts/pr14962.d, * ld-scripts/pr14962.t,
+	* ld-scripts/pr14962a.s, * ld-scripts/pr14962b.s: New test.
+	* ld-scripts/expr.exp: Run it.
+
+2012-12-17  Roland McGrath  <mcgrathr@google.com>
+
+	* ld-elf/elf.exp (stack exec, stack size): Run for *-*-nacl* targets.
+	* ld-i386/export-class.exp: Run for i?86-*-nacl* targets.
+
+2012-12-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/var1.d: Remove the leading zero.
+
+2012-12-17  Nick Clifton  <nickc@redhat.com>
+
+	* ld-elf/frame.exp: Add copyright notice.
+	* ld-scripts/section-flags.exp: Likewise.
+	* ld-scripts/size-2.d: Likewise.
+	* ld-tic6x/tic6x.exp: Likewise.
+
+2012-12-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14962
+	* ld-elf/var1.d: New file.
+	* ld-elf/var1.s: Likewise.
+	* ld-elf/var1.t: Likewise.
+
+2012-12-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14968
+	* ld-ifunc/ifunc-18a-i386.d: New file.
+	* ld-ifunc/ifunc-18a-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-18a.s: Likewise.
+	* ld-ifunc/ifunc-18b-i386.d: Likewise.
+	* ld-ifunc/ifunc-18b-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-18b.s: Likewise.
+	* ld-ifunc/ifunc-19a-i386.d: Likewise.
+	* ld-ifunc/ifunc-19a-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-19a.s: Likewise.
+	* ld-ifunc/ifunc-19b-i386.d: Likewise.
+	* ld-ifunc/ifunc-19b-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-19b.s: Likewise.
+
+2012-12-15  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* ld-elf/elf.exp (stack exec, stack size): Run for any GNU target.
+	* ld-elf/maxpage3c.d: Run for any x86 GNU target.
+	* ld-elf/maxpage4.d: Likewise.
+	* ld-elf/maxpage5.d: Likewise.
+	* ld-i386/export-class.exp: Likewise.
+
+2012-12-14  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* ld-elf/indirect.exp: Disable if -shared is not supported.
+	* lib/ld-lib.exp (check_shared_lib_support): Add aarch64*-*-elf and
+	arm*-*-elf to the exclude list.
+
+2012-12-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14956
+	* ld-ifunc/ifunc-14-i386.d: Renamed to ...
+	* ld-ifunc/ifunc-14a-i386.d: This.
+
+	* ld-ifunc/ifunc-14-x86-64.d: Renamed to ...
+	* ld-ifunc/ifunc-14a-x86-64.d: This.
+
+	* ld-ifunc/ifunc-14b-i386.d: New file.
+	* ld-ifunc/ifunc-14b-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-14c-i386.d: Likewise.
+	* ld-ifunc/ifunc-14c-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-14d-i386.d: Likewise.
+	* ld-ifunc/ifunc-14d-x86-64.d: Likewise.
+
+2012-12-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/pr14926.d: Use "readelf -S --wide".
+
+2012-12-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/12248
+	PR ld/12277
+	PR ld/12314
+	PR ld/12319
+	PR ld/12364
+	PR ld/12369
+	PR ld/12439
+	PR ld/12496
+	PR ld/12507
+	PR ld/12696
+	PR ld/12758
+	PR ld/12760
+	PR ld/12942
+	PR ld/12975
+	PR ld/13066
+	PR ld/13183
+	PR ld/13201
+	PR ld/13229
+	PR ld/13244
+	PR ld/13287
+	* ld-plugin/dummy.c: New file.
+	* ld-plugin/dummy.s: Likewise.
+	* ld-plugin/lto-11.out: Likewise.
+	* ld-plugin/lto-11a.c: Likewise.
+	* ld-plugin/lto-11b.c: Likewise.
+	* ld-plugin/lto-11c.c: Likewise.
+	* ld-plugin/lto-12.out: Likewise.
+	* ld-plugin/lto-12a.c: Likewise.
+	* ld-plugin/lto-12b.c: Likewise.
+	* ld-plugin/lto-12c.c: Likewise.
+	* ld-plugin/lto-13.out: Likewise.
+	* ld-plugin/lto-13a.c: Likewise.
+	* ld-plugin/lto-13b.c: Likewise.
+	* ld-plugin/lto-13c.c: Likewise.
+	* ld-plugin/lto-14.out: Likewise.
+	* ld-plugin/lto-14a.c: Likewise.
+	* ld-plugin/lto-14b.c: Likewise.
+	* ld-plugin/lto-14c.c: Likewise.
+	* ld-plugin/lto-15.out: Likewise.
+	* ld-plugin/lto-15a.c: Likewise.
+	* ld-plugin/lto-15b.c: Likewise.
+	* ld-plugin/lto-16a.c: Likewise.
+	* ld-plugin/lto-16a.d: Likewise.
+	* ld-plugin/lto-16b.c: Likewise.
+	* ld-plugin/lto-16b.d: Likewise.
+	* ld-plugin/lto-17a.c: Likewise.
+	* ld-plugin/lto-17a.d: Likewise.
+	* ld-plugin/lto-17b-1.d: Likewise.
+	* ld-plugin/lto-17b-2.d: Likewise.
+	* ld-plugin/lto-17b.c: Likewise.
+	* ld-plugin/lto-1a.c: Likewise.
+	* ld-plugin/lto-1b.c: Likewise.
+	* ld-plugin/lto-2.c: Likewise.
+	* ld-plugin/lto-3.d: Likewise.
+	* ld-plugin/lto-3.out: Likewise.
+	* ld-plugin/lto-3a.c: Likewise.
+	* ld-plugin/lto-3b.c: Likewise.
+	* ld-plugin/lto-3c.c: Likewise.
+	* ld-plugin/lto-3r.d: Likewise.
+	* ld-plugin/lto-5.d: Likewise.
+	* ld-plugin/lto-5.out: Likewise.
+	* ld-plugin/lto-5a.c: Likewise.
+	* ld-plugin/lto-5b.c: Likewise.
+	* ld-plugin/lto-5r.d: Likewise.
+	* ld-plugin/lto-6.c: Likewise.
+	* ld-plugin/lto-7.out: Likewise.
+	* ld-plugin/lto-7a.c: Likewise.
+	* ld-plugin/lto-7b.c: Likewise.
+	* ld-plugin/lto-7c.c: Likewise.
+	* ld-plugin/lto-7d.c: Likewise.
+	* ld-plugin/lto-8.out: Likewise.
+	* ld-plugin/lto-8a.c: Likewise.
+	* ld-plugin/lto-8b.c: Likewise.
+	* ld-plugin/lto-9.cc: Likewise.
+	* ld-plugin/lto-9.d: Likewise.
+	* ld-plugin/lto.exp: Likewise.
+	* ld-plugin/pr12696-1.cc: Likewise.
+	* ld-plugin/pr12758a.s: Likewise.
+	* ld-plugin/pr12758b.c: Likewise.
+	* ld-plugin/pr12760a.c: Likewise.
+	* ld-plugin/pr12760b.c: Likewise.
+	* ld-plugin/pr12942.out: Likewise.
+	* ld-plugin/pr12942a.cc: Likewise.
+	* ld-plugin/pr12942a.h: Likewise.
+	* ld-plugin/pr12942b.cc: Likewise.
+	* ld-plugin/pr12942c.cc: Likewise.
+	* ld-plugin/pr12975.c: Likewise.
+	* ld-plugin/pr12975.d: Likewise.
+	* ld-plugin/pr12975.t: Likewise.
+	* ld-plugin/pr12982.c: Likewise.
+	* ld-plugin/pr12982.d: Likewise.
+	* ld-plugin/pr13066.cc: Likewise.
+	* ld-plugin/pr13066.out: Likewise.
+	* ld-plugin/pr13183.d: Likewise.
+	* ld-plugin/pr13183a.c: Likewise.
+	* ld-plugin/pr13183b.c: Likewise.
+	* ld-plugin/pr13201.c: Likewise.
+	* ld-plugin/pr13201.out: Likewise.
+	* ld-plugin/pr13229.cc: Likewise.
+	* ld-plugin/pr13229.d: Likewise.
+	* ld-plugin/pr13244.c: Likewise.
+	* ld-plugin/pr13244.d: Likewise.
+	* ld-plugin/pr13287.cc: Likewise.
+	* ld-plugin/run-ie.c: Likewise.
+	* ld-plugin/run-ie.out: Likewise.
+
+2012-12-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-plugin/func1p.c: New file.
+	* ld-plugin/func2i.c: Likewise.
+	* ld-plugin/func3h.c: Likewise.
+
+	* ld-plugin/plugin.exp (plugin_extra_elf_tests): Add plugin
+	visibility test.
+
+2012-12-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* lib/ld-lib.exp (check_lto_available): New.  Check if compiler
+	supports LTO.
+
+2012-12-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* lib/ld-lib.exp (run_cc_link_tests): Properly check linker
+	warnings.
+
+2012-12-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* lib/ld-lib.exp (ar_simple_create): Pass -rc to ar.
+
+2012-12-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14926
+	* ld-elf/pr14926.d: New file.
+	* ld-elf/pr14926.s: Likewise.
+
+2012-12-07  Alan Modra  <amodra@gmail.com>
+
+	* ld-elf/comm-data.exp: Revert last change.
+	* ld-elf/comm-data5.d: xfail frv-linux.
+
+2012-12-07  Alan Modra  <amodra@gmail.com>
+
+	* ld-elf/shared.exp (libneeded1a.so): Override any system
+	supplied --as-needed or --add-needed flag.
+
+2012-12-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14915
+	* ld-elf/shared.exp (build_tests): Test --add-needed,
+	--copy-dt-needed-entries, --no-add-needed and
+	--no-copy-dt-needed-entries with -shared.
+	Add tests for --no-add-needed and --no-copy-dt-needed-entries
+	with -shared.
+
+2012-12-06  Alan Modra  <amodra@gmail.com>
+
+	* ld-elf/comm-data4.d, ld-elf/comm-data4.s: New test.
+	* ld-elf/comm-data5.d, ld-elf/comm-data5.s: New test.
+	* ld-elf/comm-data.exp: Run them.
+
+2012-12-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ld-elf/shared.exp (build_tests): Build libneeded1b.so,
+	libneeded1a.so and libneeded1c.o.
+	(run_tests): Test --add-needed and --copy-dt-needed-entries.
+	Add tests for --no-add-needed and --no-copy-dt-needed-entries.
+
+	* ld-elf/needed1.out: New file.
+	* ld-elf/needed1a.c: Likewise.
+	* ld-elf/needed1b.c: Likewise.
+	* ld-elf/needed1c.c: Likewise.
+
+2012-12-03  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* ld-mips-elf/attr-gnu-4-45.d: Add missing "readelf" keyword.
+	Update dump according to current output.
+
+2012-12-03  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* ld-mips-elf/attr-gnu-4-12.d: Update the warning message.
+	* ld-mips-elf/attr-gnu-4-13.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-14.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-15.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-21.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-23.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-24.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-25.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-31.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-32.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-34.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-35.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-41.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-42.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-43.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-45.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-51.d: Likewise.
+
+2012-12-03  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* ld-mips-elf/attr-gnu-4-12.d: Adjust the warning expected
+	according to changes to BFD.
+	* ld-mips-elf/attr-gnu-4-14.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-31.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-32.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-34.d: Likewise.
+	* ld-mips-elf/attr-gnu-4-41.d: Likewise.
+
+2012-12-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/14904
+	* ld-plugin/plugin-2.d: Update expected error message.
+	* ld-plugin/plugin-4.d: Likewise.
+
+2012-11-30  Roland McGrath  <mcgrathr@google.com>
+
+	* ld-elf/ehdr_start.s: Put reference in .rodata section, not .data.
+
+2012-11-27  Roland McGrath  <mcgrathr@google.com>
+
+	* ld-elf/flags1.d: Add *-*-nacl* to xfail list.
+	* ld-elf/orphan-region.d: Likewise.
+
+2012-11-27  Roland McGrath  <mcgrathr@google.com>
+
+	* ld-elf/compress.exp: Bail out if zlib is not supported.
+	* lib/ld-lib.exp (run_dump_test): If as options include
+	--compress-debug-sections and zlib is not available, report
+	the test as unsupported.
+
 2012-11-23  Alan Modra  <amodra@gmail.com>
 
 	* ld-powerpc/plt1.d: Update for default "at" branch hints.
@@ -1795,6 +2106,12 @@
 
 For older changes see ChangeLog-2011
 
+Copyright (C) 2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

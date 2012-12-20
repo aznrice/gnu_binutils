@@ -1,4 +1,21 @@
 # config.bfd
+#
+#   Copyright 2012 Free Software Foundation
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+#
 # Convert a canonical host type into a BFD host type.
 # Set shell variable targ to canonical target name, and run
 # using ``. config.bfd''.
@@ -660,6 +677,11 @@ case "${targ}" in
     targ_selvecs="x86_64pe_vec x86_64pei_vec bfd_elf64_x86_64_vec bfd_elf64_l1om_vec bfd_elf64_k1om_vec i386pe_vec i386pei_vec bfd_elf32_i386_vec"
     want64=true
     targ_underscore=no
+    ;;
+  x86_64-*-rdos*)
+    targ_defvec=bfd_elf64_x86_64_vec
+    targ_selvecs="bfd_elf32_i386_vec bfd_elf64_l1om_vec bfd_elf64_k1om_vec"
+    want64=true
     ;;
 #endif
   i[3-7]86-*-lynxos*)

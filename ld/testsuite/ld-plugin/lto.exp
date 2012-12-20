@@ -142,7 +142,7 @@ set lto_link_tests {
    {pr12760b.c} {} "libpr12760.a"}
   {"PR ld/12760"
    "-O2 -Wl,-e,foo -nostdlib -flto -fuse-linker-plugin tmpdir/pr12760a.o -Wl,--start-group tmpdir/libpr12760.a -Wl,--end-group" ""
-   {dummy.c} {} "pr12760.exe"}
+   {dummy.c} {} "pr12760.exe" "c" "warning: Bad bar"}
   {"Build libdummy.a PR ld/12942 (1)"
    "" "-flto -O2"
    {pr12942a.cc pr12942c.cc} {} "libdummy.a" "c++"}
@@ -198,6 +198,9 @@ set lto_link_elf_tests {
   {"PR ld/13244"
    "-shared -O2 -fPIC -flto -fuse-linker-plugin -nostdlib" "-O2 -fno-early-inlining -flto"
    {pr13244.c} {{"readelf" {-s --wide} "pr13244.d"}} "pr13244.so" "c"}
+  {"PR ld/14918"
+   "-flto" "-flto"
+   {pr14918.c} {{"readelf" {-d --wide} "pr14918.d"}} "pr14918.exe" "c"}
 }
 
 # Check final symbols in executables.

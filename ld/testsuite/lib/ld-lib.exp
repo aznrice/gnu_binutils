@@ -757,6 +757,12 @@ proc run_dump_test { name {extra_options {}} } {
 	set dfile $srcdir/$subdir/$opts(dump)
     }
 
+    if { [string match "*--compress-debug-sections*" $opts(as)] \
+	 && ![is_zlib_supported] } {
+	unsupported $testname
+	return
+    }
+
     # Time to setup xfailures.
     foreach targ $opts(xfail) {
 	setup_xfail $targ
@@ -1401,21 +1407,26 @@ proc run_cc_link_tests { ldtests } {
 	    } else {
 		set failed 0
 	    }
-	} elseif { ![ld_simple_link $cc_cmd $binfile "-L$srcdir/$subdir $ldflags $objfiles"] } {
+	} else {
+	    if { ![ld_simple_link $cc_cmd $binfile "-L$srcdir/$subdir $ldflags $objfiles"] } {
+		set failed 1
+	    } else {
+		set failed 0
+	    }
+
 	    # Check if exec_output is expected.
 	    if { $warnings != "" } then {
 		verbose -log "returned with: <$exec_output>, expected: <$warnings>"
 		if { [regexp $warnings $exec_output] } then {
-		    set failed 0
+		    set failed 2
 		} else {
 		    set failed 1
 		}
-	    } else {
-		fail $testname
-		set failed 1
 	    }
-	} else {
-	    set failed 0
+
+	    if { $failed == 1 } {
+		fail $testname
+	    }
 	}
 
 	if { $failed == 0 } {
@@ -1544,7 +1555,9 @@ proc check_gc_sections_available { } {
 # Only used and accurate for ELF targets at the moment
 
 proc check_shared_lib_support { } {
-    if {![istarget arc-*-*]
+    if {![istarget aarch64*-*-elf]
+	 && ![istarget arc-*-*]
+	 && ![istarget arm*-*-elf]
 	 && ![istarget avr-*-*]
 	 && ![istarget cr16-*-*]
 	 && ![istarget cris*-*-*]
