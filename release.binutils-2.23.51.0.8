@@ -1,4 +1,4 @@
-This is the beta release of binutils 2.23.51.0.7 for Linux, which is
+This is the beta release of binutils 2.23.51.0.8 for Linux, which is
 based on binutils 2012 1218 in CVS on sourceware.org plus various
 changes. It is purely for Linux.
 
@@ -115,12 +115,16 @@ endif
 
 to arch/ia64/Makefile in your kernel source tree.
 
-Please report any bugs related to binutils 2.23.51.0.7 to
+Please report any bugs related to binutils 2.23.51.0.8 to
 hjl.tools@gmail.com
 
 and
 
 http://www.sourceware.org/bugzilla/
+
+Changes from binutils 2.23.51.0.7:
+
+1. Properly adjust h->plt.refcount.  PR 14980.
 
 Changes from binutils 2.23.51.0.6:
 
@@ -698,13 +702,13 @@ already been defined.  PR 12001.
 
 The file list:
 
-1. binutils-2.23.51.0.7.tar.bz2.  Source code.
+1. binutils-2.23.51.0.8.tar.bz2.  Source code.
 
 The primary sites for the beta Linux binutils are:
 
 1. http://www.kernel.org/pub/linux/devel/binutils/
 
-It is also available on linux/release/2.23.51.0.7 branch at
+It is also available on linux/release/2.23.51.0.8 branch at
 
 http://git.kernel.org/?p=linux/kernel/git/hjl/binutils.git;a=summary
 
@@ -713,4 +717,4 @@ Thanks.
 
 H.J. Lu
 hjl.tools@gmail.com
-12/20/2012
+12/21/2012
