@@ -1,5 +1,10 @@
 2013-01-07  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-pr14899-1.patch: Removed.
+	* README: Likewise.
+
+2013-01-07  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-use-ld-1.patch: Removed.
 	* README: Likewise.
 
