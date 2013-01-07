@@ -2312,7 +2312,7 @@ Target_powerpc<size, big_endian>::group_sections(Layout* layout,
       typedef Output_section::Input_section_list Input_section_list;
       for (Input_section_list::const_reverse_iterator i
 	     = (*o)->input_sections().rbegin();
-	   i != (*o)->input_sections().rend();
+	   i != (Input_section_list::const_reverse_iterator)(*o)->input_sections().rend();
 	   ++i)
 	{
 	  if (i->is_input_section())
