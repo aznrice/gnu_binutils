@@ -1,3 +1,35 @@
+2013-01-07  Cary Coutant  <ccoutant@google.com>
+
+	PR gold/14993
+	* output.cc (Output_section::add_input_section): For incremental
+	updates, don't track input sections that are allocated from patch
+	space.
+
+2013-01-07  H.J. Lu  <hongjiu.lu@intel.com>
+	    Ian Lance Taylor  <iant@google.com>
+
+	PR gold/14897
+	* configure.ac (--enable-ld): Removed.
+	(install_as_default): Set to yes only for --enable-gold=default
+	or --disable-ld.
+	* configure: Regenerated.
+
+2013-01-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* options.h (General_options): Add -fuse-ld= for GCC linker
+	option compatibility.
+
+2013-01-04  Cary Coutant  <ccoutant@google.com>
+
+	* configure.ac: Fix typo restoring CXXFLAGS.
+	* configure: Regenerate.
+
+2013-01-04  Cary Coutant  <ccoutant@google.com>
+
+	* testsuite/Makefile.am (CXXLINK_S): New macro.
+	(debug_msg_so.err, debug_msg_ndebug.err): Use CXXLINK_S.
+	* testsuite/Makefile.in: Regenerate.
+
 2013-01-02  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* version.cc (print_version): Update copyright year to 2013.
