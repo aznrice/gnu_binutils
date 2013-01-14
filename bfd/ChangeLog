@@ -1,3 +1,47 @@
+2013-01-14  Alan Modra  <amodra@gmail.com>
+
+	PR binutils/14813
+	* bfdio.c (struct bfd_iovec <bclose>): Revert 2012-11-06.
+	(memory_bclose): Likewise.  Return 0 on success.
+	* cache.c (cache_bclose): Likewise.
+	* opncls.c (opncls_bclose, bfd_close): Likewise.
+	* vms-lib.c (vms_lib_bclose): Likewise.
+	* libbfd.h: Regenerate.
+
+2013-01-13  Alan Modra  <amodra@gmail.com>
+
+	* elf-bfd.h (struct elf_link_hash_entry): Delete dynamic_weak.
+	Add ref_dynamic_nonweak.
+	* elflink.c (_bfd_elf_mark_dynamic_def_weak): Delete.
+	(_bfd_elf_merge_symbol): Don't call above function.  Move
+	setting of ref_dynamic_nonweak and dynamic_def earlier.  Don't
+	clear dynamic_def.
+	(elf_link_add_object_symbols): Delete redundant "override" test.
+	Don't set dynamic_def here.
+	(elf_link_output_extsym): Update.
+
+2013-01-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-i386.c (elf_i386_check_relocs): Set bfd errror for
+	normal and TLS symbol access.
+	* elf64-x86-64.c (elf_x86_64_check_relocs): Likewise.
+
+2013-01-12  Alan Modra  <amodra@gmail.com>
+
+	* elf-bfd.h (_bfd_elf_strtab_refcount): Declare.
+	* elf-strtab.c (_bfd_elf_strtab_refcount): New function.
+	* elflink.c (elf_add_dt_needed_tag): Use _bfd_elf_strtab_refcount.
+
+2013-01-12  Alan Modra  <amodra@gmail.com>
+
+	PR ld/12549
+	* elf-bfd.h (_bfd_elf_strtab_clear_refs): Declare.
+	(_bfd_elf_strtab_clear_all_refs): Define.
+	* elf-strtab.c (_bfd_elf_strtab_clear_refs): New function.
+	(_bfd_elf_strtab_clear_all_refs): Delete.
+	* elflink.c (elf_link_add_object_symbols): Clear out added
+	strtab refs.  Correct handling of warning common symbols.
+
 2013-01-10  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* aout0.c: Remove trailing white spaces.

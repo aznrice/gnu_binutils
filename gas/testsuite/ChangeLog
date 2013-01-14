@@ -1,3 +1,27 @@
+2013-01-14  Alan Modra  <amodra@gmail.com>
+
+	* gas/v850/basic.exp (reloc part 1): Pass -mgcc-abi to gas.
+	* gas/v850/split-lo16.d: Likewise.
+
+2013-01-14  Will Newton <will.newton@imgtec.com>
+
+	* gas/metag/metadsp21.d: Fix expected MMOV disassembly.
+
+2013-01-14  Alan Modra  <amodra@gmail.com>
+
+	* gas/ppc/htm.s: Use .text rather than .section ".text".
+	* gas/ppc/power8.s: Likewise.
+	* gas/ppc/htm.d: Don't match file format.
+	* gas/ppc/power8.d: Likewise.
+
+2013-01-10  Peter Bergner <bergner@vnet.ibm.com>
+
+	* gas/ppc/htm.d: New test.
+	* gas/ppc/htm.s: Likewise.
+	* gas/ppc/power8.d: Likewise.
+	* gas/ppc/power8.s: Likewise.
+	* gas/ppc/ppc.exp: Run them.
+
 2013-01-10  Will Newton <will.newton@imgtec.com>
 
 	* gas/metag/labelarithmetic.d: New file.
