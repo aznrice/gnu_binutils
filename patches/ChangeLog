@@ -1,3 +1,7 @@
+2013-01-17  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-error-15.patch: Updated.
+
 2013-01-14  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-secondary-1.patch: Updated.
