@@ -132,6 +132,11 @@ ld/
 
 bfd/
 
+2013-01-10  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-metag.c (elf_metag_relocate_section): Add an argument
+	for error ignored.
+
 2012-08-14  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* elf64-aarch64.c (elf64_aarch64_relocate_section): Add an
@@ -560,7 +565,7 @@ bfd/
 	* elf-bfd.h (_bfd_elf_merge_symbol): Add a boolean argument to
 	indicate if the old definition is secondary.
 
-	* elf32-sh-symbian.c (_bfd_elf_mark_dynamic_def_weak): Pass FALSE
+	* elf32-sh-symbian.c (sh_symbian_relocate_section): Pass FALSE
 	to _bfd_elf_merge_symbol.
 
 	* elflink.c (_bfd_elf_merge_symbol): Add a boolean argument to
@@ -774,51 +779,4 @@ ld/testsuite/
 	* ld-elf/library8b.rd: Likewise.
 	* ld-elf/library8c.c: Likewise.
 	* ld-elf/library8c.rd: Likewise.
-
-gold/
-
-2012-11-28  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* options.h (General_options): Add -fuse-ld= for GCC linker
-	option compatibility.
-
-ld/
-
-2012-11-28  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* lexsup.c (ld_options): Add fuse-ld= for GCC linker option
-	compatibility.
-
-2012-11-30  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR gold/14897
-	* configure.ac (install_as_default): Set to yes only for
-	--disable-ld or --enable-gold=default.
-	* configure: Regenerated.
-
-2012-11-30  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR gas/14899
-	* Makefile.def (dependencies): Make all-binutils, all-gprof,
-	all-ld and all-gold depend on all-gas.
-	* Makefile.in: Regenerated.
-bfd/
-
-2012-12-21  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/14980
-	* elf32-i386.c (elf_i386_adjust_dynamic_symbol): Properly
-	adjust h->plt.refcount.
-	* elf64-x86-64.c (elf_x86_64_adjust_dynamic_symbol): Likewise.
-
-ld/testsuite
-
-2012-12-21  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/14980
-	* ld-ifunc/ifunc-14c.s: New file.
-	* ld-ifunc/ifunc-14e-i386.d: Likewise.
-	* ld-ifunc/ifunc-14e-x86-64.d: Likewise.
-	* ld-ifunc/ifunc-14f-i386.d: Likewise.
-	* ld-ifunc/ifunc-14f-x86-64.d: Likewise.
 

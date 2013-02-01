@@ -133,7 +133,9 @@ static reloc_howto_type elf_howto_table[]=
   HOWTO(R_386_TLS_TPOFF32, 0, 2, 32, FALSE, 0, complain_overflow_bitfield,
 	bfd_elf_generic_reloc, "R_386_TLS_TPOFF32",
 	TRUE, 0xffffffff, 0xffffffff, FALSE),
-  EMPTY_HOWTO (38),
+  HOWTO(R_386_SIZE32, 0, 2, 32, FALSE, 0, complain_overflow_unsigned,
+	bfd_elf_generic_reloc, "R_386_SIZE32",
+	TRUE, 0xffffffff, 0xffffffff, FALSE),
   HOWTO(R_386_TLS_GOTDESC, 0, 2, 32, FALSE, 0, complain_overflow_bitfield,
 	bfd_elf_generic_reloc, "R_386_TLS_GOTDESC",
 	TRUE, 0xffffffff, 0xffffffff, FALSE),
@@ -311,6 +313,10 @@ elf_i386_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
     case BFD_RELOC_386_TLS_TPOFF32:
       TRACE ("BFD_RELOC_386_TLS_TPOFF32");
       return &elf_howto_table[R_386_TLS_TPOFF32 - R_386_tls_offset];
+
+    case BFD_RELOC_SIZE32:
+      TRACE ("BFD_RELOC_SIZE32");
+      return &elf_howto_table[R_386_SIZE32 - R_386_tls_offset];
 
     case BFD_RELOC_386_TLS_GOTDESC:
       TRACE ("BFD_RELOC_386_TLS_GOTDESC");
@@ -1462,6 +1468,7 @@ elf_i386_check_relocs (bfd *abfd,
       struct elf_link_hash_entry *h;
       Elf_Internal_Sym *isym;
       const char *name;
+      bfd_boolean size_reloc;
 
       r_symndx = ELF32_R_SYM (rel->r_info);
       r_type = ELF32_R_TYPE (rel->r_info);
@@ -1564,6 +1571,10 @@ elf_i386_check_relocs (bfd *abfd,
 	  h->plt.refcount += 1;
 	  break;
 
+	case R_386_SIZE32:
+	  size_reloc = TRUE;
+	  goto do_size;
+
 	case R_386_TLS_IE_32:
 	case R_386_TLS_IE:
 	case R_386_TLS_GOTIE:
@@ -1656,6 +1667,7 @@ elf_i386_check_relocs (bfd *abfd,
 		      (_("%B: `%s' accessed both as normal and "
 			 "thread local symbol"),
 		       abfd, name);
+		    bfd_set_error (bfd_error_bad_value);
 		    return FALSE;
 		  }
 	      }
@@ -1710,6 +1722,8 @@ elf_i386_check_relocs (bfd *abfd,
 		h->pointer_equality_needed = 1;
 	    }
 
+	  size_reloc = FALSE;
+do_size:
 	  /* If we are creating a shared library, and this is a reloc
 	     against a global symbol, or a non PC relative reloc
 	     against a local symbol, then we need to copy the reloc
@@ -1806,7 +1820,8 @@ elf_i386_check_relocs (bfd *abfd,
 		}
 
 	      p->count += 1;
-	      if (r_type == R_386_PC32)
+	      /* Count size relocation as PC-relative relocation.  */
+	      if (r_type == R_386_PC32 || size_reloc)
 		p->pc_count += 1;
 	    }
 	  break;
@@ -1972,6 +1987,7 @@ elf_i386_gc_sweep_hook (bfd *abfd,
 
 	case R_386_32:
 	case R_386_PC32:
+	case R_386_SIZE32:
 	  if (info->shared
 	      && (h == NULL || h->type != STT_GNU_IFUNC))
 	    break;
@@ -2361,6 +2377,24 @@ elf_i386_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 
   if (eh->dyn_relocs == NULL)
     return TRUE;
+
+  /* Since pc_count for TLS symbol can only have size relocations and
+     we always resolve size relocation against non-zero TLS symbol, we
+     clear pc_count for non-zero TLS symbol.  */
+  if (h->type == STT_TLS && h->size != 0)
+    {
+      struct elf_dyn_relocs **pp;
+
+      for (pp = &eh->dyn_relocs; (p = *pp) != NULL; )
+	{
+	  p->count -= p->pc_count;
+	  p->pc_count = 0;
+	  if (p->count == 0)
+	    *pp = p->next;
+	  else
+	    pp = &p->next;
+	}
+    }
 
   /* In the shared -Bsymbolic case, discard space allocated for
      dynamic pc-relative relocs against symbols which turn out to be
@@ -3205,6 +3239,7 @@ elf_i386_relocate_section (bfd *output_bfd,
       bfd_reloc_status_type r;
       unsigned int indx;
       int tls_type;
+      bfd_vma st_size;
 
       r_type = ELF32_R_TYPE (rel->r_info);
       if (r_type == R_386_GNU_VTINHERIT
@@ -3237,6 +3272,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 	  relocation = (sec->output_section->vma
 			+ sec->output_offset
 			+ sym->st_value);
+	  st_size = sym->st_size;
 
 	  if (ELF_ST_TYPE (sym->st_info) == STT_SECTION
 	      && ((sec->flags & SEC_MERGE) != 0
@@ -3330,6 +3366,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
 				   unresolved_reloc, warned, ignored);
+	  st_size = h->size;
 	}
 
       if (sec != NULL && discarded_section (sec))
@@ -3390,7 +3427,6 @@ elf_i386_relocate_section (bfd *output_bfd,
 	      if (info->shared && h->non_got_ref)
 		{
 		  Elf_Internal_Rela outrel;
-		  bfd_byte *loc;
 		  asection *sreloc;
 		  bfd_vma offset;
 
@@ -3424,10 +3460,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 		    outrel.r_info = ELF32_R_INFO (h->dynindx, r_type);
 
 		  sreloc = htab->elf.irelifunc;
-		  loc = sreloc->contents;
-		  loc += (sreloc->reloc_count++
-			  * sizeof (Elf32_External_Rel));
-		  bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+		  elf_append_rel (output_bfd, sreloc, &outrel);
 
 		  /* If this reloc is against an external symbol, we
 		     do not want to fiddle with the addend.  Otherwise,
@@ -3581,7 +3614,6 @@ elf_i386_relocate_section (bfd *output_bfd,
 		    {
 		      asection *s;
 		      Elf_Internal_Rela outrel;
-		      bfd_byte *loc;
 
 		      s = htab->elf.srelgot;
 		      if (s == NULL)
@@ -3591,9 +3623,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 					 + htab->elf.sgot->output_offset
 					 + off);
 		      outrel.r_info = ELF32_R_INFO (0, R_386_RELATIVE);
-		      loc = s->contents;
-		      loc += s->reloc_count++ * sizeof (Elf32_External_Rel);
-		      bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+		      elf_append_rel (output_bfd, s, &outrel);
 		    }
 
 		  local_got_offsets[r_symndx] |= 1;
@@ -3698,6 +3728,17 @@ elf_i386_relocate_section (bfd *output_bfd,
 	  unresolved_reloc = FALSE;
 	  break;
 
+	case R_386_SIZE32:
+	  /* Set to symbol size.  */
+	  relocation = st_size;
+	  if (h && h->type == STT_TLS && st_size != 0)
+	    {
+	      /* Resolve size relocation against non-zero TLS symbol.  */
+	      unresolved_reloc = FALSE;
+	      break;
+	    }
+	  /* Fall through.  */
+
 	case R_386_32:
 	case R_386_PC32:
 	  if ((input_section->flags & SEC_ALLOC) == 0
@@ -3708,7 +3749,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 	       && (h == NULL
 		   || ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
 		   || h->root.type != bfd_link_hash_undefweak)
-	       && (r_type != R_386_PC32
+	       && ((r_type != R_386_PC32 && r_type != R_386_SIZE32)
 		   || !SYMBOL_CALLS_LOCAL (info, h)))
 	      || (ELIMINATE_COPY_RELOCS
 		  && !info->shared
@@ -3721,7 +3762,6 @@ elf_i386_relocate_section (bfd *output_bfd,
 		      || h->root.type == bfd_link_hash_undefined)))
 	    {
 	      Elf_Internal_Rela outrel;
-	      bfd_byte *loc;
 	      bfd_boolean skip, relocate;
 	      asection *sreloc;
 
@@ -3766,10 +3806,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 		  goto check_relocation_error;
 		}
 
-	      loc = sreloc->contents;
-	      loc += sreloc->reloc_count++ * sizeof (Elf32_External_Rel);
-
-	      bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+	      elf_append_rel (output_bfd, sreloc, &outrel);
 
 	      /* If this reloc is against an external symbol, we do
 		 not want to fiddle with the addend.  Otherwise, we
@@ -3784,7 +3821,6 @@ elf_i386_relocate_section (bfd *output_bfd,
 	  if (!info->executable)
 	    {
 	      Elf_Internal_Rela outrel;
-	      bfd_byte *loc;
 	      asection *sreloc;
 
 	      outrel.r_offset = rel->r_offset
@@ -3794,9 +3830,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 	      sreloc = elf_section_data (input_section)->sreloc;
 	      if (sreloc == NULL)
 		abort ();
-	      loc = sreloc->contents;
-	      loc += sreloc->reloc_count++ * sizeof (Elf32_External_Rel);
-	      bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+	      elf_append_rel (output_bfd, sreloc, &outrel);
 	    }
 	  /* Fall through */
 
@@ -4022,7 +4056,6 @@ elf_i386_relocate_section (bfd *output_bfd,
 	  else
 	    {
 	      Elf_Internal_Rela outrel;
-	      bfd_byte *loc;
 	      int dr_type;
 	      asection *sreloc;
 
@@ -4033,6 +4066,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 
 	      if (GOT_TLS_GDESC_P (tls_type))
 		{
+		  bfd_byte *loc;
 		  outrel.r_info = ELF32_R_INFO (indx, R_386_TLS_DESC);
 		  BFD_ASSERT (htab->sgotplt_jump_table_size + offplt + 8
 			      <= htab->elf.sgotplt->size);
@@ -4090,11 +4124,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 			    htab->elf.sgot->contents + off);
 	      outrel.r_info = ELF32_R_INFO (indx, dr_type);
 
-	      loc = sreloc->contents;
-	      loc += sreloc->reloc_count++ * sizeof (Elf32_External_Rel);
-	      BFD_ASSERT (loc + sizeof (Elf32_External_Rel)
-			  <= sreloc->contents + sreloc->size);
-	      bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+	      elf_append_rel (output_bfd, sreloc, &outrel);
 
 	      if (GOT_TLS_GD_P (tls_type))
 		{
@@ -4112,11 +4142,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 		      outrel.r_info = ELF32_R_INFO (indx,
 						    R_386_TLS_DTPOFF32);
 		      outrel.r_offset += 4;
-		      sreloc->reloc_count++;
-		      loc += sizeof (Elf32_External_Rel);
-		      BFD_ASSERT (loc + sizeof (Elf32_External_Rel)
-				  <= sreloc->contents + sreloc->size);
-		      bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+		      elf_append_rel (output_bfd, sreloc, &outrel);
 		    }
 		}
 	      else if (tls_type == GOT_TLS_IE_BOTH)
@@ -4128,9 +4154,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 			      htab->elf.sgot->contents + off + 4);
 		  outrel.r_info = ELF32_R_INFO (indx, R_386_TLS_TPOFF);
 		  outrel.r_offset += 4;
-		  sreloc->reloc_count++;
-		  loc += sizeof (Elf32_External_Rel);
-		  bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+		  elf_append_rel (output_bfd, sreloc, &outrel);
 		}
 
 	    dr_done:
@@ -4312,7 +4336,6 @@ elf_i386_relocate_section (bfd *output_bfd,
 	  else
 	    {
 	      Elf_Internal_Rela outrel;
-	      bfd_byte *loc;
 
 	      if (htab->elf.srelgot == NULL)
 		abort ();
@@ -4325,9 +4348,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 	      bfd_put_32 (output_bfd, 0,
 			  htab->elf.sgot->contents + off + 4);
 	      outrel.r_info = ELF32_R_INFO (0, R_386_TLS_DTPMOD32);
-	      loc = htab->elf.srelgot->contents;
-	      loc += htab->elf.srelgot->reloc_count++ * sizeof (Elf32_External_Rel);
-	      bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+	      elf_append_rel (output_bfd, htab->elf.srelgot, &outrel);
 	      htab->tls_ldm_got.offset |= 1;
 	    }
 	  relocation = htab->elf.sgot->output_section->vma
@@ -4351,7 +4372,6 @@ elf_i386_relocate_section (bfd *output_bfd,
 	    {
 	      Elf_Internal_Rela outrel;
 	      asection *sreloc;
-	      bfd_byte *loc;
 
 	      outrel.r_offset = rel->r_offset
 				+ input_section->output_section->vma
@@ -4367,9 +4387,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 	      sreloc = elf_section_data (input_section)->sreloc;
 	      if (sreloc == NULL)
 		abort ();
-	      loc = sreloc->contents;
-	      loc += sreloc->reloc_count++ * sizeof (Elf32_External_Rel);
-	      bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+	      elf_append_rel (output_bfd, sreloc, &outrel);
 	      if (indx)
 		continue;
 	      else if (r_type == R_386_TLS_LE_32)
@@ -4574,7 +4592,7 @@ elf_i386_finish_dynamic_symbol (bfd *output_bfd,
 			      + got_offset);
 	      rel.r_info = ELF32_R_INFO (htab->elf.hplt->indx, R_386_32);
 	      bfd_elf32_swap_reloc_out (output_bfd, &rel,
-	      loc + sizeof (Elf32_External_Rel));
+					loc + sizeof (Elf32_External_Rel));
 	    }
 	}
       else
@@ -4657,7 +4675,6 @@ elf_i386_finish_dynamic_symbol (bfd *output_bfd,
       && (elf_i386_hash_entry(h)->tls_type & GOT_TLS_IE) == 0)
     {
       Elf_Internal_Rela rel;
-      bfd_byte *loc;
 
       /* This symbol has an entry in the global offset table.  Set it
 	 up.  */
@@ -4715,15 +4732,12 @@ do_glob_dat:
 	  rel.r_info = ELF32_R_INFO (h->dynindx, R_386_GLOB_DAT);
 	}
 
-      loc = htab->elf.srelgot->contents;
-      loc += htab->elf.srelgot->reloc_count++ * sizeof (Elf32_External_Rel);
-      bfd_elf32_swap_reloc_out (output_bfd, &rel, loc);
+      elf_append_rel (output_bfd, htab->elf.srelgot, &rel);
     }
 
   if (h->needs_copy)
     {
       Elf_Internal_Rela rel;
-      bfd_byte *loc;
       asection *s;
 
       if (h->root.u.def.section == htab->sdynsharablebss)
@@ -4743,9 +4757,7 @@ do_glob_dat:
 		      + h->root.u.def.section->output_section->vma
 		      + h->root.u.def.section->output_offset);
       rel.r_info = ELF32_R_INFO (h->dynindx, R_386_COPY);
-      loc = s->contents;
-      loc += s->reloc_count++ * sizeof (Elf32_External_Rel);
-      bfd_elf32_swap_reloc_out (output_bfd, &rel, loc);
+      elf_append_rel (output_bfd, s, &rel);
     }
 
   return TRUE;

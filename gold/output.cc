@@ -2422,7 +2422,7 @@ Output_section::add_input_section(Layout* layout,
     input_section_size = uncompressed_size;
 
   off_t offset_in_section;
-  off_t aligned_offset_in_section;
+
   if (this->has_fixed_layout())
     {
       // For incremental updates, find a chunk of unused space in the section.
@@ -2432,16 +2432,14 @@ Output_section::add_input_section(Layout* layout,
         gold_fallback(_("out of patch space in section %s; "
 			"relink with --incremental-full"),
 		      this->name());
-      aligned_offset_in_section = offset_in_section;
+      return offset_in_section;
     }
-  else
-    {
-      offset_in_section = this->current_data_size_for_child();
-      aligned_offset_in_section = align_address(offset_in_section,
-						addralign);
-      this->set_current_data_size_for_child(aligned_offset_in_section
-					    + input_section_size);
-    }
+
+  offset_in_section = this->current_data_size_for_child();
+  off_t aligned_offset_in_section = align_address(offset_in_section,
+						  addralign);
+  this->set_current_data_size_for_child(aligned_offset_in_section
+					+ input_section_size);
 
   // Determine if we want to delay code-fill generation until the output
   // section is written.  When the target is relaxing, we want to delay fill
@@ -2507,14 +2505,6 @@ Output_section::add_input_section(Layout* layout,
               this->set_input_section_order_specified();
             }
         }
-      if (this->has_fixed_layout())
-	{
-	  // For incremental updates, finalize the address and offset now.
-	  uint64_t addr = this->address();
-	  isecn.set_address_and_file_offset(addr + aligned_offset_in_section,
-					    aligned_offset_in_section,
-					    this->offset());
-	}
       this->input_sections_.push_back(isecn);
     }
 
@@ -3323,7 +3313,11 @@ class Output_section::Input_section_sort_entry
   // in order to better support gcc, and we need to be compatible.
   bool
   match_file_name(const char* file_name) const
-  { return Layout::match_file_name(this->input_section_.relobj(), file_name); }
+  {
+    if (this->input_section_.is_output_section_data())
+      return false;
+    return Layout::match_file_name(this->input_section_.relobj(), file_name);
+  }
 
   // Returns 1 if THIS should appear before S in section order, -1 if S
   // appears before THIS and 0 if they are not comparable.
@@ -3393,6 +3387,19 @@ Output_section::Input_section_sort_compare::operator()(
       if (s2.section_has_name())
 	return false;
       return s1.index() < s2.index();
+    }
+
+  // Some input section names have special ordering requirements.
+  int o1 = Layout::special_ordering_of_input_section(s1.section_name().c_str());
+  int o2 = Layout::special_ordering_of_input_section(s2.section_name().c_str());
+  if (o1 != o2)
+    {
+      if (o1 < 0)
+	return false;
+      else if (o2 < 0)
+	return true;
+      else
+	return o1 < o2;
     }
 
   // A section with a priority follows a section without a priority.

@@ -1,6 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright 2012 Free Software Foundation
+dnl   Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013
+dnl   Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -68,36 +69,20 @@ dnl "install_as_default" is true if the linker to be installed as the
 dnl default linker, ld.
 dnl "installed_linker" is the installed gold linker name.
 
-default_ld=
-AC_ARG_ENABLE(ld,
-[[  --enable-ld[=ARG]     build ld [ARG={default,yes,no}]]],
-[case "${enableval}" in
- no)
-   default_ld=ld.gold
-   ;;
- esac])
-
+installed_linker=ld.gold
 AC_ARG_ENABLE(gold,
 [[  --enable-gold[=ARG]     build gold [ARG={default,yes,no}]]],
 [case "${enableval}" in
  default)
    install_as_default=yes
-   installed_linker=ld.gold
    ;;
  yes)
-   if test x${default_ld} != x; then
+   if test x${enable_ld} = xno; then
      install_as_default=yes
    fi
-   installed_linker=ld.gold
-   ;;
- no)
-   ;;
- *)
-   AC_MSG_ERROR([invalid --enable-gold argument])
    ;;
  esac],
-[install_as_default=no
- installed_linker=ld.gold])
+[install_as_default=no])
 AC_SUBST(install_as_default)
 AC_SUBST(installed_linker)
 
@@ -521,6 +506,13 @@ AC_LANG_PUSH(C++)
 AC_CHECK_HEADERS(tr1/unordered_set tr1/unordered_map)
 AC_CHECK_HEADERS(ext/hash_map ext/hash_set)
 AC_CHECK_HEADERS(byteswap.h)
+
+dnl When plugins enabled dynamic loader interface is required. Check headers
+dnl which may provide this interface. In case of dlfcn.h add libdl to link.
+AC_CHECK_HEADERS(windows.h)
+AC_CHECK_HEADERS(dlfcn.h, [DLOPEN_LIBS="-ldl"], [DLOPEN_LIBS=""])
+AC_SUBST(DLOPEN_LIBS)
+
 AC_CHECK_FUNCS(mallinfo posix_fallocate fallocate readv sysconf times)
 AC_CHECK_DECLS([basename, ffs, asprintf, vasprintf, snprintf, vsnprintf, strverscmp, strndup, memmem])
 
@@ -550,7 +542,7 @@ std::tr1::hash<off_t> h;
 ],
 [gold_cv_hash_off_t=yes],
 [gold_cv_hash_off_t=no])
-CXXFLAGS=$CFLAGS_hold])
+CXXFLAGS=$CXXFLAGS_hold])
 if test "$gold_cv_hash_off_t" = "yes"; then
    AC_DEFINE(HAVE_TR1_HASH_OFF_T, 1,
 	     [Define if std::tr1::hash<off_t> is usable])

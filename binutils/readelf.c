@@ -1,6 +1,6 @@
 /* readelf.c -- display contents of an ELF format file
    Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011, 2012
+   2008, 2009, 2010, 2011, 2012, 2013
    Free Software Foundation, Inc.
 
    Originally developed by Eric Youngdale <eric@andante.jic.com>
@@ -124,6 +124,7 @@
 #include "elf/m68hc11.h"
 #include "elf/mcore.h"
 #include "elf/mep.h"
+#include "elf/metag.h"
 #include "elf/microblaze.h"
 #include "elf/mips.h"
 #include "elf/mmix.h"
@@ -610,6 +611,7 @@ guess_is_rela (unsigned int e_machine)
     case EM_M32R:
     case EM_MCORE:
     case EM_CYGNUS_MEP:
+    case EM_METAG:
     case EM_MMIX:
     case EM_MN10200:
     case EM_CYGNUS_MN10200:
@@ -1262,6 +1264,10 @@ dump_relocations (FILE * file,
 
 	case EM_RX:
 	  rtype = elf_rx_reloc_type (type);
+	  break;
+
+	case EM_METAG:
+	  rtype = elf_metag_reloc_type (type);
 	  break;
 
 	case EM_XC16X:
@@ -2031,7 +2037,7 @@ get_machine_name (unsigned e_machine)
     case EM_MICROBLAZE_OLD:	return "Xilinx MicroBlaze";
     case EM_RL78:		return "Renesas RL78";
     case EM_RX:			return "Renesas RX";
-    case EM_METAG:		return "Imagination Technologies META processor architecture";
+    case EM_METAG:		return "Imagination Technologies Meta processor architecture";
     case EM_MCST_ELBRUS:	return "MCST Elbrus general purpose hardware architecture";
     case EM_ECOG16:		return "Cyan Technology eCOG16 family";
     case EM_ETPU:		return "Freescale Extended Time Processing Unit";
@@ -10061,6 +10067,8 @@ is_32bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 1; /* R_MCORE_ADDR32.  */
     case EM_CYGNUS_MEP:
       return reloc_type == 4; /* R_MEP_32.  */
+    case EM_METAG:
+      return reloc_type == 2; /* R_METAG_ADDR32.  */
     case EM_MICROBLAZE:
       return reloc_type == 1; /* R_MICROBLAZE_32.  */
     case EM_MIPS:
@@ -10396,6 +10404,8 @@ is_none_reloc (unsigned int reloc_type)
 	      || reloc_type == 17  /* R_XTENSA_DIFF8.  */
 	      || reloc_type == 18  /* R_XTENSA_DIFF16.  */
 	      || reloc_type == 19  /* R_XTENSA_DIFF32.  */);
+    case EM_METAG:
+      return reloc_type == 3; /* R_METAG_NONE.  */
     }
   return FALSE;
 }
@@ -12815,6 +12825,12 @@ get_note_type (unsigned e_type)
 	return _("NT_S390_PREFIX (s390 prefix register)");
       case NT_ARM_VFP:
 	return _("NT_ARM_VFP (arm VFP registers)");
+      case NT_ARM_TLS:
+	return _("NT_ARM_TLS (AArch TLS registers)");
+      case NT_ARM_HW_BREAK:
+	return _("NT_ARM_HW_BREAK (AArch hardware breakpoint registers)");
+      case NT_ARM_HW_WATCH:
+	return _("NT_ARM_HW_WATCH (AArch hardware watchpoint registers)");
       case NT_PSTATUS:
 	return _("NT_PSTATUS (pstatus structure)");
       case NT_FPREGS:

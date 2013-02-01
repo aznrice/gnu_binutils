@@ -537,7 +537,7 @@ static flagword
 convert_flags (const struct ld_plugin_symbol *sym)
 {
  switch (sym->def)
-   { 
+   {
    case LDPK_DEF:
    case LDPK_COMMON:
    case LDPK_UNDEF:
@@ -564,7 +564,7 @@ bfd_plugin_canonicalize_symtab (bfd *abfd,
 
   for (i = 0; i < nsyms; i++)
     {
-      asymbol *s = bfd_alloc (abfd, sizeof (asymbol)); 
+      asymbol *s = bfd_alloc (abfd, sizeof (asymbol));
 
       BFD_ASSERT (s);
       alocation[i] = s;

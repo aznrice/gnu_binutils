@@ -1,6 +1,7 @@
 /* tc-aarch64.c -- Assemble for the AArch64 ISA
 
-   Copyright 2009, 2010, 2011, 2012  Free Software Foundation, Inc.
+   Copyright 2009, 2010, 2011, 2012, 2013
+   Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GAS.
@@ -3925,9 +3926,14 @@ output_operand_error_record (const operand_error_record *record, char *str)
       break;
 
     case AARCH64_OPDE_OUT_OF_RANGE:
-      as_bad (_("%s out of range %d to %d at operand %d -- `%s'"),
-	      detail->error ? detail->error : _("immediate value"),
-	      detail->data[0], detail->data[1], detail->index + 1, str);
+      if (detail->data[0] != detail->data[1])
+	as_bad (_("%s out of range %d to %d at operand %d -- `%s'"),
+		detail->error ? detail->error : _("immediate value"),
+		detail->data[0], detail->data[1], detail->index + 1, str);
+      else
+	as_bad (_("%s expected to be %d at operand %d -- `%s'"),
+		detail->error ? detail->error : _("immediate value"),
+		detail->data[0], detail->index + 1, str);
       break;
 
     case AARCH64_OPDE_REG_LIST:
@@ -5050,7 +5056,8 @@ parse_operands (char *str, const aarch64_opcode *opcode)
 	  break;
 
 	case AARCH64_OPND_SYSREG:
-	  if ((val = parse_sys_reg (&str, aarch64_sys_regs_hsh, 1)) == FALSE)
+	  if ((val = parse_sys_reg (&str, aarch64_sys_regs_hsh, 1))
+	      == PARSE_FAIL)
 	    {
 	      set_syntax_error (_("unknown or missing system register name"));
 	      goto failure;
@@ -5059,7 +5066,8 @@ parse_operands (char *str, const aarch64_opcode *opcode)
 	  break;
 
 	case AARCH64_OPND_PSTATEFIELD:
-	  if ((val = parse_sys_reg (&str, aarch64_pstatefield_hsh, 0)) == FALSE)
+	  if ((val = parse_sys_reg (&str, aarch64_pstatefield_hsh, 0))
+	      == PARSE_FAIL)
 	    {
 	      set_syntax_error (_("unknown or missing PSTATE field name"));
 	      goto failure;
@@ -5254,25 +5262,6 @@ programmer_friendly_fixup (aarch64_instruction *instr)
 				    _("literal pool insertion failed"));
 	      return FALSE;
 	    }
-	}
-      break;
-    case asimdimm:
-      /* Allow MOVI V0.16B, 97, LSL 0, although the preferred architectural
-	 syntax requires that the LSL shifter can only be used when the
-	 destination register has the shape of 4H, 8H, 2S or 4S.  */
-      if (op == OP_V_MOVI_B && operands[1].shifter.kind == AARCH64_MOD_LSL
-	  && (operands[0].qualifier == AARCH64_OPND_QLF_V_8B
-	      || operands[0].qualifier == AARCH64_OPND_QLF_V_16B))
-	{
-	  if (operands[1].shifter.amount != 0)
-	    {
-	      record_operand_error (opcode, 1,
-				    AARCH64_OPDE_OTHER_ERROR,
-				    _("shift amount non-zero"));
-	      return FALSE;
-	    }
-	  operands[1].shifter.kind = AARCH64_MOD_NONE;
-	  operands[1].qualifier = AARCH64_OPND_QLF_NIL;
 	}
       break;
     case log_shift:
@@ -6965,6 +6954,8 @@ struct aarch64_cpu_option_table
    recognized by GCC.  */
 static const struct aarch64_cpu_option_table aarch64_cpus[] = {
   {"all", AARCH64_ANY, NULL},
+  {"cortex-a53",	AARCH64_ARCH_V8, "Cortex-A53"},
+  {"cortex-a57",	AARCH64_ARCH_V8, "Cortex-A57"},
   {"generic", AARCH64_ARCH_V8, NULL},
 
   /* These two are example CPUs supported in GCC, once we have real

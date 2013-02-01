@@ -1,3 +1,152 @@
+2013-01-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* options.h (General_options): Change default to true for new_dtags.
+
+2013-01-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* layout.cc (Layout::finish_dynamic_section): Only add DT_RPATH
+	when enable_new_dtags is false.  Only add DT_RUNPATH when
+	enable_new_dtags is true.
+
+2013-01-17  Serge Pavlov  <serge.v.pavlov@gmail.com>
+
+	* powerpc.cc (Stub_table::find_plt_call_entry): Make types
+	used in declaration and definition consistent.
+	(Target_powerpc::symval_for_branch): Ditto.
+
+2013-01-16  Sriraman Tallam  <tmsriram@google.com>
+
+	* testsuite/plugin_final_layout.cc: Fix comment.
+
+2013-01-16  Sriraman Tallam  <tmsriram@google.com>
+
+	* layout.cc (Layout::layout): Do not do default sorting for
+	text sections when section ordering is specified.
+	(make_output_section): Ditto.
+	* testsuite/plugin_final_layout.cc: Name the function sections
+	to catch reordering issues.
+
+2013-01-15  Alan Modra  <amodra@gmail.com>
+
+	* powerpc.cc (Target_powerpc::do_relax): Default shared libs to
+	plt-thread-safe.
+
+2013-01-15  Alan Modra  <amodra@gmail.com>
+
+	* testsuite/Makefile.am (final_layout_script.lds): Handle .got section.
+	* testsuite/Makefile.in: Regenerate.
+
+2013-01-14  Alan Modra  <amodra@gmail.com>
+
+	* testsuite/Makefile.am (MOSTLYCLEANFILES): Add various output files.
+	* testsuite/Makefile.in: Regenerate.
+
+2013-01-11  Pavel Chupin  <pavel.v.chupin@intel.com>
+
+	Fix mingw gold build with plugins enabled
+	* Makefile.am: Replace -ldl with @DLOPEN_LIBS@.
+	* configure.ac: Export DLOPEN_LIBS and add headers check.
+	* plugin.cc: Handle non-dlfcn case.
+	* Makefile.in: Regenerate.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+	* testsuite/Makefile.in: Regenerate.
+
+2013-01-09  Sriraman Tallam  <tmsriram@google.com>
+
+	* output.h (sort_attached_input_sections): Change to be public.
+	* script-sections.cc
+	(Output_section_definition::set_section_addresses): Sort
+	attached input sections according to section order before linker
+	script assigns section addresses.
+	(Orphan_output_section::set_section_addresses): Sort
+	attached input sections according to section order before linker
+	script assigns section addresses.
+	* Makefile.am (final_layout.sh): Use a simple linker script to
+	check if section ordering still works.
+	* Makefile.in: Regenerate.
+
+2013-01-09  Ben Cheng  <bccheng@google.com>
+
+	* arm.cc (Target_arm::attributes_accept_div): New function.
+	(Target_arm::attributes_forbid_div): New function.
+	(Target_arm::merge_object_attributes): Merge the Tag_DIV_use
+	attribute using the same new functions as what bfd/elf32_arm.c
+	does.
+
+2013-01-07  Cary Coutant  <ccoutant@google.com>
+
+	PR gold/14993
+	* output.cc (Output_section::add_input_section): For incremental
+	updates, don't track input sections that are allocated from patch
+	space.
+
+2013-01-07  H.J. Lu  <hongjiu.lu@intel.com>
+	    Ian Lance Taylor  <iant@google.com>
+
+	PR gold/14897
+	* configure.ac (--enable-ld): Removed.
+	(install_as_default): Set to yes only for --enable-gold=default
+	or --disable-ld.
+	* configure: Regenerated.
+
+2013-01-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* options.h (General_options): Add -fuse-ld= for GCC linker
+	option compatibility.
+
+2013-01-04  Cary Coutant  <ccoutant@google.com>
+
+	* configure.ac: Fix typo restoring CXXFLAGS.
+	* configure: Regenerate.
+
+2013-01-04  Cary Coutant  <ccoutant@google.com>
+
+	* testsuite/Makefile.am (CXXLINK_S): New macro.
+	(debug_msg_so.err, debug_msg_ndebug.err): Use CXXLINK_S.
+	* testsuite/Makefile.in: Regenerate.
+
+2013-01-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* version.cc (print_version): Update copyright year to 2013.
+
+2012-12-20  Ian Lance Taylor  <iant@google.com>
+
+	* layout.cc (Layout::special_ordering_of_input_section): New
+	function.
+	(Layout::layout): If input section requires special ordering, must
+	sort input sections.
+	(Layout::make_output_section): May sort .text input sections.
+	(Layout::is_section_name_prefix_grouped): Remove.
+	* layout.h (class Layout): Declare
+	special_ordering_of_input_section.  Don't declare
+	is_section_name_prefix_grouped.
+	* output.cc (Output_section::add_input_section): Revert last
+	change.
+	(Output_section::Input_section_sort::match_file_name): Don't crash
+	if called on output section data.
+	(Output_section::Input_section_sort_compare): Sort based on
+	special ordering.
+	(Output_section::Input_section_sort_section_order_index_compare):
+	Revert last patch.
+	(Output_section::sort_attached_input_sections): Likewise.
+
+2012-12-18  Sriraman Tallam  <tmsriram@google.com>
+
+	* layout.cc (Layout::is_section_name_prefix_grouped): New function.
+	* layout.h (Layout::is_section_name_prefix_grouped): New function.
+	* output.cc (Output_section::add_input_section): Check if section
+	name contains special prefix.  Keep input sections to sort such
+	sections.
+	(Output_section::Input_section_sort_section_order_index_compare
+	 ::operator()): Group sections according to prefixes.
+	(Output_section::sort_attached_input_sections): Add condition to
+	Input_section_entry constructor call.
+	* testsuite/Makefile.am (text_section_grouping): New test.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/text_section_grouping.cc: New file.
+	* testsuite/text_section_grouping.sh: New file.
+
 2012-12-17  Nick Clifton  <nickc@redhat.com>
 
 	* Makefile.am: Add copyright notice.

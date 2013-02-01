@@ -1,3 +1,43 @@
+2013-01-17  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-lto-mixed-18.patch: Updated.
+
+2013-01-17  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-error-15.patch: Updated.
+
+2013-01-14  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-secondary-1.patch: Updated.
+
+2013-01-10  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-error-15.patch: Updated.
+
+2013-01-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr14897-1.patch: Removed.
+	* README: Likewise.
+
+2013-01-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr14899-1.patch: Removed.
+	* README: Likewise.
+
+2013-01-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-use-ld-1.patch: Removed.
+	* README: Likewise.
+
+2012-12-21  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-shr-100.patch: Updated.
+
+2012-12-21  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-pr14980-1.patch: Removed.
+	* README: Likewise.
+
 2012-12-21  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-pr14980-1.patch: New.  Properly adjust h->plt.refcount.
