@@ -1,5 +1,5 @@
-This is the beta release of binutils 2.23.51.0.8 for Linux, which is
-based on binutils 2012 1218 in CVS on sourceware.org plus various
+This is the beta release of binutils 2.23.51.0.9 for Linux, which is
+based on binutils 2013 0118 in CVS on sourceware.org plus various
 changes. It is purely for Linux.
 
 All relevant patches in patches have been applied to the source tree.
@@ -115,12 +115,29 @@ endif
 
 to arch/ia64/Makefile in your kernel source tree.
 
-Please report any bugs related to binutils 2.23.51.0.8 to
+Please report any bugs related to binutils 2.23.51.0.9 to
 hjl.tools@gmail.com
 
 and
 
 http://www.sourceware.org/bugzilla/
+
+Changes from binutils 2.23.51.0.8:
+
+1. Update from binutils 2013 0118.
+2. Support R_386_SIZE32, R_X86_64_SIZE32 and R_X86_64_SIZE64
+relocations.
+3. Fix x86 assembler for "xtrn@got -1".  PR 15019.
+4. Don't generate old dtags with --enable-new-dtags.
+5. Add Meta support.
+6. Improve gold.
+7. Improve aarch64 support.
+8. Improve arm support.
+9. Improve cr16 support.
+10. Improve mips support.
+11. Improve ppc support.
+12. Improve v850 support.
+13. Improve xgate support.
 
 Changes from binutils 2.23.51.0.7:
 
@@ -702,13 +719,13 @@ already been defined.  PR 12001.
 
 The file list:
 
-1. binutils-2.23.51.0.8.tar.bz2.  Source code.
+1. binutils-2.23.51.0.9.tar.bz2.  Source code.
 
 The primary sites for the beta Linux binutils are:
 
 1. http://www.kernel.org/pub/linux/devel/binutils/
 
-It is also available on linux/release/2.23.51.0.8 branch at
+It is also available on linux/release/2.23.51.0.9 branch at
 
 http://git.kernel.org/?p=linux/kernel/git/hjl/binutils.git;a=summary
 
@@ -717,4 +734,4 @@ Thanks.
 
 H.J. Lu
 hjl.tools@gmail.com
-12/21/2012
+02/01/2013
