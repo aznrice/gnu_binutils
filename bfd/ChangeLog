@@ -1,3 +1,88 @@
+2013-02-01  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (dec_dynrel_count): Don't error when elf_gc_sweep_symbol
+	clears def_regular.
+
+2013-01-31  Tristan Gingold  <gingold@adacore.com>
+
+	* mach-o.c (bfd_mach_o_scan): Call bfd_mach_o_flatten_sections
+	earlier.  Fix status checking of bfd_mach_o_scan_start_address.
+	(bfd_mach_o_scan_start_address): Handle LC_MAIN.
+
+2013-01-31  Alan Modra  <amodra@gmail.com>
+	    David S. Miller  <davem@davemloft.net>
+
+	PR ld/15056
+	* elfxx-sparc.c (_bfd_sparc_elf_gc_mark_hook): Handle implicit
+	references to __tls_get_addr.
+	* elf32-tilpro.c (tilepro_elf_gc_mark_hook): Likewise.  Correct
+	vtinherit and vtentry reloc handling too.
+	* elfxx-tilegx.c (tilegx_elf_gc_mark_hook): As for tilepro.
+
+2013-01-31  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (ppc_stub_name): Trim off trailing "+0".
+
+2013-01-31  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (build_plt_stub): Correct plt stub branch to glink.
+
+2013-01-28  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c: Use %T to print symbols names and remove redundant
+	"relocation" in error messages throughout file.
+	(ppc64_elf_relocate_section): Remove sibling call error message,
+	replace with "call lacks nop".  Specially report errors for
+	branches to function entry points via OPD lookup and branches
+	to stubs.  Remove NULL symbol handling now done by %T.
+
+2013-01-28  Alan Modra  <amodra@gmail.com>
+
+	* archive.c (bfd_generic_archive_p): Return target and keep
+	ardata on partial matches.
+	* format.c (bfd_check_format_matches): Adjust for above
+	change.  Remove bfd_error_file_ambiguously_recognized dead
+	code.
+
+2013-01-26  Alan Modra  <amodra@gmail.com>
+
+	* bfd.c (struct bfd_preserve, bfd_preserve_save, bfd_preserve_restore,
+	bfd_preserve_finish): Move to..
+	* format.c: ..here, splitting out..
+	(bfd_reinit): ..this.  New function.
+	(bfd_check_format_matches): Use bfd_preserve_save/restore to
+	keep bfd state for a match.
+	* elfcode.h (elf_object_p): Don't use bfd_preserve_save/restore.
+	* elfcore.h (elf_core_file_p): Likewise.
+	* mach-o.c (bfd_mach_o_header_p): Likewise.
+	* pef.c (bfd_pef_object_p, bfd_pef_xlib_object_p): Likewise.
+	* xsym.c (bfd_sym_object_p): Likewise.
+	* mmo.c (mmo_scan): Clear abfd->symcount.
+	* opncls.c (_bfd_new_bfd): Use a smaller section hash table.
+	* section.c (bfd_section_list_clear): Clear section_htab.count.
+	* bfd-in2.h: Regenerate.
+
+2013-01-25  Michael Schewe  <michael.schewe@gmx.net>
+
+	* elf32-h8300.c (elf32_h8_relax_section): When checking for a
+	second reloc, make sure that the reloc potentially exists first.
+
+2013-01-24  Nick Clifton  <nickc@redhat.com>
+
+	* archures.c: Add bfd_mach_v850e3v5.
+	* bfd-in2.h: Regenerate.
+	* cpu-v850.c: Add entries for v850e2v5 and v850e3v5.
+	* cpu-v850_rh850.c: Likewise.
+	* elf32-v850.c: Add support for v850e3v5 architecture.
+
+2013-01-23  Markos Chandras  <markos.chandras@imgtec.com>
+
+	* elf32-metag.c: Error on HIADDR16/LOADDR16 in shared link.
+
+2013-01-23  Leif Ekblad  <leif@rdos.net>
+
+	* config.bfd (x86_64-*-rdos*): Remove targ_selvecs.
+
 2013-01-18  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* elf32-i386.c (elf_i386_allocate_dynrelocs): Clear pc_count for

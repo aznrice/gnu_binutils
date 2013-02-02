@@ -1,3 +1,58 @@
+2013-01-25  Kai Tietz  <ktietz@redhat.com>
+
+	* deffilep.y (def_image_name): Adjust type of base-address
+	argument.
+	(%union): Add new type bfd_vma as vma.
+	(VMA):  New rule.
+	(opt_base): Use VMA instead of NUMBER rule to evaluate value.
+	(def_file_print): Use bfd's fprintf_vma to output base-address.
+
+2013-01-24  Nick Clifton  <nickc@redhat.com>
+
+	* NEWS: Mention support for V850E3V5 architecture.
+
+2013-01-23  Martin Koegler  <martin.koegler@chello.at>
+
+	PR ld/15041
+	* scripttempl/pep.sc (.pdata): Only accept .pdata sections.
+	(.xdata): Similarly.
+	(.debug_frame): Similarly.
+
+2013-01-23  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR ld/15037
+	* scripttempl/avr.sc (.eeprom): Keep it.
+
+2013-01-23  Leif Ekblad  <leif@rdos.net>
+
+	* Makefile.am (ALL_64_EMULATION_SOURCES): Add eelf64rdos.c.
+	(eelf64rdos.c): New rule.
+	* emulparams/elf64rdos.sh: New file.
+	* configure.tgt (x86_64-*-rdos*): Use above.
+	* Makefile.in: Regenerate.
+
+2013-01-22  Roland McGrath  <mcgrathr@google.com>
+
+	* emultempl/elf32.em (gld${EMULATION_NAME}_before_parse): Set
+	new_dtags to TRUE for *-*-nacl* targets.
+
+2013-01-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* emultempl/elf32.em (gld${EMULATION_NAME}_before_parse): Set
+	link_info.new_dtags to TRUE for linux/gnu targets.
+	* NEWS: Mention new dtags default.
+
+2013-01-19  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.am (HOSTING_SCRT0): New.
+
+	* configure.host (HOSTING_SCRT0): New.  Used for PIE.
+
+	* configure.in (HOSTING_SCRT0): New AC_SUBST.
+
+	* Makefile.in: Regenerated.
+	* configure: Likewise.
+
 2013-01-18  Mike Frysinger  <vapier@gentoo.org>
 
 	* NEWS: Mention change in behavior with --enable-new-dtags.

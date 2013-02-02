@@ -1,3 +1,31 @@
+2013-01-31  Tristan Gingold  <gingold@adacore.com>
+
+	* gas/ppc/test1xcoff32.d: Updated.
+	* gas/all/fwdexp.d: Adjusted for AIX.
+
+2013-01-30  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* gas/aarch64/alias.s: Add new tests.
+	* gas/aarch64/alias.d: Update.
+	* gas/aarch64/no-aliases.d: Update.
+
+2013-01-30  Markos Chandras  <markos.chandras@imgtec.com>
+
+	* gas/metag/metacore21-invalid.s: Add invalid SWAP testcases.
+	* gas/metag/metacore21-invalid.l: Add expected output for invalid
+	SWAP testcases.
+
+2013-01-28  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR gas/15069
+	* gas/tic6x/insns-c674x-pcrel.s: Add test of BNOP instruction
+	within header based fetch packet.
+	* gas/tic6x/insns-c674x-pcrel.d: Update expected disassembly.
+
+2013-01-24  Nick Clifton  <nickc@redhat.com>
+
+	* gas/elf/warn-2.s: Skip for all V850 variants.
+
 2013-01-17  Yufeng Zhang  <yufeng.zhang@arm.com>
 
 	* gas/aarch64/diagnostic.l: Update.

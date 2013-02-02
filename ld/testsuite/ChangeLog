@@ -1,3 +1,30 @@
+2013-01-31  Alan Modra  <amodra@gmail.com>
+
+	* ld-powerpc/tlsexe.d: Update for changed stub names.
+	* ld-powerpc/tlsexe.r: Likewise.
+	* ld-powerpc/tlsexetoc.d: Likewise.
+	* ld-powerpc/tlsexetoc.r: Likewise.
+	* ld-powerpc/tlsso.d: Likewise.
+	* ld-powerpc/tlsso.r: Likewise.
+	* ld-powerpc/tlstocso.d: Likewise.
+	* ld-powerpc/tlstocso.r: Likewise.
+
+2013-01-31  Hans-Peter Nilsson  <hp@axis.com>
+
+	* ld-cris/libdso-13.d: Adjust for --enable-new-dtags now
+	default for *-*-linux-* by passing explicitly for all targets.
+
+2013-01-21  Alan Modra  <amodra@gmail.com>
+
+	* ld-size/size.exp (build_tests <size-7, size-8>): Pass
+	--no-as-needed in cflags.
+
+2013-01-19  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/default.exp (get_target_emul): Also set HOSTING_SCRT0.
+
+	* lib/ld-lib.exp (default_ld_link): Use HOSTING_SCRT0 for -pie.
+
 2013-01-18  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* ld-size/size-10.rd: Updated.

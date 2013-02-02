@@ -2061,6 +2061,7 @@ enum bfd_architecture
 #define bfd_mach_v850e1        '1'
 #define bfd_mach_v850e2        0x4532
 #define bfd_mach_v850e2v3      0x45325633
+#define bfd_mach_v850e3v5      0x45335635 /* ('E'|'3'|'V'|'5') */
   bfd_arch_arc,       /* ARC Cores */
 #define bfd_mach_arc_5         5
 #define bfd_mach_arc_6         6
@@ -6245,24 +6246,6 @@ extern bfd_byte *bfd_get_relocated_section_contents
    bfd_boolean, asymbol **);
 
 bfd_boolean bfd_alt_mach_code (bfd *abfd, int alternative);
-
-struct bfd_preserve
-{
-  void *marker;
-  void *tdata;
-  flagword flags;
-  const struct bfd_arch_info *arch_info;
-  struct bfd_section *sections;
-  struct bfd_section *section_last;
-  unsigned int section_count;
-  struct bfd_hash_table section_htab;
-};
-
-bfd_boolean bfd_preserve_save (bfd *, struct bfd_preserve *);
-
-void bfd_preserve_restore (bfd *, struct bfd_preserve *);
-
-void bfd_preserve_finish (bfd *, struct bfd_preserve *);
 
 bfd_vma bfd_emul_get_maxpagesize (const char *);
 

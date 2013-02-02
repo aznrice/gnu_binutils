@@ -1,3 +1,44 @@
+2013-01-29  Xi Wang  <xi.wang@gmail.com>
+
+	* readelf.c (process_version_sections): Fix overflow checks to
+	avoid undefined behaviour.
+
+2013-01-28  Doug Evans  <dje@google.com>
+
+	* dwarf.c (display_gdb_index): Handle .gdb_index version 8.
+
+2013-01-28  Robert Schiele  <rschiele@gmail.com>
+
+	* objcopy.c (parse_flags): Add merge and strings section flags.
+
+2013-01-25  Cary Coutant  <ccoutant@google.com>
+
+    	* dwarf.c (display_loc_list): Update offset for each line
+    	printed.
+    	(print_addr_index): New function.
+    	(display_loc_list_dwo): Update offset for each line printed.
+    	Fix problems displaying loclists in .dwo files.  Add support
+    	for type 4 entries.
+    	(display_debug_loc): Remove custom header for .dwo files.
+    	(display_debug_addr): Adjust formatting.
+
+2013-01-25  Marco Atzeri  <marco.atzeri@gmail.com>
+
+	* objcopy.c : Enable long section names for OPTION_ADD_GNU_DEBUGLINK.
+
+2013-01-24  Doug Evans  <dje@google.com>
+
+	* dwarf.c (display_debug_addr): Add missing parentheses to expression.
+
+2013-01-24  Nick Clifton  <nickc@redhat.com>
+
+	* readelf.c (get_machine_flags): Decode E_V850E3V5_ARCH.
+
+2013-01-23  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* readelf.c: Add strings for NT_S390_LAST_BREAK and
+	NT_S390_SYSTEM_CALL.
+
 2013-01-18  Nick Clifton  <nickc@redhat.com>
 
 	PR binutils/15026

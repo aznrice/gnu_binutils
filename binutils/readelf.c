@@ -1,7 +1,5 @@
 /* readelf.c -- display contents of an ELF format file
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011, 2012, 2013
-   Free Software Foundation, Inc.
+   Copyright 1998-2013 Free Software Foundation, Inc.
 
    Originally developed by Eric Youngdale <eric@andante.jic.com>
    Modifications by Nick Clifton <nickc@redhat.com>
@@ -2476,6 +2474,9 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	case EM_CYGNUS_V850:
 	  switch (e_flags & EF_V850_ARCH)
 	    {
+	    case E_V850E3V5_ARCH:
+	      strcat (buf, ", v850e3v5");
+	      break;
 	    case E_V850E2V3_ARCH:
 	      strcat (buf, ", v850e2v3");
 	      break;
@@ -8466,8 +8467,8 @@ process_version_sections (FILE * file)
 		int j;
 		int isum;
 
-		/* Check for negative or very large indicies.  */
-		if ((unsigned char *) edefs + idx < (unsigned char *) edefs)
+		/* Check for very large indicies.  */
+		if (idx > (size_t) (endbuf - (char *) edefs))
 		  break;
 
 		vstart = ((char *) edefs) + idx;
@@ -8491,8 +8492,7 @@ process_version_sections (FILE * file)
 			ent.vd_ndx, ent.vd_cnt);
 
 		/* Check for overflow.  */
-		if ((unsigned char *)(vstart + ent.vd_aux) < (unsigned char *) vstart
-		    || (unsigned char *)(vstart + ent.vd_aux) > (unsigned char *) endbuf)
+		if (ent.vd_aux > (size_t) (endbuf - vstart))
 		  break;
 
 		vstart += ent.vd_aux;
@@ -8512,8 +8512,7 @@ process_version_sections (FILE * file)
 		for (j = 1; j < ent.vd_cnt; j++)
 		  {
 		    /* Check for overflow.  */
-		    if ((unsigned char *)(vstart + aux.vda_next) < (unsigned char *) vstart
-			|| (unsigned char *)(vstart + aux.vda_next) > (unsigned char *) endbuf)
+		    if (aux.vda_next > (size_t) (endbuf - vstart))
 		      break;
 
 		    isum   += aux.vda_next;
@@ -8583,7 +8582,7 @@ process_version_sections (FILE * file)
 		int isum;
 		char * vstart;
 
-		if ((unsigned char *) eneed + idx < (unsigned char *) eneed)
+		if (idx > (size_t) (endbuf - (char *) eneed))
 		  break;
 
 		vstart = ((char *) eneed) + idx;
@@ -8608,8 +8607,7 @@ process_version_sections (FILE * file)
 		printf (_("  Cnt: %d\n"), ent.vn_cnt);
 
 		/* Check for overflow.  */
-		if ((unsigned char *)(vstart + ent.vn_aux) < (unsigned char *) vstart
-		    || (unsigned char *)(vstart + ent.vn_aux) > (unsigned char *) endbuf)
+		if (ent.vn_aux > (size_t) (endbuf - vstart))
 		  break;
 
 		vstart += ent.vn_aux;
@@ -8640,8 +8638,7 @@ process_version_sections (FILE * file)
 			    get_ver_flags (aux.vna_flags), aux.vna_other);
 
 		    /* Check for overflow.  */
-		    if ((unsigned char *)(vstart + aux.vna_next) < (unsigned char *) vstart
-			|| (unsigned char *)(vstart + aux.vna_next) > (unsigned char *) endbuf)
+		    if (aux.vna_next > (size_t) (endbuf - vstart))
 		      break;
 
 		    isum   += aux.vna_next;
@@ -10323,8 +10320,8 @@ is_16bit_abs_reloc (unsigned int reloc_type)
     case EM_M32C_OLD:
     case EM_M32C:
       return reloc_type == 1; /* R_M32C_16 */
-    case EM_MSP430_OLD:
     case EM_MSP430:
+    case EM_MSP430_OLD:
       return reloc_type == 5; /* R_MSP430_16_BYTE.  */
     case EM_ALTERA_NIOS2:
     case EM_NIOS32:
@@ -12811,6 +12808,10 @@ get_note_type (unsigned e_type)
 	return _("NT_S390_CTRS (s390 control registers)");
       case NT_S390_PREFIX:
 	return _("NT_S390_PREFIX (s390 prefix register)");
+      case NT_S390_LAST_BREAK:
+	return _("NT_S390_LAST_BREAK (s390 last breaking event address)");
+      case NT_S390_SYSTEM_CALL:
+	return _("NT_S390_SYSTEM_CALL (s390 system call restart data)");
       case NT_ARM_VFP:
 	return _("NT_ARM_VFP (arm VFP registers)");
       case NT_ARM_TLS:

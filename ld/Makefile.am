@@ -86,6 +86,7 @@ POD2MAN = pod2man --center="GNU Development Tools" \
 
 #stuff for self hosting (can be overridden in config file).
 HOSTING_CRT0 = @HOSTING_CRT0@
+HOSTING_SCRT0 = @HOSTING_SCRT0@
 HOSTING_LIBS = @HOSTING_LIBS@
 HOSTING_EMU = -m $(EMUL)
 
@@ -515,6 +516,7 @@ ALL_64_EMULATION_SOURCES = \
 	eelf64mmix.c \
 	eelf64ppc.c \
 	eelf64ppc_fbsd.c \
+	eelf64rdos.c \
 	eelf64tilegx.c \
 	eelf64tilegx_be.c \
 	eelf_l1om.c \
@@ -2101,6 +2103,9 @@ eelf64ppc_fbsd.c: $(srcdir)/emulparams/elf64ppc_fbsd.sh \
   $(srcdir)/emultempl/ppc64elf.em ldemul-list.h \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf64ppc_fbsd "$(tdir_elf64ppc_fbsd)"
+eelf64rdos.c: $(srcdir)/emulparams/elf64rdos.sh \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf64rdos "$(tdir_elf64rdos)"
 eelf64tilegx.c: $(srcdir)/emulparams/elf64tilegx.sh \
   $(srcdir)/emultempl/elf32.em $(srcdir)/emultempl/needrelax.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}

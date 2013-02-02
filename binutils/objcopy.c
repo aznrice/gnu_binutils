@@ -690,6 +690,8 @@ parse_flags (const char *s)
       PARSE_FLAG ("rom", SEC_ROM);
       PARSE_FLAG ("share", SEC_COFF_SHARED);
       PARSE_FLAG ("contents", SEC_HAS_CONTENTS);
+      PARSE_FLAG ("merge", SEC_MERGE);
+      PARSE_FLAG ("strings", SEC_STRINGS);
 #undef PARSE_FLAG
       else
 	{
@@ -700,7 +702,7 @@ parse_flags (const char *s)
 	  copy[len] = '\0';
 	  non_fatal (_("unrecognized section flag `%s'"), copy);
 	  fatal (_("supported flags: %s"),
-		 "alloc, load, noload, readonly, debug, code, data, rom, share, contents");
+		 "alloc, load, noload, readonly, debug, code, data, rom, share, contents, merge, strings");
 	}
 
       s = snext;
@@ -3453,6 +3455,7 @@ copy_main (int argc, char *argv[])
 	  break;
 
 	case OPTION_ADD_GNU_DEBUGLINK:
+	  long_section_names = ENABLE ;
 	  gnu_debuglink_filename = optarg;
 	  break;
 
