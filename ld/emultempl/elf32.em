@@ -105,16 +105,6 @@ gld${EMULATION_NAME}_before_parse (void)
   input_flags.dynamic = ${DYNAMIC_LINK-TRUE};
   config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo TRUE ; else echo FALSE ; fi`;
   config.separate_code = `if test "x${SEPARATE_CODE}" = xyes ; then echo TRUE ; else echo FALSE ; fi`;
-EOF
-
-case ${target} in
-  *-*-linux-* | *-*-k*bsd*-* | *-*-gnu* | *-*-nacl*)
-    fragment <<EOF
-  link_info.new_dtags = TRUE;
-EOF
-    ;;
-esac
-fragment <<EOF
 }
 
 EOF
@@ -1326,12 +1316,12 @@ EOF
     ;;
 
     *-*-linux-* | *-*-k*bsd*-* | *-*-gnu*)
-    # Linux
       fragment <<EOF
 	  if (gld${EMULATION_NAME}_check_ld_so_conf (l, force))
 	    break;
 
 EOF
+    # Linux
     ;;
   esac
 fi
