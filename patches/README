@@ -23,6 +23,7 @@ patches="
 	binutils-secondary-1.patch
 	binutils-pr15141-1.patch
 	binutils-pr15146-1.patch
+	binutils-pr15149-1.patch
 "
 
 if [ -n "$clean" ]
