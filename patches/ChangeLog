@@ -1,5 +1,10 @@
 2013-02-15  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-lto-mixed-18.patch: Add bfd_boolean to lang_finish for
+	object-only output.
+
+2013-02-15  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-pr15141-1.patch: New.  Also trace symbol from the IR
 	bfd.
 	* README: Apply it.
