@@ -1,0 +1,163 @@
+bfd/
+
+2013-02-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/15146
+	* elflink.c (elf_link_add_object_symbols): Don't add DT_NEEDED
+	for references from the dummy bfd.
+
+ld/
+
+2013-02-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/15146
+	* plugin.c (plugin_notice): Replace the undefined dummy bfd with
+	the real one.
+
+ld/testsuite/
+
+2013-02-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/15146
+	* ld-plugin/pr15146.d: New file.
+	* ld-plugin/pr15146a.c: Likewise.
+	* ld-plugin/pr15146b.c: Likewise.
+	* ld-plugin/pr15146c.c: Likewise.
+	* ld-plugin/pr15146d.c: Likewise.
+
+	* ld-plugin/lto.exp: Add tests for PR ld/15146.
+
+diff --git a/bfd/elflink.c b/bfd/elflink.c
+index 5d146a7..c1f2687 100644
+--- a/bfd/elflink.c
++++ b/bfd/elflink.c
+@@ -4491,10 +4491,13 @@ error_free_dyn:
+ 		break;
+ 	      }
+ 
++	  /* Don't add DT_NEEDED for references from the dummy bfd.  */
+ 	  if (!add_needed
+ 	      && definition
+ 	      && ((dynsym
+-		   && h->ref_regular)
++		   && h->ref_regular
++		   && (undef_bfd == NULL
++		       || (undef_bfd->flags & BFD_PLUGIN) == 0))
+ 		  || (h->ref_dynamic
+ 		      && (elf_dyn_lib_class (abfd) & DYN_AS_NEEDED) != 0
+ 		      && !on_needed_list (elf_dt_name (abfd), htab->needed))))
+diff --git a/ld/plugin.c b/ld/plugin.c
+index 2966f0f..6c9cd11 100644
+--- a/ld/plugin.c
++++ b/ld/plugin.c
+@@ -1013,7 +1013,14 @@ plugin_notice (struct bfd_link_info *info,
+ 
+       /* If this is a ref, set non_ir_ref.  */
+       else if (bfd_is_und_section (section))
+-	h->non_ir_ref = TRUE;
++	{
++	  /* Replace the undefined dummy bfd with the real one.  */
++	  if ((h->type == bfd_link_hash_undefined
++	       || h->type == bfd_link_hash_undefweak)
++	      && (h->u.undef.abfd->flags & BFD_PLUGIN) != 0)
++	    h->u.undef.abfd = abfd;
++	  h->non_ir_ref = TRUE;
++	}
+ 
+       /* Otherwise, it must be a new def.  Ensure any symbol defined
+ 	 in an IR dummy BFD takes on a new value from a real BFD.
+diff --git a/ld/testsuite/ld-plugin/lto.exp b/ld/testsuite/ld-plugin/lto.exp
+index 326faee..c2fe2c1 100644
+--- a/ld/testsuite/ld-plugin/lto.exp
++++ b/ld/testsuite/ld-plugin/lto.exp
+@@ -201,6 +201,24 @@ set lto_link_elf_tests {
+   {"PR ld/14918"
+    "-flto" "-flto"
+    {pr14918.c} {{"readelf" {-d --wide} "pr14918.d"}} "pr14918.exe" "c"}
++  {"Build libpr15146a.a"
++   "" "-flto -O2"
++   {pr15146a.c} {} "lib15146a.a"}
++  {"Build pr15146b.so"
++   "-shared" "-O2 -fpic"
++   {pr15146b.c} {} "pr15146b.so" "c"}
++  {"Build pr15146c.so"
++   "-shared tmpdir/pr15146b.so" "-O2 -fpic"
++   {pr15146c.c} {} "pr15146c.so" "c"}
++  {"PR ld/15146 (1)"
++   "-O2 -flto -fuse-linker-plugin -Wl,-rpath-link,. -Wl,--no-copy-dt-needed-entries tmpdir/pr15146a.o tmpdir/pr15146c.so" ""
++   {dummy.c} {{"readelf" {-d} "pr15146.d"}} "pr15146a.exe"}
++  {"Build libpr15146d.a"
++   "" "-flto -O2"
++   {pr15146d.c} {} "lib15146d.a"}
++  {"Build libpr15146d.a"
++   "" "-flto -O2"
++   {pr15146d.c} {} "lib15146d.a"}
+ }
+ 
+ # Check final symbols in executables.
+@@ -302,6 +320,13 @@ run_cc_link_tests $lto_link_tests
+ if { [is_elf_format]
+      && [run_host_cmd_yesno $CC "-shared -fPIC $srcdir/$subdir/dummy.c -o tmpdir/t.so"] } {
+     run_cc_link_tests $lto_link_elf_tests
++    set testname "PR ld/15146 (2)"
++    set exec_output [run_host_cmd "$CC" "$gcc_gas_flag $gcc_ld_flag -O2 -flto -fuse-linker-plugin -Wl,-rpath-link,. -Wl,--no-copy-dt-needed-entries tmpdir/pr15146d.o tmpdir/pr15146c.so"]
++    if { [ regexp "ltrans.o: undefined reference to symbol 'xxx'" $exec_output ] } {
++	pass $testname
++    } {
++	fail $testname
++    }
+ }
+ 
+ set testname "Build liblto-4.a"
+diff --git a/ld/testsuite/ld-plugin/pr15146.d b/ld/testsuite/ld-plugin/pr15146.d
+new file mode 100644
+index 0000000..48d4b85
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr15146.d
+@@ -0,0 +1,4 @@
++#failif
++#...
++ +0x[0-9a-f]+ +\(NEEDED\) +Shared library: +\[.*pr15146b.so\]
++#...
+diff --git a/ld/testsuite/ld-plugin/pr15146a.c b/ld/testsuite/ld-plugin/pr15146a.c
+new file mode 100644
+index 0000000..a22860a
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr15146a.c
+@@ -0,0 +1,13 @@
++extern int xxx;
++
++int
++bar (void)
++{
++  return xxx;
++}
++
++int
++main ()
++{ 
++  return 0;
++}
+diff --git a/ld/testsuite/ld-plugin/pr15146b.c b/ld/testsuite/ld-plugin/pr15146b.c
+new file mode 100644
+index 0000000..90eb21e
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr15146b.c
+@@ -0,0 +1 @@
++int xxx = 3;
+diff --git a/ld/testsuite/ld-plugin/pr15146c.c b/ld/testsuite/ld-plugin/pr15146c.c
+new file mode 100644
+index 0000000..e69de29
+diff --git a/ld/testsuite/ld-plugin/pr15146d.c b/ld/testsuite/ld-plugin/pr15146d.c
+new file mode 100644
+index 0000000..ba1e0ab
+--- /dev/null
++++ b/ld/testsuite/ld-plugin/pr15146d.c
+@@ -0,0 +1,7 @@
++extern int xxx;
++
++int
++main ()
++{ 
++  return xxx;
++}

@@ -1,5 +1,11 @@
 2013-02-15  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-pr15146-1.patch: New.  Don't add DT_NEEDED for
+	references from the dummy bfd.
+	* README: Apply it.
+
+2013-02-15  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-lto-mixed-18.patch: Add bfd_boolean to lang_finish for
 	object-only output.
 
