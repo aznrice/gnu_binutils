@@ -1,5 +1,11 @@
 2013-02-15  H.J. Lu  <hjl.tools@gmail.com>
 
+	* binutils-pr15141-1.patch: New.  Also trace symbol from the IR
+	bfd.
+	* README: Apply it.
+
+2013-02-15  H.J. Lu  <hjl.tools@gmail.com>
+
 	* binutils-shr-100.patch: Updated.
 
 2013-02-06  H.J. Lu  <hjl.tools@gmail.com>
