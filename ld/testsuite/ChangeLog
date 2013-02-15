@@ -1,3 +1,61 @@
+2013-02-15  Markos Chandras  <markos.chandras@imgtec.com>
+
+	* ld-metag/pcrel.d: Fix the expected disassembler
+	output to be in little endian format
+	* ld-metag/shared.d: likewise
+	* ld-metag/stub.d: likewise
+	* ld-metag/stub_pic_app.d: likewise
+	* ld-metag/stub_pic_shared.d: likewise
+	* ld-metag/stub_shared.d: likewise
+
+2013-02-13  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* ld-mips-elf/mips16-pic-2.dd,
+	ld-mips-elf/mips16-pic-2.gd: Remove 3 unused local GOT entries.
+	* ld-mips-elf/got-page-4a.s, ld-mips-elf/got-page-4b.s,
+	ld-mips-elf/got-page-4a.d, ld-mips-elf/got-page-4a.got,
+	ld-mips-elf/got-page-4b.d, ld-mips-elf/got-page-4b.got,
+	ld-mips-elf/got-page-5.s, ld-mips-elf/got-page-5.d,
+	ld-mips-elf/got-page-5.got, ld-mips-elf/got-page-6.s,
+	ld-mips-elf/got-page-6.d, ld-mips-elf/got-page-6.got,
+	ld-mips-elf/got-page-7a.s, ld-mips-elf/got-page-7b.s,
+	ld-mips-elf/got-page-7c.s, ld-mips-elf/got-page-7d.s,
+	ld-mips-elf/got-page-7e.s, ld-mips-elf/got-page-7.d,
+	ld-mips-elf/got-page-7.got: New tests.
+	* ld-mips-elf/mips-elf.exp: Run them.
+
+2013-02-11  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* ld-mips-elf/tlsdyn-o32-1.d, ld-mips-elf/tlsdyn-o32-1.got,
+	ld-mips-elf/tlsdyn-o32-2.d, ld-mips-elf/tlsdyn-o32-2.got,
+	ld-mips-elf/tlsdyn-o32-3.d, ld-mips-elf/tlsdyn-o32-3.got,
+	ld-mips-elf/tls-hidden3.d, ld-mips-elf/tls-hidden3.got: Update
+	for new hash table order.
+
+2013-02-11  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* ld-mips-elf/tls-hidden4.got, ld-mips-elf/tls-multi-got-1.d,
+	ld-mips-elf/tls-multi-got-1.got: Update for changes in the order
+	that symbols are added to per-bfd GOTs.
+
+2013-02-11  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* ld-mips-elf/tls-hidden3.d, ld-mips-elf/tls-hidden3.got,
+	ld-mips-elf/tls-multi-got-1.got, ld-mips-elf/tlsbin-o32.d,
+	ld-mips-elf/tlsbin-o32.got, ld-mips-elf/tlsdyn-o32-1.d,
+	ld-mips-elf/tlsdyn-o32-1.got, ld-mips-elf/tlsdyn-o32-2.d,
+	ld-mips-elf/tlsdyn-o32-2.got, ld-mips-elf/tlsdyn-o32-3.d,
+	ld-mips-elf/tlsdyn-o32-3.got, ld-mips-elf/tlsdyn-o32.d,
+	ld-mips-elf/tlsdyn-o32.got, ld-mips-elf/tlslib-o32.d,
+	ld-mips-elf/tlslib-o32.got, ld-mips-elf/tlslib-o32-hidden.got,
+	ld-mips-elf/tlslib-o32-ver.got: Adjust GOT layout for new
+	got_entry hash function.
+
+2013-02-11  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* ld-mips-elf/tlsdyn-o32-2.got, ld-mips-elf/tlsdyn-o32-3.got: Remove
+	unused GOT entries.
+
 2013-02-07  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/15107

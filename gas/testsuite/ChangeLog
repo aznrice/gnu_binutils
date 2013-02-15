@@ -1,3 +1,46 @@
+2013-02-15  Markos Chandras  <markos.chandras@imgtec.com>
+
+	* gas/metag/labelarithmetic.d: Fix the expected disassembler
+	output to be in little endian format
+	* gas/metag/metacore12.d: likewise
+	* gas/metag/metacore21.d: likewise
+	* gas/metag/metacore21ext.d: likewise
+	* gas/metag/metadsp21.d: likewise
+	* gas/metag/metadsp21ext.d: likewise
+	* gas/metag/metafpu.d: likewise
+	* gas/metag/metafpuext.d: likewise
+	* gas/metag/tls.d: likewise
+
+2013-02-15  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+        * gas/arm/neon-vmov-bad.d: New file.
+        * gas/arm/neon-vmov-bad.s: Likewise.
+        * gas/arm/neon-vmov-bad.l: Likewise.
+
+2013-02-14  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* gas/aarch64/system.s: Add tests.
+	* gas/aarch64/system.d: Update.
+
+2013-02-11  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* gas/arm/archv6t2.s: Add strht and ldrht tests.
+	* gas/arm/archv6t2.d: Add disassembly patterns for the above.
+
+2013-02-09  Jürgen Urban  <JuergenUrban@gmx.de>
+
+	* gas/mips/24k-triple-stores-2.d, gas/mips/24k-triple-stores-2.s,
+	gas/mips/micromips@24k-triple-stores-2.d: Move "sc" tests to...
+	* gas/mips/24k-triple-stores-2-llsc.d,
+	gas/mips/24k-triple-stores-2-llsc.s,
+	gas/mips/micromips@24k-triple-stores-2-llsc.d: ...these new tests.
+	* gas/mips/r5900-full.d, gas/mips/r5900-full.s: Verify that the
+	MIPS ISA level can be upgraded to support ll, sc, lld and scd.
+	* gas/mips/l_d-single.d, gas/mips/s_d-single.d,
+	gas/mips/r5900-nollsc.l, gas/mips/r5900-nollsc.s: New tests.
+	* gas/mips/mips.exp: Update accordingly.  Add "nollsc" to r5900
+	properties.
+
 2013-02-08  Alan Modra  <amodra@gmail.com>
 
 	* gas/nios2/nios2.exp: Add copyright.

@@ -1,3 +1,17 @@
+2013-02-15  Alan Modra  <amodra@gmail.com>
+
+	* powerpc.cc (Stub_table::plt_off): New function, extracted from..
+	(Stub_table::do_write): ..here, two places.
+	(Stub_table::plt_call_size): Use it here too.
+
+2013-02-11  Ian Lance Taylor  <iant@google.com>
+
+	* descriptors.cc (Descriptors::close_all): New function.
+	* descriptors.h (class Descriptors): Declare close_all.
+	(close_all_descriptors): New inline function.
+	* plugin.cc: Include "descriptors.h".
+	(Plugin_manager::cleanup): Call close_all_descriptors.
+
 2013-02-06  Alan Modra  <amodra@gmail.com>
 
 	* README: Update coding style link.

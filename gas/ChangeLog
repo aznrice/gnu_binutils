@@ -1,3 +1,26 @@
+2013-02-15  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+        * config/tc-arm.c (do_neon_mov): Break on NS_NULL.
+
+2013-02-15  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	* configure.tgt: Add nios2-*-rtems*.
+
+2013-02-14  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* config/tc-aarch64.c (md_begin): Change to check if 'name' is
+	NULL.
+
+2013-02-09  Jürgen Urban  <JuergenUrban@gmx.de>
+
+	* config/tc-mips.c (CPU_HAS_LDC1_SDC1): New macro.
+	(macro): Use it.  Assert that trunc.w.s is not used for r5900.
+
+2013-02-08  Yi-Hsiu, Hsu  <ahsu@marvell.com>
+
+	* gas/config/tc-arm.c (arm_cpus): Add support for mcpu=marvell-pj4
+	core.
+
 2013-02-06  Sandra Loosemore  <sandra@codesourcery.com>
             Andrew Jenner <andrew@codesourcery.com>
 

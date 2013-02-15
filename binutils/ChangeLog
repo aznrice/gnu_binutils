@@ -1,3 +1,47 @@
+2013-02-15  Kai Tietz  <ktietz@redhat.com>
+
+	* objcopy.c (copy_main): Initialize context variable.
+
+2013-02-15  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/15140
+	* ar.c (open_inarch): Fail on attempts to convert a normal archive
+	to a thin archive or vice versa.
+	* elfcomm.c (make_qualified_name): Handle corrupted thin
+	archives.
+	* readelf.c (process_archive): Likewise.
+	* doc/binutils.texi: Clarify documentation describing thin
+	archives.
+
+2013-02-15  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/15033
+	* objcopy.c (enum change_action): Delete.
+	(struct section_list): Delete remove, copy, change_vma, change_lma
+	and set_flags fields.  Add context field.
+	(find_section_list): Add a context parameter.  Add support for
+	wildcard characters in section names.
+	(is_strip_section): Check for sections being both  copied and
+	removed.
+	(copy_object): Pass context to find_section_list.
+	(setup_section): Likewise.
+	(copy_section): Likewise.
+	(copy_main): Likewise.
+	* doc/binutils: Document the new behaviour.
+	* NEWS: Mention the new feature
+
+2013-02-14  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/15125
+	* objcopy.c (copy_object): Provide a helpful warning message when
+	adding a gnu_debuglink section to an object which already contains
+	one.
+
+2013-02-07  Nick Clifton  <nickc@redhat.com>
+
+	* elfcomm.c (get_archive_member_name): Prevent seg-fault if a
+	corrupt archive uses long names but has no long name table.
+
 2013-02-06  Sandra Loosemore  <sandra@codesourcery.com>
             Andrew Jenner <andrew@codesourcery.com>
 
