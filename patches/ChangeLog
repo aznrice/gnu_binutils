@@ -1,3 +1,12 @@
+2013-02-19  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-lto-mixed-18.patch: Updated.
+
+	* binutils-pr15141-1.patch: Removed.
+	* binutils-pr15146-1.patch: Likewise.
+	* binutils-pr15149-1.patch: Likewise.
+	* README: Updated.
+
 2013-02-15  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-pr15149-1.patch: New.  Also track weak references.
