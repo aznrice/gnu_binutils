@@ -1,3 +1,70 @@
+2013-02-19  Alan Modra  <amodra@gmail.com>
+
+	* configure.in: Bump version to 2.23.52.
+	* elf-bfd.h (struct elf_build_id_info): New.
+	(struct elf_obj_tdata): Delete after_write_object_contents,
+	after_write_object_contents_info and build_id_size.  Make build_id
+	a pointer to struct elf_build_id_info.
+	* elf.c (_bfd_elf_write_object_contents): Style.  Update
+	after_write_ibject_contents invocation.
+	(elfobj_grok_gnu_build_id): Update for new build_id struct.  Don't
+	allow zero size notes.
+	* configure: Regenerate.
+
+2013-02-18  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* elf64-mips.c (micromips_elf64_howto_table_rel): Add
+	R_MICROMIPS_SCN_DISP and R_MICROMIPS_JALR.
+	(micromips_elf64_howto_table_rela): Likewise.
+	(micromips_reloc_map): Add BFD_RELOC_MICROMIPS_JALR.
+	* elfn32-mips.c (elf_micromips_howto_table_rel): Add
+	R_MICROMIPS_SCN_DISP and R_MICROMIPS_JALR.
+	(elf_micromips_howto_table_rela): Likewise.
+	(micromips_reloc_map): Add BFD_RELOC_MICROMIPS_JALR.
+
+2013-02-18  Paul Brook  <paul@codesourcery.com>
+
+	* elfxx-mips.c (MICROMIPS_P): New macro.
+	(_bfd_mips_elf_symbol_processing): Use it.
+
+2013-02-18  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* elfxx-mips.c (_bfd_mips_elf_create_dynamic_sections): Clarify
+	comment on _PROCEDURE_LINKAGE_TABLE_ creation.
+
+2013-02-18  Alan Modra  <amodra@gmail.com>
+
+	PR ld/12549
+	* elf-bfd.h (_bfd_elf_strtab_clear_refs): Delete.
+	(_bfd_elf_strtab_clear_all_refs): Declare.
+	(_bfd_elf_strtab_resize): Declare.
+	* elf-strtab.c (_bfd_elf_strtab_clear_refs): Delete.
+	(_bfd_elf_strtab_clear_all_refs): New function.
+	(_bfd_elf_strtab_resize): Likewise.
+	* elflink.c (elf_link_add_object_symbols): Use _bfd_elf_strtab_resize.
+
+2013-02-18  Alan Modra  <amodra@gmail.com>
+
+	* elf-bfd.h (struct elf_obj_tdata): Move find_line_info, local_stubs,
+	local_call_stubs, elf_data_symbol, elf_text_symbol, elf_data_section,
+	and elf_text_section to..
+	* elfxx-mips.c (struct mips_elf_obj_tdata): ..here.  Update all refs.
+	* elf64-alpha.c (struct mips_elf_find_line): Rename to..
+	(struct alpha_elf_find_line): ..this.
+	(struct alpha_elf_obj_tdata): Add find_line_info, update refs.
+
+2013-02-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/15146
+	* elflink.c (elf_link_add_object_symbols): Don't add DT_NEEDED
+	for references from the dummy bfd.
+
+2013-02-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/15149
+	* elflink.c (elf_link_add_object_symbols): Also track weak
+	references.
+
 2013-02-15  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR binutils/15151
