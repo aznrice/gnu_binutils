@@ -132,6 +132,11 @@ ld/
 
 bfd/
 
+2013-02-27  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-nios2.c (nios2_elf32_relocate_section): Add an argument
+	for error ignored.
+
 2013-01-10  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* elf32-metag.c (elf_metag_relocate_section): Add an argument
