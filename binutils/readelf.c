@@ -1,7 +1,5 @@
 /* readelf.c -- display contents of an ELF format file
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011, 2012, 2013
-   Free Software Foundation, Inc.
+   Copyright 1998-2013 Free Software Foundation, Inc.
 
    Originally developed by Eric Youngdale <eric@andante.jic.com>
    Modifications by Nick Clifton <nickc@redhat.com>
@@ -154,6 +152,8 @@
 #include "elf/xgate.h"
 #include "elf/xstormy16.h"
 #include "elf/xtensa.h"
+
+#include "elf/nios2.h"
 
 #include "getopt.h"
 #include "libiberty.h"
@@ -1290,6 +1290,10 @@ dump_relocations (FILE * file,
 	case EM_XGATE:
 	  rtype = elf_xgate_reloc_type (type);
 	  break;
+
+	case EM_ALTERA_NIOS2:
+	  rtype = elf_nios2_reloc_type (type);
+	  break;
 	}
 
       if (rtype == NULL)
@@ -1691,6 +1695,17 @@ get_tic6x_dynamic_type (unsigned long type)
 }
 
 static const char *
+get_nios2_dynamic_type (unsigned long type)
+{
+  switch (type)
+    {
+    case DT_NIOS2_GP: return "NIOS2_GP";
+    default:
+      return NULL;
+    }
+}
+
+static const char *
 get_dynamic_type (unsigned long type)
 {
   static char buff[64];
@@ -1803,6 +1818,9 @@ get_dynamic_type (unsigned long type)
 	      break;
 	    case EM_TI_C6000:
 	      result = get_tic6x_dynamic_type (type);
+	      break;
+	    case EM_ALTERA_NIOS2:
+	      result = get_nios2_dynamic_type (type);
 	      break;
 	    default:
 	      result = NULL;
@@ -2478,6 +2496,9 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	case EM_CYGNUS_V850:
 	  switch (e_flags & EF_V850_ARCH)
 	    {
+	    case E_V850E3V5_ARCH:
+	      strcat (buf, ", v850e3v5");
+	      break;
 	    case E_V850E2V3_ARCH:
 	      strcat (buf, ", v850e2v3");
 	      break;
@@ -8470,8 +8491,8 @@ process_version_sections (FILE * file)
 		int j;
 		int isum;
 
-		/* Check for negative or very large indicies.  */
-		if ((unsigned char *) edefs + idx < (unsigned char *) edefs)
+		/* Check for very large indicies.  */
+		if (idx > (size_t) (endbuf - (char *) edefs))
 		  break;
 
 		vstart = ((char *) edefs) + idx;
@@ -8495,8 +8516,7 @@ process_version_sections (FILE * file)
 			ent.vd_ndx, ent.vd_cnt);
 
 		/* Check for overflow.  */
-		if ((unsigned char *)(vstart + ent.vd_aux) < (unsigned char *) vstart
-		    || (unsigned char *)(vstart + ent.vd_aux) > (unsigned char *) endbuf)
+		if (ent.vd_aux > (size_t) (endbuf - vstart))
 		  break;
 
 		vstart += ent.vd_aux;
@@ -8516,8 +8536,7 @@ process_version_sections (FILE * file)
 		for (j = 1; j < ent.vd_cnt; j++)
 		  {
 		    /* Check for overflow.  */
-		    if ((unsigned char *)(vstart + aux.vda_next) < (unsigned char *) vstart
-			|| (unsigned char *)(vstart + aux.vda_next) > (unsigned char *) endbuf)
+		    if (aux.vda_next > (size_t) (endbuf - vstart))
 		      break;
 
 		    isum   += aux.vda_next;
@@ -8587,7 +8606,7 @@ process_version_sections (FILE * file)
 		int isum;
 		char * vstart;
 
-		if ((unsigned char *) eneed + idx < (unsigned char *) eneed)
+		if (idx > (size_t) (endbuf - (char *) eneed))
 		  break;
 
 		vstart = ((char *) eneed) + idx;
@@ -8612,8 +8631,7 @@ process_version_sections (FILE * file)
 		printf (_("  Cnt: %d\n"), ent.vn_cnt);
 
 		/* Check for overflow.  */
-		if ((unsigned char *)(vstart + ent.vn_aux) < (unsigned char *) vstart
-		    || (unsigned char *)(vstart + ent.vn_aux) > (unsigned char *) endbuf)
+		if (ent.vn_aux > (size_t) (endbuf - vstart))
 		  break;
 
 		vstart += ent.vn_aux;
@@ -8644,8 +8662,7 @@ process_version_sections (FILE * file)
 			    get_ver_flags (aux.vna_flags), aux.vna_other);
 
 		    /* Check for overflow.  */
-		    if ((unsigned char *)(vstart + aux.vna_next) < (unsigned char *) vstart
-			|| (unsigned char *)(vstart + aux.vna_next) > (unsigned char *) endbuf)
+		    if (aux.vna_next > (size_t) (endbuf - vstart))
 		      break;
 
 		    isum   += aux.vna_next;
@@ -10089,6 +10106,7 @@ is_32bit_abs_reloc (unsigned int reloc_type)
     case EM_MT:
       return reloc_type == 2; /* R_MT_32.  */
     case EM_ALTERA_NIOS2:
+      return reloc_type == 12; /* R_NIOS2_BFD_RELOC_32.  */
     case EM_NIOS32:
       return reloc_type == 1; /* R_NIOS_32.  */
     case EM_OPENRISC:
@@ -10335,10 +10353,11 @@ is_16bit_abs_reloc (unsigned int reloc_type)
     case EM_M32C_OLD:
     case EM_M32C:
       return reloc_type == 1; /* R_M32C_16 */
-    case EM_MSP430_OLD:
     case EM_MSP430:
+    case EM_MSP430_OLD:
       return reloc_type == 5; /* R_MSP430_16_BYTE.  */
     case EM_ALTERA_NIOS2:
+      return reloc_type == 13; /* R_NIOS2_BFD_RELOC_16.  */
     case EM_NIOS32:
       return reloc_type == 9; /* R_NIOS_16.  */
     case EM_TI_C6000:
@@ -10395,6 +10414,8 @@ is_none_reloc (unsigned int reloc_type)
     case EM_TILEPRO: /* R_TILEPRO_NONE.  */
     case EM_XC16X:
     case EM_C166:    /* R_XC16X_NONE.  */
+    case EM_ALTERA_NIOS2: /* R_NIOS2_NONE.  */
+    case EM_NIOS32:  /* R_NIOS_NONE.  */
       return reloc_type == 0;
     case EM_AARCH64:
       return reloc_type == 0 || reloc_type == 256;
@@ -12823,6 +12844,10 @@ get_note_type (unsigned e_type)
 	return _("NT_S390_CTRS (s390 control registers)");
       case NT_S390_PREFIX:
 	return _("NT_S390_PREFIX (s390 prefix register)");
+      case NT_S390_LAST_BREAK:
+	return _("NT_S390_LAST_BREAK (s390 last breaking event address)");
+      case NT_S390_SYSTEM_CALL:
+	return _("NT_S390_SYSTEM_CALL (s390 system call restart data)");
       case NT_ARM_VFP:
 	return _("NT_ARM_VFP (arm VFP registers)");
       case NT_ARM_TLS:
@@ -13962,6 +13987,15 @@ process_archive (char * file_name, FILE * file, bfd_boolean is_thin_archive)
         }
       else if (is_thin_archive)
         {
+	  /* PR 15140: Allow for corrupt thin archives.  */
+	  if (nested_arch.file == NULL)
+	    {
+	      error (_("%s: contains corrupt thin archive: %s\n"),
+		     file_name, name);
+	      ret = 1;
+	      break;
+	    }
+
           /* This is a proxy for a member of a nested archive.  */
           archive_file_offset = arch.nested_member_origin + sizeof arch.arhdr;
 

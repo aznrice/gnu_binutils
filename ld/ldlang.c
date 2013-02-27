@@ -398,7 +398,7 @@ get_init_priority (const char *name)
 	decimal numerical value of the init_priority attribute.
 	The order of execution in .init_array is forward and
 	.fini_array is backward.
-     2: .ctors.NNNN/.ctors.NNNN: Where NNNN is 65535 minus the
+     2: .ctors.NNNN/.dtors.NNNN: Where NNNN is 65535 minus the
 	decimal numerical value of the init_priority attribute.
 	The order of execution in .ctors is backward and .dtors
 	is forward.
@@ -1253,8 +1253,11 @@ lang_init (bfd_boolean object_only)
 }
 
 void
-lang_finish (void)
+lang_finish (bfd_boolean object_only)
 {
+  bfd_link_hash_table_free (link_info.output_bfd, link_info.hash);
+  if (!object_only)
+    bfd_hash_table_free (&lang_definedness_table);
   output_section_statement_table_free ();
 }
 
@@ -5838,9 +5841,6 @@ lang_end (void)
 	    }
 	}
     }
-
-  /* Don't bfd_hash_table_free (&lang_definedness_table);
-     map file output may result in a call of lang_track_definedness.  */
 }
 
 /* This is a small function used when we want to ignore errors from
@@ -8915,7 +8915,7 @@ cmdline_emit_object_only_section (void)
   
   ldwrite ();
 
-  lang_finish ();
+  lang_finish (TRUE);
 
   if (! bfd_close (link_info.output_bfd))
     einfo (_("%P%F:%s: final close failed on object-only output: %E\n"),

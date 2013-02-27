@@ -245,6 +245,16 @@ ld/testsuite/
 
 bfd/
 
+2013-02-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* ldlang.c (lang_finish): Take a bfd_boolean argument to support
+	object-only output.
+	(cmdline_emit_object_only_section): Pass TRUE to lang_finish.
+
+	* ldlang.h (lang_finish): Updated.
+
+	* ldmain.c (main): Pass FALSE to lang_finish.
+
 2012-10-25  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/14747

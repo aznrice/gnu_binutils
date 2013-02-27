@@ -179,13 +179,18 @@ proc big_or_little_endian {} {
 proc default_ld_link { ld target objects } {
     global HOSTING_EMU
     global HOSTING_CRT0
+    global HOSTING_SCRT0
     global HOSTING_LIBS
     global LIBS
     global host_triplet
     global link_output
     global exec_output
 
-    set objs "$HOSTING_CRT0 $objects"
+    if { [ string match "* -pie *" $objects ] } {
+	set objs "$HOSTING_SCRT0 $objects"
+    } else {
+	set objs "$HOSTING_CRT0 $objects"
+    }
     set libs "$LIBS $HOSTING_LIBS"
 
     if [is_endian_output_format $objects] then {
@@ -995,12 +1000,13 @@ proc ar_simple_create { ar aropts target objects } {
 # List contains test-items with 3 items followed by 2 lists, one item and
 # one optional item:
 #  0:name
-#  1:ld/ar options
-#  2:assembler options
-#  3:filenames of assembler files
-#  4:list of actions, options and expected outputs.
-#  5:name of output file
-#  6:compiler flags (optional)
+#  1:ld/ar leading options, placed before object files
+#  2:ld/ar trailing options, placed after object files
+#  3:assembler options
+#  4:filenames of assembler files
+#  5:list of actions, options and expected outputs.
+#  6:name of output file
+#  7:compiler flags (optional)
 #
 # Actions: { command command-line-options file-containg-expected-output-regexps }
 # Commands:
@@ -1036,11 +1042,12 @@ proc run_ld_link_tests { ldtests } {
 	}
 
 	set ld_options [lindex $testitem 1]
-	set as_options [lindex $testitem 2]
-	set src_files  [lindex $testitem 3]
-	set actions [lindex $testitem 4]
-	set binfile tmpdir/[lindex $testitem 5]
-	set cflags [lindex $testitem 6]
+	set ld_after [lindex $testitem 2]
+	set as_options [lindex $testitem 3]
+	set src_files  [lindex $testitem 4]
+	set actions [lindex $testitem 5]
+	set binfile tmpdir/[lindex $testitem 6]
+	set cflags [lindex $testitem 7]
 	set objfiles {}
 	set is_unresolved 0
 	set failed 0
@@ -1049,6 +1056,7 @@ proc run_ld_link_tests { ldtests } {
 
 #	verbose -log "Testname is $testname"
 #	verbose -log "ld_options is $ld_options"
+#	verbose -log "ld_after is $ld_after"
 #	verbose -log "as_options is $as_options"
 #	verbose -log "src_files is $src_files"
 #	verbose -log "actions is $actions"
@@ -1082,10 +1090,10 @@ proc run_ld_link_tests { ldtests } {
 	}
 
 	if { [regexp ".*\\.a$" $binfile] } {
-	    if { ![ar_simple_create $ar $ld_options $binfile "$objfiles"] } {
+	    if { ![ar_simple_create $ar $ld_options $binfile "$objfiles $ld_after"] } {
 		set failed 1
 	    }
-	} elseif { ![ld_simple_link $ld $binfile "-L$srcdir/$subdir $ld_options $objfiles"] } {
+	} elseif { ![ld_simple_link $ld $binfile "-L$srcdir/$subdir $ld_options $objfiles $ld_after"] } {
 	    set maybe_failed 1
 	    set ld_output "$exec_output"
 	}

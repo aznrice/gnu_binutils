@@ -490,7 +490,7 @@ extern int lang_statement_iteration;
 extern void lang_init
   (bfd_boolean);
 extern void lang_finish
-  (void);
+  (bfd_boolean);
 extern lang_memory_region_type * lang_memory_region_lookup
   (const char * const, bfd_boolean);
 extern void lang_memory_region_alias
