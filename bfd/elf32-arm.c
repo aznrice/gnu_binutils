@@ -10958,6 +10958,20 @@ bfd_arm_get_mach_from_attributes (bfd * abfd)
 
 	    if (strcmp (name, "IWMMXT") == 0)
 	      return bfd_mach_arm_iWMMXt;
+
+	    if (strcmp (name, "XSCALE") == 0)
+	      {
+		int wmmx;
+
+		BFD_ASSERT (Tag_WMMX_arch < NUM_KNOWN_OBJ_ATTRIBUTES);
+		wmmx = elf_known_obj_attributes (abfd) [OBJ_ATTR_PROC][Tag_WMMX_arch].i;
+		switch (wmmx)
+		  {
+		  case 1: return bfd_mach_arm_iWMMXt;
+		  case 2: return bfd_mach_arm_iWMMXt2;
+		  default: return bfd_mach_arm_XScale;
+		  }
+	      }
 	  }
 
 	return bfd_mach_arm_5TE;
@@ -13648,14 +13662,18 @@ elf32_arm_size_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
 		  && (local_iplt == NULL
 		      || local_iplt->arm.noncall_refcount == 0))
 		elf32_arm_allocate_irelocs (info, srel, 1);
-	      else if ((info->shared && !(*local_tls_type & GOT_TLS_GDESC))
-		       || *local_tls_type & GOT_TLS_GD)
-		elf32_arm_allocate_dynrelocs (info, srel, 1);
-
-	      if (info->shared && *local_tls_type & GOT_TLS_GDESC)
+	      else if (info->shared || output_bfd->flags & DYNAMIC)
 		{
-		  elf32_arm_allocate_dynrelocs (info, htab->root.srelplt, 1);
-		  htab->tls_trampoline = -1;
+		  if ((info->shared && !(*local_tls_type & GOT_TLS_GDESC))
+		      || *local_tls_type & GOT_TLS_GD)
+		    elf32_arm_allocate_dynrelocs (info, srel, 1);
+		  
+		  if (info->shared && *local_tls_type & GOT_TLS_GDESC)
+		    {
+		      elf32_arm_allocate_dynrelocs (info,
+						    htab->root.srelplt, 1);
+		      htab->tls_trampoline = -1;
+		    }
 		}
 	    }
 	  else

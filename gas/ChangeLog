@@ -1,3 +1,136 @@
+2013-03-21  Will Newton  <will.newton@linaro.org>
+
+	* config/tc-arm.c (encode_thumb32_addr_mode): Emit an error for all
+	pc-relative str instructions in Thumb mode.
+
+2013-03-21  Michael Schewe  <michael.schewe@gmx.net>
+
+	* config/tc-h8300.c (do_a_fix_imm): Add relaxation of mov
+	@(disp:32,ERx) to mov @(disp:16,ERx) insns by new reloc
+	R_H8_DISP32A16.
+	* config/tc-h8300.h: Remove duplicated defines.
+
+2013-03-21  Senthil Kumar Selvaraj  <senthil_kumar.selvaraj@atmel.com>
+
+	PR gas/15282
+	* tc-avr.c (mcu_has_3_byte_pc): New function.
+	(tc_cfi_frame_initial_instructions): Call it to find return
+	address size.
+
+2013-03-20  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR gas/15095
+	* config/tc-tic6x.c (tic6x_try_encode): Handle
+	tic6x_coding_dreg_(msb|lsb) field coding types and use it to
+	encode register pair numbers when required.
+
+2013-03-15  Will Newton  <will.newton@linaro.org>
+
+	* config/tc-arm.c (do_neon_ldr_str): Fix error check for PC register
+	in vstr in Thumb mode for pre-ARMv7 cores.
+
+2013-03-14  Andreas Schwab  <schwab@suse.de>
+
+	* doc/c-arc.texi (ARC Directives): Revert last change and use
+	@itemize instead of @table.
+	* doc/c-arm.texi (ARM-Instruction-Set): Likewise.
+
+2013-03-14  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/15273
+	* config/tc-arm.c (do_co_reg): Do not call check_obsolete with a
+	NULL message, instead just check ARM_CPU_IS_ANY directly.
+
+2013-03-14  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/15212
+	* doc/c-arc.texi (ARC Directives): Use @code instead of @bullet
+	for table format.
+	* doc/c-arm.texi (ARM-Instruction-Set): Likewise.  Also add text
+	to the @item directives.
+	(ARM-Neon-Alignment): Move to correct place in the document.
+	* doc/c-cr16.texi (CR16 Operand Qualifiers): Fix up table
+	formatting.
+	* doc/c-tic54x.texi (TIC54X-Subsyms): Correct use of
+	@smallexample.
+
+2013-03-12  Sebastian Huber <sebastian.huber@embedded-brains.de>
+
+	* config/tc-nios2.c (nios2_consume_arg): Delete 'k' case.  Add 'o'
+	case.  Add default BAD_CASE to switch.
+
+2013-03-11  Sebastian Huber <sebastian.huber@embedded-brains.de>
+
+	* config/tc-nios2.c (nios2_assemble_args_ds): New function.
+	(nios2_arg_info_structs): Add "d,s" and "d,s,E" entries.
+
+2013-03-11  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* config/tc-arm.c (crc_ext_armv8): New feature set.
+	(UNPRED_REG): New macro.
+	(do_crc32_1): New function.
+	(do_crc32b, do_crc32h, do_crc32w, do_crc32cb,
+	do_crc32ch, do_crc32cw): Likewise.
+	(TUEc): New macro.
+	(insns): Add entries for crc32 mnemonics.
+	(arm_extensions): Add entry for crc.
+
+2013-03-08  Chung-Lin Tang  <cltang@codesourcery.com>
+
+	* write.h (struct fix): Add fx_dot_frag field.
+	(dot_frag): Declare.
+	* write.c (dot_frag): New variable.
+	(fix_new_internal): Set fx_dot_frag field with dot_frag.
+	(fixup_segment): Base calculation of fx_offset with fx_dot_frag.
+	* expr.c (expr): Save value of frag_now in dot_frag when setting
+	dot_value.
+	* read.c (emit_expr): Likewise. Delete comments.
+
+2013-03-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (flag_code_names): Removed.
+	(i386_index_check): Rewrote.
+
+2013-03-05  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* config/tc-aarch64.c (aarch64_imm_float_p): Rename 'e' to 'pattern';
+	add comment.
+	(aarch64_double_precision_fmovable): New function.
+	(parse_aarch64_imm_float): Add parameter 'dp_p'; call the new
+	function; handle hexadecimal representation of IEEE754 encoding.
+	(parse_operands): Update the call to parse_aarch64_imm_float.
+
+2013-02-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (_i386_insn): Replace have_hle with hle_prefix.
+	(check_hle): Updated.
+	(md_assemble): Likewise.
+	(parse_insn): Likewise.
+
+2013-02-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (_i386_insn): Add rep_prefix.
+	(md_assemble): Check if REP prefix is OK.
+	(parse_insn): Remove expecting_string_instruction.  Set
+	i.rep_prefix.
+
+2013-02-28  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* config/tc-aarch64.c (aarch64_features): Add the 'crc' option.
+
+2013-02-28  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* config/tc-aarch64.c (parse_sys_reg): Allow the full range of CRn
+	for system registers.
+
+2013-02-27  DJ Delorie  <dj@redhat.com>
+
+	* config/tc-rl78.c (reloc_function): Add %code -> BFD_RELOC_RL78_CODE.
+	(rl78_op): Handle %code().
+	(rl78_cons_fix_new): Likewise, but ignore for 20-bit operands.
+	(tc_gen_reloc): Likwise; convert to a computed reloc.
+	(md_apply_fix): Likewise.
+
 2013-02-25  Kaushik Phatak  <Kaushik.Phatak@kpitcummins.com>
 
 	* config/rl78-parse.y: Fix encoding of DIVWU insn.

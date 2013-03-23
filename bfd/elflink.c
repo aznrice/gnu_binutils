@@ -2491,7 +2491,7 @@ _bfd_elf_fix_symbol_flags (struct elf_link_hash_entry *h,
       && !h->def_regular
       && h->ref_regular
       && !h->def_dynamic
-      && (h->root.u.def.section->owner->flags & DYNAMIC) == 0)
+      && (h->root.u.def.section->owner->flags & (DYNAMIC | BFD_PLUGIN)) == 0)
     h->def_regular = 1;
 
   /* If -Bsymbolic was used (which means to bind references to global
@@ -4361,7 +4361,12 @@ error_free_dyn:
 	     is one which is referenced or defined by both a regular
 	     object and a shared object.  */
 	  dynsym = FALSE;
-	  if (! dynamic)
+
+	  /* Plugin symbols aren't normal.  Don't set def_regular or
+	     ref_regular for them, nor make them dynamic.  */
+	  if ((abfd->flags & BFD_PLUGIN) != 0)
+	    ;
+	  else if (! dynamic)
 	    {
 	      if (! definition)
 		{
@@ -4413,10 +4418,6 @@ error_free_dyn:
 
 	  /* We don't want to make debug symbol dynamic.  */
 	  if (definition && (sec->flags & SEC_DEBUGGING) && !info->relocatable)
-	    dynsym = FALSE;
-
-	  /* Nor should we make plugin symbols dynamic.  */
-	  if ((abfd->flags & BFD_PLUGIN) != 0)
 	    dynsym = FALSE;
 
 	  if (definition)
@@ -4482,10 +4483,10 @@ error_free_dyn:
 	  if (!add_needed
 	      && definition
 	      && ((dynsym
-		   && h->ref_regular
+		   && h->ref_regular_nonweak
 		   && (undef_bfd == NULL
 		       || (undef_bfd->flags & BFD_PLUGIN) == 0))
-		  || (h->ref_dynamic
+		  || (h->ref_dynamic_nonweak
 		      && (elf_dyn_lib_class (abfd) & DYN_AS_NEEDED) != 0
 		      && !on_needed_list (elf_dt_name (abfd), htab->needed))))
 	    {
@@ -4498,6 +4499,7 @@ error_free_dyn:
 		 --no-add-needed is used and the reference was not
 		 a weak one.  */
 	      if (undef_bfd != NULL
+		  && h->ref_regular_nonweak
 		  && (elf_dyn_lib_class (abfd) & DYN_NO_NEEDED) != 0)
 		{
 		  (*_bfd_error_handler)
@@ -13025,6 +13027,11 @@ _bfd_elf_make_dynamic_reloc_section (asection *         sec,
 	  reloc_sec = bfd_make_section_anyway_with_flags (dynobj, name, flags);
 	  if (reloc_sec != NULL)
 	    {
+	      /* _bfd_elf_get_sec_type_attr chooses a section type by
+		 name.  Override as it may be wrong, eg. for a user
+		 section named "auto" we'll get ".relauto" which is
+		 seen to be a .rela section.  */
+	      elf_section_type (reloc_sec) = is_rela ? SHT_RELA : SHT_REL;
 	      if (! bfd_set_section_alignment (dynobj, reloc_sec, alignment))
 		reloc_sec = NULL;
 	    }

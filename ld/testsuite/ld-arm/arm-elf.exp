@@ -142,6 +142,9 @@ set armelftests_common {
     {"TLS descseq relaxation BE32" "-T arm-dyn.ld -EB" "" "-mbig-endian" {tls-descrelax-be32.s}
      {{objdump -fdw tls-descrelax-be32.d}}
      "tls-descrelax-be32"}
+    {"TLS local PIC symbol static link" "-T arm.ld" "" "" {tls-local-static.s}
+      {{objdump -fdw tls-local-static.d}}
+      "tls-local-static"}
     {"Thumb entry point" "-T arm.ld" "" "" {thumb-entry.s}
      {{readelf -h thumb-entry.d}}
      "thumb-entry"}
@@ -469,7 +472,7 @@ run_dump_test "movw-shared-4"
 
 # Exclude non-ARM-EABI targets.
 
-if { ![istarget "arm*-*-*eabi"] && ![istarget "arm*-*-nacl*"] } {
+if { ![istarget "arm*-*-*eabi*"] && ![istarget "arm*-*-nacl*"] } {
     # Special variants of these tests, as a different farcall stub is
     # generated for a non-ARM-EABI target: indeed in such a case,
     # there are no attributes to indicate that blx can be used.

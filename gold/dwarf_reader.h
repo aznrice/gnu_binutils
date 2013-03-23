@@ -758,8 +758,8 @@ class Dwarf_info_reader
 
   // Visit a type unit.
   virtual void
-  visit_type_unit(off_t tu_offset, off_t type_offset, uint64_t signature,
-		  Dwarf_die* root_die);
+  visit_type_unit(off_t tu_offset, off_t tu_length, off_t type_offset,
+		  uint64_t signature, Dwarf_die* root_die);
 
   // Read the range table.
   Dwarf_range_list*
@@ -799,9 +799,21 @@ class Dwarf_info_reader
   { this->reloc_mapper_->reset(checkpoint); }
 
  private:
+  // Print a warning about a corrupt debug section.
+  void
+  warn_corrupt_debug_section() const;
+
   // Check that P is within the bounds of the current section.
   bool
-  check_buffer(const unsigned char* p) const;
+  check_buffer(const unsigned char* p) const
+  {
+    if (p > this->buffer_ + this->cu_offset_ + this->cu_length_)
+      {
+	this->warn_corrupt_debug_section();
+	return false;
+      }
+    return true;
+  }
 
   // Read the DWARF string table.
   bool

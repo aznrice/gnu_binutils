@@ -160,6 +160,10 @@
 #include "safe-ctype.h"
 #include "filenames.h"
 
+#ifndef offsetof
+#define offsetof(TYPE, MEMBER) ((size_t) &(((TYPE *) 0)->MEMBER))
+#endif
+
 char * program_name = "readelf";
 static long archive_file_offset;
 static unsigned long archive_file_size;
@@ -4751,16 +4755,19 @@ process_section_headers (FILE * file)
 #define CHECK_ENTSIZE_VALUES(section, i, size32, size64) \
   do									    \
     {									    \
-      size_t expected_entsize						    \
-	= is_32bit_elf ? size32 : size64;				    \
+      bfd_size_type expected_entsize = is_32bit_elf ? size32 : size64;	    \
       if (section->sh_entsize != expected_entsize)			    \
-	error (_("Section %d has invalid sh_entsize %lx (expected %lx)\n"), \
-	       i, (unsigned long int) section->sh_entsize,		    \
-	       (unsigned long int) expected_entsize);			    \
-      section->sh_entsize = expected_entsize;				    \
+	{								\
+	  error (_("Section %d has invalid sh_entsize of %" BFD_VMA_FMT "x\n"), \
+		 i, section->sh_entsize);	\
+	  error (_("(Using the expected size of %d for the rest of this dump)\n"), \
+		   (int) expected_entsize); \
+	  section->sh_entsize = expected_entsize;			\
+	} \
     }									    \
   while (0)
-#define CHECK_ENTSIZE(section, i, type) \
+
+#define CHECK_ENTSIZE(section, i, type)					\
   CHECK_ENTSIZE_VALUES (section, i, sizeof (Elf32_External_##type),	    \
 			sizeof (Elf64_External_##type))
 
@@ -10510,7 +10517,7 @@ apply_relocations (void * file,
 	    }
 
 	  rloc = start + rp->r_offset;
-	  if ((rloc + reloc_size) > end)
+	  if ((rloc + reloc_size) > end || (rloc < start))
 	    {
 	      warn (_("skipping invalid relocation offset 0x%lx in section %s\n"),
 		    (unsigned long) rp->r_offset,
@@ -12836,6 +12843,8 @@ get_note_type (unsigned e_type)
 	return _("NT_S390_LAST_BREAK (s390 last breaking event address)");
       case NT_S390_SYSTEM_CALL:
 	return _("NT_S390_SYSTEM_CALL (s390 system call restart data)");
+      case NT_S390_TDB:
+	return _("NT_S390_TDB (s390 transaction diagnostic block)");
       case NT_ARM_VFP:
 	return _("NT_ARM_VFP (arm VFP registers)");
       case NT_ARM_TLS:
@@ -13342,71 +13351,79 @@ process_corefile_note_segment (FILE * file, bfd_vma offset, bfd_vma length)
     return 0;
 
   pnotes = (Elf_External_Note *) get_data (NULL, file, offset, 1, length,
-                                           _("notes"));
+					   _("notes"));
   if (pnotes == NULL)
     return 0;
 
   external = pnotes;
 
-  printf (_("\nNotes at offset 0x%08lx with length 0x%08lx:\n"),
+  printf (_("\nDisplaying notes found at file offset 0x%08lx with length 0x%08lx:\n"),
 	  (unsigned long) offset, (unsigned long) length);
   printf (_("  %-20s %10s\tDescription\n"), _("Owner"), _("Data size"));
 
-  while (external < (Elf_External_Note *) ((char *) pnotes + length))
+  while ((char *) external < (char *) pnotes + length)
     {
-      Elf_External_Note * next;
       Elf_Internal_Note inote;
+      size_t min_notesz;
+      char *next;
       char * temp = NULL;
+      size_t data_remaining = ((char *) pnotes + length) - (char *) external;
 
       if (!is_ia64_vms ())
-        {
-          inote.type     = BYTE_GET (external->type);
-          inote.namesz   = BYTE_GET (external->namesz);
-          inote.namedata = external->name;
-          inote.descsz   = BYTE_GET (external->descsz);
-          inote.descdata = inote.namedata + align_power (inote.namesz, 2);
-          inote.descpos  = offset + (inote.descdata - (char *) pnotes);
-
-          next = (Elf_External_Note *) (inote.descdata + align_power (inote.descsz, 2));
-        }
-      else
-        {
-          Elf64_External_VMS_Note *vms_external;
-
-          vms_external = (Elf64_External_VMS_Note *)external;
-          inote.type     = BYTE_GET (vms_external->type);
-          inote.namesz   = BYTE_GET (vms_external->namesz);
-          inote.namedata = vms_external->name;
-          inote.descsz   = BYTE_GET (vms_external->descsz);
-          inote.descdata = inote.namedata + align_power (inote.namesz, 3);
-          inote.descpos  = offset + (inote.descdata - (char *) pnotes);
-
-          next = (Elf_External_Note *)
-            (inote.descdata + align_power (inote.descsz, 3));
-        }
-
-      if (   ((char *) next > ((char *) pnotes) + length)
-	  || ((char *) next <  (char *) pnotes))
 	{
-	  warn (_("corrupt note found at offset %lx into core notes\n"),
+	  /* PR binutils/15191
+	     Make sure that there is enough data to read.  */
+	  min_notesz = offsetof (Elf_External_Note, name);
+	  if (data_remaining < min_notesz)
+	    {
+	      warn (_("Corrupt note: only %d bytes remain, not enough for a full note\n"),
+		    (int) data_remaining);
+	      break;
+	    }
+	  inote.type     = BYTE_GET (external->type);
+	  inote.namesz   = BYTE_GET (external->namesz);
+	  inote.namedata = external->name;
+	  inote.descsz   = BYTE_GET (external->descsz);
+	  inote.descdata = inote.namedata + align_power (inote.namesz, 2);
+	  inote.descpos  = offset + (inote.descdata - (char *) pnotes);
+	  next = inote.descdata + align_power (inote.descsz, 2);
+	}
+      else
+	{
+	  Elf64_External_VMS_Note *vms_external;
+
+	  /* PR binutils/15191
+	     Make sure that there is enough data to read.  */
+	  min_notesz = offsetof (Elf64_External_VMS_Note, name);
+	  if (data_remaining < min_notesz)
+	    {
+	      warn (_("Corrupt note: only %d bytes remain, not enough for a full note\n"),
+		    (int) data_remaining);
+	      break;
+	    }
+
+	  vms_external = (Elf64_External_VMS_Note *) external;
+	  inote.type     = BYTE_GET (vms_external->type);
+	  inote.namesz   = BYTE_GET (vms_external->namesz);
+	  inote.namedata = vms_external->name;
+	  inote.descsz   = BYTE_GET (vms_external->descsz);
+	  inote.descdata = inote.namedata + align_power (inote.namesz, 3);
+	  inote.descpos  = offset + (inote.descdata - (char *) pnotes);
+	  next = inote.descdata + align_power (inote.descsz, 3);
+	}
+
+      if (inote.descdata < (char *) external + min_notesz
+	  || next < (char *) external + min_notesz
+	  || data_remaining < (size_t)(next - (char *) external))
+	{
+	  warn (_("note with invalid namesz and/or descsz found at offset 0x%lx\n"),
 		(unsigned long) ((char *) external - (char *) pnotes));
-	  warn (_(" type: %lx, namesize: %08lx, descsize: %08lx\n"),
+	  warn (_(" type: 0x%lx, namesize: 0x%08lx, descsize: 0x%08lx\n"),
 		inote.type, inote.namesz, inote.descsz);
 	  break;
 	}
 
-      external = next;
-
-      /* Prevent out-of-bounds indexing.  */
-      if (inote.namedata + inote.namesz > (char *) pnotes + length
-	  || inote.namedata + inote.namesz < inote.namedata)
-        {
-          warn (_("corrupt note found at offset %lx into core notes\n"),
-                (unsigned long) ((char *) external - (char *) pnotes));
-          warn (_(" type: %lx, namesize: %08lx, descsize: %08lx\n"),
-                inote.type, inote.namesz, inote.descsz);
-          break;
-        }
+      external = (Elf_External_Note *) next;
 
       /* Verify that name is null terminated.  It appears that at least
 	 one version of Linux (RedHat 6.0) generates corefiles that don't

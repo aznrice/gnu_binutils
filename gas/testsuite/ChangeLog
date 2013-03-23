@@ -1,3 +1,264 @@
+2013-03-21  Will Newton  <will.newton@linaro.org>
+
+	* gas/arm/thumb2_relax.d: Strip out invalid pc-relative strs.
+	* gas/arm/thumb2_relax.s: Likewise.
+	* gas/arm/thumb32.d: Likewise.
+	* gas/arm/thumb32.l: Likewise.
+	* gas/arm/thumb32.s: Likewise.
+	* gas/arm/thumb2_str-bad.d: New file.
+	* gas/arm/thumb2_str-bad.l: Likewise.
+	* gas/arm/thumb2_str-bad.s: Likewise.
+
+2013-03-20  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR gas/15082
+	* gas/tic6x/insns-bad-1.s: Remove test-case for mpydp with
+	cross-path.
+	* gas/tic6x/insns-bad-1.l: Update expected output.
+	* gas/tic6x/insns-c674x.s: Add a test-case for mpydp with
+	cross-path.
+	* gas/tic6x/insns-c674x.d: Update expected output.
+
+2013-03-20  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR gas/15095
+	* gas/tic6x/insns-c674x.s: Add test cases for the newly generated
+	opcode.
+	* gas/tic6x/insns-c674x.d: Update expected disassembly.
+
+2013-03-15  Will Newton  <will.newton@linaro.org>
+
+	* gas/arm/any-idiv.d: Expand *-*eabi test to cover *-*eabi*.
+	* gas/arm/arch4t-eabi.d: Likewise.
+	* gas/arm/arch4t.d: Likewise.
+	* gas/arm/attr-any-armv4t.d: Likewise.
+	* gas/arm/attr-any-thumbv6.d: Likewise.
+	* gas/arm/attr-cpu-directive.d: Likewise.
+	* gas/arm/attr-default.d: Likewise.
+	* gas/arm/attr-march-all.d: Likewise.
+	* gas/arm/attr-march-armv1.d: Likewise.
+	* gas/arm/attr-march-armv2.d: Likewise.
+	* gas/arm/attr-march-armv2a.d: Likewise.
+	* gas/arm/attr-march-armv2s.d: Likewise.
+	* gas/arm/attr-march-armv3.d: Likewise.
+	* gas/arm/attr-march-armv3m.d: Likewise.
+	* gas/arm/attr-march-armv4.d: Likewise.
+	* gas/arm/attr-march-armv4t.d: Likewise.
+	* gas/arm/attr-march-armv4txm.d: Likewise.
+	* gas/arm/attr-march-armv4xm.d: Likewise.
+	* gas/arm/attr-march-armv5.d: Likewise.
+	* gas/arm/attr-march-armv5t.d: Likewise.
+	* gas/arm/attr-march-armv5te.d: Likewise.
+	* gas/arm/attr-march-armv5tej.d: Likewise.
+	* gas/arm/attr-march-armv5texp.d: Likewise.
+	* gas/arm/attr-march-armv5txm.d: Likewise.
+	* gas/arm/attr-march-armv6-m+os.d: Likewise.
+	* gas/arm/attr-march-armv6-m.d: Likewise.
+	* gas/arm/attr-march-armv6.d: Likewise.
+	* gas/arm/attr-march-armv6j.d: Likewise.
+	* gas/arm/attr-march-armv6k+sec.d: Likewise.
+	* gas/arm/attr-march-armv6k.d: Likewise.
+	* gas/arm/attr-march-armv6kt2.d: Likewise.
+	* gas/arm/attr-march-armv6s-m.d: Likewise.
+	* gas/arm/attr-march-armv6t2.d: Likewise.
+	* gas/arm/attr-march-armv6z.d: Likewise.
+	* gas/arm/attr-march-armv6zk.d: Likewise.
+	* gas/arm/attr-march-armv6zkt2.d: Likewise.
+	* gas/arm/attr-march-armv6zt2.d: Likewise.
+	* gas/arm/attr-march-armv7-a+idiv.d: Likewise.
+	* gas/arm/attr-march-armv7-a+mp.d: Likewise.
+	* gas/arm/attr-march-armv7-a+sec+virt.d: Likewise.
+	* gas/arm/attr-march-armv7-a+sec.d: Likewise.
+	* gas/arm/attr-march-armv7-a+virt.d: Likewise.
+	* gas/arm/attr-march-armv7-a.d: Likewise.
+	* gas/arm/attr-march-armv7-m.d: Likewise.
+	* gas/arm/attr-march-armv7-r+mp.d: Likewise.
+	* gas/arm/attr-march-armv7-r.d: Likewise.
+	* gas/arm/attr-march-armv7.d: Likewise.
+	* gas/arm/attr-march-armv7a.d: Likewise.
+	* gas/arm/attr-march-armv7em.d: Likewise.
+	* gas/arm/attr-march-armv7m.d: Likewise.
+	* gas/arm/attr-march-armv7r.d: Likewise.
+	* gas/arm/attr-march-armv8-a+crypto.d: Likewise.
+	* gas/arm/attr-march-armv8-a+fp.d: Likewise.
+	* gas/arm/attr-march-armv8-a+simd.d: Likewise.
+	* gas/arm/attr-march-armv8-a.d: Likewise.
+	* gas/arm/attr-march-iwmmxt.d: Likewise.
+	* gas/arm/attr-march-iwmmxt2.d: Likewise.
+	* gas/arm/attr-march-xscale.d: Likewise.
+	* gas/arm/attr-mcpu.d: Likewise.
+	* gas/arm/attr-mfpu-arm1020e.d: Likewise.
+	* gas/arm/attr-mfpu-arm1020t.d: Likewise.
+	* gas/arm/attr-mfpu-arm1136jf-s.d: Likewise.
+	* gas/arm/attr-mfpu-arm1136jfs.d: Likewise.
+	* gas/arm/attr-mfpu-arm7500fe.d: Likewise.
+	* gas/arm/attr-mfpu-fpa.d: Likewise.
+	* gas/arm/attr-mfpu-fpa10.d: Likewise.
+	* gas/arm/attr-mfpu-fpa11.d: Likewise.
+	* gas/arm/attr-mfpu-fpe.d: Likewise.
+	* gas/arm/attr-mfpu-fpe2.d: Likewise.
+	* gas/arm/attr-mfpu-fpe3.d: Likewise.
+	* gas/arm/attr-mfpu-maverick.d: Likewise.
+	* gas/arm/attr-mfpu-neon-fp16.d: Likewise.
+	* gas/arm/attr-mfpu-neon.d: Likewise.
+	* gas/arm/attr-mfpu-softfpa.d: Likewise.
+	* gas/arm/attr-mfpu-softvfp+vfp.d: Likewise.
+	* gas/arm/attr-mfpu-softvfp.d: Likewise.
+	* gas/arm/attr-mfpu-vfp.d: Likewise.
+	* gas/arm/attr-mfpu-vfp10-r0.d: Likewise.
+	* gas/arm/attr-mfpu-vfp10.d: Likewise.
+	* gas/arm/attr-mfpu-vfp3.d: Likewise.
+	* gas/arm/attr-mfpu-vfp9.d: Likewise.
+	* gas/arm/attr-mfpu-vfpv2.d: Likewise.
+	* gas/arm/attr-mfpu-vfpv3-d16.d: Likewise.
+	* gas/arm/attr-mfpu-vfpv3.d: Likewise.
+	* gas/arm/attr-mfpu-vfpv4-d16.d: Likewise.
+	* gas/arm/attr-mfpu-vfpv4.d: Likewise.
+	* gas/arm/attr-mfpu-vfpxd.d: Likewise.
+	* gas/arm/attr-names.d: Likewise.
+	* gas/arm/attr-order.d: Likewise.
+	* gas/arm/attr-override-cpu-directive.d: Likewise.
+	* gas/arm/attr-override-mcpu.d: Likewise.
+	* gas/arm/got_prel.d: Likewise.
+	* gas/arm/mapdir.d: Likewise.
+	* gas/arm/mapmisc.d: Likewise.
+	* gas/arm/mapsecs.d: Likewise.
+	* gas/arm/mapshort-eabi.d: Likewise.
+	* gas/arm/mapshort-elf.d: Likewise.
+	* gas/arm/mov-highregs-any.d: Likewise.
+	* gas/arm/mov-lowregs-any.d: Likewise.
+	* gas/arm/pr12198-1.d: Likewise.
+	* gas/arm/pr12198-2.d: Likewise.
+	* gas/arm/thumb-eabi.d: Likewise.
+	* gas/arm/thumb.d: Likewise.
+	* gas/arm/thumbrel.d: Likewise.
+
+2013-03-15  Nick Clifton  <nickc@redhat.com>
+
+	* gas/arm/arch7.d: Skip for non-ELF ARM targets.
+	* gas/arm/arch7a-mp.d: Likewise.
+	* gas/arm/arch7em.d: Likewise.
+	* gas/arm/crc32-bad.d: Likewise.
+	* gas/arm/crc32.d: Likewise.
+
+2013-03-15  Will Newton  <will.newton@linaro.org>
+
+	* gas/arm/vstr-thumb-bad.d: Assemble with -mcpu=arm1156t2f-s.
+
+2013-03-12  Sebastian Huber <sebastian.huber@embedded-brains.de>
+
+	* gas/nios2/nios2.exp: Use run_dump_tests.
+	* gas/nios2/mov.d: Delete file.
+	* gas/nios2/mov.s: Likewise.
+	* gas/nios2/rol.d: Likewise.
+	* gas/nios2/rol.s: Likewise.
+	* gas/nios2/add.d: Check instruction values.
+	* gas/nios2/align_fill.d: Likewise.
+	* gas/nios2/and.d: Likewise.
+	* gas/nios2/branch.d: Likewise.
+	* gas/nios2/bret.d: Likewise.
+	* gas/nios2/cache.d: Likewise.
+	* gas/nios2/call.d: Likewise.
+	* gas/nios2/call26.d: Likewise.
+	* gas/nios2/cmp.d: Likewise.
+	* gas/nios2/comments.d: Likewise.
+	* gas/nios2/complex.d: Likewise.
+	* gas/nios2/ctl.d: Likewise.
+	* gas/nios2/custom.d: Likewise.
+	* gas/nios2/etbt.d: Likewise.
+	* gas/nios2/flushda.d: Likewise.
+	* gas/nios2/jmp.d: Likewise.
+	* gas/nios2/ldb.d: Likewise.
+	* gas/nios2/ldh.d: Likewise.
+	* gas/nios2/ldw.d: Likewise.
+	* gas/nios2/lineseparator.d: Likewise.
+	* gas/nios2/movi.d: Likewise.
+	* gas/nios2/movia.d: Likewise.
+	* gas/nios2/mul.d: Likewise.
+	* gas/nios2/nor.d: Likewise.
+	* gas/nios2/or.d: Likewise.
+	* gas/nios2/registers.d: Likewise.
+	* gas/nios2/ret.d: Likewise.
+	* gas/nios2/rotate.d: Likewise.
+	* gas/nios2/stb.d: Likewise.
+	* gas/nios2/sth.d: Likewise.
+	* gas/nios2/stw.d: Likewise.
+	* gas/nios2/sub.d: Likewise.
+	* gas/nios2/sync.d: Likewise.
+	* gas/nios2/trap.d: Likewise.
+	* gas/nios2/tret.d: Likewise.
+	* gas/nios2/xor.d: Likewise.
+
+2013-03-12  Sebastian Huber <sebastian.huber@embedded-brains.de>
+
+	* gas/nios2/break.d: Check instruction values.
+
+2013-03-11  Sebastian Huber <sebastian.huber@embedded-brains.de>
+
+	* gas/nios2/nios2.exp: Run wrprs.
+	* gas/nios2/wrprs.d: New file.
+	* gas/nios2/wrprs.s: Likewise.
+
+2013-03-11  Sebastian Huber <sebastian.huber@embedded-brains.de>
+
+	* gas/nios2/nios2.exp: Run rdprs.
+	* gas/nios2/rdprs.d: New file.
+	* gas/nios2/rdprs.s: Likewise.
+
+2013-03-11  Sebastian Huber <sebastian.huber@embedded-brains.de>
+
+	* gas/nios2/nios2.exp: Run registers.
+	* gas/nios2/registers.d: New file.
+	* gas/nios2/registers.s: Likewise.
+
+2013-03-11  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* gas/arm/crc32-bad.d: New file.
+	* gas/arm/crc32-bad.l: Likewise.
+	* gas/arm/crc32-bad.s: Likewise.
+	* gas/arm/crc32.d: Likewise.
+	* gas/arm/crc32.s: Likewise.
+
+2013-03-05  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* gas/aarch64/diagnostic.s: Add test.
+	* gas/aarch64/diagnostic.l: Update.
+	* gas/aarch64/illegal.s: Add test.
+	* gas/aarch64/illegal.l: Update.
+	* gas/aarch64/fpmov.s: New file.
+	* gas/aarch64/fpmov.d: New file.
+
+2013-03-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/inval.s: Add tests for invalid addresses and eiz.
+
+	* gas/i386/x86-64-inval.s: Add tests for invalid addresses and
+	riz/eiz.
+
+	* gas/i386/inval.l: Updated.
+	* gas/i386/x86-64-inval.l: Likewise.
+
+2013-02-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gas/i386/i386.exp: Run inval-rep and x86-64-inval-rep.
+
+	* gas/i386/inval-rep.l: New file.
+	* gas/i386/inval-rep.s: Likewise.
+	* gas/i386/x86-64-inval-rep.l: Likewise.
+	* gas/i386/x86-64-inval-rep.s: Likewise.
+
+2013-02-28  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* gas/aarch64/crc32.s: New test.
+	* gas/aarch64/crc32.d: Ditto.
+
+2013-02-28  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* gas/aarch64/illegal.l: Delete the error message for
+	msr S3_1_C13_C15_1,x7.
+	* gas/aarch64/sysreg.s: Add new tests.
+	* gas/aarch64/sysreg.d: Update.
+
 2013-02-19  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR gas/15159

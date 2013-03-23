@@ -317,6 +317,10 @@ Layout::Relaxation_debug_check::verify_sections(
 void
 Layout_task_runner::run(Workqueue* workqueue, const Task* task)
 {
+  // See if any of the input definitions violate the One Definition Rule.
+  // TODO: if this is too slow, do this as a task, rather than inline.
+  this->symtab_->detect_odr_violations(task, this->options_.output_file_name());
+
   Layout* layout = this->layout_;
   off_t file_size = layout->finalize(this->input_objects_,
 				     this->symtab_,
@@ -3349,7 +3353,8 @@ Layout::set_segment_offsets(const Target* target, Output_segment* load_seg,
 	      addr = (*p)->paddr();
 	    }
 	  else if (parameters->options().user_set_Ttext()
-		   && ((*p)->flags() & elfcpp::PF_W) == 0)
+		   && (parameters->options().omagic()
+		       || ((*p)->flags() & elfcpp::PF_W) == 0))
 	    {
 	      are_addresses_set = true;
 	    }
@@ -4154,7 +4159,7 @@ Layout::create_dynamic_symtab(const Input_objects* input_objects,
 						       false,
 						       ORDER_DYNAMIC_LINKER,
 						       false);
-
+  *pdynstr = dynstr;
   if (dynstr != NULL)
     {
       Output_section_data* strdata = new Output_data_strtab(&this->dynpool_);
@@ -4170,8 +4175,6 @@ Layout::create_dynamic_symtab(const Input_objects* input_objects,
 	  odyn->add_section_address(elfcpp::DT_STRTAB, dynstr);
 	  odyn->add_section_size(elfcpp::DT_STRSZ, dynstr);
 	}
-
-      *pdynstr = dynstr;
     }
 
   // Create the hash tables.

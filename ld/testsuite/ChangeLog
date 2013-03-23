@@ -1,4 +1,89 @@
-013-02-21  H.J. Lu  <hongjiu.lu@intel.com>
+2013-03-22  Nick Clifton  <nickc@redhat.com>
+
+	* ld-elf/init0.s: Add alloc attribute to .section directive.
+	* ld-elf/fini1.s: Likewise.
+	* ld-elf/fini2.s: Likewise.
+	* ld-elf/fini3.s: Likewise.
+	* ld-elf/finin.s: Likewise.
+	* ld-elf/init0.s: Likewise.
+	* ld-elf/init1.s: Likewise.
+	* ld-elf/init2.s: Likewise.
+	* ld-elf/init3.s: Likewise.
+	* ld-elf/initn.s: Likewise.
+
+2013-02-02  Michael Schewe  <michael.schewe@gmx.net>
+
+	* ld-h8300/h8300.exp: Add new relax-7 test on ELF.
+	* ld-h8300/relax-2.s: Add other direction and .w/.l variants of
+	mov insns.
+	* ld-h8300/relax-2.d: Update expected disassembly.
+	* ld-h8300/relax-7a.s: New: tests for mov @(disp:32,ERx) -> mov
+	@(disp:16,ERx).
+	* ld-h8300/relax-7b.s: New: Likewise.
+	* ld-h8300/relax-7.d: New: expected disassembly.
+
+2013-03-20  Venkataramanan Kumar  <venkataramanan.kumar@linaro.org>
+
+	* ld-elf/group8a.d (notarget): Remove aarch64*-*-*.
+	* ld-elf/group8b.d: Likewise.
+	* ld-elf/group9a.d: Likewise.
+	* ld-elf/group9b.d: Likewise.
+	* ld-elf/pr12851.d: Likewise.
+	* ld-elf/pr12975.d: Likewise.
+	* ld-elf/pr13177.d: Likewise.
+	* ld-elf/pr13195.d: Likewise.
+
+2013-03-20  Will Newton  <will.newton@linaro.org>
+
+        * ld-elfvers/vers.exp (objdump_symstuff): Sort objdump output
+	based on the symbol name rather than address.
+	* ld-elfvers/vers1.sym: Reorder contents to match changes to vers.exp.
+	* ld-elfvers/vers15.sym: Likewise.
+	* ld-elfvers/vers18.sym: Likewise.
+	* ld-elfvers/vers21.sym: Likewise.
+	* ld-elfvers/vers9.sym: Likewise.
+
+2013-03-20  Alan Modra  <amodra@gmail.com>
+
+	* ld-elf/rel.c, ld-elf/relmain.c, ld-elf/relmain.out: New test.
+	* ld-elf/shared.exp: Build and run it.
+
+2013-03-20  Alan Modra  <amodra@gmail.com>
+	    Will Newton <will.newton@linaro.org
+
+	* ld-elfvers/vers.exp: Add -Wl,--no-as-needed to all tests
+	linking against shared libraries.
+	* ld-elfweak/elfweak.exp: Likewise.  Enable for x86_64-linux.
+	Build main1.o using $picflag.
+
+2013-03-18  Alan Modra  <amodra@gmail.com>
+
+	* ld-elf/pr14862.out: Expect no output.
+
+2013-03-15  Will Newton  <will.newton@linaro.org>
+
+	* ld-arm/arm-elf.exp: Expand *-*eabi test to cover *-*eabi*.
+	* ld-arm/gc-hidden-1.d: Likewise.
+	* ld-elfvsb/elfvsb.exp: Likewise.
+	* ld-shared/shared.exp: Likewise.
+
+2013-03-08  Venkataramanan Kumar  <venkataramanan.kumar@linaro.org>
+
+        * lib/ld-lib.exp (check_gc_sections_available): Remove aarch64
+	from list of targets that don't support gc-section.
+
+2013-03-05  Alan Modra  <amodra@gmail.com>
+
+	* ld-scripts/rgn-at6.s, * ld-scripts/rgn-at6.t, * ld-scripts/rgn-at6.d,
+	* ld-scripts/rgn-at7.t, * ld-scripts/rgn-at7.d: New tests.
+
+2013-02-28  Nathan Sidwell  <nathan@codesourcery.com>
+
+	* ld-arm/tls-local-static.s: New test.
+	* ld-arm/tls-local-static.d: New.
+	* ld-arm/arm-elf.exp (tls-local-static): Add test.
+
+2013-02-21  H.J. Lu  <hongjiu.lu@intel.com>
 
 	PR ld/15167
 	* ld-unique/unique.exp: Add a test for shared library with

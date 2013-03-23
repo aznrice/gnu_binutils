@@ -1,3 +1,74 @@
+2013-03-22  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/15201
+	* dwarf.c (display_debug_ranges): Add checks for reading beyond
+	the end of the section.
+
+	PR binutils/15157
+	* readelf.c (apply_relocations): Catch relocations with negative
+	offsets.
+
+2013-03-15  Nick Clifton  <nickc@redhat.com>
+
+	* addr2line.c (slurp_symtab): If canonicalization reveals that
+	there were no ordinary symbols, try loading the dynamic symbols
+	instead.
+
+2013-03-14  Markos Chandras  <markos.chandras@imgtec.com>
+
+	* MAINTAINERS: Add myself as Meta maintainer.
+
+2013-03-08  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* readelf.c (get_note_type): Add NT_S390_TDB.
+
+2013-03-07  Alan Modra  <amodra@gmail.com>
+
+	* strings.c (get_char): Dispense with buf[].  Instead shift
+	chars into big-endian value and byte-swap later if
+	little-endian.  Don't EOF check value read from object.
+
+2013-03-05  Corinna Vinschen  <vinschen@redhat.com>
+
+	* configure.in: Build DLL tools on x86_64-*-cygwin* as well.
+	* configure: Regenerate.
+
+2013-03-04  Nick Clifton  <nickc@redhat.com>
+
+	* elfcomm.c (error): Flush stdout before emitting the error
+	message.
+	(warn): Likewise.
+
+2013-03-01  Cary Coutant  <ccoutant@google.com>
+
+	* dwarf.c (cu_tu_indexes_read, shndx_pool, shndx_pool_size)
+	(shndx_pool_used): Move to top of file.
+	(struct cu_tu_set): New type.
+	(cu_count, tu_count, cu_sets, tu_sets): New file scope variables.
+	(fetch_indexed_string): Add "this_set" parameter.  Update all callers.
+	(find_cu_tu_set_v2): New function.
+	(read_and_display_attr_value): Add "this_set" parameter.
+	(read_and_display_attr): Likewise.
+	(process_debug_info): Track base offsets for DWARF package files.
+	(load_debug_info): Call load_cu_tu_indexes.
+	(get_DW_SECT_short_name): New function.
+	(process_cu_tu_index): Add support for version 2 DWARF package files.
+
+2013-02-27  Alan Modra  <amodra@gmail.com>
+
+	PR binutils/15191
+	* readelf.c (offsetof): Define.
+	(CHECK_ENTSIZE_VALUES): Remove extraneous indefinite article.
+	(process_corefile_note_segment): Allow notes without name or
+	desc.  Combine out-of-range checks.  Disallow "negative"
+	notesz or descsz.
+
+2013-02-26  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/15191
+	* readelf.c (process_corefile_note_segment): Prevent attempts to
+	read beyond the end of the note buffer.
+
 2013-02-15  Kai Tietz  <ktietz@redhat.com>
 
 	* objcopy.c (copy_main): Initialize context variable.
@@ -72,14 +143,14 @@
 
 2013-01-25  Cary Coutant  <ccoutant@google.com>
 
-    	* dwarf.c (display_loc_list): Update offset for each line
-    	printed.
-    	(print_addr_index): New function.
-    	(display_loc_list_dwo): Update offset for each line printed.
-    	Fix problems displaying loclists in .dwo files.  Add support
-    	for type 4 entries.
-    	(display_debug_loc): Remove custom header for .dwo files.
-    	(display_debug_addr): Adjust formatting.
+	* dwarf.c (display_loc_list): Update offset for each line
+	printed.
+	(print_addr_index): New function.
+	(display_loc_list_dwo): Update offset for each line printed.
+	Fix problems displaying loclists in .dwo files.  Add support
+	for type 4 entries.
+	(display_debug_loc): Remove custom header for .dwo files.
+	(display_debug_addr): Adjust formatting.
 
 2013-01-25  Marco Atzeri  <marco.atzeri@gmail.com>
 

@@ -1141,21 +1141,6 @@ Dwarf_die::sibling_offset()
 
 // class Dwarf_info_reader
 
-// Check that the pointer P is within the current compilation unit.
-
-inline bool
-Dwarf_info_reader::check_buffer(const unsigned char* p) const
-{
-  if (p > this->buffer_ + this->cu_offset_ + this->cu_length_)
-    {
-      gold_warning(_("%s: corrupt debug info in %s"),
-		   this->object_->name().c_str(),
-		   this->object_->section_name(this->shndx_).c_str());
-      return false;
-    }
-  return true;
-}
-
 // Begin parsing the debug info.  This calls visit_compilation_unit()
 // or visit_type_unit() for each compilation or type unit found in the
 // section, and visit_die() for each top-level DIE.
@@ -1300,7 +1285,8 @@ Dwarf_info_reader::do_parse()
 	  // Visit the CU or TU.
 	  if (this->is_type_unit_)
 	    this->visit_type_unit(section_offset + this->cu_offset_,
-				  type_offset, signature, &root_die);
+				  cu_end - cu_start, type_offset, signature,
+				  &root_die);
 	  else
 	    this->visit_compilation_unit(section_offset + this->cu_offset_,
 					 cu_end - cu_start, &root_die);
@@ -1443,8 +1429,18 @@ Dwarf_info_reader::visit_compilation_unit(off_t, off_t, Dwarf_die*)
 // Process a type unit and parse its child DIE.
 
 void
-Dwarf_info_reader::visit_type_unit(off_t, off_t, uint64_t, Dwarf_die*)
+Dwarf_info_reader::visit_type_unit(off_t, off_t, off_t, uint64_t, Dwarf_die*)
 {
+}
+
+// Print a warning about a corrupt debug section.
+
+void
+Dwarf_info_reader::warn_corrupt_debug_section() const
+{
+  gold_warning(_("%s: corrupt debug info in %s"),
+	       this->object_->name().c_str(),
+	       this->object_->section_name(this->shndx_).c_str());
 }
 
 // class Sized_dwarf_line_info
