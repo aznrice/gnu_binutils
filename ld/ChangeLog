@@ -1,3 +1,20 @@
+2013-04-04  Alan Modra  <amodra@gmail.com>
+
+	* ldlang.c (load_symbols): Report "error adding symbols" on
+	bfd_link_add_symbols failure.
+	* emultempl/elf32.em (gld${EMULATION_NAME}_try_needed): Likewise.
+	* emultempl/sunos.em (gld${EMULATION_NAME}_after_open): Likewise.
+	(gld${EMULATION_NAME}_try_needed): Likewise.
+
+2013-03-27  Georg-Johann Lay  <gjl@gcc.gnu.org>
+
+	PR ld/13812
+	* scripttempl/avr.sc: Place trampolines before .progmem section.
+
+2013-03-25  Kai Tietz  <ktietz@redhat.com>
+
+	* ld.texinfo (--disable-runtime-pseudo-reloc): Adjust default.
+
 2013-03-21  Michael Schewe  <michael.schewe@gmx.net>
 
 	* ld.texinfo (H8/300): Add description of relaxation of
