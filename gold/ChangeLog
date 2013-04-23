@@ -1,3 +1,43 @@
+2013-04-22  Alan Modra  <amodra@gmail.com>
+
+	PR gold/15355
+	* layout.cc (Layout::segment_precedes): Allow more than one
+	segment with the same type and flags.
+
+2013-04-15  Cary Coutant  <ccoutant@google.com>
+
+	* layout.cc (Layout::set_relocatable_section_offsets): Don't
+	allocate space in file for BSS sections.
+
+2013-04-15  Cary Coutant  <ccoutant@google.com>
+
+	* script-sections.cc (Orphan_output_section): Reset address
+	to zero after each orphaned section for relocatable links.
+
+2013-04-15  Cary Coutant  <ccoutant@google.com>
+
+	* symtab.cc (Symbol_table::sized_write_globals): Subtract
+	section starting address for relocatable link.
+	* testsuite/Makefile.am (script_test_11): New test.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/script_test_11.c: New source file.
+	* testsuite/script_test_11.t: New linker script.
+
+2013-04-13  Alan Modra  <amodra@gmail.com>
+
+	* powerpc.cc (Stub_control::can_add_to_stub_group): Don't set
+	owner when sections are not adjacent and exceed group size.
+	(Target_powerpc::group_sections): Handle corner case.
+	(Target_powerpc::Branch_info::make_stub): Handle case where
+	stub table doesn't exist due to branches in non-exec sections.
+	(Target_powerpc::Relocate::relocate): Likewise.
+
+2013-04-11  Alan Modra  <amodra@gmail.com>
+
+	PR gold/15354
+	* powerpc.cc (Target_powerpc::make_brlt_section): Name section
+	.branch_lt to match bfd ld.  Adjust comments throughout file.
+
 2013-04-04  Ian Lance Taylor  <iant@google.com>
 
 	GCC PR c++/56840
@@ -276,17 +316,17 @@
 
 2013-01-28  Cary Coutant  <ccoutant@google.com>
 
-    	* dwp.cc (File_list): New typedef.
-    	(Dwo_name_info_reader): New class.
-    	(Dwo_id_info_reader::Dwo_id_info_reader): Remove unused parameters.
-    	(Dwo_id_info_reader::visit_top_die): Remove unused member function.
-    	(Dwo_file::~Dwo_file): Delete input_file_ after obj_.
-    	(Dwo_file::read_executable): New function.
-    	(Dwo_file::read): Move common setup code to ...
-    	(Dwo_file::make_object): ... here.
-    	(dwp_options): Add --exec/-e.
-    	(usage): Likewise.
-    	(main): Likewise.
+	* dwp.cc (File_list): New typedef.
+	(Dwo_name_info_reader): New class.
+	(Dwo_id_info_reader::Dwo_id_info_reader): Remove unused parameters.
+	(Dwo_id_info_reader::visit_top_die): Remove unused member function.
+	(Dwo_file::~Dwo_file): Delete input_file_ after obj_.
+	(Dwo_file::read_executable): New function.
+	(Dwo_file::read): Move common setup code to ...
+	(Dwo_file::make_object): ... here.
+	(dwp_options): Add --exec/-e.
+	(usage): Likewise.
+	(main): Likewise.
 
 2013-01-24  Sriraman Tallam  <tmsriram@google.com>
 
@@ -469,11 +509,11 @@
 
 2012-12-14  Cary Coutant  <ccoutant@google.com>
 
-    	* testsuite/Makefile.am (exception_separate_shared_12_test): Add
-    	--no-as-needed flag.
-    	(exception_separate_shared_12_test): Likewise.
-    	(incremental_copy_test): Likewise.
-    	* testsuite/Makefile.in: Regenerate.
+	* testsuite/Makefile.am (exception_separate_shared_12_test): Add
+	--no-as-needed flag.
+	(exception_separate_shared_12_test): Likewise.
+	(incremental_copy_test): Likewise.
+	* testsuite/Makefile.in: Regenerate.
 
 2012-12-14  Cary Coutant  <ccoutant@google.com>
 

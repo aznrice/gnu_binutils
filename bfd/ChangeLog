@@ -1,3 +1,81 @@
+2013-04-22  Alan Modra  <amodra@gmail.com>
+
+	PR ld/15382
+	* elf-bfd.h (RELOC_AGAINST_DISCARDED_SECTION): Don't multiply
+	sh_size or reloc_count adjustment by count.
+
+2013-04-22  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (ppc64_elf_check_relocs): Don't call
+	create_linkage_sections here..
+	(ppc64_elf_init_stub_bfd): ..do so here.  Return status.
+	(create_linkage_sections): Move earlier in file.
+	(ppc64_elf_setup_section_lists): Remove now useless htab->brlt test.
+	* elf64-ppc.h (ppc64_elf_init_stub_bfd): Update proto.
+
+2013-04-19  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/15356
+	* compress.c (decompress_contents): Always call inflateEnd, even
+	when another inflation operation fails.
+
+2013-04-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf-ifunc.c: Update copyright year.
+
+2013-04-17 Luca Pizzamiglio  <luca.pizzamiglio@gmail.com>
+
+	* coffcode.h: Added a cast to void when a bfd_set_section_*()
+	macro's return value is ignored.
+	* elf32-hppa.c: Likewise.
+	* elf32-tic6x.c: Likewise.
+	* mach-o.c: Likewise.
+	* mmo.c: Likewise.
+	* opncls.c: Likewise.
+	* peicode.h: Likewise.
+	* elf32-m32r.c: Check return value of bfd_set_section_*().
+	* elfnn-ia64.c: Likewise.
+	* elfxx-mips.c: Likewise.
+	* vms-alpha.c: Likewise.
+
+2013-04-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/15371
+	* elf-ifunc.c (_bfd_elf_allocate_ifunc_dyn_relocs): Check
+	regular reference without non-GOT reference when building
+	shared library.
+
+2013-04-15  Alan Modra  <amodra@gmail.com>
+
+	* archive.c (_bfd_archive_close_and_cleanup): Clear parent
+	cache slot for archives.
+
+2013-04-14  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* mmo.c (mmo_write_chunk): Break out abfd->tdata.mmo_data to new
+	local variable mmop.
+
+2013-04-09  Senthil Kumar Selvaraj  <senthil_kumar.selvaraj@atmel.com>
+
+	PR ld/12494
+	* bfd/elf32-avr.c: Consider all sections to determine if linker
+	relaxation can safely delete a ret after a call/jmp
+
+2013-04-09  Mingjie Xing  <mingjie.xing@gmail.com>
+
+	* bfd.c (typedef bfd, Error reporting, Miscellaneous): Add
+	INODEs.
+
+2013-04-08  Tom Tromey  <tromey@redhat.com>
+
+	* som.c (bfd_section_from_som_symbol): No longer static.
+	* som.h (bfd_section_from_som_symbol): Declare.
+
+2013-04-06  Alan Modra  <amodra@gmail.com>
+
+	* elf32-ppc.c (ppc_elf_check_relocs): Use SYMBOLIC_BIND.
+	* elf64-ppc.c (ppc64_elf_check_relocs, dec_dynrel_count): Likewise.
+
 2013-04-05  Nick Clifton  <nickc@redhat.com>
 
 	* elflink.c (elf_link_add_object_symbols): Revert accidental commit.
@@ -15,8 +93,8 @@
 
 2013-04-03   Venkataramanan Kumar  <venkataramanan.kumar@linaro.org>
 
-         * elf64-aarch64.c (elf64_aarch64_gc_sweep_hook): Use
-        elf64_aarch64_locals to get local GOT reference counts.
+	* elf64-aarch64.c (elf64_aarch64_gc_sweep_hook): Use
+	elf64_aarch64_locals to get local GOT reference counts.
 
 2013-04-02  DJ Delorie  <dj@redhat.com>
 
@@ -281,9 +359,9 @@
 
 2013-03-08  Venkataramanan Kumar  <venkataramanan.kumar@linaro.org>
 
-        * elf64-aarch64.c (elf_backend_can_gc_sections): Enable gc-section
+	* elf64-aarch64.c (elf_backend_can_gc_sections): Enable gc-section
 	support.
-        (elf64_aarch64_gc_sweep_hook): Handle GOT, TLS and PLT related
+	(elf64_aarch64_gc_sweep_hook): Handle GOT, TLS and PLT related
 	relocs.
 
 2013-03-08  Andreas Arnez  <arnez@linux.vnet.ibm.com>

@@ -1,3 +1,94 @@
+2013-04-15  Julian Brown  <julian@codesourcery.com>
+
+	* gas/all/gas.exp (sleb128-7): Don't run for tic4x, tic54x.
+	* gas/all/sleb128-2.s: Reformat, use _ at start of labels, remove
+	cruft.
+	* gas/all/sleb128-3.s: Likewise.
+	* gas/all/sleb128-4.s: Likewise.
+	* gas/all/sleb128-5.s: Likewise.
+	* gas/all/sleb128-7.s: Likewise.
+	* gas/all/sleb128-2.d: Handle data sections named $DATA$.
+	* gas/all/sleb128-3.d: Likewise.
+	* gas/all/sleb128-4.d: Likewise.
+	* gas/all/sleb128-5.d: Likewise.
+	* gas/all/sleb128-7.d: Likewise.
+
+2013-04-10  Julian Brown  <julian@codesourcery.com>
+
+	* gas/all/sleb128-2.s: New test.
+	* gas/all/sleb128-3.s: Likewise.
+	* gas/all/sleb128-4.s: Likewise.
+	* gas/all/sleb128-5.s: Likewise.
+	* gas/all/sleb128-7.s: Likewise.
+	* gas/all/sleb128-2.d: New.
+	* gas/all/sleb128-3.d: New.
+	* gas/all/sleb123-4.d: New.
+	* gas/all/sleb123-5.d: New.
+	* gas/all/sleb123-7.d: New.
+	* gas/all/gas.exp (sleb128-2, sleb128-3, sleb128-4, sleb128-5)
+	(sleb128-7): Run new tests.
+
+2013-04-10  Jan Beulich <jbeulich@suse.com>
+
+	* gas/testsuite/gas/arm/ldst-pc.s: Add index, non-writeback
+	forms of various loads and stores with PC as base.
+	* gas/testsuite/gas/arm/ldst-pc.d: Update accordingly.
+
+2013-04-10  Jan Beulich <jbeulich@suse.com>
+
+	* gas/arm/barrier-bad.d: Change title.
+	* gas/arm/barrier-bad.s: Add immediate form of ISB and DSB as
+	well as one symbolic form of DSB.
+	* gas/arm/barrier-bad.l: Update accordingly.
+	* gas/arm/barrier-bad-thumb.d: Adjust title. Use barrier-bad.s as
+	source. Pass -mthumb to gas.
+	* gas/arm/barrier-bad-thumb.l: Remove.
+	* gas/arm/barrier-bad-thumb.s: Remove.
+	* gas/arm/barrier-thumb.d: Adjust title. Use barrier.s as source.
+	Pass -mthumb to gas.
+	* gas/arm/barrier-thumb.s: Remove.
+
+2013-04-09  Jan Beulich <jbeulich@suse.com>
+
+	* gas/arm/vfp1xD.s: Add VMRS/VMSR tests with FPINST, FPINST2,
+	and C15.
+	* gas/arm/vfp1xD.d: Update accordingly.
+
+2013-04-09  Jan Beulich <jbeulich@suse.com>
+
+	* gas/arm/neon-omit.s: Add tests for suffix less VMOV.
+	* gas/arm/neon-omit.d: Update accordingly.
+
+2013-04-09  Jan Beulich <jbeulich@suse.com>
+
+	* gas/arm/neon-addressing-bad.s: Add test for further invalid VST
+	operands.
+	* gas/arm/neon-addressing-bad.l: Update accordingly. 
+
+2013-04-08  Jan Beulich <jbeulich@suse.com>
+
+	* gas/i386/x86-64-opcode.s: Flesh out LOOP and J*CXZ sections.
+	Correct comments in Jcc section.
+	* gas/i386/x86-64-opcode.d: Refresh.
+	* gas/i386/ilp32/x86-64-opcode.d: Refresh.
+
+2013-04-06  David S. Miller  <davem@davemloft.net>
+
+	* gas/sparc/cbcond.s: Add tests for new opcode aliases.
+	* gas/sparc/cbcond.d: Updated.
+	* gas/sparc/hpcvis3.s: Add tests for new opcode aliases.
+	* gas/sparc/hpcvis3.d: Updated.
+	* gas/sparc/v8-movwr-imm.d: Fix expected disassembly.
+	* gas/sparc/edge.s: New test.
+	* gas/sparc/edge.d: Expected disassembly.
+	* gas/sparc/flush.s: New test.
+	* gas/sparc/flush.d: Expected disassembly.
+	* gas/sparc/ldd_std.s: New test.
+	* gas/sparc/ldd_std.d: Expected disassembly.
+	* gas/sparc/ldtw_sttw.s: New test.
+	* gas/sparc/ldtw_sttw.d: Expected disassembly.
+	* gas/sparc/sparc.exp: Run new tests.
+
 2013-03-27  Alexis Deruelle  <alexis.deruelle@gmail.com>
 
 	PR binutils/15068

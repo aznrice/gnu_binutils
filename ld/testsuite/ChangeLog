@@ -1,3 +1,38 @@
+2013-04-22  Alan Modra  <amodra@gmail.com>
+
+	* ld-powerpc/tlsexe.d: Adjust for section id changes.
+	* ld-powerpc/tlsexe.r: Likewise.
+	* ld-powerpc/tlsexetoc.d: Likewise.
+	* ld-powerpc/tlsexetoc.r: Likewise.
+	* ld-powerpc/tlsso.d: Likewise.
+	* ld-powerpc/tlsso.r: Likewise.
+	* ld-powerpc/tlstocso.d: Likewise.
+	* ld-powerpc/tlstocso.r: Likewise.
+
+2013-04-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/15371
+	* ld-ifunc/ifunc-20-i386.d: New file.
+	* ld-ifunc/ifunc-20-x86-64.d: Likewise.
+	* ld-ifunc/ifunc-20.s: Likewise.
+
+2013-04-10  Venkataramanan Kumar  <venkataramanan.kumar@linaro.org>
+
+	* ld-aarch64/gc-plt1.s: New file.
+	* ld-aarch64/gc-plt2.s: Likewise.
+	* ld-aarch64/gc-plt-hidden.s: Likewise.
+	* ld-aarch64/gc-plt-main.s: Likewise.
+	* ld-aarch64/gc-relocs-257.s: Likewise.
+	* ld-aarch64/gc-plt-relocs.d: Update expected objdump.
+	* ld-aarch64/gc-relocs-257.d: Likewise.
+	* ld-aarch64/gc-relocs-257-dyn.d: Likewise.
+	* ld-aarch64/aarch64-elf.exp: Add test.
+
+2013-04-08  Ramana Radhakrishnan  <ramana.radhakrishnan@arm.com>
+
+	* ld-aarch64/gc-tls-relocs.d: Handle big endian format.
+	* ld-aarch64/gc-got-relocs.d: Likewise.
+
 2013-04-04  Alan Modra  <amodra@gmail.com>
 
 	* ld-elf/shared.exp: Update regexp on --no-add-needed and
@@ -64,7 +99,7 @@
 
 2013-03-20  Will Newton  <will.newton@linaro.org>
 
-        * ld-elfvers/vers.exp (objdump_symstuff): Sort objdump output
+	* ld-elfvers/vers.exp (objdump_symstuff): Sort objdump output
 	based on the symbol name rather than address.
 	* ld-elfvers/vers1.sym: Reorder contents to match changes to vers.exp.
 	* ld-elfvers/vers15.sym: Likewise.
@@ -98,7 +133,7 @@
 
 2013-03-08  Venkataramanan Kumar  <venkataramanan.kumar@linaro.org>
 
-        * lib/ld-lib.exp (check_gc_sections_available): Remove aarch64
+	* lib/ld-lib.exp (check_gc_sections_available): Remove aarch64
 	from list of targets that don't support gc-section.
 
 2013-03-05  Alan Modra  <amodra@gmail.com>
@@ -167,9 +202,9 @@
 
 2013-02-18  Maciej W. Rozycki  <macro@codesourcery.com>
 
-        * ld-mips-elf/jalx-2.ld: Include .rel.plt in output, give .plt a
+	* ld-mips-elf/jalx-2.ld: Include .rel.plt in output, give .plt a
 	mapping.
-        * ld-mips-elf/jalx-2.dd: Adjust disassembly accordingly.
+	* ld-mips-elf/jalx-2.dd: Adjust disassembly accordingly.
 
 2013-02-18  Alan Modra  <amodra@gmail.com>
 

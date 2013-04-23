@@ -6338,22 +6338,16 @@ parse_operands (char *str, const unsigned int *pattern, bfd_boolean thumb)
   do							   \
     {						 	   \
       val = parse_barrier (&str);			   \
-      if (val == FAIL)					   \
+      if (val == FAIL && ! ISALPHA (*str))		   \
+	goto immediate;					   \
+      if (val == FAIL					   \
+	  /* ISB can only take SY as an option.  */	   \
+	  || ((inst.instruction & 0xf0) == 0x60		   \
+	       && val != 0xf))				   \
 	{						   \
-	  if (ISALPHA (*str))				   \
-	      goto failure;				   \
-	  else						   \
-	      goto immediate;				   \
-	}						   \
-      else						   \
-	{						   \
-	  if ((inst.instruction & 0xf0) == 0x60		   \
-	      && val != 0xf)				   \
-	    {						   \
-	       /* ISB can only take SY as an option.  */   \
-	       inst.error = _("invalid barrier type");	   \
-	       goto failure;				   \
-	    }						   \
+	   inst.error = _("invalid barrier type");	   \
+	   backtrack_pos = 0;				   \
+	   goto failure;				   \
 	}						   \
     }							   \
   while (0)
@@ -7202,8 +7196,10 @@ encode_arm_addr_mode_3 (int i, bfd_boolean is_t)
   if (inst.operands[i].immisreg)
     {
       constraint ((inst.operands[i].imm == REG_PC
-		   || inst.operands[i].reg == REG_PC),
+		   || (is_t && inst.operands[i].reg == REG_PC)),
 		  BAD_PC_ADDRESSING);
+      constraint (inst.operands[i].reg == REG_PC && inst.operands[i].writeback,
+		  BAD_PC_WRITEBACK);
       inst.instruction |= inst.operands[i].imm;
       if (!inst.operands[i].negative)
 	inst.instruction |= INDEX_UP;
@@ -7541,13 +7537,7 @@ static void
 do_barrier (void)
 {
   if (inst.operands[0].present)
-    {
-      constraint ((inst.instruction & 0xf0) != 0x40
-		  && inst.operands[0].imm > 0xf
-		  && inst.operands[0].imm < 0x0,
-		  _("bad barrier type"));
-      inst.instruction |= inst.operands[0].imm;
-    }
+    inst.instruction |= inst.operands[0].imm;
   else
     inst.instruction |= 0xf;
 }
@@ -8256,32 +8246,22 @@ do_vmrs (void)
 {
   unsigned Rt = inst.operands[0].reg;
 
-  if (thumb_mode && inst.operands[0].reg == REG_SP)
+  if (thumb_mode && Rt == REG_SP)
     {
       inst.error = BAD_SP;
       return;
     }
 
   /* APSR_ sets isvec. All other refs to PC are illegal.  */
-  if (!inst.operands[0].isvec && inst.operands[0].reg == REG_PC)
+  if (!inst.operands[0].isvec && Rt == REG_PC)
     {
       inst.error = BAD_PC;
       return;
     }
 
-  switch (inst.operands[1].reg)
-    {
-    case 0: /* FPSID */
-    case 1: /* FPSCR */
-    case 6: /* MVFR1 */
-    case 7: /* MVFR0 */
-    case 8: /* FPEXC */
-      inst.instruction |= (inst.operands[1].reg << 16);
-      break;
-    default:
-      first_error (_("operand 1 must be a VFP extension System Register"));
-    }
-
+  /* If we get through parsing the register name, we just insert the number
+     generated into the instruction without further validation.  */
+  inst.instruction |= (inst.operands[1].reg << 16);
   inst.instruction |= (Rt << 12);
 }
 
@@ -8298,17 +8278,9 @@ do_vmsr (void)
       return;
     }
 
-  switch (inst.operands[0].reg)
-    {
-    case 0: /* FPSID  */
-    case 1: /* FPSCR  */
-    case 8: /* FPEXC */
-      inst.instruction |= (inst.operands[0].reg << 16);
-      break;
-    default:
-      first_error (_("operand 0 must be FPSID or FPSCR pr FPEXC"));
-    }
-
+  /* If we get through parsing the register name, we just insert the number
+     generated into the instruction without further validation.  */
+  inst.instruction |= (inst.operands[0].reg << 16);
   inst.instruction |= (Rt << 12);
 }
 
@@ -10066,21 +10038,6 @@ do_t_arit3c (void)
       else
 	constraint (1, _("dest must overlap one source register"));
     }
-}
-
-static void
-do_t_barrier (void)
-{
-  if (inst.operands[0].present)
-    {
-      constraint ((inst.instruction & 0xf0) != 0x40
-		  && inst.operands[0].imm > 0xf
-		  && inst.operands[0].imm < 0x0,
-		  _("bad barrier type"));
-      inst.instruction |= inst.operands[0].imm;
-    }
-  else
-    inst.instruction |= 0xf;
 }
 
 static void
@@ -15360,6 +15317,16 @@ do_neon_mov (void)
         unsigned dn = NEON_SCALAR_REG (inst.operands[0].reg);
         unsigned x = NEON_SCALAR_INDEX (inst.operands[0].reg);
 
+	/* .<size> is optional here, defaulting to .32. */
+	if (inst.vectype.elems == 0
+	    && inst.operands[0].vectype.type == NT_invtype
+	    && inst.operands[1].vectype.type == NT_invtype)
+	  {
+	    inst.vectype.el[0].type = NT_untyped;
+	    inst.vectype.el[0].size = 32;
+	    inst.vectype.elems = 1;
+	  }
+
         et = neon_check_type (2, NS_NULL, N_8 | N_16 | N_32 | N_KEY, N_EQK);
         logsize = neon_logbits (et.size);
 
@@ -15408,6 +15375,16 @@ do_neon_mov (void)
         unsigned dn = NEON_SCALAR_REG (inst.operands[1].reg);
         unsigned x = NEON_SCALAR_INDEX (inst.operands[1].reg);
         unsigned abcdebits = 0;
+
+	/* .<dt> is optional here, defaulting to .32. */
+	if (inst.vectype.elems == 0
+	    && inst.operands[0].vectype.type == NT_invtype
+	    && inst.operands[1].vectype.type == NT_invtype)
+	  {
+	    inst.vectype.el[0].type = NT_untyped;
+	    inst.vectype.el[0].size = 32;
+	    inst.vectype.elems = 1;
+	  }
 
 	et = neon_check_type (2, NS_NULL,
 			      N_EQK, N_S8 | N_S16 | N_U8 | N_U16 | N_32 | N_KEY);
@@ -15692,10 +15669,10 @@ do_neon_ldr_str (void)
       && inst.operands[1].reg == REG_PC
       && (ARM_CPU_HAS_FEATURE (selected_cpu, arm_ext_v7) || thumb_mode))
     {
-      if (!thumb_mode && warn_on_deprecated)
-	as_warn (_("Use of PC here is deprecated"));
-      else
+      if (thumb_mode)
 	inst.error = _("Use of PC here is UNPREDICTABLE");
+      else if (warn_on_deprecated)
+	as_warn (_("Use of PC here is deprecated"));
     }
 
   if (inst.operands[0].issingle)
@@ -15999,6 +15976,11 @@ do_neon_ldx_stx (void)
 
     case NEON_ALL_LANES:
       NEON_ENCODE (DUP, inst);
+      if (inst.instruction == N_INV)
+	{
+	  first_error ("only loads support such operands");
+	  break;
+	}
       do_neon_ld_dup ();
       break;
 
@@ -17538,7 +17520,7 @@ static const struct reg_entry reg_names[] =
   REGDEF(R10_fiq,512|(10<<16),RNB), REGDEF(r10_fiq,512|(10<<16),RNB),
   REGDEF(R11_fiq,512|(11<<16),RNB), REGDEF(r11_fiq,512|(11<<16),RNB),
   REGDEF(R12_fiq,512|(12<<16),RNB), REGDEF(r12_fiq,512|(12<<16),RNB),
-  REGDEF(SP_fiq,512|(13<<16),RNB), REGDEF(SP_fiq,512|(13<<16),RNB),
+  REGDEF(SP_fiq,512|(13<<16),RNB), REGDEF(sp_fiq,512|(13<<16),RNB),
   REGDEF(LR_fiq,512|(14<<16),RNB), REGDEF(lr_fiq,512|(14<<16),RNB),
   REGDEF(SPSR_fiq,512|(14<<16)|SPSR_BIT,RNB), REGDEF(spsr_fiq,512|(14<<16)|SPSR_BIT,RNB),
 
@@ -18503,9 +18485,9 @@ static const struct asm_opcode insns[] =
 #undef  THUMB_VARIANT
 #define THUMB_VARIANT  & arm_ext_barrier
 
- TUF("dmb",	57ff050, f3bf8f50, 1, (oBARRIER_I15), barrier,  t_barrier),
- TUF("dsb",	57ff040, f3bf8f40, 1, (oBARRIER_I15), barrier,  t_barrier),
- TUF("isb",	57ff060, f3bf8f60, 1, (oBARRIER_I15), barrier,  t_barrier),
+ TUF("dmb",	57ff050, f3bf8f50, 1, (oBARRIER_I15), barrier, barrier),
+ TUF("dsb",	57ff040, f3bf8f40, 1, (oBARRIER_I15), barrier, barrier),
+ TUF("isb",	57ff060, f3bf8f60, 1, (oBARRIER_I15), barrier, barrier),
 
  /* ARM V7 instructions.  */
 #undef  ARM_VARIANT
