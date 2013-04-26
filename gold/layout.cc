@@ -317,6 +317,10 @@ Layout::Relaxation_debug_check::verify_sections(
 void
 Layout_task_runner::run(Workqueue* workqueue, const Task* task)
 {
+  // See if any of the input definitions violate the One Definition Rule.
+  // TODO: if this is too slow, do this as a task, rather than inline.
+  this->symtab_->detect_odr_violations(task, this->options_.output_file_name());
+
   Layout* layout = this->layout_;
   off_t file_size = layout->finalize(this->input_objects_,
 				     this->symtab_,
@@ -3171,12 +3175,14 @@ Layout::segment_precedes(const Output_segment* seg1,
 
   // The order of non-PT_LOAD segments is unimportant.  We simply sort
   // by the numeric segment type and flags values.  There should not
-  // be more than one segment with the same type and flags.
+  // be more than one segment with the same type and flags, except
+  // when a linker script specifies such.
   if (type1 != elfcpp::PT_LOAD)
     {
       if (type1 != type2)
 	return type1 < type2;
-      gold_assert(flags1 != flags2);
+      gold_assert(flags1 != flags2
+		  || this->script_options_->saw_phdrs_clause());
       return flags1 < flags2;
     }
 
@@ -3349,7 +3355,8 @@ Layout::set_segment_offsets(const Target* target, Output_segment* load_seg,
 	      addr = (*p)->paddr();
 	    }
 	  else if (parameters->options().user_set_Ttext()
-		   && ((*p)->flags() & elfcpp::PF_W) == 0)
+		   && (parameters->options().omagic()
+		       || ((*p)->flags() & elfcpp::PF_W) == 0))
 	    {
 	      are_addresses_set = true;
 	    }
@@ -3589,7 +3596,8 @@ Layout::set_relocatable_section_offsets(Output_data* file_header,
 	(*p)->set_address(0);
       (*p)->set_file_offset(off);
       (*p)->finalize_data_size();
-      off += (*p)->data_size();
+      if ((*p)->type() != elfcpp::SHT_NOBITS)
+	off += (*p)->data_size();
 
       (*p)->set_out_shndx(*pshndx);
       ++*pshndx;
@@ -4154,7 +4162,7 @@ Layout::create_dynamic_symtab(const Input_objects* input_objects,
 						       false,
 						       ORDER_DYNAMIC_LINKER,
 						       false);
-
+  *pdynstr = dynstr;
   if (dynstr != NULL)
     {
       Output_section_data* strdata = new Output_data_strtab(&this->dynpool_);
@@ -4170,8 +4178,6 @@ Layout::create_dynamic_symtab(const Input_objects* input_objects,
 	  odyn->add_section_address(elfcpp::DT_STRTAB, dynstr);
 	  odyn->add_section_size(elfcpp::DT_STRSZ, dynstr);
 	}
-
-      *pdynstr = dynstr;
     }
 
   // Create the hash tables.

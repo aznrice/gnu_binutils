@@ -1,3 +1,11 @@
+2013-04-05  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-secondary-1.patch: Updated.
+
+2013-04-05  H.J. Lu  <hjl.tools@gmail.com>
+
+	* binutils-shr-100.patch: Updated.
+
 2013-02-27  H.J. Lu  <hjl.tools@gmail.com>
 
 	* binutils-shr-100.patch: Updated.

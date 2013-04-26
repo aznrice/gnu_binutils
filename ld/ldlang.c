@@ -2803,7 +2803,7 @@ load_symbols (lang_input_statement_type *entry,
 		 substitute BFD for us.  */
 	      if (!bfd_link_add_symbols (subsbfd, &link_info))
 		{
-		  einfo (_("%F%B: could not read symbols: %E\n"), member);
+		  einfo (_("%F%B: error adding symbols: %E\n"), member);
 		  loaded = FALSE;
 		}
 	    }
@@ -2817,7 +2817,7 @@ load_symbols (lang_input_statement_type *entry,
   if (bfd_link_add_symbols (entry->the_bfd, &link_info))
     entry->flags.loaded = TRUE;
   else
-    einfo (_("%F%B: could not read symbols: %E\n"), entry->the_bfd);
+    einfo (_("%F%B: error adding symbols: %E\n"), entry->the_bfd);
 
   return entry->flags.loaded;
 }
@@ -4985,6 +4985,13 @@ lang_size_sections_1
 	      {
 		bfd_vma lma = os->lma_region->current;
 
+		/* When LMA_REGION is the same as REGION, align the LMA
+		   as we did for the VMA, possibly including alignment
+		   from the bfd section.  If a different region, then
+		   only align according to the value in the output
+		   statement.  */
+		if (os->lma_region != os->region)
+		  section_alignment = os->section_alignment;
 		if (section_alignment > 0)
 		  lma = align_power (lma, section_alignment);
 		os->bfd_section->lma = lma;

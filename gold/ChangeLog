@@ -1,3 +1,295 @@
+2013-04-22  Alan Modra  <amodra@gmail.com>
+
+	PR gold/15355
+	* layout.cc (Layout::segment_precedes): Allow more than one
+	segment with the same type and flags.
+
+2013-04-15  Cary Coutant  <ccoutant@google.com>
+
+	* layout.cc (Layout::set_relocatable_section_offsets): Don't
+	allocate space in file for BSS sections.
+
+2013-04-15  Cary Coutant  <ccoutant@google.com>
+
+	* script-sections.cc (Orphan_output_section): Reset address
+	to zero after each orphaned section for relocatable links.
+
+2013-04-15  Cary Coutant  <ccoutant@google.com>
+
+	* symtab.cc (Symbol_table::sized_write_globals): Subtract
+	section starting address for relocatable link.
+	* testsuite/Makefile.am (script_test_11): New test.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/script_test_11.c: New source file.
+	* testsuite/script_test_11.t: New linker script.
+
+2013-04-13  Alan Modra  <amodra@gmail.com>
+
+	* powerpc.cc (Stub_control::can_add_to_stub_group): Don't set
+	owner when sections are not adjacent and exceed group size.
+	(Target_powerpc::group_sections): Handle corner case.
+	(Target_powerpc::Branch_info::make_stub): Handle case where
+	stub table doesn't exist due to branches in non-exec sections.
+	(Target_powerpc::Relocate::relocate): Likewise.
+
+2013-04-11  Alan Modra  <amodra@gmail.com>
+
+	PR gold/15354
+	* powerpc.cc (Target_powerpc::make_brlt_section): Name section
+	.branch_lt to match bfd ld.  Adjust comments throughout file.
+
+2013-04-04  Ian Lance Taylor  <iant@google.com>
+
+	GCC PR c++/56840
+	* object.cc (do_layout_deferred_sections): Handle .eh_frame
+	sections before checking whether they are included in the link.
+
+2013-03-29  Sriraman Tallam  <tmsriram@google.com>
+
+	* archive.cc (Archive::get_elf_object_for_member):  Create the elf
+	object before calling the plugin claim_file handler.  Pass the elf
+	object of the archive to the plugin. Delete the elf object if the
+	plugin claims the file.
+
+2013-03-21  Alan Modra  <amodra@gmail.com>
+
+	* layout.cc (Layout::set_segment_offsets): Accept writable .text
+	segment when omagic.
+
+2013-03-21  Alan Modra  <amodra@gmail.com>
+
+	* dwp.cc (Dwp_output_file::add_contribution): Avoid signed/unsigned
+	comparison warning.
+	* layout.cc (Layout::create_dynamic_symtab): Avoid "may be used
+	uninitialized" warning.
+
+2013-03-20  Alan Modra  <amodra@gmail.com>
+
+	* symtab.h (Symbol::clear_version): New function.
+	* symtab.cc (Symbol_table::set_dynsym_indexes): Don't set object
+	is_needed by weak references.  Clear version for symbols defined
+	in as-needed objects that are not needed.
+
+2013-03-15  Alan Modra  <amodra@gmail.com>
+
+	* powerpc.cc (Target_powerpc::Scan::reloc_needs_plt_for_ifunc): Make
+	static and public.  Add report_err param.  Return false for data refs.
+	(Target_powerpc::rela_dyn_section): New overloaded function.
+	(Target_powerpc::plt_, iplt_): Elucidate.
+	(Output_data_plt_powerpc::entry_count): Handle current_data_size()==0.
+	(Output_data_plt_powerpc::do_write): Don't write .iplt.
+	(Output_data_plt_powerpc::plt_entry_count): Don't add .iplt entries.
+	(Target_powerpc::Scan::local, global): Adjust reloc_needs_plt_for_ifunc
+	calls.  Put ifunc dynamic relocs in irela_dyn_section.  Only
+	push_branch and make_plt_entry for ifunc syms when
+	reloc_needs_plt_for_ifunc.
+	(Target_powerpc::Relocate::relocate): Don't use plt entry value
+	for ifunc unless reloc_needs_plt_for_ifunc.
+
+2013-03-15  Alan Modra  <amodra@gmail.com>
+
+	* gc.h (gc_process_relocs): Don't look through function descriptors.
+	* icf.cc (get_section_contents): Do so here instead.
+
+2013-03-13  Alan Modra  <amodra@gmail.com>
+
+	* powerpc.cc (is_branch_reloc): Forward declare.
+	(Target_powerpc::do_can_check_for_function_pointers): New predicate.
+	(Target_powerpc::Scan::local_reloc_may_be_function_pointer): Return
+	false for 64-bit, true for 32-bit non-branch relocs.
+	(Target_powerpc::Scan::global_reloc_may_be_function_pointer): Likewise.
+	* testsuite/Makefile.am (icf_test): Use linker map file instead of
+	nm output.
+	(icf_safe_test): Generate linker map file as well as nm output.
+	(icf_safe_so_test): Likewise.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/icf_test.sh: Parse linker map file to determine
+	section folding.
+	* testsuite/icf_safe_test.sh: Likewise.  Expect folding for PowerPC.
+	* testsuite/icf_safe_so_test.sh: Likewise.
+	(X86_32_or_ARM_specific_safe_fold): Merge into..
+	(arch_specific_safe_fold): ..this.
+	(X86_64_specific_safe_fold): Delete unused function.
+
+2013-03-12  Alan Modra  <amodra@gmail.com>
+
+	* gc.h (gc_process_relocs): Look through function descriptors
+	to determine shndx, symvalue and addend used by ICF.  Tidy
+	variable duplication.
+
+2013-03-11  Alan Modra  <amodra@gmail.com>
+
+	* gold.cc (queue_middle_tasks): Move detect_odr_violations..
+	* layout.cc (Layout_task_runner::run): ..to here.
+	* symtab.h (struct Symbol_location): Extract from..
+	(class Symbol_table): ..here.
+	* symtab.cc (Symbol_table::linenos_from_loc): Invoke function_location.
+	* target.h (class Target): Add function_location and
+	do_function_location functions.
+	(class Sized_target): Add do_function_location.
+	* object.h (class Sized_relobj_file): Move find_shdr..
+	(class Object): ..to here.
+	* object.cc: Likewise.  Update to suit.  Instantiate.
+	(Sized_relobj_file::find_eh_frame): Update find_shdr call.
+	* powerpc.cc (class Powerpc_dynobj): New.
+	(Target_powerpc::do_function_location): New function.
+	(Powerpc_relobj::do_find_special_sections): Update find_shdr call.
+	(Powerpc_dynobj::do_read_symbols): New function.
+	(Target_powerpc::do_make_elf_object): Make a Powerpc_dynobj.
+
+2013-03-08  Ian Lance Taylor  <iant@google.com>
+
+	* options.cc (General_options::string_to_object_format): Accept
+	"default".
+
+2013-03-08  Alan Modra  <amodra@gmail.com>
+
+	* ehframe.h (Post_fdes) Make it a vector of Post_fde rather than
+	pointer to Post_fde.
+	(struct Post_fde): Move definition to here..
+	* ehframe.cc (struct Post_fde): ..from here.
+	(Cie::write): Don't alloc Post_fde.
+	(Eh_frame::do_sized_write): Update.  Don't free Post_fde.
+
+2013-03-07  Alan Modra  <amodra@gmail.com>
+
+	* testsuite/discard_locals_relocatable_test.c: Add a powerpc
+	relocation referencing .LC0.
+	* testsuite/discard_locals_test.sh: Remove FIXMEs.
+
+2013-03-07  Alan Modra  <amodra@gmail.com>
+
+	* testsuite/ifunc-sel.h (ifunc_sel, ifunc_one): Mark
+	always_inline.  Add assembly for powerpc to avoid GOT.
+
+2013-03-07  Alan Modra  <amodra@gmail.com>
+
+	* testsuite/script_test_10.sh: Don't test .bss section
+	header number.
+
+2013-03-06  Alan Modra  <amodra@gmail.com>
+
+	* powerpc.cc (class Powerpc_relobj): Move some member functions.
+	(Target_powerpc::symval_for_branch):  Add symtab param.  Update
+	all callers.  Handle folded sections.
+	(Target_powerpc::do_gc_add_reference): Don't cast dynamic object
+	to Powerpc_relobj.
+	(Global_symbol_visitor_opd::operator()): Likewise.
+
+2013-03-04  Alan Modra  <amodra@gmail.com>
+
+	* testsuite/Makefile.am (final_layout_script.lds): Add .sbss.
+	* testsuite/Makefile.in: Regenerate.
+
+2013-03-01  Cary Coutant  <ccoutant@google.com>
+
+	Add dwp support for v2 DWARF package file format.
+	* dwarf_reader.cc (Dwarf_info_reader::visit_type_unit): Add
+	tu_length parameter.  Adjust all callers.
+	* dwarf_reader.h (Dwarf_info_reader::visit_type_unit): Likewise.
+	* dwp.cc: Include dwarf.h.
+	(Section_bounds): New struct type.
+	(Unit_set): New struct type.
+	(Dwo_file::Dwo_file): Initialize new data member.
+	(Dwo_file::read_compunit_index, Dwo_file::read_typeunit_index):
+	Combine and rename to...
+	(Dwo_file::read_unit_index): ...this.
+	(Dwo_file::sized_read_compunit_index)
+	(Dwo_file::sized_read_typeunit_index): Combine and rename to...
+	(Dwo_file::sized_read_unit_index): ...this.
+	(Dwo_file::copy_section): Remove section_name, is_str_offsets
+	parameters; add section_id parameter.
+	(Dwo_file::add_cu_set, Dwo_file::add_tu_set): Combine and rename to...
+	(Dwo_file::add_unit_set): ...this.
+	(Dwo_file::shndx_map_): Remove.
+	(Dwo_file::sect_offsets_): New data member.
+	(Dwp_output_file::Dwp_output_file): Initialize new data members.
+	(Dwp_output_file::add_section): Rename to...
+	(Dwp_output_file::add_contribution): ...this.
+	(Dwp_output_file::add_cu_set): Combine parameters into a struct.
+	(Dwp_output_file::add_tu_set): Likewise.
+	(Dwp_output_file::Contribution): New type.
+	(Dwp_output_file::Section::contributions): New data member.
+	(Dwp_output_file::Cu_or_tu_set): Remove.
+	(Dwp_output_file::Section::Section): New ctor.
+	(Dwp_output_file::Dwp_index::Shndx_pool): Remove.
+	(Dwp_output_file::Dwp_index::Section_table): New type.
+	(Dwp_output_file::Dwp_index::Dwp_index): Initialize new data members.
+	(Dwp_output_file::Dwp_index::enter_set): Change type of "set"
+	parameter.
+	(Dwp_output_file::Dwp_index::shndx_pool): Remove.
+	(Dwp_output_file::Dwp_index::shndx_pool_end): Remove.
+	(Dwp_output_file::Dwp_index::section_table): New member function.
+	(Dwp_output_file::Dwp_index::section_table_end): New member function.
+	(Dwp_output_file::Dwp_index::shndx_pool_size): Remove.
+	(Dwp_output_file::Dwp_index::section_table_rows): New member function.
+	(Dwp_output_file::Dwp_index::section_table_cols): New member function.
+	(Dwp_output_file::Dwp_index::shndx_pool_): Remove.
+	(Dwp_output_file::Dwp_index::section_table_): New data member.
+	(Dwp_output_file::Dwp_index::section_mask_): New data member.
+	(Dwp_output_file::add_output_section): New member function.
+	(Dwp_output_file::write_new_section): New member function.
+	(Dwp_output_file::write_contributions): New member function.
+	(Dwp_output_file::section_id_map_): New data member.
+	(class Dwo_id_info_reader): Remove.
+	(class Unit_reader): New class.
+	(get_dwarf_section_name): New function.
+	(Dwo_file::read_executable): Adjust initializations of class data.
+	(Dwo_file::read): Add support for v2 package file format.
+	(Dwo_file::read_unit_index): Likewise.
+	(Dwo_file::sized_read_unit_index): Likewise.
+	(Dwo_file::copy_section): Likewise.
+	(Dwo_file::add_unit_set): Likewise.
+	(Dwp_output_file::add_output_section): Likewise.
+	(Dwp_output_file::add_contribution): Likewise.
+	(Dwp_output_file::Dwp_index::find_or_add): Use row index to check
+	for empty slot.
+	(Dwp_output_file::Dwp_index::enter_set): Add support for v2 package
+	file format.
+	(Dwp_output_file::Dwp_index::grow): Use row index to check for empty
+	slot.
+	(Dwp_output_file::initialize): Remove unused function.
+	(Dwp_output_file::finalize): Add support for v2 package file format.
+	(Dwp_output_file::write_index): Likewise.
+	* gdb-index.cc (Gdb_index_info_reader::visit_type_unit): Adjust
+	function prototype.
+
+2013-03-01  Cary Coutant  <ccoutant@google.com>
+
+	* dwarf_reader.cc (Dwarf_info_reader::check_buffer): Move
+	function into class definition in header file.
+	(Dwarf_info_reader::warn_corrupt_debug_section): New function.
+	* dwarf_reader.h (Dwarf_info_reader::warn_corrupt_debug_section):
+	New function.
+	(Dwarf_info_reader::check_buffer): Move here from .cc file.
+
+2013-02-28  Alan Modra  <amodra@gmail.com>
+
+	* target.h (Target::plt_fde_location, do_plt_fde_location): Declare.
+	* target.cc (Target::do_plt_fde_location): New function.
+	* ehframe.h (class FDE): Add post_map field to u_.from_linker,
+	accessor function, and constructor param.
+	(struct Post_fde, Post_fdes): Declare.
+	(Cie::write): Add post_fdes param.
+	* ehframe.cc (Fde::write): Use plt_fde_location.
+	(struct Post_fde): Define.
+	(Cie::write): Stash FDEs added post merge mapping.
+	(Eh_frame::add_ehframe_for_plt): Assert no new CIEs after mapping.
+	Adjust Fde constructor call.  Bump final_data_size_ for post map FDEs.
+	(Eh_frame::do_sized_write): Arrange to write post map FDES after
+	other FDEs.
+	* powerpc.cc (Target_powerpc::do_plt_fde_location): New function.
+	(Target_powerpc::has_glink): New function.
+	(Target_powerpc::do_relax): Add eh_frame info for stubs.
+	(struct Eh_cie, eh_frame_cie, glink_eh_frame_fde_64,
+	glink_eh_frame_fde_32, default_fde): New data.
+	(Stub_table::eh_frame_added_): New var.
+	(Stub_table::find_long_branch_entry, stub_address, stub_offset):
+	Make const.
+	(Stub_table::add_eh_frame): New function.
+	(Output_data_glink::add_eh_frame): New function.
+	(Target_powerpc::make_glink_section): Call add_eh_frame.
+
 2013-02-15  Ian Lance Taylor  <iant@google.com>
 
 	* options.h (DEFINE_uint64_alias): Define.
@@ -24,17 +316,17 @@
 
 2013-01-28  Cary Coutant  <ccoutant@google.com>
 
-    	* dwp.cc (File_list): New typedef.
-    	(Dwo_name_info_reader): New class.
-    	(Dwo_id_info_reader::Dwo_id_info_reader): Remove unused parameters.
-    	(Dwo_id_info_reader::visit_top_die): Remove unused member function.
-    	(Dwo_file::~Dwo_file): Delete input_file_ after obj_.
-    	(Dwo_file::read_executable): New function.
-    	(Dwo_file::read): Move common setup code to ...
-    	(Dwo_file::make_object): ... here.
-    	(dwp_options): Add --exec/-e.
-    	(usage): Likewise.
-    	(main): Likewise.
+	* dwp.cc (File_list): New typedef.
+	(Dwo_name_info_reader): New class.
+	(Dwo_id_info_reader::Dwo_id_info_reader): Remove unused parameters.
+	(Dwo_id_info_reader::visit_top_die): Remove unused member function.
+	(Dwo_file::~Dwo_file): Delete input_file_ after obj_.
+	(Dwo_file::read_executable): New function.
+	(Dwo_file::read): Move common setup code to ...
+	(Dwo_file::make_object): ... here.
+	(dwp_options): Add --exec/-e.
+	(usage): Likewise.
+	(main): Likewise.
 
 2013-01-24  Sriraman Tallam  <tmsriram@google.com>
 
@@ -217,11 +509,11 @@
 
 2012-12-14  Cary Coutant  <ccoutant@google.com>
 
-    	* testsuite/Makefile.am (exception_separate_shared_12_test): Add
-    	--no-as-needed flag.
-    	(exception_separate_shared_12_test): Likewise.
-    	(incremental_copy_test): Likewise.
-    	* testsuite/Makefile.in: Regenerate.
+	* testsuite/Makefile.am (exception_separate_shared_12_test): Add
+	--no-as-needed flag.
+	(exception_separate_shared_12_test): Likewise.
+	(incremental_copy_test): Likewise.
+	* testsuite/Makefile.in: Regenerate.
 
 2012-12-14  Cary Coutant  <ccoutant@google.com>
 

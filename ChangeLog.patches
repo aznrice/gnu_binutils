@@ -1,5 +1,14 @@
 bfd/
 
+2013-04-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf-bfd.h (struct elf_backend_data <merge_symbol>):  Add abfd,
+	newdyn and olddyn.  Remove const from oldsec.
+	(_bfd_elf_sharable_merge_symbol): Updated.
+	* elf64-x86-64.c (elf_x86_64_merge_symbol): Likewise.
+	* elflink.c (_bfd_elf_merge_symbol): Update bed->merge_symbol
+	call.
+
 2009-12-12  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* elf.c: Fix shadowed variable warnings.
