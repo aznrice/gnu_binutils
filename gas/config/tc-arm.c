@@ -1938,7 +1938,7 @@ parse_neon_el_struct_list (char **str, unsigned *pbase,
   enum arm_reg_type rtype = REG_TYPE_NDQ;
   const char *const incr_error = _("register stride must be 1 or 2");
   const char *const type_error = _("mismatched element/structure types in list");
-  struct neon_typed_alias firsttype;
+  struct neon_typed_alias firsttype = { 0, 0, { 0, 0 } };
 
   if (skip_past_char (&ptr, '{') == SUCCESS)
     leading_brace = 1;

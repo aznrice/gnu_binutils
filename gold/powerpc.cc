@@ -923,7 +923,7 @@ class Target_powerpc : public Sized_target<size, big_endian>
     bool issued_non_pic_error_;
   };
 
-  Address
+  typename elfcpp::Elf_types<size>::Elf_Addr
   symval_for_branch(const Symbol_table* symtab, Address value,
 		    const Sized_symbol<size>* gsym,
 		    Powerpc_relobj<size, big_endian>* object,
@@ -3231,20 +3231,20 @@ class Stub_table : public Output_relaxed_input_section
 		     Address);
 
   // Find a given plt call stub.
-  Address
+  typename elfcpp::Elf_types<size>::Elf_Addr
   find_plt_call_entry(const Symbol*) const;
 
-  Address
+  typename elfcpp::Elf_types<size>::Elf_Addr
   find_plt_call_entry(const Sized_relobj_file<size, big_endian>*,
 		      unsigned int) const;
 
-  Address
+  typename elfcpp::Elf_types<size>::Elf_Addr
   find_plt_call_entry(const Sized_relobj_file<size, big_endian>*,
 		      const Symbol*,
 		      unsigned int,
 		      Address) const;
 
-  Address
+  typename elfcpp::Elf_types<size>::Elf_Addr
   find_plt_call_entry(const Sized_relobj_file<size, big_endian>*,
 		      unsigned int,
 		      unsigned int,
@@ -3254,7 +3254,7 @@ class Stub_table : public Output_relaxed_input_section
   void
   add_long_branch_entry(const Powerpc_relobj<size, big_endian>*, Address);
 
-  Address
+  typename elfcpp::Elf_types<size>::Elf_Addr
   find_long_branch_entry(const Powerpc_relobj<size, big_endian>*,
 			 Address) const;
 
@@ -3267,7 +3267,7 @@ class Stub_table : public Output_relaxed_input_section
     this->branch_size_ = 0;
   }
 
-  Address
+  typename elfcpp::Elf_types<size>::Elf_Addr
   set_address_and_size(const Output_section* os, Address off)
   {
     Address start_off = off;
@@ -3284,14 +3284,14 @@ class Stub_table : public Output_relaxed_input_section
     return my_size;
   }
 
-  Address
+  typename elfcpp::Elf_types<size>::Elf_Addr
   stub_address() const
   {
     return align_address(this->address() + this->orig_data_size_,
 			 this->stub_align());
   }
 
-  Address
+  typename elfcpp::Elf_types<size>::Elf_Addr
   stub_offset() const
   {
     return align_address(this->offset() + this->orig_data_size_,
