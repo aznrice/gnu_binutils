@@ -175,6 +175,7 @@ REQUIRED_OFILES =							\
 	./getruntime.$(objext) ./hashtab.$(objext) ./hex.$(objext)	\
 	./lbasename.$(objext) ./lrealpath.$(objext)			\
 	./make-relative-prefix.$(objext) ./make-temp-file.$(objext)	\
+	./mkstemps.$(objext)						\
 	./objalloc.$(objext)						\
 	./obstack.$(objext)						\
 	./partition.$(objext) ./pexecute.$(objext) ./physmem.$(objext)	\
