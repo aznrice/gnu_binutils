@@ -1,3 +1,7 @@
+2014-01-07  Philipp Tomsich  <philipp.tomsich@theobroma-systems.com>
+
+	* config/tc-aarch64.c (aarch64_cpus): Add entry for "xgene-1"
+
 2014-04-24  Nick Clifton  <nickc@redhat.com>
 
 	* config/tc-arm.c (s_ltorg): Only create a mapping symbol for ELF
