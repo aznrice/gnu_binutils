@@ -1,3 +1,11 @@
+2013-12-20  Alan Modra  <amodra@gmail.com>
+
+	* elf-eh-frame.c (cie_eq): Return false when initial_insn_length
+	is too large.
+	(cie_compute_hash): Don't exceed bounds of initial_instructions.
+	(_bfd_elf_parse_eh_frame): Always set initial_insn_length, and
+	save as much of insns to initial_instructions[] as will fit.
+
 2014-04-30  Will Newton  <will.newton@linaro.org>
 
 	* version.h: Bump version.
