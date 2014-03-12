@@ -1,3 +1,31 @@
+2014-03-07  Michael Hudson-Doyle  <michael.hudson@linaro.org>
+	    Kugan Vivekanandarajah  <kugan.vivekanandarajah@linaro.org>
+
+	* elfnn-aarch64.c (elfNN_aarch64_final_link_relocate): Use correct
+	offset while calculating relocation address.
+	(elfNN_aarch64_create_small_pltn_entry): Likewise.
+	(elfNN_aarch64_init_small_plt0_entry): Likewise.
+
+2014-02-28  Alan Modra  <amodra@gmail.com>
+
+	PR ld/16643
+	* elflink.c (elf_gc_sweep): Call gc_sweep_hook for exactly
+	the same conditions we called check_relocs.
+
+2014-02-07  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* cache.c (bfd_cache_max_open): Cast RLIM_INFINITY to rlim_t.
+
+2014-01-24  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (ppc_build_one_stub): Correct reloc count passed
+	to get_relocs for ELFv2.
+	(STK_LINKER): Comment typo fix.
+
+	2013-12-16  Andreas Schwab  <schwab@suse.de>
+	* elf64-ppc.c (ppc64_elf_relocate_section): Add newline to error
+	message.
+
 2013-12-20  Alan Modra  <amodra@gmail.com>
 
 	* elflink.c (_bfd_elf_merge_symbol): If merging a new weak

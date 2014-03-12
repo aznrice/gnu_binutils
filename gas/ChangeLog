@@ -1,3 +1,20 @@
+2014-01-31  Michael Zolotukhin  <michael.v.zolotukhin@gmail.com>
+
+	* config/tc-i386.c (check_VecOperands): Remove regzmm from AVX2
+	gather assert.
+
+2014-01-22  Michael Zolotukhin  <michael.v.zolotukhin@gmail.com>
+
+	PR gas/16489
+	* config/tc-i386.c (check_VecOperands): Add check for invalid
+	register set in AVX512 gathers.
+
+2014-01-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* as.c (parse_args): Update copyright year to 2014.
+	* config/tc-i386.c (regbnd): Removed.
+	(vec_disp8): Likewise.
+
 2013-12-18  Yufeng Zhang  <yufeng.zhang@arm.com>
 
 	* config/tc-aarch64.c (md_assemble): Defer the feature checking until

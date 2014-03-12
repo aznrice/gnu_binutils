@@ -1,3 +1,26 @@
+2014-02-27  Jiong Wang  <jiong.wang@arm.com>
+
+	* aarch64-tbl.h (aarch64_opcode_table): Replace IMM0 with
+	FPIMM0 for fcmeq, fcmgt, fcmge, fcmlt and fcmle.
+
+2014-02-27  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64-opc.c (print_register_offset_address): Call
+	get_int_reg_name to prepare the register name.
+
+2014-01-30  Michael Zolotukhin  <michael.v.zolotukhin@gmail.com>
+	    Jan Beulich  <jbeulich@suse.com>
+
+	PR binutils/16490
+	* i386-dis.c (OP_E_memory): Fix shift computation for
+	vex_vsib_q_w_dq_mode.
+
+2014-01-09  Bradley Nelson  <bradnelson@google.com>
+	    Roland McGrath  <mcgrathr@google.com>
+
+	* i386-dis.c (print_insn): Do not touch all_prefixes[-1] when
+	last_rex_prefix is -1.
+
 2013-11-20  Yufeng Zhang  <yufeng.zhang@arm.com>
 
 	* aarch64-opc.c (aarch64_pstatefields): Update.
