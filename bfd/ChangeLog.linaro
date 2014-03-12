@@ -1,3 +1,9 @@
+2014-03-12  Will Newton  <will.newton@linaro.org>
+
+	Linaro binutils 2.24-2014.03 released.
+
+	* version.h: Update version.
+
 2013-12-24  Victor Chong  <victor.chong@linaro.org>
 
 	* version.h: Bump version.
