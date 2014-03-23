@@ -308,10 +308,6 @@ CODE_FRAGMENT
 .     with this name and type in use.  BSF_OBJECT must also be set.  *}
 .#define BSF_GNU_UNIQUE		(1 << 23)
 .
-.  {* A secondary global symbol, overridable without warnings by
-.     a regular or weak global symbol of the same name.  *}
-.#define BSF_SECONDARY		(1 << 24)
-.
 .  flagword flags;
 .
 .  {* A pointer to the section to which this symbol is
@@ -495,7 +491,6 @@ bfd_print_symbol_vandf (bfd *abfd, void *arg, asymbol *symbol)
 	   ((type & BSF_LOCAL)
 	    ? (type & BSF_GLOBAL) ? '!' : 'l'
 	    : (type & BSF_GLOBAL) ? 'g'
-	    : (type & BSF_SECONDARY) ? 's'
 	    : (type & BSF_GNU_UNIQUE) ? 'u' : ' '),
 	   (type & BSF_WEAK) ? 'w' : ' ',
 	   (type & BSF_CONSTRUCTOR) ? 'C' : ' ',
@@ -699,15 +694,6 @@ bfd_decode_symclass (asymbol *symbol)
     }
   if (symbol->flags & BSF_GNU_UNIQUE)
     return 'u';
-  if (symbol->flags & BSF_SECONDARY)
-    {
-      /* If secondary, determine if it's specifically an object
-	 or non-object weak.  */
-      if (symbol->flags & BSF_OBJECT)
-	return 'Y';
-      else
-	return 'S';
-    }
   if (!(symbol->flags & (BSF_GLOBAL | BSF_LOCAL)))
     return '?';
 
@@ -948,7 +934,7 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
   struct stab_find_info *info;
   bfd_size_type stabsize, strsize;
   bfd_byte *stab, *str;
-  bfd_byte *last_stab = NULL;
+  bfd_byte *last_stab, *last_str;
   bfd_size_type stroff;
   struct indexentry *indexentry;
   char *file_name;
@@ -1161,8 +1147,9 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
       file_name = NULL;
       directory_name = NULL;
       saw_fun = 1;
+      stroff = 0;
 
-      for (i = 0, stroff = 0, stab = info->stabs, str = info->strs;
+      for (i = 0, last_stab = stab = info->stabs, last_str = str = info->strs;
 	   i < info->indextablesize && stab < info->stabs + stabsize;
 	   stab += STABSIZE)
 	{
@@ -1188,7 +1175,7 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 		{
 		  info->indextable[i].val = bfd_get_32 (abfd, last_stab + VALOFF);
 		  info->indextable[i].stab = last_stab;
-		  info->indextable[i].str = str;
+		  info->indextable[i].str = last_str;
 		  info->indextable[i].directory_name = directory_name;
 		  info->indextable[i].file_name = file_name;
 		  info->indextable[i].function_name = NULL;
@@ -1206,6 +1193,7 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 	      else
 		{
 		  last_stab = stab;
+		  last_str = str;
 		  if (stab + STABSIZE >= info->stabs + stabsize
 		      || *(stab + STABSIZE + TYPEOFF) != (bfd_byte) N_SO)
 		    {
@@ -1256,7 +1244,7 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 	{
 	  info->indextable[i].val = bfd_get_32 (abfd, last_stab + VALOFF);
 	  info->indextable[i].stab = last_stab;
-	  info->indextable[i].str = str;
+	  info->indextable[i].str = last_str;
 	  info->indextable[i].directory_name = directory_name;
 	  info->indextable[i].file_name = file_name;
 	  info->indextable[i].function_name = NULL;

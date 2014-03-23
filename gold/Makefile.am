@@ -7,12 +7,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; see the file COPYING3.  If not see
 # <http://www.gnu.org/licenses/>.
@@ -27,7 +27,7 @@ tooldir = $(exec_prefix)/$(target_alias)
 ACLOCAL_AMFLAGS = -I ../bfd -I ../config
 
 AM_CFLAGS = $(WARN_CFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS)
-AM_CXXFLAGS = $(WARN_CXXFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS) -Wno-error
+AM_CXXFLAGS = $(WARN_CXXFLAGS) $(LFS_CFLAGS) $(RANDOM_SEED_CFLAGS)
 
 AM_CPPFLAGS = \
 	-I$(srcdir) -I$(srcdir)/../include -I$(srcdir)/../elfcpp \
@@ -211,21 +211,22 @@ check: libgold.a
 install-exec-local: ld-new$(EXEEXT)
 	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(tooldir)/bin
 	n=`echo $(installed_linker) | sed '$(transform)'`; \
-	$(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${n}$(EXEEXT); \
+	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
+	  ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${n}$(EXEEXT); \
 	if test "$(bindir)" != "$(tooldir)/bin"; then \
 	  rm -f $(DESTDIR)$(tooldir)/bin/$(installed_linker)$(EXEEXT); \
 	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$(installed_linker)$(EXEEXT) >/dev/null 2>/dev/null \
-	  || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$(installed_linker)$(EXEEXT); \
+	  || $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$(installed_linker)$(EXEEXT); \
 	fi; \
 	if test "x$(install_as_default)" = "xyes"; then \
 	  ld=`echo ld | sed '$(transform)'`; \
 	  rm -f $(DESTDIR)$(bindir)/$${ld}$(EXEEXT); \
 	  ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(bindir)/$${ld}$(EXEEXT) >/dev/null 2>/dev/null \
-	  || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${ld}$(EXEEXT); \
+	  || $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(bindir)/$${ld}$(EXEEXT); \
 	  if test "$(bindir)" != "$(tooldir)/bin"; then \
 	    rm -f $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 	    ln $(DESTDIR)$(bindir)/$${n}$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT) >/dev/null 2>/dev/null \
-	    || $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
+	    || $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) ld-new$(EXEEXT) $(DESTDIR)$(tooldir)/bin/ld$(EXEEXT); \
 	  fi; \
 	fi
 
@@ -269,7 +270,7 @@ ld2_LDFLAGS = -Bgcctestdir2/
 bootstrap-test: ld2
 	rm -f $@
 	echo "#!/bin/sh" > $@
-	echo "cmp ld1 ld2" > $@
+	echo "cmp ld1 ld2" >> $@
 	chmod +x $@
 
 libgold-1-r.o: gcctestdir1/ld libgold.a
@@ -296,11 +297,68 @@ ld2_r_LDFLAGS = -Bgcctestdir2-r/
 bootstrap-test-r: ld2-r
 	rm -f $@
 	echo "#!/bin/sh" > $@
-	echo "cmp ld1-r ld2-r" > $@
+	echo "cmp ld1-r ld2-r" >> $@
 	chmod +x $@
 
 check_PROGRAMS = ld1 ld2 ld1-r ld2-r
 TESTS = bootstrap-test bootstrap-test-r
+
+# Verify that changing the number of threads doesn't change the
+# treehash computation, by building ld1 and ld3 the same way except
+# for the number of threads.  However, the build ID should change if
+# we change the chunk size for --build-id=tree, so ld4 should be
+# different.  We run the latter test even if multithreading is unavailable,
+# because the treehash can still operate in that mode.
+check_PROGRAMS += ld4
+TESTS += bootstrap-test-treehash-chunksize
+
+gcctestdir3/ld: ld-new
+	test -d gcctestdir3 || mkdir -p gcctestdir3
+	rm -f gcctestdir3/ld
+	(cd gcctestdir3 && $(LN_S) ../ld-new ld)
+
+ld3_SOURCES = $(sources_var)
+ld3_DEPENDENCIES = $(deps_var) gcctestdir3/ld
+ld3_LDADD = $(ldadd_var)
+ld3_LDFLAGS = -Bgcctestdir3/
+
+gcctestdir4/ld: ld-new
+	test -d gcctestdir4 || mkdir -p gcctestdir4
+	rm -f gcctestdir4/ld
+	(cd gcctestdir4 && $(LN_S) ../ld-new ld)
+
+ld4_SOURCES = $(sources_var)
+ld4_DEPENDENCIES = $(deps_var) gcctestdir4/ld
+ld4_LDADD = $(ldadd_var)
+ld4_LDFLAGS = -Bgcctestdir4/
+
+ld1_LDFLAGS += -Wl,--build-id=tree -Wl,--build-id-chunk-size-for-treehash=12345 -Wl,--build-id-min-file-size-for-treehash=0
+ld2_LDFLAGS += -Wl,--build-id=tree -Wl,--build-id-chunk-size-for-treehash=12345 -Wl,--build-id-min-file-size-for-treehash=0
+ld3_LDFLAGS += -Wl,--build-id=tree -Wl,--build-id-chunk-size-for-treehash=12345 -Wl,--build-id-min-file-size-for-treehash=0
+ld4_LDFLAGS += -Wl,--build-id=tree -Wl,--build-id-chunk-size-for-treehash=12346 -Wl,--build-id-min-file-size-for-treehash=0
+
+if THREADS
+
+ld1_LDFLAGS += -Wl,--thread-count=3
+ld2_LDFLAGS += -Wl,--thread-count=3
+ld3_LDFLAGS += -Wl,--thread-count=13
+ld4_LDFLAGS += -Wl,--thread-count=3
+check_PROGRAMS += ld3
+TESTS += bootstrap-test-treehash-chunksize
+
+bootstrap-test-treehash: ld1 ld3
+	rm -f $@
+	echo "#!/bin/sh" > $@
+	echo "cmp ld1 ld3" >> $@
+	chmod +x $@
+
+endif
+
+bootstrap-test-treehash-chunksize: ld1 ld4
+	rm -f $@
+	echo "#!/bin/sh" > $@
+	echo "cmp ld1 ld4 | grep ." >> $@
+	chmod +x $@
 
 endif
 endif

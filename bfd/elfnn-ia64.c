@@ -1055,8 +1055,7 @@ elfNN_ia64_add_symbol_hook (bfd *abfd,
       *valp = sym->st_size;
     }
 
-  return _bfd_elf_add_sharable_symbol (abfd, info, sym, namep, flagsp,
-				       secp, valp);
+  return TRUE;
 }
 
 /* Return the number of additional phdrs we will need.  */
@@ -3903,17 +3902,17 @@ elfNN_ia64_relocate_section (bfd *output_bfd,
       else
 	{
 	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned, ignored;
+	  bfd_boolean warned;
 	  struct elf_link_hash_entry **sym_hashes = elf_sym_hashes (input_bfd);
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sym_sec, value,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 
 	  if (h->root.type == bfd_link_hash_undefweak)
 	    undef_weak_ref = TRUE;
-	  else if (warned || (ignored && info->executable))
+	  else if (warned)
 	    continue;
 	}
 
@@ -5069,19 +5068,6 @@ elfNN_hpux_backend_symbol_processing (bfd *abfd ATTRIBUTE_UNUSED,
 #define elf_backend_rela_normal		1
 #define elf_backend_special_sections	elfNN_ia64_special_sections
 #define elf_backend_default_execstack	0
-
-#define elf_backend_section_from_bfd_section \
-  _bfd_elf_sharable_section_from_bfd_section
-#define elf_backend_symbol_processing \
-  _bfd_elf_sharable_symbol_processing
-#define elf_backend_common_section_index \
-  _bfd_elf_sharable_common_section_index
-#define elf_backend_common_section \
-  _bfd_elf_sharable_common_section
-#define elf_backend_common_definition \
-  _bfd_elf_sharable_common_definition
-#define elf_backend_merge_symbol \
-  _bfd_elf_sharable_merge_symbol
 
 /* FIXME: PR 290: The Intel C compiler generates SHT_IA_64_UNWIND with
    SHF_LINK_ORDER. But it doesn't set the sh_link or sh_info fields.

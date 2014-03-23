@@ -81,7 +81,7 @@ SECTIONS
     KEEP(*(.vectors))
 
     /* For data that needs to reside in the lower 64k of progmem.  */
-    *(.progmem.gcc*)
+    ${RELOCATING+ *(.progmem.gcc*)}
 
     /* PR 13812: Placing the trampolines here gives a better chance
        that they will be in range of the code that uses them.  */
@@ -89,19 +89,21 @@ SECTIONS
     ${CONSTRUCTING+ __trampolines_start = . ; }
     /* The jump trampolines for the 16-bit limited relocs will reside here.  */
     *(.trampolines)
-    *(.trampolines*)
+    ${RELOCATING+ *(.trampolines*)}
     ${CONSTRUCTING+ __trampolines_end = . ; }
 
-    *(.progmem*)
+    ${RELOCATING+ *(.progmem*)}
     
+    ${RELOCATING+. = ALIGN(2);}
+
     /* For future tablejump instruction arrays for 3 byte pc devices.
        We don't relax jump/call instructions within these sections.  */
     *(.jumptables) 
-    *(.jumptables*) 
+    ${RELOCATING+ *(.jumptables*)}
 
     /* For code that needs to reside in the lower 128k progmem.  */
     *(.lowtext)
-    *(.lowtext*)
+    ${RELOCATING+ *(.lowtext*)}
 
     ${CONSTRUCTING+ __ctors_start = . ; }
     ${CONSTRUCTING+ *(.ctors) }
@@ -136,7 +138,7 @@ SECTIONS
     KEEP (*(.init9))
     *(.text)
     ${RELOCATING+. = ALIGN(2);}
-    *(.text.*)
+    ${RELOCATING+ *(.text.*)}
     ${RELOCATING+. = ALIGN(2);}
     *(.fini9)  /* _exit() starts here.  */
     KEEP (*(.fini9))
@@ -168,9 +170,9 @@ SECTIONS
        addresses for subsequent sections because -Tdata= from the command
        line will have no effect, see PR13697.  Thus, keep .data  */
     KEEP (*(.data))    
-    *(.data*)
+    ${RELOCATING+ *(.data*)}
     *(.rodata)  /* We need to include .rodata here if gcc is used */
-    *(.rodata*) /* with -fdata-sections.  */
+    ${RELOCATING+ *(.rodata*)} /* with -fdata-sections.  */
     *(.gnu.linkonce.d*)
     ${RELOCATING+. = ALIGN(2);}
     ${RELOCATING+ _edata = . ; }
@@ -181,7 +183,7 @@ SECTIONS
   {
     ${RELOCATING+ PROVIDE (__bss_start = .) ; }
     *(.bss)
-    *(.bss*)
+    ${RELOCATING+ *(.bss*)}
     *(COMMON)
     ${RELOCATING+ PROVIDE (__bss_end = .) ; }
   } ${RELOCATING+ > data}
@@ -232,9 +234,10 @@ SECTIONS
   .stab.index 0 : { *(.stab.index) }
   .stab.indexstr 0 : { *(.stab.indexstr) }
   .comment 0 : { *(.comment) } 
+  .note.gnu.build-id : { *(.note.gnu.build-id) }
 EOF
 
-source $srcdir/scripttempl/DWARF.sc
+. $srcdir/scripttempl/DWARF.sc
 
 cat <<EOF
 }

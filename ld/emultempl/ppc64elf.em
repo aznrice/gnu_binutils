@@ -423,8 +423,7 @@ ppc_layout_sections_again (void)
   gld${EMULATION_NAME}_map_segments (TRUE);
 
   if (!link_info.relocatable)
-    _bfd_set_gp_value (link_info.output_bfd,
-		       ppc64_elf_toc (link_info.output_bfd));
+    ppc64_elf_set_toc (&link_info, link_info.output_bfd);
 
   need_laying_out = -1;
 }
@@ -525,8 +524,7 @@ gld${EMULATION_NAME}_after_allocation (void)
       gld${EMULATION_NAME}_map_segments (need_laying_out);
 
       if (!link_info.relocatable)
-	_bfd_set_gp_value (link_info.output_bfd,
-			   ppc64_elf_toc (link_info.output_bfd));
+	ppc64_elf_set_toc (&link_info, link_info.output_bfd);
     }
 }
 
@@ -534,7 +532,7 @@ gld${EMULATION_NAME}_after_allocation (void)
 /* Final emulation specific call.  */
 
 static void
-ppc_finish (void)
+gld${EMULATION_NAME}_finish (void)
 {
   /* e_entry on PowerPC64 points to the function descriptor for
      _start.  If _start is missing, default to the first function
@@ -566,7 +564,7 @@ ppc_finish (void)
     }
 
   ppc64_elf_restore_symbols (&link_info);
-  gld${EMULATION_NAME}_finish ();
+  finish_default ();
 }
 
 
@@ -868,6 +866,6 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
 #
 LDEMUL_BEFORE_ALLOCATION=ppc_before_allocation
 LDEMUL_AFTER_ALLOCATION=gld${EMULATION_NAME}_after_allocation
-LDEMUL_FINISH=ppc_finish
+LDEMUL_FINISH=gld${EMULATION_NAME}_finish
 LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=ppc_create_output_section_statements
 LDEMUL_NEW_VERS_PATTERN=gld${EMULATION_NAME}_new_vers_pattern

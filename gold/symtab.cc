@@ -3150,7 +3150,7 @@ Symbol_table::sized_write_section_symbol(const Output_section* os,
 void
 Symbol_table::print_stats() const
 {
-#if defined(HAVE_TR1_UNORDERED_MAP) || defined(HAVE_EXT_HASH_MAP) || defined(ANDROID)
+#if defined(HAVE_TR1_UNORDERED_MAP) || defined(HAVE_EXT_HASH_MAP)
   fprintf(stderr, _("%s: symbol table entries: %zu; buckets: %zu\n"),
 	  program_name, this->table_.size(), this->table_.bucket_count());
 #else

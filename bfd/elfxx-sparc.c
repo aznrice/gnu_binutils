@@ -3019,12 +3019,12 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean warned, ignored;
+	  bfd_boolean warned;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 	  if (warned)
 	    {
 	      /* To avoid generating warning messages about truncated
@@ -4793,9 +4793,10 @@ _bfd_sparc_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
 	    }
 	}
 
-      elf_section_data (splt->output_section)->this_hdr.sh_entsize
-	= (htab->is_vxworks || !ABI_64_P (output_bfd))
-	  ? 0 : htab->plt_entry_size;
+      if (elf_section_data (splt->output_section) != NULL)
+        elf_section_data (splt->output_section)->this_hdr.sh_entsize
+          = ((htab->is_vxworks || !ABI_64_P (output_bfd))
+             ? 0 : htab->plt_entry_size);
     }
 
   /* Set the first entry in the global offset table to the address of

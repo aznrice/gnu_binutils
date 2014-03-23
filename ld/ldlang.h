@@ -1,7 +1,5 @@
 /* ldlang.h - linker command language support
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright 1991-2013 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -167,6 +165,8 @@ typedef struct lang_output_section_statement_struct
   unsigned int update_dot : 1;
   /* If this section is after assignment to _end.  */
   unsigned int after_end : 1;
+  /* If this section uses the alignment of its input sections.  */
+  unsigned int align_lma_with_input : 1;
 } lang_output_section_statement_type;
 
 typedef struct
@@ -488,9 +488,9 @@ extern lang_statement_list_type input_file_chain;
 extern int lang_statement_iteration;
 
 extern void lang_init
-  (bfd_boolean);
+  (void);
 extern void lang_finish
-  (bfd_boolean);
+  (void);
 extern lang_memory_region_type * lang_memory_region_lookup
   (const char * const, bfd_boolean);
 extern void lang_memory_region_alias
@@ -502,12 +502,8 @@ extern void lang_set_flags
 extern void lang_add_output
   (const char *, int from_script);
 extern lang_output_section_statement_type *lang_enter_output_section_statement
-  (const char *output_section_statement_name,
-   etree_type *address_exp,
-   enum section_type sectype,
-   etree_type *align,
-   etree_type *subalign,
-   etree_type *, int);
+  (const char *, etree_type *, enum section_type, etree_type *, etree_type *,
+   etree_type *, int, int);
 extern void lang_final
   (void);
 extern void lang_relax_sections
@@ -663,46 +659,5 @@ ldlang_override_segment_assignment
 
 extern void
 lang_ld_feature (char *);
-
-typedef enum
-{
-  cmdline_is_file_enum,
-  cmdline_is_bfd_enum
-} cmdline_enum_type;
-
-typedef struct cmdline_header_struct
-{
-  union cmdline_union *next;
-  cmdline_enum_type type;
-} cmdline_header_type;
-
-typedef struct cmdline_file_struct
-{
-  cmdline_header_type header;
-  const char *filename;
-} cmdline_file_type;
-
-typedef struct cmdline_bfd_struct
-{
-  cmdline_header_type header;
-  bfd *abfd;
-} cmdline_bfd_type;
-
-typedef union cmdline_union
-{
-  cmdline_header_type header;
-  cmdline_file_type file;
-  cmdline_bfd_type abfd;
-} cmdline_union_type;
-
-typedef struct cmdline_list
-{
-  cmdline_union_type *head;
-  cmdline_union_type **tail;
-} cmdline_list_type;
-
-extern void cmdline_emit_object_only_section (void);
-extern void cmdline_check_object_only_section (bfd *, bfd_boolean);
-extern void cmdline_remove_object_only_files (void);
 
 #endif

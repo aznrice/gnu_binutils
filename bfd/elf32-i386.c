@@ -819,9 +819,6 @@ struct elf_i386_link_hash_table
 
   /* The index of the next unused R_386_IRELATIVE slot in .rel.plt.  */
   bfd_vma next_irelative_index;
-
-  asection *sdynsharablebss;
-  asection *srelsharablebss;
 };
 
 /* Get the i386 ELF linker hash table from a link_info structure.  */
@@ -1000,19 +997,10 @@ elf_i386_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
 
   htab->sdynbss = bfd_get_linker_section (dynobj, ".dynbss");
   if (!info->shared)
-    {
-      htab->srelbss = bfd_get_linker_section (dynobj, ".rel.bss");
-      htab->sdynsharablebss
-	= bfd_get_linker_section (dynobj, ".dynsharablebss");
-      htab->srelsharablebss
-	= bfd_get_linker_section (dynobj, ".rel.sharable_bss");
-    }
+    htab->srelbss = bfd_get_linker_section (dynobj, ".rel.bss");
 
   if (!htab->sdynbss
-      || (!info->shared
-	  && (!htab->srelbss
-	      || !htab->sdynsharablebss
-	      || !htab->srelsharablebss)))
+      || (!info->shared && !htab->srelbss))
     abort ();
 
   if (get_elf_i386_backend_data (dynobj)->is_vxworks
@@ -2166,22 +2154,16 @@ elf_i386_adjust_dynamic_symbol (struct bfd_link_info *info,
      both the dynamic object and the regular object will refer to the
      same memory location for the variable.  */
 
-  s = htab->sdynbss;
-
   /* We must generate a R_386_COPY reloc to tell the dynamic linker to
      copy the initial value out of the dynamic object and into the
      runtime process image.  */
   if ((h->root.u.def.section->flags & SEC_ALLOC) != 0 && h->size != 0)
     {
-      if (elf_section_flags (h->root.u.def.section) & SHF_GNU_SHARABLE)
-	{
-	  htab->srelsharablebss->size += sizeof (Elf32_External_Rel);
-	  s = htab->sdynsharablebss;
-	}
-      else
-	htab->srelbss->size += sizeof (Elf32_External_Rel);
+      htab->srelbss->size += sizeof (Elf32_External_Rel);
       h->needs_copy = 1;
     }
+
+  s = htab->sdynbss;
 
   return _bfd_elf_adjust_dynamic_copy (h, s);
 }
@@ -2215,7 +2197,8 @@ elf_i386_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   if (h->type == STT_GNU_IFUNC
       && h->def_regular)
     return _bfd_elf_allocate_ifunc_dyn_relocs (info, h, &eh->dyn_relocs,
-                                               plt_entry_size, 4);
+                                               plt_entry_size,
+					       plt_entry_size, 4);
   else if (htab->elf.dynamic_sections_created
 	   && h->plt.refcount > 0)
     {
@@ -2903,7 +2886,6 @@ elf_i386_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	       || s == htab->elf.iplt
 	       || s == htab->elf.igotplt
 	       || s == htab->plt_eh_frame
-	       || s == htab->sdynsharablebss
 	       || s == htab->sdynbss)
 	{
 	  /* Strip these too.  */
@@ -3329,12 +3311,11 @@ elf_i386_relocate_section (bfd *output_bfd,
       else
 	{
 	  bfd_boolean warned ATTRIBUTE_UNUSED;
-	  bfd_boolean ignored ATTRIBUTE_UNUSED;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 	  st_size = h->size;
 	}
 
@@ -4701,26 +4682,20 @@ do_glob_dat:
   if (h->needs_copy)
     {
       Elf_Internal_Rela rel;
-      asection *s;
-
-      if (h->root.u.def.section == htab->sdynsharablebss)
-	s = htab->srelsharablebss;
-      else
-	s = htab->srelbss;
 
       /* This symbol needs a copy reloc.  Set it up.  */
 
       if (h->dynindx == -1
 	  || (h->root.type != bfd_link_hash_defined
 	      && h->root.type != bfd_link_hash_defweak)
-	  || s == NULL)
+	  || htab->srelbss == NULL)
 	abort ();
 
       rel.r_offset = (h->root.u.def.value
 		      + h->root.u.def.section->output_section->vma
 		      + h->root.u.def.section->output_offset);
       rel.r_info = ELF32_R_INFO (h->dynindx, R_386_COPY);
-      elf_append_rel (output_bfd, s, &rel);
+      elf_append_rel (output_bfd, htab->srelbss, &rel);
     }
 
   return TRUE;
@@ -5041,8 +5016,7 @@ elf_i386_add_symbol_hook (bfd * abfd,
 	  || ELF_ST_BIND (sym->st_info) == STB_GNU_UNIQUE))
     elf_tdata (info->output_bfd)->has_gnu_symbols = TRUE;
 
-  return _bfd_elf_add_sharable_symbol (abfd, info, sym, namep, flagsp,
-				       secp, valp);
+  return TRUE;
 }
 
 #define TARGET_LITTLE_SYM		bfd_elf32_i386_vec
@@ -5095,19 +5069,6 @@ elf_i386_add_symbol_hook (bfd * abfd,
 #define elf_backend_add_symbol_hook           elf_i386_add_symbol_hook
 #undef	elf_backend_post_process_headers
 #define	elf_backend_post_process_headers	_bfd_elf_set_osabi
-
-#define elf_backend_section_from_bfd_section \
-  _bfd_elf_sharable_section_from_bfd_section
-#define elf_backend_symbol_processing \
-  _bfd_elf_sharable_symbol_processing
-#define elf_backend_common_section_index \
-  _bfd_elf_sharable_common_section_index
-#define elf_backend_common_section \
-  _bfd_elf_sharable_common_section
-#define elf_backend_common_definition \
-  _bfd_elf_sharable_common_definition
-#define elf_backend_merge_symbol \
-  _bfd_elf_sharable_merge_symbol
 
 #include "elf32-target.h"
 
@@ -5334,19 +5295,33 @@ static const struct elf_i386_backend_data elf_i386_nacl_arch_bed =
     0,                                  /* is_vxworks */
   };
 
+static bfd_boolean
+elf32_i386_nacl_elf_object_p (bfd *abfd)
+{
+  /* Set the right machine number for a NaCl i386 ELF32 file.  */
+  bfd_default_set_arch_mach (abfd, bfd_arch_i386, bfd_mach_i386_i386_nacl);
+  return TRUE;
+}
+
 #undef	elf_backend_arch_data
 #define elf_backend_arch_data	&elf_i386_nacl_arch_bed
 
+#undef	elf_backend_object_p
+#define elf_backend_object_p			elf32_i386_nacl_elf_object_p
 #undef	elf_backend_modify_segment_map
 #define	elf_backend_modify_segment_map		nacl_modify_segment_map
 #undef	elf_backend_modify_program_headers
 #define	elf_backend_modify_program_headers	nacl_modify_program_headers
+#undef	elf_backend_final_write_processing
+#define elf_backend_final_write_processing	nacl_final_write_processing
 
 #include "elf32-target.h"
 
 /* Restore defaults.  */
+#undef	elf_backend_object_p
 #undef	elf_backend_modify_segment_map
 #undef	elf_backend_modify_program_headers
+#undef	elf_backend_final_write_processing
 
 /* VxWorks support.  */
 

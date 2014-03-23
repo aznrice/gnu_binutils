@@ -1,6 +1,7 @@
 // archive.cc -- archive support for gold
 
-// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2013
+// Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -584,7 +585,7 @@ Archive::get_file_and_offset(off_t off, Input_file** input_file, off_t* memoff,
       const char* arch_path = this->filename().c_str();
       const char* basename = lbasename(arch_path);
       if (basename > arch_path)
-        member_name->replace((std::string::size_type)0, 0,
+        member_name->replace(0, 0,
                              this->filename().substr(0, basename - arch_path));
     }
 
@@ -1130,7 +1131,7 @@ unsigned int Lib_group::total_members;
 unsigned int Lib_group::total_members_loaded;
 
 Lib_group::Lib_group(const Input_file_lib* lib, Task* task)
-  : Library_base(task), lib_(lib), members_()
+  : Library_base(task), members_()
 {
   this->members_.resize(lib->size());
 }

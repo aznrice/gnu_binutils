@@ -3495,13 +3495,13 @@ elf64_ia64_relocate_section (bfd *output_bfd,
       else
 	{
 	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned, ignored;
+	  bfd_boolean warned;
 	  struct elf_link_hash_entry **sym_hashes = elf_sym_hashes (input_bfd);
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sym_sec, value,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 
 	  if (h->root.type == bfd_link_hash_undefweak)
 	    undef_weak_ref = TRUE;
@@ -4924,10 +4924,6 @@ error_free_dyn:
 
 	case STB_WEAK:
 	  flags = BSF_WEAK;
-	  break;
-
-	case STB_SECONDARY:
-	  flags = BSF_SECONDARY;
 	  break;
 
 	case STB_GNU_UNIQUE:

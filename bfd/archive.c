@@ -1880,7 +1880,7 @@ bfd_ar_hdr_from_filesystem (bfd *abfd, const char *filename, bfd *member)
     {
       /* Assume we just "made" the member, and fake it.  */
       struct bfd_in_memory *bim = (struct bfd_in_memory *) member->iostream;
-      time ((time_t*)&status.st_mtime);
+      time (&status.st_mtime);
       status.st_uid = getuid ();
       status.st_gid = getgid ();
       status.st_mode = 0644;
@@ -2336,7 +2336,6 @@ _bfd_compute_and_write_armap (bfd *arch, unsigned int elength)
 
 		  if (((flags & (BSF_GLOBAL
 				 | BSF_WEAK
-				 | BSF_SECONDARY
 				 | BSF_INDIRECT
 				 | BSF_GNU_UNIQUE)) != 0
 		       || bfd_is_com_section (sec))

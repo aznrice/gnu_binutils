@@ -168,9 +168,6 @@ static const struct ld_option ld_options[] =
     '\0', N_("PLUGIN"), N_("Load named plugin"), ONE_DASH },
   { {"plugin-opt", required_argument, NULL, OPTION_PLUGIN_OPT},
     '\0', N_("ARG"), N_("Send arg to last-loaded plugin"), ONE_DASH },
-  { {"plugin-save-temps", no_argument, NULL, OPTION_PLUGIN_SAVE_TEMPS},
-    '\0', NULL, N_("Store plugin intermediate files permanently"),
-    ONE_DASH },
   { {"flto", optional_argument, NULL, OPTION_IGNORE},
     '\0', NULL, N_("Ignored for GCC LTO option compatibility"),
     ONE_DASH },
@@ -970,9 +967,6 @@ parse_args (unsigned argc, char **argv)
 	  if (plugin_opt_plugin_arg (optarg))
 	    einfo(_("%P%F: bad -plugin-opt option\n"));
 	  break;
-	case OPTION_PLUGIN_SAVE_TEMPS:
-	  plugin_save_temps = TRUE;
-	  break;
 #endif /* ENABLE_PLUGINS */
 	case 'q':
 	  link_info.emitrelocations = TRUE;
@@ -1094,7 +1088,12 @@ parse_args (unsigned argc, char **argv)
 	  if (config.has_shared)
 	    {
 	      link_info.shared = TRUE;
-	      link_info.pie = FALSE;
+	      /* When creating a shared library, the default
+		 behaviour is to ignore any unresolved references.  */
+	      if (link_info.unresolved_syms_in_objects == RM_NOT_YET_SET)
+		link_info.unresolved_syms_in_objects = RM_IGNORE;
+	      if (link_info.unresolved_syms_in_shared_libs == RM_NOT_YET_SET)
+		link_info.unresolved_syms_in_shared_libs = RM_IGNORE;
 	    }
 	  else
 	    einfo (_("%P%F: -shared not supported\n"));
@@ -1458,6 +1457,14 @@ parse_args (unsigned argc, char **argv)
       free (default_dirlist);
     }
 
+  if (link_info.unresolved_syms_in_objects == RM_NOT_YET_SET)
+    /* FIXME: Should we allow emulations a chance to set this ?  */
+    link_info.unresolved_syms_in_objects = how_to_report_unresolved_symbols;
+
+  if (link_info.unresolved_syms_in_shared_libs == RM_NOT_YET_SET)
+    /* FIXME: Should we allow emulations a chance to set this ?  */
+    link_info.unresolved_syms_in_shared_libs = how_to_report_unresolved_symbols;
+
   if (link_info.relocatable)
     {
       if (command_line.check_section_addresses < 0)
@@ -1513,27 +1520,6 @@ parse_args (unsigned argc, char **argv)
 
   if (! link_info.shared || link_info.pie)
     link_info.executable = TRUE;
-
-  /* When creating a shared library, the default behaviour is to
-     ignore any unresolved references.  */
-
-  if (link_info.unresolved_syms_in_objects == RM_NOT_YET_SET)
-    {
-      if (link_info.shared && !link_info.pie)
-	link_info.unresolved_syms_in_objects = RM_IGNORE;
-      else
-	link_info.unresolved_syms_in_objects
-	  = how_to_report_unresolved_symbols;
-    }
-
-  if (link_info.unresolved_syms_in_shared_libs == RM_NOT_YET_SET)
-    {
-      if (link_info.shared && !link_info.pie)
-	link_info.unresolved_syms_in_shared_libs = RM_IGNORE;
-      else
-	link_info.unresolved_syms_in_shared_libs
-	  = how_to_report_unresolved_symbols;
-    }
 
   /* Treat ld -r -s as ld -r -S -x (i.e., strip all local symbols).  I
      don't see how else this can be handled, since in this case we

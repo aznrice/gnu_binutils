@@ -140,7 +140,7 @@ fi
 DYNAMIC=".dynamic      ${RELOCATING-0} : { *(.dynamic) }"
 RODATA=".rodata       ${RELOCATING-0} : { *(.rodata${RELOCATING+ .rodata.* .gnu.linkonce.r.*}) }"
 DATARELRO=".data.rel.ro : { *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*) *(.data.rel.ro .data.rel.ro.* .gnu.linkonce.d.rel.ro.*) }"
-DISCARDED="/DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink) *(.gnu.lto_*) *(.gnu_object_only) }"
+DISCARDED="/DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink)  *(.gnu.lto_*) }"
 INIT_LIT=".init.literal 0 : { *(.init.literal)	}"
 INIT=".init         0 : { *(.init)		}"
 FINI_LIT=".fini.literal 0 : { *(.fini.literal)	}"
@@ -541,7 +541,7 @@ cat <<EOF
 
 EOF
 
-source $srcdir/scripttempl/DWARF.sc
+. $srcdir/scripttempl/DWARF.sc
 
 cat <<EOF
   ${TINY_DATA_SECTION}

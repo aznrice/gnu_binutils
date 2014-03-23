@@ -131,6 +131,7 @@
 #include "elf/moxie.h"
 #include "elf/mt.h"
 #include "elf/msp430.h"
+#include "elf/nios2.h"
 #include "elf/or32.h"
 #include "elf/pj.h"
 #include "elf/ppc.h"
@@ -152,8 +153,6 @@
 #include "elf/xgate.h"
 #include "elf/xstormy16.h"
 #include "elf/xtensa.h"
-
-#include "elf/nios2.h"
 
 #include "getopt.h"
 #include "libiberty.h"
@@ -417,7 +416,7 @@ print_symbol (int width, const char *symbol)
       /* Keep the width positive.  This also helps.  */
       width = - width;
       extra_padding = TRUE;
-    }  
+    }
 
   if (do_wide)
     /* Set the remaining width to a very large value.
@@ -903,6 +902,17 @@ get_reloc_symindex (bfd_vma reloc_info)
   return is_32bit_elf ? ELF32_R_SYM (reloc_info) : ELF64_R_SYM (reloc_info);
 }
 
+static inline bfd_boolean
+uses_msp430x_relocs (void)
+{
+  return
+    elf_header.e_machine == EM_MSP430 /* Paranoia.  */
+    /* GCC uses osabi == ELFOSBI_STANDALONE.  */
+    && (((elf_header.e_flags & EF_MSP430_MACH) == E_MSP430_MACH_MSP430X)
+	/* TI compiler uses ELFOSABI_NONE.  */
+	|| (elf_header.e_ident[EI_OSABI] == ELFOSABI_NONE));
+}
+
 /* Display the contents of the relocation data found at the specified
    offset.  */
 
@@ -1125,6 +1135,11 @@ dump_relocations (FILE * file,
 	  break;
 
 	case EM_MSP430:
+	  if (uses_msp430x_relocs ())
+	    {
+	      rtype = elf_msp430x_reloc_type (type);
+	      break;
+	    }
 	case EM_MSP430_OLD:
 	  rtype = elf_msp430_reloc_type (type);
 	  break;
@@ -1391,8 +1406,6 @@ dump_relocations (FILE * file,
 			sec_name = "ABS";
 		      else if (psym->st_shndx == SHN_COMMON)
 			sec_name = "COMMON";
-		      else if (psym->st_shndx == SHN_GNU_SHARABLE_COMMON)
-			sec_name = "GNU_SHARABLE_COMMON";
 		      else if ((elf_header.e_machine == EM_MIPS
 				&& psym->st_shndx == SHN_MIPS_SCOMMON)
 			       || (elf_header.e_machine == EM_TI_C6000
@@ -1562,7 +1575,7 @@ get_ppc_dynamic_type (unsigned long type)
   switch (type)
     {
     case DT_PPC_GOT:    return "PPC_GOT";
-    case DT_PPC_TLSOPT: return "PPC_TLSOPT";
+    case DT_PPC_OPT:    return "PPC_OPT";
     default:
       return NULL;
     }
@@ -1576,7 +1589,7 @@ get_ppc64_dynamic_type (unsigned long type)
     case DT_PPC64_GLINK:  return "PPC64_GLINK";
     case DT_PPC64_OPD:    return "PPC64_OPD";
     case DT_PPC64_OPDSZ:  return "PPC64_OPDSZ";
-    case DT_PPC64_TLSOPT: return "PPC64_TLSOPT";
+    case DT_PPC64_OPT:    return "PPC64_OPT";
     default:
       return NULL;
     }
@@ -2448,10 +2461,20 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	    strcat (buf, _(", relocatable-lib"));
 	  break;
 
+	case EM_PPC64:
+	  if (e_flags & EF_PPC64_ABI)
+	    {
+	      char abi[] = ", abiv0";
+
+	      abi[6] += e_flags & EF_PPC64_ABI;
+	      strcat (buf, abi);
+	    }
+	  break;
+
 	case EM_V800:
 	  if ((e_flags & EF_RH850_ABI) == EF_RH850_ABI)
 	    strcat (buf, ", RH850 ABI");
-	    
+
 	  if (e_flags & EF_V800_850E3)
 	    strcat (buf, ", V3 architecture");
 
@@ -2554,6 +2577,12 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 
 	  if (e_flags & EF_MIPS_32BITMODE)
 	    strcat (buf, ", 32bitmode");
+
+	  if (e_flags & EF_MIPS_NAN2008)
+	    strcat (buf, ", nan2008");
+
+	  if (e_flags & EF_MIPS_FP64)
+	    strcat (buf, ", fp64");
 
 	  switch ((e_flags & EF_MIPS_MACH))
 	    {
@@ -2763,13 +2792,18 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	    strcat (buf, ", G-Float");
 	  break;
 
+	case EM_RL78:
+	  if (e_flags & E_FLAG_RL78_G10)
+	    strcat (buf, ", G10");
+	  break;
+
 	case EM_RX:
 	  if (e_flags & E_FLAG_RX_64BIT_DOUBLES)
 	    strcat (buf, ", 64-bit doubles");
 	  if (e_flags & E_FLAG_RX_DSP)
 	    strcat (buf, ", dsp");
 	  if (e_flags & E_FLAG_RX_PID)
-	    strcat (buf, ", pid");	  
+	    strcat (buf, ", pid");
 	  if (e_flags & E_FLAG_RX_ABI)
 	    strcat (buf, ", RX ABI");
 	  break;
@@ -2783,6 +2817,32 @@ get_machine_flags (unsigned e_flags, unsigned e_machine)
 	  if ((e_flags & EF_C6000_REL))
 	    strcat (buf, ", relocatable module");
 	  break;
+
+	case EM_MSP430:
+	  strcat (buf, _(": architecture variant: "));
+	  switch (e_flags & EF_MSP430_MACH)
+	    {
+	    case E_MSP430_MACH_MSP430x11: strcat (buf, "MSP430x11"); break;
+	    case E_MSP430_MACH_MSP430x11x1 : strcat (buf, "MSP430x11x1 "); break;
+	    case E_MSP430_MACH_MSP430x12: strcat (buf, "MSP430x12"); break;
+	    case E_MSP430_MACH_MSP430x13: strcat (buf, "MSP430x13"); break;
+	    case E_MSP430_MACH_MSP430x14: strcat (buf, "MSP430x14"); break;
+	    case E_MSP430_MACH_MSP430x15: strcat (buf, "MSP430x15"); break;
+	    case E_MSP430_MACH_MSP430x16: strcat (buf, "MSP430x16"); break;
+	    case E_MSP430_MACH_MSP430x31: strcat (buf, "MSP430x31"); break;
+	    case E_MSP430_MACH_MSP430x32: strcat (buf, "MSP430x32"); break;
+	    case E_MSP430_MACH_MSP430x33: strcat (buf, "MSP430x33"); break;
+	    case E_MSP430_MACH_MSP430x41: strcat (buf, "MSP430x41"); break;
+	    case E_MSP430_MACH_MSP430x42: strcat (buf, "MSP430x42"); break;
+	    case E_MSP430_MACH_MSP430x43: strcat (buf, "MSP430x43"); break;
+	    case E_MSP430_MACH_MSP430x44: strcat (buf, "MSP430x44"); break;
+	    case E_MSP430_MACH_MSP430X  : strcat (buf, "MSP430X"); break;
+	    default:
+	      strcat (buf, _(": unknown")); break;
+	    }
+
+	  if (e_flags & ~ EF_MSP430_MACH)
+	    strcat (buf, _(": unknown extra flag bits also present"));
 	}
     }
 
@@ -2975,7 +3035,6 @@ get_segment_type (unsigned long p_type)
     case PT_SHLIB:	return "SHLIB";
     case PT_PHDR:	return "PHDR";
     case PT_TLS:	return "TLS";
-    case PT_GNU_SHR:	return "GNU_SHR";
 
     case PT_GNU_EH_FRAME:
 			return "GNU_EH_FRAME";
@@ -3209,6 +3268,18 @@ get_tic6x_section_type_name (unsigned int sh_type)
 }
 
 static const char *
+get_msp430x_section_type_name (unsigned int sh_type)
+{
+  switch (sh_type)
+    {
+    case SHT_MSP430_SEC_FLAGS:   return "MSP430_SEC_FLAGS";
+    case SHT_MSP430_SYM_ALIASES: return "MSP430_SYM_ALIASES";
+    case SHT_MSP430_ATTRIBUTES:  return "MSP430_ATTRIBUTES";
+    default: return NULL;
+    }
+}
+
+static const char *
 get_section_type_name (unsigned int sh_type)
 {
   static char buff[32];
@@ -3241,7 +3312,6 @@ get_section_type_name (unsigned int sh_type)
     case 0x7ffffffd:		return "AUXILIARY";
     case 0x7fffffff:		return "FILTER";
     case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
-    case SHT_GNU_OBJECT_ONLY:	return "GNU_OBJECT_ONLY";
 
     default:
       if ((sh_type >= SHT_LOPROC) && (sh_type <= SHT_HIPROC))
@@ -3273,6 +3343,9 @@ get_section_type_name (unsigned int sh_type)
 	      break;
 	    case EM_TI_C6000:
 	      result = get_tic6x_section_type_name (sh_type);
+	      break;
+	    case EM_MSP430:
+	      result = get_msp430x_section_type_name (sh_type);
 	      break;
 	    default:
 	      result = NULL;
@@ -4842,7 +4915,8 @@ process_section_headers (FILE * file)
 	      || (do_debug_info     && const_strneq (name, "info"))
 	      || (do_debug_info     && const_strneq (name, "types"))
 	      || (do_debug_abbrevs  && const_strneq (name, "abbrev"))
-	      || (do_debug_lines    && const_strneq (name, "line"))
+	      || (do_debug_lines    && strcmp (name, "line") == 0)
+	      || (do_debug_lines    && const_strneq (name, "line."))
 	      || (do_debug_pubnames && const_strneq (name, "pubnames"))
 	      || (do_debug_pubtypes && const_strneq (name, "pubtypes"))
 	      || (do_debug_aranges  && const_strneq (name, "aranges"))
@@ -4945,10 +5019,10 @@ process_section_headers (FILE * file)
 	{
 	  print_symbol (-17, SECTION_NAME (section));
 	}
-      
+
       printf (do_wide ? " %-15s " : " %-15.15s ",
 	      get_section_type_name (section->sh_type));
-      
+
       if (is_32bit_elf)
 	{
 	  const char * link_too_big = NULL;
@@ -5116,7 +5190,7 @@ process_section_headers (FILE * file)
   W (write), A (alloc), X (execute), M (merge), S (strings)\n\
   I (info), L (link order), G (group), T (TLS), E (exclude), x (unknown)\n\
   O (extra OS processing required) o (OS specific), p (processor specific)\n"));
-    }	
+    }
 
   return 1;
 }
@@ -6567,7 +6641,10 @@ get_unwind_section_word (struct arm_unw_aux_info *  aux,
 	   ++relsec)
 	{
 	  if (relsec->sh_info >= elf_header.e_shnum
-	      || section_headers + relsec->sh_info != sec)
+	      || section_headers + relsec->sh_info != sec
+	      /* PR 15745: Check the section type as well.  */
+	      || (relsec->sh_type != SHT_REL
+		  && relsec->sh_type != SHT_RELA))
 	    continue;
 
 	  arm_sec->rel_type = relsec->sh_type;
@@ -6577,19 +6654,15 @@ get_unwind_section_word (struct arm_unw_aux_info *  aux,
 				     relsec->sh_size,
 				     & arm_sec->rela, & arm_sec->nrelas))
 		return FALSE;
-	      break;
 	    }
-	  else if (relsec->sh_type == SHT_RELA)
+	  else /* relsec->sh_type == SHT_RELA */
 	    {
 	      if (!slurp_rela_relocs (aux->file, relsec->sh_offset,
 				      relsec->sh_size,
 				      & arm_sec->rela, & arm_sec->nrelas))
 		return FALSE;
-	      break;
 	    }
-	  else
-	    warn (_("unexpected relocation type (%d) for section %d"),
-		  relsec->sh_type, relsec->sh_info);
+	  break;
 	}
 
       arm_sec->next_rela = arm_sec->rela;
@@ -6649,7 +6722,7 @@ get_unwind_section_word (struct arm_unw_aux_info *  aux,
 
 	  if (streq (relname, "R_ARM_NONE"))
 	      continue;
-	  
+
 	  if (! streq (relname, "R_ARM_PREL31"))
 	    {
 	      warn (_("Skipping unexpected relocation type %s\n"), relname);
@@ -6659,7 +6732,7 @@ get_unwind_section_word (struct arm_unw_aux_info *  aux,
       else if (elf_header.e_machine == EM_TI_C6000)
 	{
 	  relname = elf_tic6x_reloc_type (ELF32_R_TYPE (rp->r_info));
-	  
+
 	  if (streq (relname, "R_C6000_NONE"))
 	    continue;
 
@@ -6691,8 +6764,8 @@ get_unwind_section_word (struct arm_unw_aux_info *  aux,
 
 static const char *tic6x_unwind_regnames[16] =
 {
-  "A15", "B15", "B14", "B13", "B12", "B11", "B10", "B3", 
-  "A14", "A13", "A12", "A11", "A10", 
+  "A15", "B15", "B14", "B13", "B12", "B11", "B10", "B3",
+  "A14", "A13", "A12", "A11", "A10",
   "[invalid reg 13]", "[invalid reg 14]", "[invalid reg 15]"
 };
 
@@ -7177,9 +7250,9 @@ decode_arm_unwind (struct arm_unw_aux_info *  aux,
   else
     {
       /* ARM EHABI Section 6.3:
-	 
+
 	 An exception-handling table entry for the compact model looks like:
-	 
+
            31 30-28 27-24 23-0
 	   -- ----- ----- ----
             1   0   index Data for personalityRoutine[index]    */
@@ -7363,7 +7436,7 @@ arm_process_unwind (FILE *file)
       sec_type = SHT_C6000_UNWIND;
       break;
 
-    default: 
+    default:
       error (_("Unsupported architecture type %d encountered when processing unwind table"),
 	     elf_header.e_machine);
       return;
@@ -7435,7 +7508,10 @@ process_unwind (FILE * file)
 
   for (i = 0; handlers[i].handler != NULL; i++)
     if (elf_header.e_machine == handlers[i].machtype)
-      return handlers[i].handler (file);
+      {
+	handlers[i].handler (file);
+	return;
+      }
 
   printf (_("\nThe decoding of unwind sections for machine type %s is not currently supported.\n"),
 	  get_machine_name (elf_header.e_machine));
@@ -8823,7 +8899,7 @@ process_version_sections (FILE * file)
 			      if (get_data (&evn, file, offset, sizeof (evn), 1,
 					    _("version need")) == NULL)
 				break;
-			      
+
 			      ivn.vn_aux  = BYTE_GET (evn.vn_aux);
 			      ivn.vn_next = BYTE_GET (evn.vn_next);
 
@@ -8959,7 +9035,6 @@ get_symbol_binding (unsigned int binding)
     case STB_LOCAL:	return "LOCAL";
     case STB_GLOBAL:	return "GLOBAL";
     case STB_WEAK:	return "WEAK";
-    case STB_SECONDARY:	return "SECOND";
     default:
       if (binding >= STB_LOPROC && binding <= STB_HIPROC)
 	snprintf (buff, sizeof (buff), _("<processor specific>: %d"),
@@ -8998,8 +9073,13 @@ get_symbol_type (unsigned int type)
     default:
       if (type >= STT_LOPROC && type <= STT_HIPROC)
 	{
-	  if (elf_header.e_machine == EM_ARM && type == STT_ARM_TFUNC)
-	    return "THUMB_FUNC";
+	  if (elf_header.e_machine == EM_ARM)
+	    {
+	      if (type == STT_ARM_TFUNC)
+		return "THUMB_FUNC";
+	      if (type == STT_ARM_16BIT)
+		return "THUMB_LABEL";
+	    }
 
 	  if (elf_header.e_machine == EM_SPARCV9 && type == STT_REGISTER)
 	    return "REGISTER";
@@ -9131,6 +9211,19 @@ get_ia64_symbol_other (unsigned int other)
 }
 
 static const char *
+get_ppc64_symbol_other (unsigned int other)
+{
+  if (PPC64_LOCAL_ENTRY_OFFSET (other) != 0)
+    {
+      static char buf[32];
+      snprintf (buf, sizeof buf, _("<localentry>: %d"),
+		PPC64_LOCAL_ENTRY_OFFSET (other));
+      return buf;
+    }
+  return NULL;
+}
+
+static const char *
 get_symbol_other (unsigned int other)
 {
   const char * result = NULL;
@@ -9146,6 +9239,9 @@ get_symbol_other (unsigned int other)
       break;
     case EM_IA_64:
       result = get_ia64_symbol_other (other);
+      break;
+    case EM_PPC64:
+      result = get_ppc64_symbol_other (other);
       break;
     default:
       break;
@@ -9168,8 +9264,6 @@ get_symbol_index_type (unsigned int type)
     case SHN_UNDEF:	return "UND";
     case SHN_ABS:	return "ABS";
     case SHN_COMMON:	return "COM";
-    case SHN_GNU_SHARABLE_COMMON:
-			return "GNU_SHARABLE_COM";
     default:
       if (type == SHN_IA_64_ANSI_COMMON
 	  && elf_header.e_machine == EM_IA_64
@@ -9251,7 +9345,7 @@ print_dynamic_symbol (bfd_vma si, unsigned long hn)
 
   n = print_vma (si, DEC_5);
   if (n < 5)
-    fputs ("     " + n, stdout);
+    fputs (&"     "[n], stdout);
   printf (" %3lu: ", hn);
   print_vma (psym->st_value, LONG_HEX);
   putchar (' ');
@@ -9518,7 +9612,7 @@ process_symbol_table (FILE * file)
 	   i < elf_header.e_shnum;
 	   i++, section++)
 	{
-	  unsigned int si, start_global;
+	  unsigned int si;
 	  char * strtab = NULL;
 	  unsigned long int strtab_size = 0;
 	  Elf_Internal_Sym * symtab;
@@ -9551,7 +9645,6 @@ process_symbol_table (FILE * file)
 	  if (symtab == NULL)
 	    continue;
 
-	  start_global = section->sh_info;
 	  if (section->sh_link == elf_header.e_shstrndx)
 	    {
 	      strtab = string_table;
@@ -9576,11 +9669,7 @@ process_symbol_table (FILE * file)
 	      putchar (' ');
 	      print_vma (psym->st_size, DEC_5);
 	      printf (" %-7s", get_symbol_type (ELF_ST_TYPE (psym->st_info)));
-	      if (si < start_global
-		  && ELF_ST_BIND (psym->st_info) != STB_LOCAL)
-		printf (" %-6s", "<corrupt>");
-	      else
-		printf (" %-6s", get_symbol_binding (ELF_ST_BIND (psym->st_info)));
+	      printf (" %-6s", get_symbol_binding (ELF_ST_BIND (psym->st_info)));
 	      printf (" %-7s", get_symbol_visibility (ELF_ST_VISIBILITY (psym->st_other)));
 	      /* Check to see if any other bits in the st_other field are set.
 	         Note - displaying this information disrupts the layout of the
@@ -9972,6 +10061,60 @@ target_specific_reloc_handling (Elf_Internal_Rela * reloc,
 
   switch (elf_header.e_machine)
     {
+    case EM_MSP430:
+    case EM_MSP430_OLD:
+      {
+	static Elf_Internal_Sym * saved_sym = NULL;
+
+	switch (reloc_type)
+	  {
+	  case 10: /* R_MSP430_SYM_DIFF */
+	    if (uses_msp430x_relocs ())
+	      break;
+	  case 21: /* R_MSP430X_SYM_DIFF */
+	    saved_sym = symtab + get_reloc_symindex (reloc->r_info);
+	    return TRUE;
+
+	  case 1: /* R_MSP430_32 or R_MSP430_ABS32 */
+	  case 3: /* R_MSP430_16 or R_MSP430_ABS8 */
+	    goto handle_sym_diff;
+
+	  case 5: /* R_MSP430_16_BYTE */
+	  case 9: /* R_MSP430_8 */
+	    if (uses_msp430x_relocs ())
+	      break;
+	    goto handle_sym_diff;
+
+	  case 2: /* R_MSP430_ABS16 */
+	  case 15: /* R_MSP430X_ABS16 */
+	    if (! uses_msp430x_relocs ())
+	      break;
+	    goto handle_sym_diff;
+
+	  handle_sym_diff:
+	    if (saved_sym != NULL)
+	      {
+		bfd_vma value;
+
+		value = reloc->r_addend
+		  + (symtab[get_reloc_symindex (reloc->r_info)].st_value
+		     - saved_sym->st_value);
+
+		byte_put (start + reloc->r_offset, value, reloc_type == 1 ? 4 : 2);
+
+		saved_sym = NULL;
+		return TRUE;
+	      }
+	    break;
+
+	  default:
+	    if (saved_sym != NULL)
+	      error (_("Unhandled MSP430 reloc type found after SYM_DIFF reloc"));
+	    break;
+	  }
+	break;
+      }
+
     case EM_MN10300:
     case EM_CYGNUS_MN10300:
       {
@@ -10111,7 +10254,7 @@ is_32bit_abs_reloc (unsigned int reloc_type)
       return reloc_type == 1; /* R_MOXIE_32.  */
     case EM_MSP430_OLD:
     case EM_MSP430:
-      return reloc_type == 1; /* R_MSP43_32.  */
+      return reloc_type == 1; /* R_MSP430_32 or R_MSP320_ABS32.  */
     case EM_MT:
       return reloc_type == 2; /* R_MT_32.  */
     case EM_ALTERA_NIOS2:
@@ -10363,6 +10506,8 @@ is_16bit_abs_reloc (unsigned int reloc_type)
     case EM_M32C:
       return reloc_type == 1; /* R_M32C_16 */
     case EM_MSP430:
+      if (uses_msp430x_relocs ())
+	return reloc_type == 2; /* R_MSP430_ABS16.  */
     case EM_MSP430_OLD:
       return reloc_type == 5; /* R_MSP430_16_BYTE.  */
     case EM_ALTERA_NIOS2:
@@ -10984,6 +11129,7 @@ display_debug_section (int shndx, Elf_Internal_Shdr * section, FILE * file)
   /* See if we know how to display the contents of this section.  */
   for (i = 0; i < max; i++)
     if (streq (debug_displays[i].section.uncompressed_name, name)
+	|| (i == line && const_strneq (name, ".debug_line."))
         || streq (debug_displays[i].section.compressed_name, name))
       {
 	struct dwarf_section * sec = &debug_displays [i].section;
@@ -10992,7 +11138,9 @@ display_debug_section (int shndx, Elf_Internal_Shdr * section, FILE * file)
 	if (secondary)
 	  free_debug_section ((enum dwarf_section_display_enum) i);
 
-	if (streq (sec->uncompressed_name, name))
+	if (i == line && const_strneq (name, ".debug_line."))
+	  sec->name = name;
+	else if (streq (sec->uncompressed_name, name))
 	  sec->name = sec->uncompressed_name;
 	else
 	  sec->name = sec->compressed_name;
@@ -11518,7 +11666,7 @@ display_power_gnu_attribute (unsigned char * p,
 	  warn (_("corrupt Tag_GNU_Power_ABI_Struct_Return"));
 	  return p;
 	}
-		   
+
       val = read_uleb128 (p, &len, end);
       p += len;
       printf ("  Tag_GNU_Power_ABI_Struct_Return: ");
@@ -11623,19 +11771,19 @@ display_mips_gnu_attribute (unsigned char * p,
 
       switch (val)
 	{
-	case 0:
+	case Val_GNU_MIPS_ABI_FP_ANY:
 	  printf (_("Hard or soft float\n"));
 	  break;
-	case 1:
+	case Val_GNU_MIPS_ABI_FP_DOUBLE:
 	  printf (_("Hard float (double precision)\n"));
 	  break;
-	case 2:
+	case Val_GNU_MIPS_ABI_FP_SINGLE:
 	  printf (_("Hard float (single precision)\n"));
 	  break;
-	case 3:
+	case Val_GNU_MIPS_ABI_FP_SOFT:
 	  printf (_("Soft float\n"));
 	  break;
-	case 4:
+	case Val_GNU_MIPS_ABI_FP_64:
 	  printf (_("Hard float (MIPS32r2 64-bit FPU)\n"));
 	  break;
 	default:
@@ -11913,6 +12061,79 @@ display_raw_attribute (unsigned char * p, unsigned char * end)
   putchar ('\n');
 }
 
+static unsigned char *
+display_msp430x_attribute (unsigned char * p,
+			   const unsigned char * const end)
+{
+  unsigned int len;
+  int val;
+  int tag;
+
+  tag = read_uleb128 (p, & len, end);
+  p += len;
+
+  switch (tag)
+    {
+    case OFBA_MSPABI_Tag_ISA:
+      val = read_uleb128 (p, &len, end);
+      p += len;
+      printf ("  Tag_ISA: ");
+      switch (val)
+	{
+	case 0: printf (_("None\n")); break;
+	case 1: printf (_("MSP430\n")); break;
+	case 2: printf (_("MSP430X\n")); break;
+	default: printf ("??? (%d)\n", val); break;
+	}
+      break;
+
+    case OFBA_MSPABI_Tag_Code_Model:
+      val = read_uleb128 (p, &len, end);
+      p += len;
+      printf ("  Tag_Code_Model: ");
+      switch (val)
+	{
+	case 0: printf (_("None\n")); break;
+	case 1: printf (_("Small\n")); break;
+	case 2: printf (_("Large\n")); break;
+	default: printf ("??? (%d)\n", val); break;
+	}
+      break;
+
+    case OFBA_MSPABI_Tag_Data_Model:
+      val = read_uleb128 (p, &len, end);
+      p += len;
+      printf ("  Tag_Data_Model: ");
+      switch (val)
+	{
+	case 0: printf (_("None\n")); break;
+	case 1: printf (_("Small\n")); break;
+	case 2: printf (_("Large\n")); break;
+	case 3: printf (_("Restricted Large\n")); break;
+	default: printf ("??? (%d)\n", val); break;
+	}
+      break;
+
+    default:
+      printf (_("  <unknown tag %d>: "), tag);
+
+      if (tag & 1)
+	{
+	  printf ("\"%s\"\n", p);
+	  p += strlen ((char *) p) + 1;
+	}
+      else
+	{
+	  val = read_uleb128 (p, &len, end);
+	  p += len;
+	  printf ("%d (0x%x)\n", val, val);
+	}
+      break;
+   }
+
+  return p;
+}
+
 static int
 process_attributes (FILE * file,
 		    const char * public_name,
@@ -12082,6 +12303,13 @@ process_tic6x_specific (FILE * file)
 {
   return process_attributes (file, "c6xabi", SHT_C6000_ATTRIBUTES,
 			     display_tic6x_attribute, NULL);
+}
+
+static int
+process_msp430x_specific (FILE * file)
+{
+  return process_attributes (file, "mspabi", SHT_MSP430_ATTRIBUTES,
+			     display_msp430x_attribute, NULL);
 }
 
 /* DATA points to the contents of a MIPS GOT that starts at VMA PLTGOT.
@@ -12625,7 +12853,7 @@ process_mips_specific (FILE * file)
 		  _("Type"),
 		  /* Note for translators: "Ndx" = abbreviated form of "Index".  */
 		  _("Ndx"), _("Name"));
-	  
+
 	  sym_width = (is_32bit_elf ? 80 : 160) - 28 - addr_size * 6 - 1;
 	  for (i = gotsym; i < symtabno; i++)
 	    {
@@ -13562,6 +13790,8 @@ process_arch_specific (FILE * file)
     case EM_TI_C6000:
       return process_tic6x_specific (file);
       break;
+    case EM_MSP430:
+      return process_msp430x_specific (file);
     default:
       break;
     }

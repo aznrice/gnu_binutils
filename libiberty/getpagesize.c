@@ -60,13 +60,11 @@ BUGS
 # endif /* PAGESIZE */
 #endif /* GNU_OUR_PAGESIZE */
 
-#ifndef __BIONIC__ /* Bionic implements getpagesize() itself */
 int
 getpagesize (void)
 {
   return (GNU_OUR_PAGESIZE);
 }
-#endif
 
 #else /* VMS */
 

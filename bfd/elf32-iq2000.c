@@ -627,12 +627,12 @@ iq2000_elf_relocate_section (bfd *		     output_bfd ATTRIBUTE_UNUSED,
       else
 	{
 	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned, ignored;
+	  bfd_boolean warned;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 
 	  name = h->root.root.string;
 	}

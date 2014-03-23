@@ -10,12 +10,6 @@ function:
 indirect_function:
 	.byte	0x0
 	
-        .size   secondary_function,1
-	.secondary secondary_function
-        .type   secondary_function,%function
-secondary_function:
-	.byte	0x0
-	
         .data
 	
         .type   object,%object
@@ -38,11 +32,6 @@ unique_global:
 	.byte	0x0
 	.size	unique_global,1
 
-        .type   secondary_object,%object
-	.secondary secondary_object
-secondary_object:
-	.byte	0x0
-        .size   secondary_object,1
-
 	.comm	common, 1
 	.type   common,STT_COMMON
+	

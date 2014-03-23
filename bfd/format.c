@@ -180,33 +180,6 @@ bfd_preserve_finish (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_preserve *preserve)
   preserve->marker = NULL;
 }
 
-/* Set lto_type in ABFD.  */
-
-static void
-bfd_set_lto_type (bfd *abfd)
-{
-  if (abfd->format == bfd_object
-      && abfd->lto_type == lto_non_object
-      && (abfd->flags & (DYNAMIC | EXEC_P)) == 0)
-    {
-      asection *sec;
-      enum bfd_lto_object_type type = lto_non_ir_object;
-      for (sec = abfd->sections; sec != NULL; sec = sec->next)
-	{
-	  if (strcmp (sec->name, GNU_OBJECT_ONLY_SECTION_NAME) == 0)
-	    {
-	      type = lto_mixed_object;
-	      abfd->object_only_section = sec;
-	      break;
-	    }
-	  else if (type != lto_ir_object
-		   && strncmp (sec->name, ".gnu.lto_", 9) == 0)
-	    type = lto_ir_object;
-	}
-      abfd->lto_type = type;
-    }
-}
-
 /*
 FUNCTION
 	bfd_check_format_matches
@@ -249,10 +222,7 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
     }
 
   if (abfd->format != bfd_unknown)
-    {
-      bfd_set_lto_type (abfd);
-      return abfd->format == format;
-    }
+    return abfd->format == format;
 
   if (matching != NULL || *bfd_associated_vector != NULL)
     {
@@ -406,6 +376,9 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
 	}
     }
 
+  /* We have more than one equally good match.  If any of the best
+     matches is a target in config.bfd targ_defvec or targ_selvecs,
+     choose it.  */
   if (match_count > 1)
     {
       const bfd_target * const *assoc = bfd_associated_vector;
@@ -415,7 +388,8 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
 	  int i = match_count;
 
 	  while (--i >= 0)
-	    if (matching_vector[i] == right_targ)
+	    if (matching_vector[i] == right_targ
+		&& right_targ->match_priority <= best_match)
 	      break;
 
 	  if (i >= 0)
@@ -424,6 +398,22 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
 	      break;
 	    }
 	}
+    }
+
+  /* We still have more than one equally good match, and at least some
+     of the targets support match priority.  Choose the first of the
+     best matches.  */
+  if (match_count > 1 && best_count != match_count)
+    {
+      int i;
+
+      for (i = 0; i < match_count; i++)
+	{
+	  right_targ = matching_vector[i];
+	  if (right_targ->match_priority <= best_match)
+	    break;
+	}
+      match_count = 1;
     }
 
   /* There is way too much undoing of half-known state here.  We
@@ -459,8 +449,6 @@ bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching)
 
       if (matching_vector)
 	free (matching_vector);
-
-      bfd_set_lto_type (abfd);
 
       /* File position has moved, BTW.  */
       return TRUE;

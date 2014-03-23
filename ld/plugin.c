@@ -1,5 +1,5 @@
 /* Plugin control for the GNU linker.
-   Copyright 2010, 2011, 2012 Free Software Foundation, Inc.
+   Copyright 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -38,9 +38,6 @@
 
 /* Report plugin symbols.  */
 bfd_boolean report_plugin_symbols;
-
-/* Store plugin intermediate files permanently.  */
-bfd_boolean plugin_save_temps;
 
 /* The suffix to append to the name of the real (claimed) object file
    when generating a dummy BFD to hold the IR symbols sent from the
@@ -219,17 +216,6 @@ plugin_opt_plugin_arg (const char *arg)
 
   if (!last_plugin)
     return set_plugin_error (_("<no plugin>"));
-
-  /* Ignore -pass-through= from GCC driver.  */
-  if (*arg == '-')
-    {
-      const char *p;
-      for (p = arg + 1; p; p++)
-	if (*p != '-')
-	  break;
-      if (strncmp (p, "pass-through=", 13) == 0)
-	return 0;
-    }
 
   newarg = xmalloc (sizeof *newarg);
   newarg->arg = arg;
@@ -443,20 +429,18 @@ add_symbols (void *handle, int nsyms, const struct ld_plugin_symbol *syms)
 /* Get the input file information with an open (possibly re-opened)
    file descriptor.  */
 static enum ld_plugin_status
-get_input_file (const void *handle, struct ld_plugin_input_file *file)
+get_input_file (const void *handle ATTRIBUTE_UNUSED,
+                struct ld_plugin_input_file *file ATTRIBUTE_UNUSED)
 {
   ASSERT (called_plugin);
-  handle = handle;
-  file = file;
   return LDPS_ERR;
 }
 
 /* Release the input file.  */
 static enum ld_plugin_status
-release_input_file (const void *handle)
+release_input_file (const void *handle ATTRIBUTE_UNUSED)
 {
   ASSERT (called_plugin);
-  handle = handle;
   return LDPS_ERR;
 }
 
@@ -890,9 +874,6 @@ plugin_maybe_claim (struct ld_plugin_input_file *file,
   close (file->fd);
   if (claimed)
     {
-      /* Check object only section.  */
-      cmdline_check_object_only_section (entry->the_bfd, TRUE);
-
       /* Discard the real file's BFD and substitute the dummy one.  */
 
       /* BFD archive handling caches elements so we can't call
@@ -946,17 +927,14 @@ plugin_call_cleanup (void)
     {
       if (curplug->cleanup_handler && !curplug->cleanup_done)
 	{
-	  if (!plugin_save_temps)
-	    {
-	      enum ld_plugin_status rv;
-	      curplug->cleanup_done = TRUE;
-	      called_plugin = curplug;
-	      rv = (*curplug->cleanup_handler) ();
-	      called_plugin = NULL;
-	      if (rv != LDPS_OK)
-		info_msg (_("%P: %s: error in plugin cleanup: %d (ignored)\n"),
-			  curplug->name, rv);
-	    }
+	  enum ld_plugin_status rv;
+	  curplug->cleanup_done = TRUE;
+	  called_plugin = curplug;
+	  rv = (*curplug->cleanup_handler) ();
+	  called_plugin = NULL;
+	  if (rv != LDPS_OK)
+	    info_msg (_("%P: %s: error in plugin cleanup: %d (ignored)\n"),
+		      curplug->name, rv);
 	  dlclose (curplug->dlhandle);
 	}
       curplug = curplug->next;

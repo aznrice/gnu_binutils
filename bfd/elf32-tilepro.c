@@ -2892,13 +2892,12 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	}
       else
 	{
-	  bfd_boolean warned ATTRIBUTE_UNUSED;
-	  bfd_boolean ignored ATTRIBUTE_UNUSED;
+	  bfd_boolean warned;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 	  if (warned)
 	    {
 	      /* To avoid generating warning messages about truncated
@@ -3910,8 +3909,9 @@ tilepro_elf_finish_dynamic_sections (bfd *output_bfd,
 		  PLT_ENTRY_SIZE - PLT_HEADER_SIZE);
 	}
 
-      elf_section_data (splt->output_section)->this_hdr.sh_entsize
-	= PLT_ENTRY_SIZE;
+      if (elf_section_data (splt->output_section) != NULL)
+	elf_section_data (splt->output_section)->this_hdr.sh_entsize
+	  = PLT_ENTRY_SIZE;
     }
 
   if (htab->elf.sgotplt)

@@ -1,7 +1,5 @@
 /* Main program of GNU linker.
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright 1991-2013 Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -82,7 +80,7 @@ const char *ld_sysroot;
 char * ld_canon_sysroot;
 int ld_canon_sysroot_len;
 
-/* Set by -G argument, for MIPS ECOFF target.  */
+/* Set by -G argument, for targets like MIPS ELF.  */
 int g_switch_value = 8;
 
 /* Nonzero means print names of input files as processed.  */
@@ -222,9 +220,6 @@ main (int argc, char **argv)
 
   xatexit (ld_cleanup);
 
-  /* Remove temporary object-only files.  */
-  xatexit (cmdline_remove_object_only_files);
-
   /* Set up the sysroot directory.  */
   ld_sysroot = get_sysroot (argc, argv);
   if (*ld_sysroot)
@@ -284,7 +279,6 @@ main (int argc, char **argv)
   link_info.combreloc = TRUE;
   link_info.strip_discarded = TRUE;
   link_info.emit_hash = TRUE;
-  link_info.emit_secondary = TRUE;
   link_info.callbacks = &link_callbacks;
   link_info.input_bfds_tail = &link_info.input_bfds;
   /* SVR4 linkers seem to set DT_INIT and DT_FINI based on magic _init
@@ -295,7 +289,6 @@ main (int argc, char **argv)
   link_info.pei386_auto_import = -1;
   link_info.spare_dynamic_tags = 5;
   link_info.path_separator = ':';
-  link_info.sharable_sections = FALSE;
 
   ldfile_add_arch ("");
   emulation = get_emulation (argc, argv);
@@ -303,7 +296,7 @@ main (int argc, char **argv)
   default_target = ldemul_choose_target (argc, argv);
   config.maxpagesize = bfd_emul_get_maxpagesize (default_target);
   config.commonpagesize = bfd_emul_get_commonpagesize (default_target);
-  lang_init (FALSE);
+  lang_init ();
   ldemul_before_parse ();
   lang_has_input_file = FALSE;
   parse_args (argc, argv);
@@ -318,7 +311,34 @@ main (int argc, char **argv)
 
   ldemul_set_symbols ();
 
-  ld_parse_linker_script ();
+  /* If we have not already opened and parsed a linker script,
+     try the default script from command line first.  */
+  if (saved_script_handle == NULL
+      && command_line.default_script != NULL)
+    {
+      ldfile_open_command_file (command_line.default_script);
+      parser_input = input_script;
+      yyparse ();
+    }
+
+  /* If we have not already opened and parsed a linker script
+     read the emulation's appropriate default script.  */
+  if (saved_script_handle == NULL)
+    {
+      int isfile;
+      char *s = ldemul_get_script (&isfile);
+
+      if (isfile)
+	ldfile_open_default_command_file (s);
+      else
+	{
+	  lex_string = s;
+	  lex_redirect (s, _("built in linker script"), 1);
+	}
+      parser_input = input_script;
+      yyparse ();
+      lex_string = NULL;
+    }
 
   if (verbose)
     {
@@ -406,7 +426,7 @@ main (int argc, char **argv)
   if (nocrossref_list != NULL)
     check_nocrossrefs ();
 
-  lang_finish (FALSE);
+  lang_finish ();
 
   /* Even if we're producing relocatable output, some non-fatal errors should
      be reported in the exit status.  (What non-fatal errors, if any, do we
@@ -424,8 +444,6 @@ main (int argc, char **argv)
     {
       if (! bfd_close (link_info.output_bfd))
 	einfo (_("%F%B: final close failed: %E\n"), link_info.output_bfd);
-
-      link_info.output_bfd = NULL;
 
       /* If the --force-exe-suffix is enabled, and we're making an
 	 executable file and it doesn't end in .exe, copy it to one
@@ -472,9 +490,6 @@ main (int argc, char **argv)
 	    }
 	}
     }
-
-  if (link_info.emit_gnu_object_only)
-    cmdline_emit_object_only_section ();
 
   END_PROGRESS (program_name);
 
@@ -782,9 +797,7 @@ add_archive_element (struct bfd_link_info *info,
 	    }
 	}
     }
-  else
 #endif /* ENABLE_PLUGINS */
-    cmdline_check_object_only_section (input->the_bfd, FALSE);
 
   ldlang_add_file (input);
 
@@ -938,10 +951,10 @@ multiple_definition (struct bfd_link_info *info,
   if (obfd != NULL)
     einfo (_("%D: first defined here\n"), obfd, osec, oval);
 
-  if (RELAXATION_ENABLED)
+  if (RELAXATION_ENABLED_BY_USER)
     {
       einfo (_("%P: Disabling relaxation: it will not work with multiple definitions\n"));
-      link_info.disable_target_specific_optimizations = -1;
+      DISABLE_RELAXATION;
     }
 
   return TRUE;
@@ -1452,39 +1465,4 @@ notice (struct bfd_link_info *info,
     add_cref (name, abfd, section, value);
 
   return TRUE;
-}
-
-/* Parse the linker script.   */
-
-void
-ld_parse_linker_script ()
-{
-  /* If we have not already opened and parsed a linker script,
-     try the default script from command line first.  */
-  if (saved_script_handle == NULL
-      && command_line.default_script != NULL)
-    {
-      ldfile_open_command_file (command_line.default_script);
-      parser_input = input_script;
-      yyparse ();
-    }
-
-  /* If we have not already opened and parsed a linker script
-     read the emulation's appropriate default script.  */
-  if (saved_script_handle == NULL)
-    {
-      int isfile;
-      char *s = ldemul_get_script (&isfile);
-
-      if (isfile)
-	ldfile_open_default_command_file (s);
-      else
-	{
-	  lex_string = s;
-	  lex_redirect (s, _("built in linker script"), 1);
-	}
-      parser_input = input_script;
-      yyparse ();
-      lex_string = NULL;
-    }
 }

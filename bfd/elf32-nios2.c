@@ -1718,12 +1718,12 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean warned, ignored;
+	  bfd_boolean warned;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 	}
 
       if (sec && discarded_section (sec))
@@ -3264,9 +3264,6 @@ nios2_elf32_finish_dynamic_sections (bfd *output_bfd,
 	      nios2_elf32_install_imm16 (splt, 4, hiadj (corrected));
 	      nios2_elf32_install_imm16 (splt, 12, (corrected & 0xffff) + 4);
 	      nios2_elf32_install_imm16 (splt, 16, (corrected & 0xffff) + 8);
-
-	      elf_section_data (splt->output_section)->this_hdr.sh_entsize
-		= 24;
 	    }
 	  else
 	    {
@@ -3292,9 +3289,6 @@ nios2_elf32_finish_dynamic_sections (bfd *output_bfd,
 					 (got_address & 0xffff) + 4);
 	      nios2_elf32_install_imm16 (splt, res_size + 20,
 					 (got_address & 0xffff) + 8);
-
-	      elf_section_data (splt->output_section)->this_hdr.sh_entsize
-		= 28 + res_size;
 	    }
 	}
     }

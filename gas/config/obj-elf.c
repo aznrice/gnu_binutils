@@ -70,7 +70,6 @@ static void obj_elf_line (int);
 static void obj_elf_size (int);
 static void obj_elf_type (int);
 static void obj_elf_ident (int);
-static void obj_elf_secondary (int);
 static void obj_elf_weak (int);
 static void obj_elf_local (int);
 static void obj_elf_visibility (int);
@@ -79,7 +78,6 @@ static void obj_elf_subsection (int);
 static void obj_elf_popsection (int);
 static void obj_elf_gnu_attribute (int);
 static void obj_elf_tls_common (int);
-static void obj_elf_sharable_common (int);
 static void obj_elf_lcomm (int);
 static void obj_elf_struct (int);
 
@@ -101,7 +99,6 @@ static const pseudo_typeS elf_pseudo_table[] =
   {"type", obj_elf_type, 0},
   {"version", obj_elf_version, 0},
   {"weak", obj_elf_weak, 0},
-  {"secondary", obj_elf_secondary, 0},
 
   /* These define symbol visibility.  */
   {"internal", obj_elf_visibility, STV_INTERNAL},
@@ -140,8 +137,6 @@ static const pseudo_typeS elf_pseudo_table[] =
   {"text", obj_elf_text, 0},
 
   {"tls_common", obj_elf_tls_common, 0},
-
-  {"sharable_common", obj_elf_sharable_common, 0},
 
   /* End sentinel.  */
   {NULL, NULL, 0},
@@ -398,39 +393,6 @@ obj_elf_tls_common (int ignore ATTRIBUTE_UNUSED)
 }
 
 static void
-obj_elf_sharable_common (int ignore ATTRIBUTE_UNUSED)
-{
-  static segT sharable_bss_section;
-  asection *saved_com_section_ptr = elf_com_section_ptr;
-  asection *saved_bss_section = bss_section;
-
-  if (sharable_bss_section == NULL)
-    {
-      flagword applicable;
-      segT seg = now_seg;
-      subsegT subseg = now_subseg;
-
-      /* The .sharable_bss section is for local .sharable_common
-	 symbols.  */
-      sharable_bss_section = subseg_new (".sharable_bss", 0);
-      applicable = bfd_applicable_section_flags (stdoutput);
-      bfd_set_section_flags (stdoutput, sharable_bss_section,
-			     applicable & SEC_ALLOC);
-      seg_info (sharable_bss_section)->bss = 1;
-
-      subseg_set (seg, subseg);
-    }
-
-  elf_com_section_ptr = &_bfd_elf_sharable_com_section;
-  bss_section = sharable_bss_section;
-
-  s_comm_internal (0, elf_common_parse);
-
-  elf_com_section_ptr = saved_com_section_ptr;
-  bss_section = saved_bss_section;
-}
-
-static void
 obj_elf_lcomm (int ignore ATTRIBUTE_UNUSED)
 {
   symbolS *symbolP = s_comm_internal (0, s_lcomm_internal);
@@ -483,29 +445,6 @@ obj_elf_local (int ignore ATTRIBUTE_UNUSED)
 }
 
 static void
-obj_elf_secondary (int ignore ATTRIBUTE_UNUSED)
-{
-  int c;
-  symbolS *symbolP;
-
-  do
-    {
-      symbolP = get_sym_from_input_line_and_check ();
-      c = *input_line_pointer;
-      S_SET_SECONDARY (symbolP);
-      if (c == ',')
-	{
-	  input_line_pointer++;
-	  SKIP_WHITESPACE ();
-	  if (*input_line_pointer == '\n')
-	    c = '\n';
-	}
-    }
-  while (c == ',');
-  demand_empty_rest_of_line ();
-}
-
-static void
 obj_elf_weak (int ignore ATTRIBUTE_UNUSED)
 {
   int c;
@@ -515,8 +454,7 @@ obj_elf_weak (int ignore ATTRIBUTE_UNUSED)
     {
       symbolP = get_sym_from_input_line_and_check ();
       c = *input_line_pointer;
-      if (!S_IS_SECONDARY (symbolP))
-	S_SET_WEAK (symbolP);
+      S_SET_WEAK (symbolP);
       if (c == ',')
 	{
 	  input_line_pointer++;
@@ -673,17 +611,11 @@ obj_elf_change_section (const char *name,
 
 		 .section .lbss,"aw",@progbits
 
-		 "@progbits" is incorrect.  Also for sharable bss
-		 sections, gcc, as of 2005-07-06, will emit
-
-		 .section .sharable_bss,"aw",@progbits
-
 		 "@progbits" is incorrect.  */
 #ifdef TC_I386
 	      && (bed->s->arch_size != 64
 		  || !(ssect->attr & SHF_X86_64_LARGE))
 #endif
-	      && !(ssect->attr & SHF_GNU_SHARABLE)
 	      && ssect->type != SHT_INIT_ARRAY
 	      && ssect->type != SHT_FINI_ARRAY
 	      && ssect->type != SHT_PREINIT_ARRAY)
@@ -2204,23 +2136,17 @@ elf_frob_symbol (symbolS *symp, int *puntp)
 	      if (S_IS_WEAK (symp))
 		S_SET_WEAK (symp2);
 
-	      if (S_IS_SECONDARY (symp))
-		S_SET_SECONDARY (symp2);
-
 	      if (S_IS_EXTERNAL (symp))
 		S_SET_EXTERNAL (symp2);
 	    }
 	}
     }
 
-  /* Double check weak and secondary symbols.  */
-  if (S_IS_COMMON (symp))
+  /* Double check weak symbols.  */
+  if (S_IS_WEAK (symp))
     {
-      if (S_IS_WEAK (symp))
+      if (S_IS_COMMON (symp))
 	as_bad (_("symbol `%s' can not be both weak and common"),
-		S_GET_NAME (symp));
-      else if (S_IS_SECONDARY (symp))
-	as_bad (_("symbol `%s' can not be both secondary and common"),
 		S_GET_NAME (symp));
     }
 
@@ -2436,7 +2362,7 @@ elf_frob_file_before_adjust (void)
 	    /* If there was .weak foo, but foo was neither defined nor
 	       used anywhere, remove it.  */
 
-	    else if ((S_IS_WEAK (symp) || S_IS_SECONDARY (symp))
+	    else if (S_IS_WEAK (symp)
 		     && symbol_used_p (symp) == 0
 		     && symbol_used_in_reloc_p (symp) == 0)
 	      symbol_remove (symp, &symbol_rootP, &symbol_lastP);

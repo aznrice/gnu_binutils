@@ -2096,15 +2096,12 @@ static const struct bfd_elf_special_section special_sections_g[] =
   { STRING_COMMA_LEN (".gnu.linkonce.b"), -2, SHT_NOBITS,      SHF_ALLOC + SHF_WRITE },
   { STRING_COMMA_LEN (".gnu.lto_"),       -1, SHT_PROGBITS,    SHF_EXCLUDE },
   { STRING_COMMA_LEN (".got"),             0, SHT_PROGBITS,    SHF_ALLOC + SHF_WRITE },
-  { STRING_COMMA_LEN (".gnu_object_only"), 0, SHT_GNU_OBJECT_ONLY, SHF_EXCLUDE },
   { STRING_COMMA_LEN (".gnu.version"),     0, SHT_GNU_versym,  0 },
   { STRING_COMMA_LEN (".gnu.version_d"),   0, SHT_GNU_verdef,  0 },
   { STRING_COMMA_LEN (".gnu.version_r"),   0, SHT_GNU_verneed, 0 },
   { STRING_COMMA_LEN (".gnu.liblist"),     0, SHT_GNU_LIBLIST, SHF_ALLOC },
   { STRING_COMMA_LEN (".gnu.conflict"),    0, SHT_RELA,        SHF_ALLOC },
   { STRING_COMMA_LEN (".gnu.hash"),        0, SHT_GNU_HASH,    SHF_ALLOC },
-  { STRING_COMMA_LEN (".gnu.linkonce.shrb"), -2, SHT_NOBITS, SHF_ALLOC + SHF_WRITE + SHF_GNU_SHARABLE},
-  { STRING_COMMA_LEN (".gnu.linkonce.shrd"), -2, SHT_PROGBITS, SHF_ALLOC + SHF_WRITE + SHF_GNU_SHARABLE},
   { NULL,                        0,        0, 0,               0 }
 };
 
@@ -2159,8 +2156,6 @@ static const struct bfd_elf_special_section special_sections_s[] =
   /* See struct bfd_elf_special_section declaration for the semantics of
      this special case where .prefix_length != strlen (.prefix).  */
   { ".stabstr",			5,  3, SHT_STRTAB, 0 },
-  { STRING_COMMA_LEN (".sharable_bss"), -2, SHT_NOBITS, SHF_ALLOC + SHF_WRITE + SHF_GNU_SHARABLE},
-  { STRING_COMMA_LEN (".sharable_data"), -2, SHT_PROGBITS, SHF_ALLOC + SHF_WRITE + SHF_GNU_SHARABLE},
   { NULL,                       0,  0, 0,          0 }
 };
 
@@ -3255,10 +3250,7 @@ sym_is_global (bfd *abfd, asymbol *sym)
   if (bed->elf_backend_sym_is_global)
     return (*bed->elf_backend_sym_is_global) (abfd, sym);
 
-  return ((sym->flags & (BSF_GLOBAL
-			 | BSF_WEAK
-			 | BSF_SECONDARY
-			 | BSF_GNU_UNIQUE)) != 0
+  return ((sym->flags & (BSF_GLOBAL | BSF_WEAK | BSF_GNU_UNIQUE)) != 0
 	  || bfd_is_und_section (bfd_get_section (sym))
 	  || bfd_is_com_section (bfd_get_section (sym)));
 }
@@ -3623,32 +3615,6 @@ get_program_header_size (bfd *abfd, struct bfd_link_info *info)
 	}
     }
 
-  /* Check to see if we need a PT_GNU_SHR segment for sharable data
-     sections.  */
-  for (s = abfd->sections; s != NULL; s = s->next)
-    {
-      if ((elf_section_flags (s) & SHF_GNU_SHARABLE) != 0
-	  && elf_section_type (s) == SHT_PROGBITS)
-	{
-	  /* We need a PT_GNU_SHR segment.  */
-	  ++segs;
-	  break;
-	}
-    }
-
-  /* Check to see if we need a PT_GNU_SHR segment for sharable bss
-     sections.  */
-  for (s = abfd->sections; s != NULL; s = s->next)
-    {
-      if ((elf_section_flags (s) & SHF_GNU_SHARABLE) != 0
-	  && elf_section_type (s) == SHT_NOBITS)
-	{
-	  /* We need a PT_GNU_SHR segment.  */
-	  ++segs;
-	  break;
-	}
-    }
-
   /* Let the backend count up any program headers it might need.  */
   bed = get_elf_backend_data (abfd);
   if (bed->elf_backend_additional_program_headers)
@@ -3819,8 +3785,6 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
       bfd_boolean phdr_in_segment = TRUE;
       bfd_boolean writable;
       int tls_count = 0;
-      int sharable_data_count = 0, sharable_bss_count = 0;
-      asection *first_sharable_data = NULL, *first_sharable_bss = NULL;
       asection *first_tls = NULL;
       asection *dynsec, *eh_frame_hdr;
       bfd_size_type amt;
@@ -4129,22 +4093,6 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
 		first_tls = s;
 	      tls_count++;
 	    }
-	  if (elf_section_flags (s) & SHF_GNU_SHARABLE)
-	    {
-	      if (elf_section_type (s) == SHT_PROGBITS)
-		{
-		  if (! sharable_data_count)
-		    first_sharable_data = s;
-		  sharable_data_count++;
-		}
-	      else
-		{
-		  BFD_ASSERT (elf_section_type (s) == SHT_NOBITS);
-		  if (! sharable_bss_count)
-		    first_sharable_bss = s;
-		  sharable_bss_count++;
-		}
-	    }
 	}
 
       /* If there are any SHF_TLS output sections, add PT_TLS segment.  */
@@ -4170,60 +4118,6 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
 
 	  *pm = m;
 	  pm = &m->next;
-	}
-
-      /* If there are any output SHF_GNU_SHARABLE data sections, add a
-	 PT_GNU_SHR segment.  */
-      if (sharable_data_count > 0)
-	{
-	  int j;
-
-	  amt = sizeof (struct elf_segment_map);
-	  amt += (sharable_data_count - 1) * sizeof (asection *);
-	  m = bfd_zalloc (abfd, amt);
-	  if (m == NULL)
-	    goto error_return;
-	  m->next = NULL;
-	  m->p_type = PT_GNU_SHR;
-	  m->count = sharable_data_count;
-	  /* Mandated PF_R.  */
-	  m->p_flags = PF_R;
-	  m->p_flags_valid = 1;
-	  for (j = 0; j < sharable_data_count; ++j)
-	    {
-	      m->sections[j] = first_sharable_data;
-	      first_sharable_data = first_sharable_data->next;
-	    }
-
-	  *pm = m;
-	   pm = &m->next;
-	}
-
-      /* If there are any output SHF_GNU_SHARABLE bss sections, add a
-	 PT_GNU_SHR segment.  */
-      if (sharable_bss_count > 0)
-	{
-	  int j;
-
-	  amt = sizeof (struct elf_segment_map);
-	  amt += (sharable_bss_count - 1) * sizeof (asection *);
-	  m = bfd_zalloc (abfd, amt);
-	  if (m == NULL)
-	    goto error_return;
-	  m->next = NULL;
-	  m->p_type = PT_GNU_SHR;
-	  m->count = sharable_bss_count;
-	  /* Mandated PF_R.  */
-	  m->p_flags = PF_R;
-	  m->p_flags_valid = 1;
-	  for (j = 0; j < sharable_bss_count; ++j)
-	    {
-	      m->sections[j] = first_sharable_bss;
-	      first_sharable_bss = first_sharable_bss->next;
-	    }
-
-	  *pm = m;
-	   pm = &m->next;
 	}
 
       /* If there is a .eh_frame_hdr section, throw in a PT_GNU_EH_FRAME
@@ -4767,7 +4661,6 @@ assign_file_positions_for_load_sections (bfd *abfd,
 	  align = (bfd_size_type) 1 << bfd_get_section_alignment (abfd, sec);
 
 	  if ((p->p_type == PT_LOAD
-	       || p->p_type == PT_GNU_SHR
 	       || p->p_type == PT_TLS)
 	      && (this_hdr->sh_type != SHT_NOBITS
 		  || ((this_hdr->sh_flags & SHF_ALLOC) != 0
@@ -6333,11 +6226,12 @@ copy_elf_program_header (bfd *ibfd, bfd *obfd)
 	      if (ELF_SECTION_IN_SEGMENT (this_hdr, segment))
 		{
 		  map->sections[isec++] = section->output_section;
-		  if (section->lma < lowest_section->lma)
-		    lowest_section = section;
 		  if ((section->flags & SEC_ALLOC) != 0)
 		    {
 		      bfd_vma seg_off;
+
+		      if (section->lma < lowest_section->lma)
+			lowest_section = section;
 
 		      /* Section lmas are set up from PT_LOAD header
 			 p_paddr in _bfd_elf_make_section_from_shdr.
@@ -6981,9 +6875,8 @@ Unable to find equivalent output section for symbol '%s' from section '%s'"),
 #endif
 	    sym.st_info = ELF_ST_INFO (STB_GLOBAL, type);
 	}
-      /* Output undefined secondary symbols as weak.  */
       else if (bfd_is_und_section (syms[idx]->section))
-	sym.st_info = ELF_ST_INFO (((flags & (BSF_WEAK | BSF_SECONDARY))
+	sym.st_info = ELF_ST_INFO (((flags & BSF_WEAK)
 				    ? STB_WEAK
 				    : STB_GLOBAL),
 				   type);
@@ -6997,8 +6890,6 @@ Unable to find equivalent output section for symbol '%s' from section '%s'"),
 	    bind = STB_LOCAL;
 	  else if (flags & BSF_GNU_UNIQUE)
 	    bind = STB_GNU_UNIQUE;
-	  else if (flags & BSF_SECONDARY)
-	    bind = STB_SECONDARY;
 	  else if (flags & BSF_WEAK)
 	    bind = STB_WEAK;
 	  else if (flags & BSF_GLOBAL)

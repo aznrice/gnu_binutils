@@ -511,12 +511,12 @@ rx_elf_relocate_section
 	}
       else
 	{
-	  bfd_boolean warned, ignored;
+	  bfd_boolean warned;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes, h,
 				   sec, relocation, unresolved_reloc,
-				   warned, ignored);
+				   warned);
 
 	  name = h->root.root.string;
 	}
@@ -1163,6 +1163,7 @@ rx_elf_relocate_section
 	  {
 	    int32_t tmp;
 
+	    saw_subtract = TRUE;
 	    RX_STACK_POP (tmp);
 	    tmp = - tmp;
 	    RX_STACK_PUSH (tmp);
@@ -1207,7 +1208,6 @@ rx_elf_relocate_section
 	  {
 	    int32_t tmp1, tmp2;
 
-	    saw_subtract = TRUE;
 	    RX_STACK_POP (tmp1);
 	    RX_STACK_POP (tmp2);
 	    tmp1 /= tmp2;

@@ -2309,12 +2309,12 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 	}
       else
 	{
-	  bfd_boolean warned, ignored;
+	  bfd_boolean warned;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned, ignored);
+				   unresolved_reloc, warned);
 	}
 
       if (sec != NULL && discarded_section (sec))
@@ -3313,8 +3313,6 @@ elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
     {
       bfd_signed_vma *local_got;
       bfd_signed_vma *end_local_got;
-      char *local_tls_type;
-      bfd_vma *local_tlsdesc_gotent;
       bfd_size_type locsymcount;
       Elf_Internal_Shdr *symtab_hdr;
       asection *srel;
@@ -3355,8 +3353,7 @@ elf32_tic6x_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
       end_local_got = local_got + locsymcount;
       s = htab->elf.sgot;
       srel = htab->elf.srelgot;
-      for (; local_got < end_local_got;
-	   ++local_got, ++local_tls_type, ++local_tlsdesc_gotent)
+      for (; local_got < end_local_got; ++local_got)
 	{
 	  if (*local_got > 0)
 	    {

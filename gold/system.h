@@ -87,27 +87,17 @@ struct hash<off_t> : public std::unary_function<off_t, std::size_t>
 } } // Close namespaces.
 #endif // !defined(HAVE_TR1_HASH_OFF_T)
 
-#elif defined(ANDROID) || (defined(HAVE_EXT_HASH_MAP) && defined(HAVE_EXT_HASH_SET))
+#elif defined(HAVE_EXT_HASH_MAP) && defined(HAVE_EXT_HASH_SET)
 
-#ifdef ANDROID // STLport is a bit like libstdc++ in terms of extensions... But not quite the same
-#include <hash_map>
-#include <hash_set>
-#include <stl/_hash_fun.h>
-#define HASHMAP_NAMESPACE std
-using std::_STLP_PRIV_NAME::__stl_hash_string;
-#else
 #include <ext/hash_map>
 #include <ext/hash_set>
-#define HASHMAP_NAMESPACE __gnu_cxx
-#endif
-
 #include <string>
 
-#define Unordered_set HASHMAP_NAMESPACE::hash_set
-#define Unordered_map HASHMAP_NAMESPACE::hash_map
-#define Unordered_multimap HASHMAP_NAMESPACE::hash_multimap
+#define Unordered_set __gnu_cxx::hash_set
+#define Unordered_map __gnu_cxx::hash_map
+#define Unordered_multimap __gnu_cxx::hash_multimap
 
-namespace HASHMAP_NAMESPACE
+namespace __gnu_cxx
 {
 
 template<>
