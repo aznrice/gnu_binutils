@@ -1,3 +1,400 @@
+2014-03-27  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	Remove some globals from our parser.
+	* language.c (unk_lang_parser): Add "struct parser_state"
+	argument.
+	* language.h (struct language_defn) <la_parser>: Likewise.
+	* parse.c (expout, expout_size, expout_ptr): Remove variables.
+	(initialize_expout): Add "struct parser_state" argument.
+	Rewrite function to use the parser state.
+	(reallocate_expout, write_exp_elt, write_exp_elt_opcode,
+	write_exp_elt_sym, write_exp_elt_block, write_exp_elt_objfile,
+	write_exp_elt_longcst, write_exp_elt_dblcst,
+	write_exp_elt_decfloatcst, write_exp_elt_type,
+	write_exp_elt_intern, write_exp_string, write_exp_string_vector,
+	write_exp_bitstring, write_exp_msymbol, mark_struct_expression,
+	write_dollar_variable): Likewise.
+	(parse_exp_in_context_1): Use parser state.
+	(insert_type_address_space): Add "struct parser_state" argument.
+	Use parser state.
+	(increase_expout_size): New function.
+	* parser-defs.h: Forward declare "struct language_defn" and
+	"struct parser_state".
+	(expout, expout_size, expout_ptr): Remove extern declarations.
+	(parse_gdbarch, parse_language): Rewrite macro declarations to
+	accept the parser state.
+	(struct parser_state): New struct.
+	(initialize_expout, reallocate_expout, write_exp_elt_opcode,
+	write_exp_elt_sym, write_exp_elt_longcst, write_exp_elt_dblcst,
+	write_exp_elt_decfloatcst, write_exp_elt_type,
+	write_exp_elt_intern, write_exp_string, write_exp_string_vector,
+	write_exp_bitstring, write_exp_elt_block, write_exp_elt_objfile,
+	write_exp_msymbol, write_dollar_variable,
+	mark_struct_expression, insert_type_address_space): Add "struct
+	parser_state" argument.
+	(increase_expout_size): New function.
+	* utils.c (do_clear_parser_state): New function.
+	(make_cleanup_clear_parser_state): Likewise.
+	* utils.h (make_cleanup_clear_parser_state): New function
+	prototype.
+	* aarch64-linux-tdep.c (aarch64_stap_parse_special_token):
+	Update calls to write_exp* in order to pass the parser state.
+	* arm-linux-tdep.c (arm_stap_parse_special_token): Likewise.
+	* i386-tdep.c (i386_stap_parse_special_token_triplet): Likewise.
+	(i386_stap_parse_special_token_three_arg_disp): Likewise.
+	* ppc-linux-tdep.c (ppc_stap_parse_special_token): Likewise.
+	* stap-probe.c (stap_parse_register_operand): Likewise.
+	(stap_parse_single_operand): Likewise.
+	(stap_parse_argument_1): Likewise.
+	(stap_parse_argument): Use parser state.
+	* stap-probe.h: Include "parser-defs.h".
+	(struct stap_parse_info) <pstate>: New field.
+	* c-exp.y (parse_type): Rewrite to use parser state.
+	(yyparse): Redefine to c_parse_internal.
+	(pstate): New global variable.
+	(parse_number): Add "struct parser_state" argument.
+	(write_destructor_name): Likewise.
+	(type_exp): Update calls to write_exp* and similars in order to
+	use parser state.
+	(exp1, exp, variable, qualified_name, space_identifier,
+	typename, typebase): Likewise.
+	(write_destructor_name, parse_number, lex_one_token,
+	classify_name, classify_inner_name, c_parse): Add "struct
+	parser_state" argument.  Update function to use parser state.
+	* c-lang.h: Forward declare "struct parser_state".
+	(c_parse): Add "struct parser_state" argument.
+	* ada-exp.y (parse_type): Rewrite macro to use parser state.
+	(yyparse): Redefine macro to ada_parse_internal.
+	(pstate): New variable.
+	(write_int, write_object_renaming, write_var_or_type,
+	write_name_assoc, write_exp_op_with_string, write_ambiguous_var,
+	type_int, type_long, type_long_long, type_float, type_double,
+	type_long_double, type_char, type_boolean, type_system_address):
+	Add "struct parser_state" argument.
+	(exp1, primary, simple_exp, relation, and_exp, and_then_exp,
+	or_exp, or_else_exp, xor_exp, type_prefix, opt_type_prefix,
+	var_or_type, aggregate, aggregate_component_list,
+	positional_list, others, component_group,
+	component_associations): Update calls to write_exp* and similar
+	functions in order to use parser state.
+	(ada_parse, write_var_from_sym, write_int,
+	write_exp_op_with_string, write_object_renaming,
+	find_primitive_type, write_selectors, write_ambiguous_var,
+	write_var_or_type, write_name_assoc, type_int, type_long,
+	type_long_long, type_float, type_double, type_long_double,
+	type_char, type_boolean, type_system_address): Add "struct
+	parser_state" argument.  Adjust function to use parser state.
+	* ada-lang.c (parse): Likewise.
+	* ada-lang.h: Forward declare "struct parser_state".
+	(ada_parse): Add "struct parser_state" argument.
+	* ada-lex.l (processInt, processReal): Likewise.  Adjust all
+	calls to both functions.
+	* f-exp.y (parse_type, parse_f_type): Rewrite macros to use
+	parser state.
+	(yyparse): Redefine macro to f_parse_internal.
+	(pstate): New variable.
+	(parse_number): Add "struct parser_state" argument.
+	(type_exp, exp, subrange, typebase): Update calls to write_exp*
+	and similars in order to use parser state.
+	(parse_number): Adjust code to use parser state.
+	(yylex): Likewise.
+	(f_parse): New function.
+	* f-lang.h: Forward declare "struct parser_state".
+	(f_parse): Add "struct parser_state" argument.
+	* jv-exp.y (parse_type, parse_java_type): Rewrite macros to use
+	parser state.
+	(yyparse): Redefine macro for java_parse_internal.
+	(pstate): New variable.
+	(push_expression_name, push_expression_name, insert_exp): Add
+	"struct parser_state" argument.
+	(type_exp, StringLiteral, Literal, PrimitiveType, IntegralType,
+	FloatingPointType, exp1, PrimaryNoNewArray, FieldAccess,
+	FuncStart, MethodInvocation, ArrayAccess, PostfixExpression,
+	PostIncrementExpression, PostDecrementExpression,
+	UnaryExpression, PreIncrementExpression, PreDecrementExpression,
+	UnaryExpressionNotPlusMinus, CastExpression,
+	MultiplicativeExpression, AdditiveExpression, ShiftExpression,
+	RelationalExpression, EqualityExpression, AndExpression,
+	ExclusiveOrExpression, InclusiveOrExpression,
+	ConditionalAndExpression, ConditionalOrExpression,
+	ConditionalExpression, Assignment, LeftHandSide): Update
+	calls to write_exp* and similars in order to use parser state.
+	(parse_number): Ajust code to use parser state.
+	(yylex): Likewise.
+	(java_parse): New function.
+	(push_variable): Add "struct parser_state" argument.  Adjust
+	code to user parser state.
+	(push_fieldnames, push_qualified_expression_name,
+	push_expression_name, insert_exp): Likewise.
+	* jv-lang.h: Forward declare "struct parser_state".
+	(java_parse): Add "struct parser_state" argument.
+	* m2-exp.y (parse_type, parse_m2_type): Rewrite macros to use
+	parser state.
+	(yyparse): Redefine macro to m2_parse_internal.
+	(pstate): New variable.
+	(type_exp, exp, fblock, variable, type): Update calls to
+	write_exp* and similars to use parser state.
+	(yylex): Likewise.
+	(m2_parse): New function.
+	* m2-lang.h: Forward declare "struct parser_state".
+	(m2_parse): Add "struct parser_state" argument.
+	* objc-lang.c (end_msglist): Add "struct parser_state" argument.
+	* objc-lang.h: Forward declare "struct parser_state".
+	(end_msglist): Add "struct parser_state" argument.
+	* p-exp.y (parse_type): Rewrite macro to use parser state.
+	(yyparse): Redefine macro to pascal_parse_internal.
+	(pstate): New variable.
+	(parse_number): Add "struct parser_state" argument.
+	(type_exp, exp1, exp, qualified_name, variable): Update calls to
+	write_exp* and similars in order to use parser state.
+	(parse_number, yylex): Adjust code to use parser state.
+	(pascal_parse): New function.
+	* p-lang.h: Forward declare "struct parser_state".
+	(pascal_parse): Add "struct parser_state" argument.
+	* go-exp.y (parse_type): Rewrite macro to use parser state.
+	(yyparse): Redefine macro to go_parse_internal.
+	(pstate): New variable.
+	(parse_number): Add "struct parser_state" argument.
+	(type_exp, exp1, exp, variable, type): Update calls to
+	write_exp* and similars in order to use parser state.
+	(parse_number, lex_one_token, classify_name, yylex): Adjust code
+	to use parser state.
+	(go_parse): Likewise.
+	* go-lang.h: Forward declare "struct parser_state".
+	(go_parse): Add "struct parser_state" argument.
+
+2014-03-27  Doug Evans  <dje@google.com>
+
+	* dwarf2read.c (read_str_index): Delete arg cu.  All callers updated.
+
+2014-03-27  Doug Evans  <dje@google.com>
+
+	* dwarf2read.c (init_cutu_and_read_dies_no_follow): Fix comments.
+	Remove argument abbrev_section.  All callers updated.
+
+2014-03-27  Doug Evans  <dje@google.com>
+
+	* dwarf2read.c (struct dwarf2_cu): Improve comments for members
+	addr_base, ranges_base.
+
+2014-03-26  Keith Seitz  <keiths@redhat.com>
+
+	* ada-tasks.c (get_tcb_types_info): Search STRUCT_DOMAIN for
+	types, not VAR_DOMAIN.
+
+2014-03-25  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* features/nios2-cpu.xml: Correct types of "gp", "fp", "ea", and
+	"ra" registers.
+	* features/nios2-linux.c: Regenerated.
+	* features/nios2.c: Regenerated.
+
+2014-03-25  Pedro Alves  <palves@redhat.com>
+
+	* cli/cli-script.c (script_from_file): Force the interpreter to
+	sync mode.
+
+2014-03-24  Pierre Langlois  <pierre.langlois@embecosm.com>
+
+	* avr-tdep.c (avr_scan_prologue): Accept push r1 instruction for
+	small stack allocation.
+
+2014-03-24  Tristan Gingold  <gingold@adacore.com>
+
+	* darwin-nat.c (exc_server): Remove unused prototype.
+	(darwin_dump_message): Correctly display data on x86_64.
+	(darwin_encode_reply): Fix style.
+	Add comments and fix indentation.
+
+2014-03-24  Pierre Langlois  <pierre.langlois@embecosm.com>
+
+	* MAINTAINERS (Write After Approval): Add "Pierre Langlois".
+
+2014-03-22  Doug Evans  <xdje42@gmail.com>
+
+	* infcmd.c: Whitespace fixes.
+	(interrupt_command): Merge two function comments into one.
+
+2014-03-22  Doug Evans  <xdje42@gmail.com>
+
+	* infcmd.c (interrupt_command): Renamed from interrupt_target_command.
+	All uses updated.
+
+2014-03-22  Yao Qi  <yao@codesourcery.com>
+
+	* remote.c (target_read_live_memory): Remove.
+	(memory_xfer_live_readonly_partial): Rename it to
+	remote_xfer_live_readonly_partial.  Remove argument 'object'.
+	All callers updated.  Call remote_read_bytes_1
+	instead of target_read_live_memory.
+	* tracepoint.c (set_traceframe_number): Remove.
+	(make_cleanup_restore_traceframe_number): Likewise .
+	* tracepoint.h (set_traceframe_number): Remove declaration.
+	(make_cleanup_restore_traceframe_number): Likewise.
+
+2014-03-22  Yao Qi  <yao@codesourcery.com>
+
+	* remote.c (remote_read_bytes): Move code on reading from the
+	remote stub to ...
+	(remote_read_bytes_1): ... here.  New function.
+
+2014-03-22  Yao Qi  <yao@codesourcery.com>
+
+	* ctf.c (ctf_xfer_partial): Check the return value of
+	exec_read_partial_read_only, if it is not TARGET_XFER_OK,
+	return TARGET_XFER_UNAVAILABLE.
+	* tracefile-tfile.c (tfile_xfer_partial): Likewise.
+	* target.c (target_read_live_memory): Move it to remote.c.
+	(memory_xfer_live_readonly_partial): Likewise.
+	(memory_xfer_partial_1): Move some code to remote_read_bytes.
+	* remote.c (target_read_live_memory): Moved from target.c.
+	(memory_xfer_live_readonly_partial): Likewise.
+	(remote_read_bytes): Factored out from
+	memory_xfer_partial_1.
+
+2014-03-21  Daniel Gutson  <daniel.gutson@tallertechnologies.com>
+
+	* extension.c (eval_ext_lang_from_control_command): Avoid dereferencing
+	NULL pointer.
+
+2014-03-21  Pedro Alves  <palves@redhat.com>
+
+	* infrun.c (normal_stop): Extend comment.
+
+2014-03-21  Hui Zhu  <hui@codesourcery.com>
+	    Pedro Alves  <palves@redhat.com>
+
+	* darwin-nat.c (darwin_pid_to_exec_file): Change xmalloc to
+	static buffer.
+	* fbsd-nat.c (fbsd_pid_to_exec_file): Ditto.
+	* linux-nat.c (linux_child_pid_to_exec_file): Ditto.
+	* nbsd-nat.c (nbsd_pid_to_exec_file): Ditto.
+
+2014-03-20  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mi/mi-interp.c (mi_memory_changed): Avoid using the ISO C99
+	`z' formatted output modifier.
+
+2014-03-20  Tom Tromey  <tromey@redhat.com>
+	    Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* probe.c (parse_probes): Turn assert into an ordinary error.
+	* break-catch-throw.c (re_set_exception_catchpoint): Ignore
+	exceptions when parsing probes.  Rearrange the code for clarity.
+
+2014-03-20  Tom Tromey  <tromey@redhat.com>
+
+	PR gdb/14135
+	* top.c (execute_command): Only dispatch events if the command
+	started the target.
+
+2014-03-20  Tom Tromey  <tromey@redhat.com>
+
+	PR cli/15718
+	* infcall.c: Include event-top.h.
+	(run_inferior_call): Call async_disable_stdin if needed.
+
+2014-03-20  Pedro Alves  <palves@redhat.com>
+
+	* infrun.c (prepare_to_proceed): Delete.
+	(thread_still_needs_step_over): New function.
+	(find_thread_needs_step_over): New function.
+	(proceed): If the current thread needs a step-over, set its
+	steping_over_breakpoint flag.  Adjust to use
+	find_thread_needs_step_over instead of prepare_to_proceed.
+	(process_event_stop_test): For BPSTAT_WHAT_STOP_NOISY and
+	BPSTAT_WHAT_STOP_SILENT, assume the thread stopped for a
+	breakpoint.
+	(switch_back_to_stepped_thread): Step over breakpoints of all
+	threads not the stepping thread, before switching back to the
+	stepping thread.
+
+2014-03-20  Pedro Alves  <palves@redhat.com>
+
+	* breakpoint.c (single_step_breakpoint_inserted_here_p): Make
+	extern.
+	* breakpoint.h (single_step_breakpoint_inserted_here_p): Declare.
+	* infrun.c (saved_singlestep_ptid)
+	(stepping_past_singlestep_breakpoint): Delete.
+	(resume): Remove stepping_past_singlestep_breakpoint handling.
+	(proceed): Store the prev_pc of the stepping thread too.
+	(init_wait_for_inferior): Adjust.  Clear singlestep_ptid and
+	singlestep_pc.
+	(enum infwait_states): Delete infwait_thread_hop_state.
+	(struct execution_control_state) <hit_singlestep_breakpoint>: New
+	field.
+	(handle_inferior_event): Adjust.
+	(handle_signal_stop): Delete stepping_past_singlestep_breakpoint
+	handling and the thread-hop code.  Before removing single-step
+	breakpoints, check whether the thread hit a single-step breakpoint
+	of another thread.  If it did, the trap is not a random signal.
+	(switch_back_to_stepped_thread): If the event thread hit a
+	single-step breakpoint, unblock it before switching to the
+	stepping thread.  Handle the case of the stepped thread having
+	advanced already.
+	(keep_going): Handle the case of the current thread moving past a
+	single-step breakpoint.
+
+2014-03-20  Pedro Alves  <palves@redhat.com>
+
+	PR breakpoints/7143
+	* breakpoint.c (should_be_inserted): Don't insert breakpoints that
+	are being stepped over.
+	(breakpoint_address_match): Make extern.
+	* breakpoint.h (breakpoint_address_match): New declaration.
+	* inferior.h (stepping_past_instruction_at): New declaration.
+	* infrun.c (struct step_over_info): New type.
+	(step_over_info): New global.
+	(set_step_over_info, clear_step_over_info)
+	(stepping_past_instruction_at): New functions.
+	(handle_inferior_event): Clear the step-over info when
+	trap_expected is cleared.
+	(resume): Remove now stale comment.
+	(clear_proceed_status): Clear step-over info.
+	(proceed): Adjust step-over handling to set or clear the step-over
+	info instead of removing all breakpoints.
+	(handle_signal_stop): When setting up a thread-hop, don't remove
+	breakpoints here.
+	(stop_stepping): Clear step-over info.
+	(keep_going): Adjust step-over handling to set or clear step-over
+	info and then always inserting breakpoints, instead of removing
+	all breakpoints when stepping over one.
+
+2014-03-20  Pedro Alves  <palves@redhat.com>
+
+	* infrun.c (previous_inferior_ptid): Adjust comment.
+	(deferred_step_ptid): Delete.
+	(infrun_thread_ptid_changed, prepare_to_proceed)
+	(init_wait_for_inferior): Adjust.
+	(handle_signal_stop): Delete deferred_step_ptid handling.
+
+2014-03-18  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	PR gdb/15358
+	* defs.h (sync_quit_force_run): New declaration.
+	(QUIT): Check also SYNC_QUIT_FORCE_RUN.
+	* event-top.c (async_sigterm_handler): New declaration.
+	(async_sigterm_token): New variable.
+	(async_init_signals): Create also async_sigterm_token.
+	(async_sigterm_handler): New function.
+	(sync_quit_force_run): New variable.
+	(handle_sigterm): Replace quit_force call by other calls.
+	* utils.c (quit): Call quit_force if SYNC_QUIT_FORCE_RUN.
+
+2014-03-18  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* rs6000-tdep.c (rs6000_frame_cache): Correct little-endian GPR
+	offset into SPE pseudo registers.
+
+2014-03-18  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/13860
+	* inferior.h (print_stop_event): Declare.
+	* infrun.c (print_stop_event): New, factored out from ...
+	(normal_stop): ... this.
+	* mi/mi-interp.c (mi_on_normal_stop): Use print_stop_event instead
+	of bpstat_print/print_stack_frame.
+
 2014-03-17  Tom Tromey  <tromey@redhat.com>
 
 	* ui-out.c (clear_table, ui_out_new): Clear uiout->table.id.

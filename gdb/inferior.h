@@ -195,6 +195,8 @@ extern void start_remote (int from_tty);
 
 extern void normal_stop (void);
 
+extern void print_stop_event (struct target_waitstatus *ws);
+
 extern int signal_stop_state (int);
 
 extern int signal_print_state (int);
@@ -219,6 +221,12 @@ void set_step_info (struct frame_info *frame, struct symtab_and_line sal);
    $_exitsignal.  */
 
 extern void clear_exit_convenience_vars (void);
+
+/* Returns true if we're trying to step past the instruction at
+   ADDRESS in ASPACE.  */
+
+extern int stepping_past_instruction_at (struct address_space *aspace,
+					 CORE_ADDR address);
 
 /* From infcmd.c */
 

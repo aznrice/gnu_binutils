@@ -513,12 +513,12 @@ struct dwarf2_cu
 
   /* The DW_AT_addr_base attribute if present, zero otherwise
      (zero is a valid value though).
-     Note this value comes from the stub CU/TU's DIE.  */
+     Note this value comes from the Fission stub CU/TU's DIE.  */
   ULONGEST addr_base;
 
   /* The DW_AT_ranges_base attribute if present, zero otherwise
      (zero is a valid value though).
-     Note this value comes from the stub CU/TU's DIE.
+     Note this value comes from the Fission stub CU/TU's DIE.
      Also note that the value is zero in the non-DWO case so this value can
      be used without needing to know whether DWO files are in use or not.
      N.B. This does not apply to DW_AT_ranges appearing in
@@ -1492,7 +1492,7 @@ static CORE_ADDR read_addr_index_from_leb128 (struct dwarf2_cu *,
 					      unsigned int *);
 
 static const char *read_str_index (const struct die_reader_specs *reader,
-				   struct dwarf2_cu *cu, ULONGEST str_index);
+				   ULONGEST str_index);
 
 static void set_cu_language (unsigned int, struct dwarf2_cu *);
 
@@ -5515,10 +5515,9 @@ init_cutu_and_read_dies (struct dwarf2_per_cu_data *this_cu,
   do_cleanups (cleanups);
 }
 
-/* Read CU/TU THIS_CU in section SECTION,
-   but do not follow DW_AT_GNU_dwo_name if present.
-   DWOP_FILE, if non-NULL, is the DWO/DWP file to read (the caller is assumed
-   to have already done the lookup to find the DWO/DWP file).
+/* Read CU/TU THIS_CU but do not follow DW_AT_GNU_dwo_name if present.
+   DWO_FILE, if non-NULL, is the DWO file to read (the caller is assumed
+   to have already done the lookup to find the DWO file).
 
    The caller is required to fill in THIS_CU->section, THIS_CU->offset, and
    THIS_CU->is_debug_types, but nothing else.
@@ -5534,7 +5533,6 @@ init_cutu_and_read_dies (struct dwarf2_per_cu_data *this_cu,
 
 static void
 init_cutu_and_read_dies_no_follow (struct dwarf2_per_cu_data *this_cu,
-				   struct dwarf2_section_info *abbrev_section,
 				   struct dwo_file *dwo_file,
 				   die_reader_func_ftype *die_reader_func,
 				   void *data)
@@ -5542,6 +5540,7 @@ init_cutu_and_read_dies_no_follow (struct dwarf2_per_cu_data *this_cu,
   struct objfile *objfile = dwarf2_per_objfile->objfile;
   struct dwarf2_section_info *section = this_cu->section;
   bfd *abfd = get_section_bfd_owner (section);
+  struct dwarf2_section_info *abbrev_section;
   struct dwarf2_cu cu;
   const gdb_byte *begin_info_ptr, *info_ptr;
   struct die_reader_specs reader;
@@ -5555,6 +5554,10 @@ init_cutu_and_read_dies_no_follow (struct dwarf2_per_cu_data *this_cu,
 			this_cu->offset.sect_off);
 
   gdb_assert (this_cu->cu == NULL);
+
+  abbrev_section = (dwo_file != NULL
+		    ? &dwo_file->sections.abbrev
+		    : get_abbrev_section_for_cu (this_cu));
 
   /* This is cheap if the section is already read in.  */
   dwarf2_read_section (objfile, section);
@@ -5603,10 +5606,7 @@ init_cutu_and_read_dies_simple (struct dwarf2_per_cu_data *this_cu,
 				die_reader_func_ftype *die_reader_func,
 				void *data)
 {
-  init_cutu_and_read_dies_no_follow (this_cu,
-				     get_abbrev_section_for_cu (this_cu),
-				     NULL,
-				     die_reader_func, data);
+  init_cutu_and_read_dies_no_follow (this_cu, NULL, die_reader_func, data);
 }
 
 /* Type Unit Groups.
@@ -9326,9 +9326,7 @@ create_dwo_cu (struct dwo_file *dwo_file)
       per_cu.offset.sect_off = info_ptr - section->buffer;
       per_cu.section = section;
 
-      init_cutu_and_read_dies_no_follow (&per_cu,
-					 &dwo_file->sections.abbrev,
-					 dwo_file,
+      init_cutu_and_read_dies_no_follow (&per_cu, dwo_file,
 					 create_dwo_cu_reader,
 					 &create_dwo_cu_data);
 
@@ -15909,7 +15907,7 @@ read_attribute_value (const struct die_reader_specs *reader,
 	ULONGEST str_index =
 	  read_unsigned_leb128 (abfd, info_ptr, &bytes_read);
 
-	DW_STRING (attr) = read_str_index (reader, cu, str_index);
+	DW_STRING (attr) = read_str_index (reader, str_index);
 	DW_STRING_IS_CANONICAL (attr) = 0;
 	info_ptr += bytes_read;
       }
@@ -16445,12 +16443,12 @@ dwarf2_read_addr_index (struct dwarf2_per_cu_data *per_cu,
    This is only used by the Fission support.  */
 
 static const char *
-read_str_index (const struct die_reader_specs *reader,
-		struct dwarf2_cu *cu, ULONGEST str_index)
+read_str_index (const struct die_reader_specs *reader, ULONGEST str_index)
 {
   struct objfile *objfile = dwarf2_per_objfile->objfile;
   const char *objf_name = objfile_name (objfile);
   bfd *abfd = objfile->obfd;
+  struct dwarf2_cu *cu = reader->cu;
   struct dwarf2_section_info *str_section = &reader->dwo_file->sections.str;
   struct dwarf2_section_info *str_offsets_section =
     &reader->dwo_file->sections.str_offsets;
