@@ -1,3 +1,8 @@
+2014-04-23  Will Newton  <will.newton@linaro.org>
+
+	* config/tc-arm.c (s_ltorg): Call make_mapping_symbol
+	directly instead of mapping_state.
+
 2014-01-17  Will Newton  <will.newton@linaro.org>
 
 	* config/tc-arm.c (do_vfp_nsyn_cvt_fpv8): Set OP to 1
