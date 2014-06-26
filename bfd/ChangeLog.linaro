@@ -1,3 +1,8 @@
+2014-07-08  Will Newton  <will.newton@linaro.org>
+
+	* elf32-arm.c (ELF_MAXPAGESIZE): Increase the default
+	value to 64kB and remove custom setting for NaCl.
+
 2014-07-07  Will Newton  <will.newton@linaro.org>
 
 	* version.h: Bump version.

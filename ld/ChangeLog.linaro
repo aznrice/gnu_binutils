@@ -1,3 +1,8 @@
+2014-07-08  Will Newton  <will.newton@linaro.org>
+
+	* emulparams/armelf_linux.sh (TEXT_START_ADDR): Increase
+	alignment to 64kB boundary.
+
 2014-02-01  Hans-Peter Nilsson  <hp@bitrange.com>
 
 	* emultempl/mmix-elfnmmo.em (mmix_after_allocation): Fix typo in

@@ -15757,7 +15757,7 @@ const struct elf_size_info elf32_arm_size_info =
 #ifdef __QNXTARGET__
 #define ELF_MAXPAGESIZE			0x1000
 #else
-#define ELF_MAXPAGESIZE			0x8000
+#define ELF_MAXPAGESIZE			0x10000
 #endif
 #define ELF_MINPAGESIZE			0x1000
 #define ELF_COMMONPAGESIZE		0x1000
@@ -15896,8 +15896,6 @@ elf32_arm_nacl_final_write_processing (bfd *abfd, bfd_boolean linker)
 #undef  elf_backend_final_write_processing
 #define elf_backend_final_write_processing	elf32_arm_nacl_final_write_processing
 
-#undef	ELF_MAXPAGESIZE
-#define ELF_MAXPAGESIZE			0x10000
 #undef	ELF_MINPAGESIZE
 #undef	ELF_COMMONPAGESIZE
 
