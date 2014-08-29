@@ -1,3 +1,9 @@
+2014-08-29  Will Newton  <will.newton@linaro.org>
+
+	Linaro binutils 2.24-2014.09 released.
+
+	* version.h: Update version.
+
 2014-08-26  Jiong Wang  <jiong.wang@arm.com>
 
 	* elfnn-aarch64.c (elfNN_aarch64_check_relocs): Initialize non_got_ref
