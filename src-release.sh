@@ -56,7 +56,7 @@ ETC_SUPPORT="Makefile.in configure configure.in standards.texi \
 getver()
 {
     tool=$1
-    if grep 'AC_INIT.*BFD_VERSION' $tool/configure.ac >/dev/null 2>&1; then
+    if grep 'AM_INIT_AUTOMAKE.*BFD_VERSION' $tool/configure.in >/dev/null 2>&1; then
 	bfd/configure --version | sed -n -e '1s,.* ,,p'
     elif test -f $tool/common/create-version.sh; then
 	$tool/common/create-version.sh $tool 'dummy-host' 'dummy-target' VER.tmp
